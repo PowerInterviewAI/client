@@ -1,0 +1,6 @@
+.ruff_cache
+.mypy_cache
+__pycache__
+
+/nice-gui/venv
+/electron/node_modules

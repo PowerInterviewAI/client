@@ -1,0 +1,8 @@
+{
+    "python.testing.pytestArgs": [
+        "nice-gui/test",
+        "-s"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true
+}
