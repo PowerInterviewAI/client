@@ -2,6 +2,6 @@
 .mypy_cache
 __pycache__
 
-/nice-gui/venv
+/backend/venv
 /electron/node_modules
 /models

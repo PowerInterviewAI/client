@@ -8,7 +8,7 @@
             "name": "Main",
             "type": "debugpy",
             "request": "launch",
-            "module": "nice-gui.app.main"
+            "module": "backend.app.main"
         }
     ]
 }

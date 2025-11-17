@@ -1,6 +1,6 @@
 {
     "python.testing.pytestArgs": [
-        "nice-gui/test",
+        "backend/test",
         "-s"
     ],
     "python.testing.unittestEnabled": false,
