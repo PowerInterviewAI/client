@@ -4,3 +4,4 @@ __pycache__
 
 /nice-gui/venv
 /electron/node_modules
+/models
