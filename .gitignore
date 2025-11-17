@@ -3,6 +3,6 @@
 .pytest_cache
 __pycache__
 
-/backend/venv
+/venv
 /frontend/node_modules
 /models

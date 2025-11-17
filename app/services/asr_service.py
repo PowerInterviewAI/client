@@ -2,6 +2,7 @@ import queue
 import threading
 import time
 from collections.abc import Callable
+from typing import Any
 
 import numpy as np
 import sounddevice as sd
@@ -21,8 +22,8 @@ class ASRService:
         channels: int = 2,
         device: int | None = None,
         block_duration: float = 0.25,
-        on_final: Callable[[dict], None] | None = None,
-        on_partial: Callable[[dict], None] | None = None,
+        on_final: Callable[[dict[str, Any]], None] | None = None,
+        on_partial: Callable[[dict[str, Any]], None] | None = None,
     ) -> None:
         """
         Args:
@@ -58,7 +59,7 @@ class ASRService:
     # -------------------------
     # Audio Callback
     # -------------------------
-    def _audio_callback(self, indata: np.ndarray, frames, time_info, status) -> None:  # noqa: ANN001, ARG002
+    def _audio_callback(self, indata: np.ndarray, frames, time_info, status) -> None:  # type: ignore  # noqa: ANN001, ARG002, PGH003
         if status:
             logger.warning(f"Audio status: {status}")
         mono = indata.mean(axis=1) if indata.ndim > 1 else indata
@@ -93,10 +94,10 @@ class ASRService:
     def start(self) -> None:
         """Start capturing and recognizing audio."""
         if self.running.is_set():
-            logger.warning("AudioTransService already running.")
+            logger.warning("ASRService already running.")
             return
 
-        logger.info("Starting AudioTransService...")
+        logger.info("Starting ASRService...")
         self.running.set()
         self.worker_thread = threading.Thread(target=self._worker, daemon=True)
         self.worker_thread.start()
@@ -115,10 +116,10 @@ class ASRService:
     def stop(self) -> None:
         """Stop audio capture and background worker."""
         if not self.running.is_set():
-            logger.warning("AudioTransService not running.")
+            logger.warning("ASRService not running.")
             return
 
-        logger.info("Stopping AudioTransService...")
+        logger.info("Stopping ASRService...")
         self.running.clear()
         self.audio_queue.put(np.zeros(0))  # unblock queue
 
@@ -128,7 +129,7 @@ class ASRService:
         if self.stream.active:
             self.stream.stop()
         self.stream.close()
-        logger.info("AudioTransService stopped.")
+        logger.info("ASRService stopped.")
 
     def run_forever(self) -> None:
         """Convenience loop to keep the service alive until Ctrl+C."""
