@@ -9,7 +9,7 @@ from loguru import logger
 from scipy.signal import resample_poly
 from vosk import KaldiRecognizer, Model
 
-from app.cfg.fs import config as cfg_fs
+from backend.cfg.fs import config as cfg_fs
 
 
 class ASRService:

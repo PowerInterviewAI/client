@@ -4,7 +4,7 @@ import pyaudiowpatch as pyaudio
 import pytest
 from loguru import logger
 
-from app.services.asr_service import ASRService
+from backend.services.asr_service import ASRService
 
 
 @pytest.mark.asyncio

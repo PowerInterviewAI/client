@@ -1,6 +1,6 @@
 {
     "python.testing.pytestArgs": [
-        "test",
+        "backend_test",
         "-s",
     ],
     "python.testing.unittestEnabled": false,
