@@ -1,4 +1,5 @@
 import json
+import threading
 
 from loguru import logger
 
@@ -16,6 +17,9 @@ class TranscriptService:
 
         self.input_asr: ASRService | None = None
         self.loopback_asr: ASRService | None = None
+
+        # Synchronization lock
+        self._lock = threading.Lock()
 
     def start(self, input_device_index: int) -> None:
         self.stop()
@@ -35,57 +39,67 @@ class TranscriptService:
         self.loopback_asr.start()
 
     def stop(self) -> None:
-        if self.input_asr is not None:
-            self.input_asr.stop()
-            self.input_asr = None
+        with self._lock:
+            if self.input_asr is not None:
+                self.input_asr.stop()
+                self.input_asr = None
 
-        if self.loopback_asr is not None:
-            self.loopback_asr.stop()
-            self.loopback_asr = None
+            if self.loopback_asr is not None:
+                self.loopback_asr.stop()
+                self.loopback_asr = None
 
     def on_input_partial(self, result_json: str) -> None:
         result_dict = json.loads(result_json)
         text = result_dict.get("partial", "")
         logger.debug(f"on_input_partial: {text}")
-        if self.transcript_loopback_partial.text == "":
-            self.transcript_loopback_partial.timestamp = DatetimeUtil.get_current_timestamp()
-
-        self.transcript_input_partial.text = text
+        with self._lock:
+            if self.transcript_loopback_partial.text == "":
+                self.transcript_loopback_partial.timestamp = DatetimeUtil.get_current_timestamp()
+            self.transcript_input_partial.text = text
 
     def on_input_final(self, result_json: str) -> None:
         result_dict = json.loads(result_json)
         text = result_dict.get("text", "")
         logger.debug(f"on_input_final: {text}")
-        self.transcripts.append(
-            Transcript(
-                speaker=Speaker.YOU,
-                text=text,
-                timestamp=self.transcript_input_partial.timestamp,
+        with self._lock:
+            self.transcripts.append(
+                Transcript(
+                    speaker=Speaker.YOU,
+                    text=text,
+                    timestamp=self.transcript_input_partial.timestamp,
+                )
             )
-        )
-        self.transcript_loopback_partial.text = ""
+            self.transcript_input_partial.text = ""
+            self.transcript_loopback_partial.text = ""
 
     def on_loopback_partial(self, result_json: str) -> None:
         result_dict = json.loads(result_json)
         text = result_dict.get("partial", "")
         logger.debug(f"on_loopback_partial: {text}")
-        if self.transcript_input_partial.text == "":
-            self.transcript_input_partial.timestamp = DatetimeUtil.get_current_timestamp()
-
-        self.transcript_loopback_partial.text = text
+        with self._lock:
+            if self.transcript_input_partial.text == "":
+                self.transcript_input_partial.timestamp = DatetimeUtil.get_current_timestamp()
+            self.transcript_loopback_partial.text = text
 
     def on_loopback_final(self, result_json: str) -> None:
         result_dict = json.loads(result_json)
         text = result_dict.get("text", "")
         logger.debug(f"on_loopback_final: {text}")
-        self.transcripts.append(
-            Transcript(
-                speaker=Speaker.INTERVIEWER,
-                text=text,
-                timestamp=self.transcript_loopback_partial.timestamp,
+        with self._lock:
+            self.transcripts.append(
+                Transcript(
+                    speaker=Speaker.INTERVIEWER,
+                    text=text,
+                    timestamp=self.transcript_loopback_partial.timestamp,
+                )
             )
-        )
-        self.transcript_input_partial.text = ""
+            self.transcript_loopback_partial.text = ""
+            self.transcript_input_partial.text = ""
+
+    def get_transcripts(self) -> list[Transcript]:
+        with self._lock:
+            # Return a shallow copy to avoid concurrent modifications
+            return list(self.transcripts)
 
 
-transcript_service = TranscriptService()
+transcriptor = TranscriptService()
