@@ -10,7 +10,7 @@ interface TopBarProps {
 
 export default function TopBar({ userName, onProfileClick, onThemeToggle, isDark }: TopBarProps) {
   return (
-    <div className="border-b border-border bg-card px-4 py-3 shadow-sm flex-shrink-0">
+    <div className="border-b border-border bg-card px-4 py-3 flex-shrink-0">
       <div className="flex items-center justify-between">
         {/* Left: App Logo and Title */}
         <div className="flex items-center gap-3">
@@ -35,7 +35,6 @@ export default function TopBar({ userName, onProfileClick, onThemeToggle, isDark
 
           <div className="text-right">
             <p className="text-sm font-medium text-foreground">{userName}</p>
-            <p className="text-xs text-muted-foreground">Active</p>
           </div>
           <Button
             variant="ghost"

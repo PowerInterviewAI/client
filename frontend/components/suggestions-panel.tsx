@@ -38,8 +38,8 @@ export default function SuggestionsPanel() {
   }
 
   return (
-    <Card className="flex flex-col h-full bg-card">
-      <div className="border-b border-border px-4 py-3 flex-shrink-0">
+    <Card className="flex flex-col h-full bg-card p-0 overflow-hidden">
+      <div className="border-b border-border p-4 flex-shrink-0">
         <h3 className="font-semibold text-foreground text-sm">Interview Suggestions</h3>
         <p className="text-xs text-muted-foreground mt-1">AI-powered recommendations</p>
       </div>

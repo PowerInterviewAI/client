@@ -11,8 +11,8 @@ export default function TranscriptPanel() {
   ]
 
   return (
-    <Card className="flex flex-col h-full bg-card">
-      <div className="border-b border-border px-3 py-2 flex-shrink-0">
+    <Card className="flex flex-col h-full bg-card p-0 overflow-hidden">
+      <div className="border-b border-border px-4 pt-4 pb-2 flex-shrink-0">
         <h3 className="font-semibold text-foreground text-xs">Transcription</h3>
       </div>
       <div className="flex-1 overflow-y-auto">
