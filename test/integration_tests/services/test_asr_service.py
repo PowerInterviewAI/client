@@ -1,0 +1,42 @@
+import json
+
+import pyaudiowpatch as pyaudio
+import pytest
+from loguru import logger
+
+from app.services.asr_service import ASRService
+
+
+@pytest.mark.asyncio
+async def test_asr_service() -> None:
+    last_text = ""
+    last_partial = ""
+
+    def on_final(result_json: str) -> None:
+        result_dict = json.loads(result_json)
+        text = result_dict["text"]
+        nonlocal last_text
+        if text != last_text:
+            logger.debug(f"FINAL: {text}")
+            last_text = text
+
+    def on_partial(result_json: str) -> None:
+        result_dict = json.loads(result_json)
+        partial = result_dict["partial"]
+        nonlocal last_partial
+        if partial != last_partial:
+            logger.debug(f"PARTIAL: {partial}")
+            last_partial = partial
+
+    pa = pyaudio.PyAudio()
+    loopback_dev = pa.get_default_wasapi_loopback()
+    pa.terminate()
+
+    service = ASRService(
+        device_index=loopback_dev["index"],
+        on_final=on_final,
+        on_partial=on_partial,
+    )
+
+    # Run until interrupted
+    await service.run_forever()

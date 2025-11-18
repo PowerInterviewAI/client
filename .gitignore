@@ -1,6 +1,8 @@
 .ruff_cache
 .mypy_cache
+.pytest_cache
 __pycache__
 
-/nice-gui/venv
-/electron/node_modules
+/venv
+/frontend/node_modules
+/models
