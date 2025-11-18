@@ -6,6 +6,7 @@ from typing import Any
 import numpy as np
 import pyaudiowpatch as pyaudio
 from loguru import logger
+from scipy.signal import resample_poly
 from vosk import KaldiRecognizer, Model
 
 from app.cfg.fs import config as cfg_fs
@@ -14,13 +15,15 @@ from app.cfg.fs import config as cfg_fs
 class ASRService:
     """Async speech-to-text service using Vosk and pyaudiowpatch."""
 
+    TARGET_RATE = 16_000
+
     def __init__(
         self,
         model_path: str | None = None,
         device_index: int | None = None,
         block_duration: float = 0.25,
-        on_final: Callable[[dict[str, Any]], None] | None = None,
-        on_partial: Callable[[dict[str, Any]], None] | None = None,
+        on_final: Callable[[str], None] | None = None,
+        on_partial: Callable[[str], None] | None = None,
     ) -> None:
         pa = pyaudio.PyAudio()
         dev_info = pa.get_device_info_by_index(device_index)
@@ -48,12 +51,9 @@ class ASRService:
         logger.info(f"Loading Vosk model: {self.model_path}")
         self.model = Model(str(self.model_path))
         logger.info("Loaded Vosk model")
-        self.recognizer = KaldiRecognizer(self.model, self.sample_rate)
+        self.recognizer = KaldiRecognizer(self.model, self.TARGET_RATE)
         self.recognizer.SetWords(True)  # noqa: FBT003
 
-    # -------------------------
-    # Audio callback
-    # -------------------------
     def _audio_callback(
         self,
         in_data: np.ndarray,
@@ -69,6 +69,11 @@ class ASRService:
         if self.channels > 1:
             data_np = data_np.reshape(-1, self.channels).mean(axis=1)
 
+        # --- Resample if needed ---
+        if self.sample_rate != self.TARGET_RATE:
+            # Sinc interpolation; keeps shape stable for streaming if block is small
+            data_np = resample_poly(data_np, self.TARGET_RATE, self.sample_rate)
+
         # Non-blocking put into asyncio.Queue
         with contextlib.suppress(RuntimeError):
             if self.loop:
@@ -76,9 +81,6 @@ class ASRService:
 
         return (None, pyaudio.paContinue)
 
-    # -------------------------
-    # Async worker
-    # -------------------------
     async def _worker(self) -> None:
         """Async consumer that reads from queue and performs recognition."""
         while self.running_event.is_set():
@@ -102,9 +104,6 @@ class ASRService:
         if asyncio.iscoroutine(result):
             await result
 
-    # -------------------------
-    # Lifecycle
-    # -------------------------
     async def start(self) -> None:
         if self.running_event.is_set():
             logger.warning("ASRService already running.")

@@ -30,6 +30,7 @@ async def test_asr_service() -> None:
 
     pa = pyaudio.PyAudio()
     loopback_dev = pa.get_default_wasapi_loopback()
+    pa.terminate()
 
     service = ASRService(
         device_index=loopback_dev["index"],
