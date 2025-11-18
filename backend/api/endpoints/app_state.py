@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from backend.api.custom import RouteErrorHandler
 from backend.models.app_state import AppState, AppStateUpdate
+from backend.schemas.transcription import Transcription
 from backend.services.app_config_service import AppStateService
 from backend.services.audio_service import AudioService
 
@@ -36,5 +37,5 @@ def list_audio_output_devices() -> list[dict[str, Any]]:
 
 
 @router.get("/get-transcriptions")
-def get_transcriptions() -> list[dict[str, Any]]:
+def get_transcriptions() -> list[Transcription]:
     raise NotImplementedError
