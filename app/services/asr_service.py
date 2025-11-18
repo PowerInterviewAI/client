@@ -37,9 +37,9 @@ class ASRService:
         # Async management
         self.loop: asyncio.AbstractEventLoop | None = None
         self.audio_queue: asyncio.Queue[np.ndarray] = asyncio.Queue()
-        self.running = False
-        self.stream = None
-        self.task: asyncio.Task | None = None
+        self.running_event = asyncio.Event()
+        self.stream: pyaudio.Stream | None = None
+        self.task: asyncio.Task[None] | None = None
 
         # PyAudio setup
         self.pa = pyaudio.PyAudio()
@@ -71,7 +71,8 @@ class ASRService:
 
         # Non-blocking put into asyncio.Queue
         with contextlib.suppress(RuntimeError):
-            self.loop.call_soon_threadsafe(self.audio_queue.put_nowait, data_np)
+            if self.loop:
+                self.loop.call_soon_threadsafe(self.audio_queue.put_nowait, data_np)
 
         return (None, pyaudio.paContinue)
 
@@ -80,7 +81,7 @@ class ASRService:
     # -------------------------
     async def _worker(self) -> None:
         """Async consumer that reads from queue and performs recognition."""
-        while self.running:
+        while self.running_event.is_set():
             data = await self.audio_queue.get()
             if data.size == 0:
                 continue
@@ -88,12 +89,10 @@ class ASRService:
             pcm16 = (data * 32767).astype(np.int16).tobytes()
             if self.recognizer.AcceptWaveform(pcm16):
                 result = self.recognizer.Result()
-                logger.info(f"[FINAL] {result}")
                 if self.on_final:
                     await self._maybe_await(self.on_final(result))
             else:
                 partial = self.recognizer.PartialResult()
-                logger.debug(f"[PARTIAL] {partial}")
                 if self.on_partial:
                     await self._maybe_await(self.on_partial(partial))
 
@@ -107,12 +106,12 @@ class ASRService:
     # Lifecycle
     # -------------------------
     async def start(self) -> None:
-        if self.running:
+        if self.running_event.is_set():
             logger.warning("ASRService already running.")
             return
 
         logger.info("Starting async ASRService...")
-        self.running = True
+        self.running_event.set()
 
         self.stream = self.pa.open(
             format=pyaudio.paInt16,
@@ -131,12 +130,12 @@ class ASRService:
         logger.info("Audio input stream started async mode.")
 
     async def stop(self) -> None:
-        if not self.running:
+        if not self.running_event.is_set():
             logger.warning("ASRService not running.")
             return
 
         logger.info("Stopping ASRService...")
-        self.running = False
+        self.running_event.clear()
 
         if self.task:
             await self.task
@@ -154,7 +153,7 @@ class ASRService:
         await self.start()
         logger.info("Listening... Press Ctrl+C to stop (async mode).")
         try:
-            while self.running:  # noqa: ASYNC110
+            while self.running_event.is_set():  # noqa: ASYNC110
                 await asyncio.sleep(0.1)
         except KeyboardInterrupt:
             logger.info("KeyboardInterrupt: stopping.")
