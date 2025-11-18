@@ -4,5 +4,6 @@
 __pycache__
 
 /venv
+/frontend/node_modules
 /frontend-container/node_modules
 /models
