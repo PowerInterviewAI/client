@@ -99,7 +99,7 @@ export default function Home() {
 
       <div className="flex flex-1 overflow-hidden gap-2 p-2" style={{ height: 'calc(100vh - 120px)' }}>
         {/* Left Column: Video + Transcription */}
-        <div className="flex flex-col gap-2 w-80 flex-shrink-0 min-h-0">
+        <div className="flex flex-col gap-2 w-96 flex-shrink-0 min-h-0">
           {/* Video Panel - Small and compact */}
           <div className="h-48 flex-shrink-0">
             <VideoPanel />

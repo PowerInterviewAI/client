@@ -36,16 +36,16 @@ export default function TranscriptPanel({ transcripts }: TranscriptionPanelProps
             <p className="text-sm text-muted-foreground">No transcripts yet</p>
           </div>
         ) : (
-          <div className="p-3 space-y-3">
+          <div className="p-2 space-y-2">
             {transcripts.map((item, idx) => (
-              <div key={idx} className="space-y-1 pb-2 border-b border-border/50 last:border-0">
+              <div key={idx} className="space-y-1 pb-1 border-b border-border/50 last:border-0">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-semibold text-primary">{item.speaker}</span>
                   <span className="text-xs text-muted-foreground flex-shrink-0">
                     {new Date(item.timestamp).toLocaleString()}
                   </span>
                 </div>
-                <p className="text-xs text-foreground/80 leading-relaxed">{item.text}</p>
+                <p className="text-sm text-foreground/80 leading-relaxed">{item.text}</p>
               </div>
             ))}
             {/* This invisible div acts as scroll target */}
