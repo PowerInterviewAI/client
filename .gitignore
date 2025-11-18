@@ -8,3 +8,5 @@ __pycache__
 /frontend-container/node_modules
 /backend/public
 /models
+
+/app_state.json

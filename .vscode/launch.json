@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Main",
+            "name": "Backend",
             "type": "debugpy",
             "request": "launch",
-            "module": "backend.app.main"
+            "module": "backend.main"
         }
     ]
 }
