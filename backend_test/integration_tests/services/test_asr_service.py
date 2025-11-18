@@ -1,14 +1,12 @@
 import json
 
 import pyaudiowpatch as pyaudio
-import pytest
 from loguru import logger
 
 from backend.services.asr_service import ASRService
 
 
-@pytest.mark.asyncio
-async def test_asr_service() -> None:
+def test_asr_service() -> None:
     last_text = ""
     last_partial = ""
 
@@ -39,4 +37,4 @@ async def test_asr_service() -> None:
     )
 
     # Run until interrupted
-    await service.run_forever()
+    service.run_forever()

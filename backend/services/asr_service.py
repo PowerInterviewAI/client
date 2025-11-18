@@ -1,6 +1,7 @@
-import asyncio
 import contextlib
+import threading
 from collections.abc import Callable
+from queue import Empty, Queue
 from typing import Any
 
 import numpy as np
@@ -13,7 +14,7 @@ from backend.cfg.fs import config as cfg_fs
 
 
 class ASRService:
-    """Async speech-to-text service using Vosk and pyaudiowpatch."""
+    """Synchronous speech-to-text service using Vosk and PyAudio."""
 
     TARGET_RATE = 16_000
 
@@ -37,12 +38,10 @@ class ASRService:
         self.on_final = on_final
         self.on_partial = on_partial
 
-        # Async management
-        self.loop: asyncio.AbstractEventLoop | None = None
-        self.audio_queue: asyncio.Queue[np.ndarray] = asyncio.Queue()
-        self.running_event = asyncio.Event()
-        self.stream: pyaudio.Stream | None = None
-        self.task: asyncio.Task[None] | None = None
+        # Threading
+        self.audio_queue: Queue[np.ndarray] = Queue(maxsize=20)
+        self.running = threading.Event()
+        self.worker_thread: threading.Thread | None = None
 
         # PyAudio setup
         self.pa = pyaudio.PyAudio()
@@ -54,14 +53,16 @@ class ASRService:
         self.recognizer = KaldiRecognizer(self.model, self.TARGET_RATE)
         self.recognizer.SetWords(True)  # noqa: FBT003
 
+        self.stream: pyaudio.Stream | None = None
+
     def _audio_callback(
         self,
-        in_data: np.ndarray,
+        in_data: bytes,
         _frame_count: int,
         _time_info: dict[str, Any],
         status_flags: int,
     ) -> tuple[Any, Any]:
-        """Called from PyAudio thread; enqueue audio data to async queue."""
+        """Called from PyAudio thread; enqueue audio data."""
         if status_flags:
             logger.warning(f"Audio status: {status_flags}")
 
@@ -69,22 +70,26 @@ class ASRService:
         if self.channels > 1:
             data_np = data_np.reshape(-1, self.channels).mean(axis=1)
 
-        # --- Resample if needed ---
         if self.sample_rate != self.TARGET_RATE:
-            # Sinc interpolation; keeps shape stable for streaming if block is small
             data_np = resample_poly(data_np, self.TARGET_RATE, self.sample_rate)
 
-        # Non-blocking put into asyncio.Queue
-        with contextlib.suppress(RuntimeError):
-            if self.loop:
-                self.loop.call_soon_threadsafe(self.audio_queue.put_nowait, data_np)
+        # Try non-blocking put
+        with contextlib.suppress(Exception):
+            if self.audio_queue.full():
+                self.audio_queue.get_nowait()
+            self.audio_queue.put_nowait(data_np)
 
         return (None, pyaudio.paContinue)
 
-    async def _worker(self) -> None:
-        """Async consumer that reads from queue and performs recognition."""
-        while self.running_event.is_set():
-            data = await self.audio_queue.get()
+    def _worker(self) -> None:
+        """Worker thread that consumes audio queue and runs recognition."""
+        logger.debug("Recognition worker started.")
+        while self.running.is_set():
+            try:
+                data = self.audio_queue.get(timeout=0.1)
+            except Empty:
+                continue
+
             if data.size == 0:
                 continue
 
@@ -92,25 +97,20 @@ class ASRService:
             if self.recognizer.AcceptWaveform(pcm16):
                 result = self.recognizer.Result()
                 if self.on_final:
-                    await self._maybe_await(self.on_final(result))
+                    self.on_final(result)
             else:
                 partial = self.recognizer.PartialResult()
                 if self.on_partial:
-                    await self._maybe_await(self.on_partial(partial))
+                    self.on_partial(partial)
+        logger.debug("Recognition worker stopped.")
 
-    @staticmethod
-    async def _maybe_await(result: object) -> None:
-        """If callback is async, await it."""
-        if asyncio.iscoroutine(result):
-            await result
-
-    async def start(self) -> None:
-        if self.running_event.is_set():
+    def start(self) -> None:
+        if self.running.is_set():
             logger.warning("ASRService already running.")
             return
 
-        logger.info("Starting async ASRService...")
-        self.running_event.set()
+        logger.info("Starting ASRService (sync)...")
+        self.running.set()
 
         self.stream = self.pa.open(
             format=pyaudio.paInt16,
@@ -123,37 +123,36 @@ class ASRService:
         )
         self.stream.start_stream()
 
-        # create worker task
-        self.loop = asyncio.get_running_loop()
-        self.task = asyncio.create_task(self._worker())
-        logger.info("Audio input stream started async mode.")
+        # Worker thread
+        self.worker_thread = threading.Thread(target=self._worker, daemon=True)
+        self.worker_thread.start()
+        logger.info("Audio input stream started (sync mode).")
 
-    async def stop(self) -> None:
-        if not self.running_event.is_set():
+    def stop(self) -> None:
+        if not self.running.is_set():
             logger.warning("ASRService not running.")
             return
 
         logger.info("Stopping ASRService...")
-        self.running_event.clear()
+        self.running.clear()
 
-        if self.task:
-            await self.task
+        if self.worker_thread and self.worker_thread.is_alive():
+            self.worker_thread.join(timeout=2)
 
         if self.stream and self.stream.is_active():
             self.stream.stop_stream()
         if self.stream:
             self.stream.close()
 
-        self.pa.terminate()
         logger.info("ASRService stopped.")
 
-    async def run_forever(self) -> None:
-        """Convenience loop to keep the service alive until Ctrl+C."""
-        await self.start()
-        logger.info("Listening... Press Ctrl+C to stop (async mode).")
+    def run_forever(self) -> None:
+        """Blocking loop to keep the service active."""
+        self.start()
+        logger.info("Listening... Press Ctrl+C to stop (sync mode).")
         try:
-            while self.running_event.is_set():  # noqa: ASYNC110
-                await asyncio.sleep(0.1)
+            while self.running.is_set():
+                threading.Event().wait(0.1)
         except KeyboardInterrupt:
             logger.info("KeyboardInterrupt: stopping.")
-            await self.stop()
+            self.stop()

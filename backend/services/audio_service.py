@@ -13,3 +13,7 @@ class AudioService:
     @classmethod
     def get_output_devices(cls) -> list[dict[str, Any]]:
         return [device for device in cls._pa.get_device_info_generator() if device["maxOutputChannels"] > 0]
+
+    @classmethod
+    def get_loopback_device(cls) -> dict[str, Any]:
+        return cls._pa.get_default_wasapi_loopback()  # type: ignore  # noqa: PGH003
