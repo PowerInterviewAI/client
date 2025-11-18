@@ -1,21 +1,53 @@
 'use client'
 
-import { useState } from 'react'
-import VideoPanel from '@/components/video-panel'
-import TranscriptPanel from '@/components/transcript-panel'
-import SuggestionsPanel from '@/components/suggestions-panel'
 import ControlPanel from '@/components/control-panel'
 import ProfileDialog from '@/components/profile-dialog'
+import SuggestionsPanel from '@/components/suggestions-panel'
 import TopBar from '@/components/top-bar'
+import TranscriptPanel from '@/components/transcript-panel'
+import VideoPanel from '@/components/video-panel'
+import axiosClient from '@/lib/axiosClient'
+import { AppState } from '@/types/appState'
+import { PyAudioDevice } from '@/types/audioDevice'
+import { APIError } from '@/types/error'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
 
 export default function Home() {
   const [isRecording, setIsRecording] = useState(false)
-  const [selectedMicrophone, setSelectedMicrophone] = useState('default')
-  const [selectedOutput, setSelectedOutput] = useState('default')
   const [selectedLanguage, setSelectedLanguage] = useState('en')
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [userName, setUserName] = useState('John Doe')
   const [isDark, setIsDark] = useState(false)
+  const [appState, setAppState] = useState<AppState>()
+
+  const { data: appStateFetched, refetch: refetchAppState } = useQuery<AppState, APIError>({
+    queryKey: ['appState'],
+    queryFn: async () => {
+      const response = await axiosClient.get<AppState>('/api/app-state/get-app-state');
+      return response.data;
+    },
+  })
+  const updateAppStateMutation = useMutation<AppState, APIError, Partial<AppState>>({
+    mutationFn: async (appState) => {
+      const response = await axiosClient.put('/api/app-state/update-app-state', appState);
+      return response.data;
+    },
+  })
+  const { data: audioInputDevices, refetch: refetchAudioInputDevices } = useQuery<PyAudioDevice[], APIError>({
+    queryKey: ['audioInputDevices'],
+    queryFn: async () => {
+      const response = await axiosClient.get<PyAudioDevice[]>('/api/app-state/audio-input-devices');
+      return response.data;
+    },
+  })
+  const { data: audioOutputDevices, refetch: refetchAudioOutputDevices } = useQuery<PyAudioDevice[], APIError>({
+    queryKey: ['audioOutputDevices'],
+    queryFn: async () => {
+      const response = await axiosClient.get<PyAudioDevice[]>('/api/app-state/audio-output-devices');
+      return response.data;
+    }
+  })
 
   const handleThemeToggle = () => {
     const newIsDark = !isDark
@@ -28,6 +60,18 @@ export default function Home() {
       localStorage.setItem('theme', 'light')
     }
   }
+
+  const updateAppState = (state: Partial<AppState>) => {
+    const newState = { ...appState, ...state } as AppState
+    setAppState(newState)
+    updateAppStateMutation.mutate(state)
+  }
+
+  useEffect(() => {
+    if (appStateFetched) {
+      setAppState(appStateFetched)
+    }
+  }, [appStateFetched])
 
   return (
     <div className="flex flex-col h-screen bg-background">
@@ -62,12 +106,12 @@ export default function Home() {
         <ControlPanel
           isRecording={isRecording}
           setIsRecording={setIsRecording}
-          selectedMicrophone={selectedMicrophone}
-          setSelectedMicrophone={setSelectedMicrophone}
-          selectedOutput={selectedOutput}
-          setSelectedOutput={setSelectedOutput}
+          audioInputDevices={audioInputDevices || []}
+          selectedInputDevice={`${appState?.audio_input_device}`}
+          audioOutputDevices={audioOutputDevices || []}
+          selectedOutputDevice={`${appState?.audio_output_device}`}
           selectedLanguage={selectedLanguage}
-          setSelectedLanguage={setSelectedLanguage}
+          updateState={updateAppState}
         />
       </div>
 

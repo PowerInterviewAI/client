@@ -9,27 +9,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { PyAudioDevice } from '@/types/audioDevice'
+import { AppState } from '@/types/appState'
 
 interface ControlPanelProps {
   isRecording: boolean
   setIsRecording: (value: boolean) => void
-  selectedMicrophone: string
-  setSelectedMicrophone: (value: string) => void
-  selectedOutput: string
-  setSelectedOutput: (value: string) => void
+  audioInputDevices: PyAudioDevice[]
+  audioOutputDevices: PyAudioDevice[]
+  selectedInputDevice: string
+  selectedOutputDevice: string
   selectedLanguage: string
-  setSelectedLanguage: (value: string) => void
+  updateState: (state: Partial<AppState>) => void
 }
 
 export default function ControlPanel({
   isRecording,
   setIsRecording,
-  selectedMicrophone,
-  setSelectedMicrophone,
-  selectedOutput,
-  setSelectedOutput,
+  audioInputDevices,
+  selectedInputDevice,
+  audioOutputDevices,
+  selectedOutputDevice,
   selectedLanguage,
-  setSelectedLanguage,
+  updateState,
 }: ControlPanelProps) {
   return (
     <div className="flex items-center gap-2 px-4 py-2">
@@ -57,40 +59,42 @@ export default function ControlPanel({
       <div className="h-4 w-px bg-border" />
 
       {/* Microphone Select */}
-      <Select value={selectedMicrophone} onValueChange={setSelectedMicrophone}>
+      <Select value={selectedInputDevice} onValueChange={(v) => updateState({ audio_input_device: Number(v) })}>
         <SelectTrigger className="h-8 w-32 text-xs flex-shrink-0">
           <SelectValue placeholder="Microphone" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="default">Default Mic</SelectItem>
-          <SelectItem value="usb">USB Microphone</SelectItem>
-          <SelectItem value="headset">Headset</SelectItem>
+          {audioInputDevices.map((device) => (
+            <SelectItem key={device.index} value={`${device.index}`}>
+              {device.name}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
 
       {/* Output Audio Select */}
-      <Select value={selectedOutput} onValueChange={setSelectedOutput}>
+      <Select value={selectedOutputDevice} onValueChange={(v) => updateState({ audio_output_device: Number(v) })}>
         <SelectTrigger className="h-8 w-32 text-xs flex-shrink-0">
           <SelectValue placeholder="Output" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="default">Default Output</SelectItem>
-          <SelectItem value="speakers">Speakers</SelectItem>
-          <SelectItem value="headphones">Headphones</SelectItem>
+          {
+            audioOutputDevices.map((device) => (
+              <SelectItem key={device.index} value={`${device.index}`}>
+                {device.name}
+              </SelectItem>
+            ))
+          }
         </SelectContent>
       </Select>
 
       {/* Language Select */}
-      <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+      <Select value={selectedLanguage}>
         <SelectTrigger className="h-8 w-28 text-xs flex-shrink-0">
           <SelectValue placeholder="Language" />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="en">English</SelectItem>
-          <SelectItem value="es">Spanish</SelectItem>
-          <SelectItem value="fr">French</SelectItem>
-          <SelectItem value="de">German</SelectItem>
-          <SelectItem value="zh">Chinese</SelectItem>
         </SelectContent>
       </Select>
 
