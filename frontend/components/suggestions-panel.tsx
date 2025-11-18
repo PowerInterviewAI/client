@@ -77,13 +77,13 @@ export default function SuggestionsPanel() {
       <div className="border-t border-border p-3 flex-shrink-0">
         <Button
           size="sm"
-          className="w-full"
+          className="px-4"
           variant="default"
           onClick={handleGenerateSuggestions}
           disabled={isLoading}
         >
           {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-          {isLoading ? 'Generating...' : 'Generate Suggestions'}
+          {isLoading ? 'Generating...' : 'Suggestions'}
         </Button>
       </div>
     </Card>
