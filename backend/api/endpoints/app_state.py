@@ -4,9 +4,10 @@ from fastapi import APIRouter
 
 from backend.api.custom import RouteErrorHandler
 from backend.models.app_state import AppState, AppStateUpdate
-from backend.schemas.transcription import Transcription
+from backend.schemas.transcript import Speaker, Transcript
 from backend.services.app_config_service import AppStateService
 from backend.services.audio_service import AudioService
+from backend.utils.rand import RandUtil
 
 router = APIRouter(
     route_class=RouteErrorHandler,
@@ -37,5 +38,13 @@ def list_audio_output_devices() -> list[dict[str, Any]]:
 
 
 @router.get("/get-transcriptions")
-def get_transcriptions() -> list[Transcription]:
-    raise NotImplementedError
+def get_transcriptions() -> list[Transcript]:
+    count = RandUtil.get_int(5, 10)
+    return [
+        Transcript(
+            speaker=RandUtil.get_enum(Speaker),
+            text=RandUtil.get_str(),
+            timestamp=RandUtil.get_timestamp(),
+        )
+        for _ in range(count)
+    ]

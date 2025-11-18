@@ -19,7 +19,6 @@ interface ControlPanelProps {
   audioOutputDevices: PyAudioDevice[]
   selectedInputDevice: string
   selectedOutputDevice: string
-  selectedLanguage: string
   updateState: (state: Partial<AppState>) => void
 }
 
@@ -30,7 +29,6 @@ export default function ControlPanel({
   selectedInputDevice,
   audioOutputDevices,
   selectedOutputDevice,
-  selectedLanguage,
   updateState,
 }: ControlPanelProps) {
   return (
@@ -89,7 +87,7 @@ export default function ControlPanel({
       </Select>
 
       {/* Language Select */}
-      <Select value={selectedLanguage}>
+      <Select value="en">
         <SelectTrigger className="h-8 w-28 text-xs flex-shrink-0">
           <SelectValue placeholder="Language" />
         </SelectTrigger>

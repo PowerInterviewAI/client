@@ -10,16 +10,17 @@ import axiosClient from '@/lib/axiosClient'
 import { AppState } from '@/types/appState'
 import { PyAudioDevice } from '@/types/audioDevice'
 import { APIError } from '@/types/error'
+import { Transcript } from '@/types/transcript'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 
 export default function Home() {
   const [isRecording, setIsRecording] = useState(false)
-  const [selectedLanguage, setSelectedLanguage] = useState('en')
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [userName, setUserName] = useState('John Doe')
   const [isDark, setIsDark] = useState(false)
   const [appState, setAppState] = useState<AppState>()
+  const [transcripts, setTranscripts] = useState<Transcript[]>([])
 
   const { data: appStateFetched, refetch: refetchAppState } = useQuery<AppState, APIError>({
     queryKey: ['appState'],
@@ -48,6 +49,15 @@ export default function Home() {
       return response.data;
     }
   })
+  const { data: transcriptsFetched, refetch: refetchTranscriptions } = useQuery<Transcript[], APIError>({
+    queryKey: ['transcriptions'],
+    queryFn: async () => {
+      const response = await axiosClient.get<Transcript[]>('/api/app-state/get-transcriptions');
+      return response.data;
+    },
+    refetchInterval: 200,
+    refetchIntervalInBackground: true
+  })
 
   const handleThemeToggle = () => {
     const newIsDark = !isDark
@@ -72,6 +82,11 @@ export default function Home() {
       setAppState(appStateFetched)
     }
   }, [appStateFetched])
+  useEffect(() => {
+    if (transcriptsFetched && transcriptsFetched !== transcripts) {
+      setTranscripts(transcriptsFetched)
+    }
+  }, [transcriptsFetched])
 
   return (
     <div className="flex flex-col h-screen bg-background">
@@ -92,7 +107,9 @@ export default function Home() {
 
           {/* Transcription Panel - Fill remaining space with scroll */}
           <div className="flex-1 min-h-0 overflow-hidden">
-            <TranscriptPanel />
+            <TranscriptPanel
+              transcripts={transcripts || []}
+            />
           </div>
         </div>
 
@@ -110,7 +127,6 @@ export default function Home() {
           selectedInputDevice={`${appState?.audio_input_device}`}
           audioOutputDevices={audioOutputDevices || []}
           selectedOutputDevice={`${appState?.audio_output_device}`}
-          selectedLanguage={selectedLanguage}
           updateState={updateAppState}
         />
       </div>

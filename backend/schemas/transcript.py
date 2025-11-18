@@ -9,7 +9,7 @@ class Speaker(StrEnum):
     INTERVIEWER = "Interviewer"
 
 
-class Transcription(BaseModel):
+class Transcript(BaseModel):
     timestamp: Annotated[
         int,
         Field(description="The Unix timestamp of the text"),
