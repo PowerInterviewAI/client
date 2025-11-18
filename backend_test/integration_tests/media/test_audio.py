@@ -19,4 +19,7 @@ def test_pyaudio_device_list() -> None:
     logger.debug(f"Default output device: {pa.get_default_output_device_info()}")
     logger.debug(f"Default loopback device: {pa.get_default_wasapi_loopback()}")
 
+    for i, host_api in enumerate(pa.get_host_api_info_generator()):
+        logger.debug(f"host_api {i}: {json.dumps(host_api, indent=2)}")
+
     pa.terminate()

@@ -58,7 +58,7 @@ export default function ControlPanel({
 
       {/* Microphone Select */}
       <Select value={selectedInputDevice} onValueChange={(v) => updateState({ audio_input_device: Number(v) })}>
-        <SelectTrigger className="h-8 w-32 text-xs flex-shrink-0">
+        <SelectTrigger className="h-8 w-40 text-xs flex-shrink-0">
           <SelectValue placeholder="Microphone" />
         </SelectTrigger>
         <SelectContent>
@@ -72,7 +72,7 @@ export default function ControlPanel({
 
       {/* Output Audio Select */}
       <Select value={selectedOutputDevice} onValueChange={(v) => updateState({ audio_output_device: Number(v) })}>
-        <SelectTrigger className="h-8 w-32 text-xs flex-shrink-0">
+        <SelectTrigger className="h-8 w-40 text-xs flex-shrink-0">
           <SelectValue placeholder="Output" />
         </SelectTrigger>
         <SelectContent>
