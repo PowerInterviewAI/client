@@ -17,7 +17,6 @@ import { useEffect, useState } from 'react'
 
 export default function Home() {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
-  const [userName, setUserName] = useState('John Doe')
   const [isDark, setIsDark] = useState(false)
   const [appState, setAppState] = useState<AppState>()
   const [transcripts, setTranscripts] = useState<Transcript[]>([])
@@ -125,7 +124,7 @@ export default function Home() {
   return (
     <div className="flex flex-col h-screen bg-background">
       <TopBar
-        userName={userName}
+        userName={appState?.profile?.username || ''}
         onProfileClick={() => setIsProfileOpen(true)}
         onThemeToggle={handleThemeToggle}
         isDark={isDark}
@@ -169,8 +168,9 @@ export default function Home() {
       <ProfileDialog
         isOpen={isProfileOpen}
         onOpenChange={setIsProfileOpen}
-        onNameChange={setUserName}
-        initialName={userName}
+        initialName={appState?.profile?.username ?? ""}
+        initialProfileData={appState?.profile?.profile_data ?? ""}
+        updateState={updateAppState}
       />
     </div>
   )

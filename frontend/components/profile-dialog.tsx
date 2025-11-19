@@ -5,30 +5,28 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { X } from 'lucide-react'
+import { AppState } from '@/types/appState'
 
 interface ProfileDialogProps {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
-  onNameChange: (name: string) => void
   initialName: string
   initialProfileData: string
-  onProfileDataChange: (data: string) => void
+  updateState: (state: Partial<AppState>) => void
 }
 
 export default function ProfileDialog({
   isOpen,
   onOpenChange,
-  onNameChange,
   initialName,
   initialProfileData,
-  onProfileDataChange,
+  updateState,
 }: ProfileDialogProps) {
   const [name, setName] = useState(initialName)
   const [profileData, setProfileData] = useState(initialProfileData)
 
   const handleSave = () => {
-    onNameChange(name)
-    onProfileDataChange(profileData)
+    updateState({ profile: { username: name, profile_data: profileData } })
     onOpenChange(false)
   }
 
