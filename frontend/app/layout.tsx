@@ -1,13 +1,12 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { useState } from 'react';
 import './globals.css';
 
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
+const geist = Geist({ subsets: ["latin"] });
+const geistMono = Geist_Mono({ subsets: ["latin"] });
 
 function ThemeProvider({ children }: { children: React.ReactNode }) {
   return (
@@ -36,7 +35,8 @@ export default function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`font-sans antialiased`}>
+      <body className={`${geist.className} ${geistMono.className} antialiased`}>
+        {/* </body><body className={`font-sans antialiased`}> */}
         <ThemeProvider>
           <QueryClientProvider client={queryClient}>
             {children}
