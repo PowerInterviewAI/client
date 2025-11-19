@@ -5,6 +5,7 @@ from typing import Any
 
 from loguru import logger
 
+from backend.schemas.running_state import RunningState
 from backend.schemas.transcript import Speaker, Transcript
 from backend.services.asr_service import ASRService
 from backend.services.audio_service import AudioService
@@ -22,9 +23,13 @@ class TranscriptService:
 
         # Synchronization lock
         self._lock = threading.Lock()
+        self._running_state = RunningState.IDLE
 
     def start(self, input_device_index: int) -> None:
         self.stop()
+
+        with self._lock:
+            self._running_state = RunningState.STARTING
 
         if self.input_asr is None:
             self.input_asr = ASRService(
@@ -42,13 +47,24 @@ class TranscriptService:
         self.input_asr.start(device_index=input_device_index)
         self.loopback_asr.start()
 
+        with self._lock:
+            self._running_state = RunningState.RUNNING
+
     def stop(self) -> None:
+        with self._lock:
+            self._running_state = RunningState.STOPPING
+
         with self._lock:
             if self.input_asr is not None:
                 self.input_asr.stop()
 
             if self.loopback_asr is not None:
                 self.loopback_asr.stop()
+
+            self._running_state = RunningState.STOPPED
+
+    def running_state(self) -> RunningState:
+        return self._running_state
 
     def _process_partial(self, result_json: str, speaker: Speaker, partial_attr: str) -> None:
         result_dict: dict[str, Any] = json.loads(result_json)

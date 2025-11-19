@@ -10,19 +10,19 @@ import axiosClient from '@/lib/axiosClient'
 import { AppState } from '@/types/appState'
 import { PyAudioDevice } from '@/types/audioDevice'
 import { APIError } from '@/types/error'
+import { RunningState } from '@/types/runningState'
 import { Transcript } from '@/types/transcript'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 
 export default function Home() {
-  const [isRecording, setIsRecording] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [userName, setUserName] = useState('John Doe')
   const [isDark, setIsDark] = useState(false)
   const [appState, setAppState] = useState<AppState>()
   const [transcripts, setTranscripts] = useState<Transcript[]>([])
 
-  const { data: appStateFetched, refetch: refetchAppState } = useQuery<AppState, APIError>({
+  const { data: appStateFetched } = useQuery<AppState, APIError>({
     queryKey: ['appState'],
     queryFn: async () => {
       const response = await axiosClient.get<AppState>('/api/app-state/get-app-state');
@@ -35,21 +35,21 @@ export default function Home() {
       return response.data;
     },
   })
-  const { data: audioInputDevices, refetch: refetchAudioInputDevices } = useQuery<PyAudioDevice[], APIError>({
+  const { data: audioInputDevices } = useQuery<PyAudioDevice[], APIError>({
     queryKey: ['audioInputDevices'],
     queryFn: async () => {
       const response = await axiosClient.get<PyAudioDevice[]>('/api/app-state/audio-input-devices');
       return response.data;
     },
   })
-  const { data: audioOutputDevices, refetch: refetchAudioOutputDevices } = useQuery<PyAudioDevice[], APIError>({
+  const { data: audioOutputDevices } = useQuery<PyAudioDevice[], APIError>({
     queryKey: ['audioOutputDevices'],
     queryFn: async () => {
       const response = await axiosClient.get<PyAudioDevice[]>('/api/app-state/audio-output-devices');
       return response.data;
     }
   })
-  const { data: transcriptsFetched, refetch: refetchTranscriptions } = useQuery<Transcript[], APIError>({
+  const { data: transcriptsFetched } = useQuery<Transcript[], APIError>({
     queryKey: ['transcriptions'],
     queryFn: async () => {
       const response = await axiosClient.get<Transcript[]>('/api/app-state/get-transcriptions');
@@ -57,6 +57,26 @@ export default function Home() {
     },
     refetchInterval: 200,
     refetchIntervalInBackground: true
+  })
+  const { data: runningState } = useQuery<RunningState, APIError>({
+    queryKey: ['runningState'],
+    queryFn: async () => {
+      const response = await axiosClient.get<RunningState>('/api/app-state/running-state');
+      return response.data;
+    },
+    refetchInterval: 100
+  })
+  const startMutation = useMutation<void, APIError, void>({
+    mutationFn: async () => {
+      const response = await axiosClient.get('/api/app-state/start');
+      return response.data;
+    },
+  })
+  const stopMutation = useMutation<void, APIError, void>({
+    mutationFn: async () => {
+      const response = await axiosClient.get('/api/app-state/stop');
+      return response.data;
+    },
   })
 
   const handleThemeToggle = () => {
@@ -121,8 +141,9 @@ export default function Home() {
 
       <div className="border-t border-border bg-card shadow-lg">
         <ControlPanel
-          isRecording={isRecording}
-          setIsRecording={setIsRecording}
+          runningState={runningState ?? RunningState.IDLE}
+          startMutation={startMutation}
+          stopMutation={stopMutation}
           audioInputDevices={audioInputDevices || []}
           selectedInputDevice={`${appState?.audio_input_device}`}
           audioOutputDevices={audioOutputDevices || []}

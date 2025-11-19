@@ -1,6 +1,5 @@
 'use client'
 
-import { Mic, MicOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -9,48 +8,95 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { PyAudioDevice } from '@/types/audioDevice'
 import { AppState } from '@/types/appState'
+import { PyAudioDevice } from '@/types/audioDevice'
+import { APIError } from '@/types/error'
+import { RunningState } from '@/types/runningState'
+import { UseMutationResult } from '@tanstack/react-query'
+import { Mic, MicOff } from 'lucide-react'
 
 interface ControlPanelProps {
-  isRecording: boolean
-  setIsRecording: (value: boolean) => void
+  runningState: RunningState
   audioInputDevices: PyAudioDevice[]
   audioOutputDevices: PyAudioDevice[]
   selectedInputDevice: string
   selectedOutputDevice: string
+  startMutation: UseMutationResult<void, APIError, void, unknown>
+  stopMutation: UseMutationResult<void, APIError, void, unknown>
   updateState: (state: Partial<AppState>) => void
 }
 
+type StateConfig = {
+  onClick: () => void;
+  className: string;
+  disabled: boolean;
+  icon: React.ReactNode;
+  label: string;
+};
+
+
 export default function ControlPanel({
-  isRecording,
-  setIsRecording,
+  runningState,
   audioInputDevices,
   selectedInputDevice,
   audioOutputDevices,
   selectedOutputDevice,
+  startMutation,
+  stopMutation,
   updateState,
 }: ControlPanelProps) {
+
+  const stateConfig: Record<RunningState, StateConfig> = {
+    [RunningState.IDLE]: {
+      onClick: () => startMutation.mutate(),
+      className: "bg-primary hover:bg-primary/90",
+      disabled: false,
+      icon: <Mic className="mr-1.5 h-3.5 w-3.5" />,
+      label: "Start",
+    },
+    [RunningState.STARTING]: {
+      onClick: () => { },
+      className: "bg-primary hover:bg-primary/90",
+      disabled: true,
+      icon: <Mic className="mr-1.5 h-3.5 w-3.5" />,
+      label: "Starting...",
+    },
+    [RunningState.RUNNING]: {
+      onClick: () => stopMutation.mutate(),
+      className: "bg-destructive hover:bg-destructive/90",
+      disabled: false,
+      icon: <MicOff className="mr-1.5 h-3.5 w-3.5" />,
+      label: "Stop",
+    },
+    [RunningState.STOPPING]: {
+      onClick: () => { },
+      className: "bg-destructive hover:bg-destructive/90",
+      disabled: true,
+      icon: <MicOff className="mr-1.5 h-3.5 w-3.5" />,
+      label: "Stopping...",
+    },
+    [RunningState.STOPPED]: {
+      onClick: () => startMutation.mutate(),
+      className: "bg-primary hover:bg-primary/90",
+      disabled: false,
+      icon: <Mic className="mr-1.5 h-3.5 w-3.5" />,
+      label: "Start",
+    },
+  };
+
+  const { onClick, className, disabled, icon, label } = stateConfig[runningState];
+
   return (
     <div className="flex items-center gap-2 px-4 py-2">
       {/* Start/Stop Button */}
       <Button
-        onClick={() => setIsRecording(!isRecording)}
+        onClick={onClick}
         size="sm"
-        className={`flex-shrink-0 h-8 px-3 text-xs font-medium ${isRecording ? 'bg-destructive hover:bg-destructive/90' : 'bg-primary hover:bg-primary/90'
-          }`}
+        className={`flex-shrink-0 h-8 px-3 text-xs font-medium ${className}`}
+        disabled={disabled}
       >
-        {isRecording ? (
-          <>
-            <MicOff className="mr-1.5 h-3.5 w-3.5" />
-            Stop
-          </>
-        ) : (
-          <>
-            <Mic className="mr-1.5 h-3.5 w-3.5" />
-            Start
-          </>
-        )}
+        {icon}
+        {label}
       </Button>
 
       {/* Divider */}
@@ -101,8 +147,8 @@ export default function ControlPanel({
 
       {/* Status indicator */}
       <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-muted/50">
-        <div className={`h-2 w-2 rounded-full ${isRecording ? 'bg-destructive animate-pulse' : 'bg-muted-foreground'}`} />
-        <span className="text-xs text-muted-foreground">{isRecording ? 'Recording' : 'Ready'}</span>
+        <div className={`h-2 w-2 rounded-full ${runningState === RunningState.RUNNING ? 'bg-destructive animate-pulse' : 'bg-muted-foreground'}`} />
+        <span className="text-xs text-muted-foreground">{runningState.toUpperCase()}</span>
       </div>
     </div>
   )

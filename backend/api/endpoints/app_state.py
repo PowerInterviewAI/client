@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from backend.api.custom import RouteErrorHandler
 from backend.models.app_state import AppState, AppStateUpdate
+from backend.schemas.running_state import RunningState
 from backend.schemas.transcript import Transcript
 from backend.services.app_config_service import AppStateService
 from backend.services.audio_service import AudioService
@@ -40,3 +41,19 @@ def list_audio_output_devices() -> list[dict[str, Any]]:
 @router.get("/get-transcriptions")
 def get_transcriptions() -> list[Transcript]:
     return transcriptor.get_transcripts()
+
+
+@router.get("/running-state")
+def is_running() -> RunningState:
+    return transcriptor.running_state()
+
+
+@router.get("/start")
+def start() -> None:
+    app_state = AppStateService.get_app_state()
+    transcriptor.start(input_device_index=app_state.audio_input_device)
+
+
+@router.get("/stop")
+def stop() -> None:
+    transcriptor.stop()

@@ -2,6 +2,7 @@ from loguru import logger
 
 from backend.cfg.fs import config as cfg_fs
 from backend.models.app_state import AppState, AppStateUpdate
+from backend.schemas.running_state import RunningState
 from backend.services.transcript_service import transcriptor
 
 
@@ -9,7 +10,7 @@ class AppStateService:
     _app_config: AppState = AppState()
 
     @classmethod
-    def get_app_state(cls) -> AppState | None:
+    def get_app_state(cls) -> AppState:
         return cls._app_config
 
     @classmethod
@@ -48,7 +49,7 @@ class AppStateService:
         )
         cls.save_app_state()
 
-        if cfg.audio_input_device is not None:
+        if cfg.audio_input_device is not None and transcriptor.running_state() == RunningState.RUNNING:
             transcriptor.start(cfg.audio_input_device)
 
         return cls._app_config
