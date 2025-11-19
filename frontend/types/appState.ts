@@ -1,6 +1,6 @@
 export interface UserProfile {
     username: string;
-    resume: string;
+    profile_data: string;
 }
 
 export enum Language {
