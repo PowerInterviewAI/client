@@ -155,6 +155,8 @@ class ASRService:
         if self.stream:
             self.stream.close()
 
+        self.recognizer.Result()
+
         logger.info("ASRService stopped.")
 
     def run_forever(self) -> None:
