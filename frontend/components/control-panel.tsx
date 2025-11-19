@@ -34,6 +34,11 @@ type StateConfig = {
   label: string;
 };
 
+type IndicatorConfig = {
+  dotClass: string;
+  label: string;
+};
+
 
 export default function ControlPanel({
   runningState,
@@ -83,72 +88,95 @@ export default function ControlPanel({
       label: "Start",
     },
   };
-
   const { onClick, className, disabled, icon, label } = stateConfig[runningState];
+
+  const indicatorConfig: Record<RunningState, IndicatorConfig> = {
+    [RunningState.IDLE]: {
+      dotClass: "bg-muted-foreground",
+      label: "Idle",
+    },
+    [RunningState.STARTING]: {
+      dotClass: "bg-primary animate-pulse",
+      label: "Starting",
+    },
+    [RunningState.RUNNING]: {
+      dotClass: "bg-destructive animate-pulse",
+      label: "Running",
+    },
+    [RunningState.STOPPING]: {
+      dotClass: "bg-destructive animate-pulse",
+      label: "Stopping",
+    },
+    [RunningState.STOPPED]: {
+      dotClass: "bg-muted-foreground",
+      label: "Stopped",
+    },
+  };
+  const { dotClass: indicatorDotClass, label: indicatorLabel } = indicatorConfig[runningState];
 
   return (
     <div className="flex items-center gap-2 px-4 py-2">
-      {/* Start/Stop Button */}
-      <Button
-        onClick={onClick}
-        size="sm"
-        className={`flex-shrink-0 h-8 px-3 text-xs font-medium ${className}`}
-        disabled={disabled}
-      >
-        {icon}
-        {label}
-      </Button>
+      <div className='flex flex-1 justify-center gap-2 items-center'>
 
-      {/* Divider */}
-      <div className="h-4 w-px bg-border" />
-
-      {/* Microphone Select */}
-      <Select value={selectedInputDevice} onValueChange={(v) => updateState({ audio_input_device: Number(v) })}>
-        <SelectTrigger className="h-8 w-40 text-xs flex-shrink-0">
-          <SelectValue placeholder="Microphone" />
-        </SelectTrigger>
-        <SelectContent>
-          {audioInputDevices.map((device) => (
-            <SelectItem key={device.index} value={`${device.index}`}>
-              {device.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      {/* Output Audio Select */}
-      <Select value={selectedOutputDevice} onValueChange={(v) => updateState({ audio_output_device: Number(v) })}>
-        <SelectTrigger className="h-8 w-40 text-xs flex-shrink-0">
-          <SelectValue placeholder="Output" />
-        </SelectTrigger>
-        <SelectContent>
-          {
-            audioOutputDevices.map((device) => (
+        {/* Microphone Select */}
+        <Select value={selectedInputDevice} onValueChange={(v) => updateState({ audio_input_device: Number(v) })}>
+          <SelectTrigger className="h-8 w-40 text-xs flex-shrink-0">
+            <SelectValue placeholder="Microphone" />
+          </SelectTrigger>
+          <SelectContent>
+            {audioInputDevices.map((device) => (
               <SelectItem key={device.index} value={`${device.index}`}>
                 {device.name}
               </SelectItem>
-            ))
-          }
-        </SelectContent>
-      </Select>
+            ))}
+          </SelectContent>
+        </Select>
 
-      {/* Language Select */}
-      <Select value="en">
-        <SelectTrigger className="h-8 w-28 text-xs flex-shrink-0">
-          <SelectValue placeholder="Language" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="en">English</SelectItem>
-        </SelectContent>
-      </Select>
+        {/* Output Audio Select */}
+        <Select value={selectedOutputDevice} onValueChange={(v) => updateState({ audio_output_device: Number(v) })}>
+          <SelectTrigger className="h-8 w-40 text-xs flex-shrink-0">
+            <SelectValue placeholder="Output" />
+          </SelectTrigger>
+          <SelectContent>
+            {
+              audioOutputDevices.map((device) => (
+                <SelectItem key={device.index} value={`${device.index}`}>
+                  {device.name}
+                </SelectItem>
+              ))
+            }
+          </SelectContent>
+        </Select>
 
-      {/* Spacer */}
-      <div className="flex-1" />
+        {/* Language Select */}
+        <Select value="en">
+          <SelectTrigger className="h-8 w-28 text-xs flex-shrink-0">
+            <SelectValue placeholder="Language" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="en">English</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* Divider */}
+        <div className="h-4 w-px bg-border" />
+
+        {/* Start/Stop Button */}
+        <Button
+          onClick={onClick}
+          size="sm"
+          className={`flex-shrink-0 h-8 px-3 text-xs font-medium ${className}`}
+          disabled={disabled}
+        >
+          {icon}
+          {label}
+        </Button>
+      </div>
 
       {/* Status indicator */}
       <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-muted/50">
-        <div className={`h-2 w-2 rounded-full ${runningState === RunningState.RUNNING ? 'bg-destructive animate-pulse' : 'bg-muted-foreground'}`} />
-        <span className="text-xs text-muted-foreground">{runningState.toUpperCase()}</span>
+        <div className={`h-2 w-2 rounded-full ${indicatorDotClass}`} />
+        <span className="text-xs text-muted-foreground">{indicatorLabel}</span>
       </div>
     </div>
   )
