@@ -80,16 +80,17 @@ export default function Home() {
   })
 
   const handleThemeToggle = () => {
-    const newIsDark = !isDark
-    setIsDark(newIsDark)
+    const newIsDark = !isDark;
+    setIsDark(newIsDark);
+
     if (newIsDark) {
-      document.documentElement.classList.add('dark')
-      localStorage.setItem('theme', 'dark')
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
     } else {
-      document.documentElement.classList.remove('dark')
-      localStorage.setItem('theme', 'light')
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
     }
-  }
+  };
 
   const updateAppState = (state: Partial<AppState>) => {
     const newState = { ...appState, ...state } as AppState
@@ -107,6 +108,19 @@ export default function Home() {
       setTranscripts(transcriptsFetched)
     }
   }, [transcriptsFetched])
+  useEffect(() => {
+    // Check localStorage or system preference
+    const storedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    if (storedTheme === 'dark' || (!storedTheme && prefersDark)) {
+      setIsDark(true);
+      document.documentElement.classList.add('dark');
+    } else {
+      setIsDark(false);
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
 
   return (
     <div className="flex flex-col h-screen bg-background">
