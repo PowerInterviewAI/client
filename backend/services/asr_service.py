@@ -16,6 +16,8 @@ from backend.cfg.fs import config as cfg_fs
 class ASRService:
     """Synchronous speech-to-text service using Vosk and PyAudio."""
 
+    _pa = pyaudio.PyAudio()
+
     TARGET_RATE = 16_000
 
     def __init__(
@@ -26,15 +28,15 @@ class ASRService:
         on_final: Callable[[str], None] | None = None,
         on_partial: Callable[[str], None] | None = None,
     ) -> None:
-        pa = pyaudio.PyAudio()
-        dev_info = pa.get_device_info_by_index(device_index)
+        dev_info = self._pa.get_device_info_by_index(device_index)
         self.sample_rate = int(dev_info["defaultSampleRate"])
         self.channels = dev_info["maxInputChannels"]
-        pa.terminate()
 
         self.model_path = model_path or cfg_fs.MODELS_DIR / "vosk-model-en-us-0.22-lgraph"
+
         self.device_index = device_index
-        self.blocksize = int(self.sample_rate * block_duration)
+        self.block_duration = block_duration
+        self.blocksize = int(self.sample_rate * self.block_duration)
         self.on_final = on_final
         self.on_partial = on_partial
 
@@ -104,10 +106,19 @@ class ASRService:
                     self.on_partial(partial)
         logger.debug("Recognition worker stopped.")
 
-    def start(self) -> None:
-        if self.running.is_set():
-            logger.warning("ASRService already running.")
-            return
+    def start(
+        self,
+        device_index: int | None = None,
+    ) -> None:
+        self.stop()
+
+        if device_index is not None:
+            dev_info = self._pa.get_device_info_by_index(device_index)
+            self.sample_rate = int(dev_info["defaultSampleRate"])
+            self.channels = dev_info["maxInputChannels"]
+
+            self.device_index = device_index
+            self.blocksize = int(self.sample_rate * self.block_duration)
 
         logger.info("Starting ASRService (sync)...")
         self.running.set()

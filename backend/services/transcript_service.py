@@ -26,29 +26,29 @@ class TranscriptService:
     def start(self, input_device_index: int) -> None:
         self.stop()
 
-        self.input_asr = ASRService(
-            device_index=input_device_index,
-            on_final=self.on_input_final,
-            on_partial=self.on_input_partial,
-        )
-        self.loopback_asr = ASRService(
-            device_index=AudioService.get_loopback_device().get("index", 0),
-            on_final=self.on_loopback_final,
-            on_partial=self.on_loopback_partial,
-        )
+        if self.input_asr is None:
+            self.input_asr = ASRService(
+                device_index=input_device_index,
+                on_final=self.on_input_final,
+                on_partial=self.on_input_partial,
+            )
+        if self.loopback_asr is None:
+            self.loopback_asr = ASRService(
+                device_index=AudioService.get_loopback_device().get("index", 0),
+                on_final=self.on_loopback_final,
+                on_partial=self.on_loopback_partial,
+            )
 
-        self.input_asr.start()
+        self.input_asr.start(device_index=input_device_index)
         self.loopback_asr.start()
 
     def stop(self) -> None:
         with self._lock:
             if self.input_asr is not None:
                 self.input_asr.stop()
-                self.input_asr = None
 
             if self.loopback_asr is not None:
                 self.loopback_asr.stop()
-                self.loopback_asr = None
 
     def _process_partial(self, result_json: str, speaker: Speaker, partial_attr: str) -> None:
         result_dict: dict[str, Any] = json.loads(result_json)
@@ -56,10 +56,11 @@ class TranscriptService:
         if not text:
             return
 
-        logger.debug(f"{speaker}: {text}")
-
         partial_transcript: Transcript = getattr(self, partial_attr)
+        if partial_transcript.text == text:
+            return
 
+        logger.debug(f"{speaker}: {text}")
         with self._lock:
             if partial_transcript.timestamp == 0:
                 partial_transcript.timestamp = DatetimeUtil.get_current_timestamp()
