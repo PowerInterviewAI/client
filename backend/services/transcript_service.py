@@ -1,6 +1,7 @@
 import copy
 import json
 import threading
+from typing import Any
 
 from loguru import logger
 
@@ -49,73 +50,62 @@ class TranscriptService:
                 self.loopback_asr.stop()
                 self.loopback_asr = None
 
-    def on_input_partial(self, result_json: str) -> None:
-        result_dict = json.loads(result_json)
-        text = result_dict.get("partial", "")
+    def _process_partial(self, result_json: str, speaker: Speaker, partial_attr: str) -> None:
+        result_dict: dict[str, Any] = json.loads(result_json)
+        text: str = result_dict.get("partial", "")
         if not text:
             return
 
-        logger.debug(f"on_input_partial: {text}")
+        logger.debug(f"{speaker}: {text}")
+
+        partial_transcript: Transcript = getattr(self, partial_attr)
+
         with self._lock:
-            if self.transcript_input_partial.timestamp == 0:
-                self.transcript_input_partial.timestamp = DatetimeUtil.get_current_timestamp()
-            self.transcript_input_partial.text = text
+            if partial_transcript.timestamp == 0:
+                partial_transcript.timestamp = DatetimeUtil.get_current_timestamp()
+            partial_transcript.text = text
+
+    def on_input_partial(self, result_json: str) -> None:
+        self._process_partial(result_json, Speaker.YOU, "transcript_input_partial")
 
     def on_loopback_partial(self, result_json: str) -> None:
-        result_dict = json.loads(result_json)
-        text = result_dict.get("partial", "")
+        self._process_partial(result_json, Speaker.INTERVIEWER, "transcript_loopback_partial")
+
+    def _process_final(self, result_json: str, speaker: Speaker, partial_attr: str) -> None:
+        result_dict: dict[str, Any] = json.loads(result_json)
+        text: str = result_dict.get("text", "").strip()
         if not text:
             return
 
-        logger.debug(f"on_loopback_partial: {text}")
+        # Normalize text
+        final = text[0].upper() + text[1:]
+        if not final.endswith("."):
+            final += "."
+
+        logger.debug(f"{speaker}: {final}")
+
+        # Get the partial transcript object dynamically
+        partial_transcript: Transcript = getattr(self, partial_attr)
+
         with self._lock:
-            if self.transcript_loopback_partial.timestamp == 0:
-                self.transcript_loopback_partial.timestamp = DatetimeUtil.get_current_timestamp()
-            self.transcript_loopback_partial.text = text
+            if self.transcripts and self.transcripts[-1].speaker == speaker:
+                self.transcripts[-1].text += " " + final
+            else:
+                self.transcripts.append(
+                    Transcript(
+                        speaker=speaker,
+                        text=final,
+                        timestamp=partial_transcript.timestamp or DatetimeUtil.get_current_timestamp(),
+                    )
+                )
+            # Reset the partial transcript
+            setattr(self, partial_attr, Transcript(speaker=speaker, text="", timestamp=0))
 
     def on_input_final(self, result_json: str) -> None:
-        result_dict = json.loads(result_json)
-        text: str = result_dict.get("text", "").strip()
-        if not text:
-            return
-
-        final = text
-        final = final[0].upper() + final[1:]
-        if not final.endswith("."):
-            final += "."
-
-        logger.debug(f"on_input_final: {final}")
-        with self._lock:
-            self.transcripts.append(
-                Transcript(
-                    speaker=Speaker.YOU,
-                    text=final,
-                    timestamp=self.transcript_input_partial.timestamp or DatetimeUtil.get_current_timestamp(),
-                )
-            )
-            self.transcript_input_partial = Transcript(speaker=Speaker.YOU, text="", timestamp=0)
+        self._process_final(result_json, Speaker.YOU, "transcript_input_partial")
 
     def on_loopback_final(self, result_json: str) -> None:
-        result_dict = json.loads(result_json)
-        text: str = result_dict.get("text", "").strip()
-        if not text:
-            return
-
-        final = text
-        final = final[0].upper() + final[1:]
-        if not final.endswith("."):
-            final += "."
-
-        logger.debug(f"on_loopback_final: {final}")
-        with self._lock:
-            self.transcripts.append(
-                Transcript(
-                    speaker=Speaker.INTERVIEWER,
-                    text=final,
-                    timestamp=self.transcript_loopback_partial.timestamp or DatetimeUtil.get_current_timestamp(),
-                )
-            )
-            self.transcript_loopback_partial = Transcript(speaker=Speaker.INTERVIEWER, text="", timestamp=0)
+        self._process_final(result_json, Speaker.INTERVIEWER, "transcript_loopback_partial")
 
     def get_transcripts(self) -> list[Transcript]:
         with self._lock:
