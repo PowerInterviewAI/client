@@ -78,7 +78,7 @@ export default function SuggestionsPanel() {
         <Button
           size="sm"
           className="px-4"
-          variant="default"
+          variant="outline"
           onClick={handleGenerateSuggestions}
           disabled={isLoading}
         >
