@@ -28,6 +28,8 @@ class TranscriptService:
     def start(self, input_device_index: int) -> None:
         self.stop()
 
+        self.clear_transcripts()
+
         with self._lock:
             self._running_state = RunningState.STARTING
 
@@ -142,6 +144,12 @@ class TranscriptService:
             ret.sort(key=lambda t: t.timestamp)
 
             return ret
+
+    def clear_transcripts(self) -> None:
+        with self._lock:
+            self.transcripts = []
+            self.transcript_input_partial = Transcript(speaker=Speaker.YOU, text="", timestamp=0)
+            self.transcript_loopback_partial = Transcript(speaker=Speaker.INTERVIEWER, text="", timestamp=0)
 
 
 transcriptor = TranscriptService()
