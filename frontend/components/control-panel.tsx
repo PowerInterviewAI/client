@@ -13,7 +13,7 @@ import { PyAudioDevice } from '@/types/audioDevice'
 import { APIError } from '@/types/error'
 import { RunningState } from '@/types/runningState'
 import { UseMutationResult } from '@tanstack/react-query'
-import { Mic, MicOff } from 'lucide-react'
+import { Languages, Mic, MicOff, Speaker } from 'lucide-react'
 
 interface ControlPanelProps {
   runningState: RunningState
@@ -116,47 +116,56 @@ export default function ControlPanel({
 
   return (
     <div className="flex items-center gap-2 px-4 py-2">
-      <div className='flex flex-1 justify-center gap-2 items-center'>
+      <div className='flex flex-1 justify-center gap-4 items-center'>
 
         {/* Microphone Select */}
-        <Select value={selectedInputDevice} onValueChange={(v) => updateState({ audio_input_device: Number(v) })}>
-          <SelectTrigger className="h-8 w-40 text-xs flex-shrink-0">
-            <SelectValue placeholder="Microphone" />
-          </SelectTrigger>
-          <SelectContent>
-            {audioInputDevices.map((device) => (
-              <SelectItem key={device.index} value={`${device.index}`}>
-                {device.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {/* Output Audio Select */}
-        <Select value={selectedOutputDevice} onValueChange={(v) => updateState({ audio_output_device: Number(v) })}>
-          <SelectTrigger className="h-8 w-40 text-xs flex-shrink-0">
-            <SelectValue placeholder="Output" />
-          </SelectTrigger>
-          <SelectContent>
-            {
-              audioOutputDevices.map((device) => (
+        <div className='flex items-center'>
+          <Mic className="mr-1.5 h-3.5 w-3.5" />
+          <Select value={selectedInputDevice} onValueChange={(v) => updateState({ audio_input_device: Number(v) })}>
+            <SelectTrigger className="h-8 w-32 text-xs flex-shrink-0">
+              <SelectValue placeholder="Microphone" />
+            </SelectTrigger>
+            <SelectContent>
+              {audioInputDevices.map((device) => (
                 <SelectItem key={device.index} value={`${device.index}`}>
                   {device.name}
                 </SelectItem>
-              ))
-            }
-          </SelectContent>
-        </Select>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Output Audio Select */}
+        <div className='flex items-center'>
+          <Speaker className="mr-1.5 h-3.5 w-3.5" />
+          <Select value={selectedOutputDevice} onValueChange={(v) => updateState({ audio_output_device: Number(v) })}>
+            <SelectTrigger className="h-8 w-32 text-xs flex-shrink-0">
+              <SelectValue placeholder="Output" />
+            </SelectTrigger>
+            <SelectContent>
+              {
+                audioOutputDevices.map((device) => (
+                  <SelectItem key={device.index} value={`${device.index}`}>
+                    {device.name}
+                  </SelectItem>
+                ))
+              }
+            </SelectContent>
+          </Select>
+        </div>
 
         {/* Language Select */}
-        <Select value="en">
-          <SelectTrigger className="h-8 w-28 text-xs flex-shrink-0">
-            <SelectValue placeholder="Language" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="en">English</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className='flex items-center'>
+          <Languages className="mr-1.5 h-3.5 w-3.5" />
+          <Select value="en">
+            <SelectTrigger className="h-8 w-28 text-xs flex-shrink-0">
+              <SelectValue placeholder="Language" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="en">English</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
         {/* Divider */}
         <div className="h-4 w-px bg-border" />

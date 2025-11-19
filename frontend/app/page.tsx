@@ -55,7 +55,7 @@ export default function Home() {
       const response = await axiosClient.get<Transcript[]>('/api/app-state/get-transcriptions');
       return response.data;
     },
-    refetchInterval: 200,
+    refetchInterval: 100,
     refetchIntervalInBackground: true
   })
   const { data: runningState } = useQuery<RunningState, APIError>({
