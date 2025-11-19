@@ -10,7 +10,7 @@ class UserProfile(BaseModel):
         str,
         Field(description="The username of the user"),
     ] = "John Doe"
-    resume: Annotated[
+    profile_data: Annotated[
         str,
-        Field(description="The resume content of the user"),
+        Field(description="The profile data of the user"),
     ] = "My name is John Doe."
