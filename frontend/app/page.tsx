@@ -7,10 +7,8 @@ import TopBar from '@/components/top-bar'
 import TranscriptPanel from '@/components/transcript-panel'
 import VideoPanel from '@/components/video-panel'
 import axiosClient from '@/lib/axiosClient'
-import { AppState } from '@/types/appState'
-import { PyAudioDevice } from '@/types/audioDevice'
+import { AppState, RunningState } from '@/types/appState'
 import { APIError } from '@/types/error'
-import { RunningState } from '@/types/runningState'
 import { SuggestionState } from '@/types/suggestion'
 import { Config } from '@/types/config'
 import { Transcript } from '@/types/transcript'
@@ -130,20 +128,20 @@ export default function Home() {
         <div className="flex-1 min-w-0 min-h-0 overflow-hidden">
           <SuggestionsPanel
             suggestionsList={appState?.suggestions ?? []}
-            suggestionState={appState?.suggestionState ?? SuggestionState.IDLE}
+            suggestionState={appState?.suggestion_state ?? SuggestionState.IDLE}
           />
         </div>
       </div>
 
       <div className="border-t border-border bg-card shadow-lg">
         <ControlPanel
-          runningState={appState?.runningState ?? RunningState.IDLE}
+          runningState={appState?.running_state ?? RunningState.IDLE}
           startMutation={startMutation}
           stopMutation={stopMutation}
-          audioInputDevices={appState?.audioInputDevices ?? []}
-          selectedInputDevice={`${config?.audioInputDevice ?? 0}`}
-          audioOutputDevices={appState?.audioOutputDevices ?? []}
-          selectedOutputDevice={`${config?.audioOutputDevice ?? 0}`}
+          audioInputDevices={appState?.audio_input_devices ?? []}
+          selectedInputDevice={`${config?.audio_input_device ?? 0}`}
+          audioOutputDevices={appState?.audio_output_devices ?? []}
+          selectedOutputDevice={`${config?.audio_output_device ?? 0}`}
           updateConfig={updateConfig}
         />
       </div>
@@ -152,7 +150,7 @@ export default function Home() {
         isOpen={isProfileOpen}
         onOpenChange={setIsProfileOpen}
         initialName={config?.profile?.username ?? ""}
-        initialProfileData={config?.profile?.profileData ?? ""}
+        initialProfileData={config?.profile?.profile_data ?? ""}
         updateConfig={updateConfig}
       />
     </div>

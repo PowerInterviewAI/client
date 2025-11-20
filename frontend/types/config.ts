@@ -1,6 +1,6 @@
 export interface UserProfile {
     username: string;
-    profileData: string;
+    profile_data: string;
 }
 
 export enum Language {
@@ -9,7 +9,7 @@ export enum Language {
 
 export interface Config {
     profile: UserProfile;
-    audioInputDevice: number;
-    audioOutputDevice: number;
+    audio_input_device: number;
+    audio_output_device: number;
     language: Language;
 }

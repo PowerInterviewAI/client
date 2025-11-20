@@ -1,6 +1,14 @@
+from enum import StrEnum
 from typing import Annotated
 
 from pydantic import BaseModel, Field
+
+
+class SuggestionState(StrEnum):
+    IDLE = "idle"
+    LOADING = "loading"
+    SUCCESS = "success"
+    ERROR = "error"
 
 
 class SuggestionRecord(BaseModel):

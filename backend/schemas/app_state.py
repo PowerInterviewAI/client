@@ -3,7 +3,7 @@ from typing import Annotated, Any
 
 from pydantic import BaseModel, Field
 
-from backend.schemas.suggestion import SuggestionBatch
+from backend.schemas.suggestion import SuggestionBatch, SuggestionState
 from backend.schemas.transcript import Transcript
 
 
@@ -13,13 +13,6 @@ class RunningState(StrEnum):
     RUNNING = "running"
     STOPPING = "stopping"
     STOPPED = "stopped"
-
-
-class SuggestionState(StrEnum):
-    IDLE = "idle"
-    LOADING = "loading"
-    SUCCESS = "success"
-    ERROR = "error"
 
 
 class AppState(BaseModel):

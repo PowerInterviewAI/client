@@ -1,7 +1,8 @@
 from fastapi import APIRouter
 
 from backend.api.custom import RouteErrorHandler
-from backend.schemas.app_state import AppState, SuggestionState
+from backend.schemas.app_state import AppState
+from backend.schemas.suggestion import SuggestionState
 from backend.services.audio_service import AudioService
 from backend.services.config_service import ConfigService
 from backend.services.transcript_service import transcriptor

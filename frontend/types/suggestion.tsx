@@ -13,6 +13,6 @@ export interface SuggestionRecord {
 
 export interface SuggestionBatch {
     timestamp: number
-    lastQuestion: string
+    last_question: string
     suggestions: SuggestionRecord[]
 }

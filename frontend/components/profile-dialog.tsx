@@ -34,7 +34,7 @@ export default function ProfileDialog({
   }, [isOpen, initialName, initialProfileData])
 
   const handleSave = () => {
-    updateConfig({ profile: { username: name, profileData: profileData } })
+    updateConfig({ profile: { username: name, profile_data: profileData } })
     onOpenChange(false)
   }
 
