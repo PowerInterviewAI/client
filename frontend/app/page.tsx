@@ -8,13 +8,13 @@ import TranscriptPanel from '@/components/transcript-panel'
 import VideoPanel from '@/components/video-panel'
 import axiosClient from '@/lib/axiosClient'
 import { AppState, RunningState } from '@/types/appState'
+import { PyAudioDevice } from '@/types/audioDevice'
+import { Config } from '@/types/config'
 import { APIError } from '@/types/error'
 import { SuggestionState } from '@/types/suggestion'
-import { Config } from '@/types/config'
 import { Transcript } from '@/types/transcript'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { PyAudioDevice } from '@/types/audioDevice'
 
 export default function Home() {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
@@ -58,7 +58,7 @@ export default function Home() {
       const response = await axiosClient.get<AppState>('/api/app/get-state');
       return response.data;
     },
-    refetchInterval: 1000,
+    refetchInterval: 100,
   })
   const startMutation = useMutation<void, APIError, void>({
     mutationFn: async () => {
