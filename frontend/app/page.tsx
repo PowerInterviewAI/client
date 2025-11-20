@@ -11,6 +11,8 @@ import { AppState } from '@/types/appState'
 import { PyAudioDevice } from '@/types/audioDevice'
 import { APIError } from '@/types/error'
 import { RunningState } from '@/types/runningState'
+import { SuggestionState } from '@/types/suggestion'
+import { Config } from '@/types/config'
 import { Transcript } from '@/types/transcript'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
@@ -18,62 +20,39 @@ import { useEffect, useState } from 'react'
 export default function Home() {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isDark, setIsDark] = useState(false)
-  const [appState, setAppState] = useState<AppState>()
+  const [config, setConfig] = useState<Config>()
   const [transcripts, setTranscripts] = useState<Transcript[]>([])
 
-  const { data: appStateFetched } = useQuery<AppState, APIError>({
+  const { data: configFetched } = useQuery<Config, APIError>({
+    queryKey: ['config'],
+    queryFn: async () => {
+      const response = await axiosClient.get<Config>('/api/config/get');
+      return response.data;
+    },
+  })
+  const updateConfigMutation = useMutation<Config, APIError, Partial<Config>>({
+    mutationFn: async (config) => {
+      const response = await axiosClient.put('/api/config/update', config);
+      return response.data;
+    },
+  })
+
+  const { data: appState } = useQuery<AppState, APIError>({
     queryKey: ['appState'],
     queryFn: async () => {
-      const response = await axiosClient.get<AppState>('/api/app-state/get-app-state');
+      const response = await axiosClient.get<AppState>('/api/app/get-state');
       return response.data;
     },
-  })
-  const updateAppStateMutation = useMutation<AppState, APIError, Partial<AppState>>({
-    mutationFn: async (appState) => {
-      const response = await axiosClient.put('/api/app-state/update-app-state', appState);
-      return response.data;
-    },
-  })
-  const { data: audioInputDevices } = useQuery<PyAudioDevice[], APIError>({
-    queryKey: ['audioInputDevices'],
-    queryFn: async () => {
-      const response = await axiosClient.get<PyAudioDevice[]>('/api/app-state/audio-input-devices');
-      return response.data;
-    },
-  })
-  const { data: audioOutputDevices } = useQuery<PyAudioDevice[], APIError>({
-    queryKey: ['audioOutputDevices'],
-    queryFn: async () => {
-      const response = await axiosClient.get<PyAudioDevice[]>('/api/app-state/audio-output-devices');
-      return response.data;
-    }
-  })
-  const { data: transcriptsFetched } = useQuery<Transcript[], APIError>({
-    queryKey: ['transcriptions'],
-    queryFn: async () => {
-      const response = await axiosClient.get<Transcript[]>('/api/app-state/get-transcriptions');
-      return response.data;
-    },
-    refetchInterval: 100,
-    refetchIntervalInBackground: true
-  })
-  const { data: runningState } = useQuery<RunningState, APIError>({
-    queryKey: ['runningState'],
-    queryFn: async () => {
-      const response = await axiosClient.get<RunningState>('/api/app-state/running-state');
-      return response.data;
-    },
-    refetchInterval: 100
   })
   const startMutation = useMutation<void, APIError, void>({
     mutationFn: async () => {
-      const response = await axiosClient.get('/api/app-state/start');
+      const response = await axiosClient.get('/api/app/start');
       return response.data;
     },
   })
   const stopMutation = useMutation<void, APIError, void>({
     mutationFn: async () => {
-      const response = await axiosClient.get('/api/app-state/stop');
+      const response = await axiosClient.get('/api/app/stop');
       return response.data;
     },
   })
@@ -91,22 +70,22 @@ export default function Home() {
     }
   };
 
-  const updateAppState = (state: Partial<AppState>) => {
-    const newState = { ...appState, ...state } as AppState
-    setAppState(newState)
-    updateAppStateMutation.mutate(state)
+  const updateConfig = (config: Partial<Config>) => {
+    const newConfig = { ...appState, ...config } as Config
+    setConfig(newConfig)
+    updateConfigMutation.mutate(config)
   }
 
   useEffect(() => {
-    if (appStateFetched) {
-      setAppState(appStateFetched)
+    if (configFetched) {
+      setConfig(configFetched);
     }
-  }, [appStateFetched])
+  }, [configFetched])
   useEffect(() => {
-    if (transcriptsFetched && transcriptsFetched !== transcripts) {
-      setTranscripts(transcriptsFetched)
+    if (appState?.transcripts && appState?.transcripts !== transcripts) {
+      setTranscripts(appState?.transcripts)
     }
-  }, [transcriptsFetched])
+  }, [appState?.transcripts])
   useEffect(() => {
     // Check localStorage or system preference
     const storedTheme = localStorage.getItem('theme');
@@ -124,7 +103,7 @@ export default function Home() {
   return (
     <div className="flex flex-col h-screen bg-background">
       <TopBar
-        userName={appState?.profile?.username || ''}
+        userName={config?.profile?.username || ''}
         onProfileClick={() => setIsProfileOpen(true)}
         onThemeToggle={handleThemeToggle}
         isDark={isDark}
@@ -148,29 +127,32 @@ export default function Home() {
 
         {/* Center Column: Main Suggestions Panel */}
         <div className="flex-1 min-w-0 min-h-0 overflow-hidden">
-          <SuggestionsPanel />
+          <SuggestionsPanel
+            suggestionsList={appState?.suggestions ?? []}
+            suggestionState={appState?.suggestionState ?? SuggestionState.IDLE}
+          />
         </div>
       </div>
 
       <div className="border-t border-border bg-card shadow-lg">
         <ControlPanel
-          runningState={runningState ?? RunningState.IDLE}
+          runningState={appState?.runningState ?? RunningState.IDLE}
           startMutation={startMutation}
           stopMutation={stopMutation}
-          audioInputDevices={audioInputDevices ?? []}
-          selectedInputDevice={`${appState?.audio_input_device}`}
-          audioOutputDevices={audioOutputDevices ?? []}
-          selectedOutputDevice={`${appState?.audio_output_device}`}
-          updateState={updateAppState}
+          audioInputDevices={appState?.audioInputDevices ?? []}
+          selectedInputDevice={`${config?.audioInputDevice ?? 0}`}
+          audioOutputDevices={appState?.audioOutputDevices ?? []}
+          selectedOutputDevice={`${config?.audioOutputDevice ?? 0}`}
+          updateConfig={updateConfig}
         />
       </div>
 
       <ProfileDialog
         isOpen={isProfileOpen}
         onOpenChange={setIsProfileOpen}
-        initialName={appState?.profile?.username ?? ""}
-        initialProfileData={appState?.profile?.profile_data ?? ""}
-        updateState={updateAppState}
+        initialName={config?.profile?.username ?? ""}
+        initialProfileData={config?.profile?.profileData ?? ""}
+        updateConfig={updateConfig}
       />
     </div>
   )

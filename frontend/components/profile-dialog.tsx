@@ -6,13 +6,14 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { X } from 'lucide-react'
 import { AppState } from '@/types/appState'
+import { Config } from '@/types/config'
 
 interface ProfileDialogProps {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
   initialName: string
   initialProfileData: string
-  updateState: (state: Partial<AppState>) => void
+  updateConfig: (config: Partial<Config>) => void
 }
 
 export default function ProfileDialog({
@@ -20,7 +21,7 @@ export default function ProfileDialog({
   onOpenChange,
   initialName,
   initialProfileData,
-  updateState,
+  updateConfig,
 }: ProfileDialogProps) {
   const [name, setName] = useState(initialName)
   const [profileData, setProfileData] = useState(initialProfileData)
@@ -33,7 +34,7 @@ export default function ProfileDialog({
   }, [isOpen, initialName, initialProfileData])
 
   const handleSave = () => {
-    updateState({ profile: { username: name, profile_data: profileData } })
+    updateConfig({ profile: { username: name, profileData: profileData } })
     onOpenChange(false)
   }
 

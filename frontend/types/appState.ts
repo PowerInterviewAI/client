@@ -1,15 +1,13 @@
-export interface UserProfile {
-    username: string;
-    profile_data: string;
-}
-
-export enum Language {
-    ENGLISH = 'en',
-}
+import { PyAudioDevice } from "./audioDevice"
+import { RunningState } from "./runningState"
+import { SuggestionBatch, SuggestionState } from "./suggestion"
+import { Transcript } from "./transcript"
 
 export interface AppState {
-    profile: UserProfile;
-    audio_input_device: number;
-    audio_output_device: number;
-    language: Language;
+    audioInputDevices: PyAudioDevice[]
+    audioOutputDevices: PyAudioDevice[]
+    transcripts: Transcript[]
+    runningState: RunningState
+    suggestionState: SuggestionState
+    suggestions: SuggestionBatch[]
 }

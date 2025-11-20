@@ -1,41 +1,26 @@
 'use client'
 
-import { useState } from 'react'
 import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Zap, Loader2 } from 'lucide-react'
+import { Loader2, Zap } from 'lucide-react'
+import { SuggestionRecord, SuggestionBatch, SuggestionState } from '@/types/suggestion'
 
-export default function SuggestionsPanel() {
-  const [suggestions, setSuggestions] = useState<string[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+interface SuggestionsPanelProps {
+  suggestionsList: SuggestionBatch[]
+  suggestionState: SuggestionState
+}
 
-  const handleGenerateSuggestions = async () => {
-    setIsLoading(true)
-    setError(null)
+export default function SuggestionsPanel({
+  suggestionsList,
+  suggestionState,
+}: SuggestionsPanelProps) {
+  // ensure newest-first ordering without mutating props
+  const history = [...(suggestionsList || [])].sort((a, b) => b.timestamp - a.timestamp)
+  const current: SuggestionBatch | undefined = history.length > 0 ? history[0] : undefined
+  const suggestions: SuggestionRecord[] = current?.suggestions ?? []
 
-    try {
-      const response = await fetch('/api/suggestions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          context: 'Technical interview for a software engineer role',
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to generate suggestions')
-      }
-
-      const data = await response.json()
-      setSuggestions(data.suggestions || [])
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'An error occurred'
-      setError(message)
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const isLoading = suggestionState === SuggestionState.LOADING
+  const isError = suggestionState === SuggestionState.ERROR
+  const isSuccess = suggestionState === SuggestionState.SUCCESS
 
   return (
     <Card className="flex flex-col h-full bg-card p-0 overflow-hidden">
@@ -45,7 +30,8 @@ export default function SuggestionsPanel() {
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {suggestions.length === 0 && !isLoading && (
+        {/* Empty state */}
+        {suggestions.length === 0 && !isLoading && !isError && (
           <div className="flex items-center justify-center h-full text-center p-4">
             <div>
               <p className="text-sm text-muted-foreground">No suggestions yet</p>
@@ -54,20 +40,45 @@ export default function SuggestionsPanel() {
           </div>
         )}
 
-        {error && (
-          <div className="p-4">
-            <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3">
-              <p className="text-sm text-destructive">{error}</p>
+        {/* Loading state */}
+        {isLoading && (
+          <div className="flex items-center justify-center h-40 p-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Generating suggestions...</span>
             </div>
           </div>
         )}
 
-        {suggestions.length > 0 && (
+        {/* Error state */}
+        {isError && (
+          <div className="p-4">
+            <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3">
+              <p className="text-sm text-destructive">Failed to generate suggestions</p>
+            </div>
+          </div>
+        )}
+
+        {/* Suggestions list (render only when we have results and not loading) */}
+        {suggestions.length > 0 && (isSuccess || !isLoading) && (
           <div className="p-4 space-y-3">
             {suggestions.map((suggestion, idx) => (
-              <div key={idx} className="flex gap-3 pb-3 border-b border-border/40 last:border-0">
+              <div
+                key={idx}
+                className="flex gap-3 pb-3 border-b border-border/40 last:border-0"
+              >
                 <Zap className="h-4 w-4 mt-0.5 text-accent flex-shrink-0" />
-                <span className="text-sm text-foreground/80 leading-relaxed">{suggestion}</span>
+                <div>
+                  <div className="text-xs text-muted-foreground mb-1">
+                    Score: <span className="text-foreground/80 font-medium">{suggestion.score}</span>
+                  </div>
+                  <div className="text-sm text-foreground/80 leading-relaxed">
+                    {suggestion.content}
+                  </div>
+                  {suggestion.purpose && (
+                    <div className="text-xs text-muted-foreground mt-2">Purpose: {suggestion.purpose}</div>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -75,16 +86,13 @@ export default function SuggestionsPanel() {
       </div>
 
       <div className="border-t border-border p-3 flex-shrink-0">
-        <Button
-          size="sm"
-          className="px-4"
-          variant="outline"
-          onClick={handleGenerateSuggestions}
-          disabled={isLoading}
-        >
-          {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-          {isLoading ? 'Generating...' : 'Suggestions'}
-        </Button>
+        <div className="text-xs text-muted-foreground">
+          {current ? (
+            <span>Last generated: {new Date(current.timestamp).toLocaleString()}</span>
+          ) : (
+            <span>No generation yet</span>
+          )}
+        </div>
       </div>
     </Card>
   )

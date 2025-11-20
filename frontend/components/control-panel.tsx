@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/select'
 import { AppState } from '@/types/appState'
 import { PyAudioDevice } from '@/types/audioDevice'
+import { Config } from '@/types/config'
 import { APIError } from '@/types/error'
 import { RunningState } from '@/types/runningState'
 import { UseMutationResult } from '@tanstack/react-query'
@@ -23,7 +24,7 @@ interface ControlPanelProps {
   selectedOutputDevice: string
   startMutation: UseMutationResult<void, APIError, void, unknown>
   stopMutation: UseMutationResult<void, APIError, void, unknown>
-  updateState: (state: Partial<AppState>) => void
+  updateConfig: (config: Partial<Config>) => void
 }
 
 type StateConfig = {
@@ -48,7 +49,7 @@ export default function ControlPanel({
   selectedOutputDevice,
   startMutation,
   stopMutation,
-  updateState,
+  updateConfig,
 }: ControlPanelProps) {
 
   const stateConfig: Record<RunningState, StateConfig> = {
@@ -121,7 +122,7 @@ export default function ControlPanel({
         {/* Microphone Select */}
         <div className='flex items-center'>
           <Mic className="mr-1.5 h-3.5 w-3.5" />
-          <Select value={selectedInputDevice} onValueChange={(v) => updateState({ audio_input_device: Number(v) })}>
+          <Select value={selectedInputDevice} onValueChange={(v) => updateConfig({ audioInputDevice: Number(v) })}>
             <SelectTrigger className="h-8 w-32 text-xs flex-shrink-0">
               <SelectValue placeholder="Microphone" />
             </SelectTrigger>
@@ -138,7 +139,7 @@ export default function ControlPanel({
         {/* Output Audio Select */}
         <div className='flex items-center'>
           <Speaker className="mr-1.5 h-3.5 w-3.5" />
-          <Select value={selectedOutputDevice} onValueChange={(v) => updateState({ audio_output_device: Number(v) })}>
+          <Select value={selectedOutputDevice} onValueChange={(v) => updateConfig({ audioOutputDevice: Number(v) })}>
             <SelectTrigger className="h-8 w-32 text-xs flex-shrink-0">
               <SelectValue placeholder="Output" />
             </SelectTrigger>
