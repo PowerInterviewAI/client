@@ -14,7 +14,7 @@ export default function SuggestionsPanel({
   suggestionState,
 }: SuggestionsPanelProps) {
   // ensure newest-first ordering without mutating props
-  const suggestions: SuggestionRecord[] = suggestion?.suggestions ?? []
+  const records: SuggestionRecord[] = suggestion?.records ?? []
 
   const isLoading = suggestionState === SuggestionState.LOADING
   const isError = suggestionState === SuggestionState.ERROR
@@ -29,7 +29,7 @@ export default function SuggestionsPanel({
 
       <div className="flex-1 overflow-y-auto">
         {/* Empty state */}
-        {suggestions.length === 0 && !isLoading && !isError && (
+        {records.length === 0 && !isLoading && !isError && (
           <div className="flex items-center justify-center h-full text-center p-4">
             <div>
               <p className="text-sm text-muted-foreground">No suggestions yet</p>
@@ -58,9 +58,9 @@ export default function SuggestionsPanel({
         )}
 
         {/* Suggestions list (render only when we have results and not loading) */}
-        {suggestions.length > 0 && (isSuccess || !isLoading) && (
+        {records.length > 0 && (isSuccess || !isLoading) && (
           <div className="p-4 space-y-3">
-            {suggestions.map((suggestion, idx) => (
+            {records.map((record, idx) => (
               <div
                 key={idx}
                 className="flex gap-3 pb-3 border-b border-border/40 last:border-0"
@@ -68,13 +68,13 @@ export default function SuggestionsPanel({
                 <Zap className="h-4 w-4 mt-0.5 text-accent flex-shrink-0" />
                 <div>
                   <div className="text-xs text-muted-foreground mb-1">
-                    Score: <span className="text-foreground/80 font-medium">{suggestion.score}</span>
+                    Score: <span className="text-foreground/80 font-medium">{record.score}</span>
                   </div>
                   <div className="text-sm text-foreground/80 leading-relaxed">
-                    {suggestion.content}
+                    {record.content}
                   </div>
-                  {suggestion.purpose && (
-                    <div className="text-xs text-muted-foreground mt-2">Purpose: {suggestion.purpose}</div>
+                  {record.purpose && (
+                    <div className="text-xs text-muted-foreground mt-2">Purpose: {record.purpose}</div>
                   )}
                 </div>
               </div>

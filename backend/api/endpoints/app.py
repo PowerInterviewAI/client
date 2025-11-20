@@ -4,9 +4,9 @@ from fastapi import APIRouter
 
 from backend.api.custom import RouteErrorHandler
 from backend.schemas.app_state import AppState
-from backend.schemas.suggestion import SuggestionBatch, SuggestionState
 from backend.services.audio_service import AudioService
 from backend.services.config_service import ConfigService
+from backend.services.suggestion_service import suggestion_service
 from backend.services.transcript_service import transcriptor
 
 router = APIRouter(
@@ -30,8 +30,8 @@ def get_app_state() -> AppState:
     return AppState(
         transcripts=transcriptor.get_transcripts(),
         running_state=transcriptor.running_state(),
-        suggestion_state=SuggestionState.IDLE,
-        suggestions=SuggestionBatch(timestamp=0, last_question="", suggestions=[]),
+        suggestion_state=suggestion_service.suggestion_state(),
+        suggestion=suggestion_service.get_suggestion(),
     )
 
 

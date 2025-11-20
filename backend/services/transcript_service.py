@@ -1,6 +1,7 @@
 import copy
 import json
 import threading
+from collections.abc import Callable
 from typing import Any
 
 from loguru import logger
@@ -9,17 +10,26 @@ from backend.schemas.app_state import RunningState
 from backend.schemas.transcript import Speaker, Transcript
 from backend.services.asr_service import ASRService
 from backend.services.audio_service import AudioService
+from backend.services.suggestion_service import suggestion_service
 from backend.utils.datetime import DatetimeUtil
 
 
 class TranscriptService:
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        callback_on_self_final: Callable[[list[Transcript]], None] | None = None,
+        callback_on_other_final: Callable[[list[Transcript]], None] | None = None,
+    ) -> None:
         self.transcripts: list[Transcript] = []
-        self.transcript_input_partial = Transcript(speaker=Speaker.YOU, text="", timestamp=0)
-        self.transcript_loopback_partial = Transcript(speaker=Speaker.INTERVIEWER, text="", timestamp=0)
+        self.transcript_self_partial = Transcript(speaker=Speaker.SELF, text="", timestamp=0)
+        self.transcript_other_partial = Transcript(speaker=Speaker.OTHER, text="", timestamp=0)
 
-        self.input_asr: ASRService | None = None
-        self.loopback_asr: ASRService | None = None
+        self.self_asr: ASRService | None = None
+        self.other_asr: ASRService | None = None
+
+        # Callbacks
+        self.callback_on_self_final: Callable[[list[Transcript]], None] = callback_on_self_final
+        self.callback_on_other_final: Callable[[list[Transcript]], None] = callback_on_other_final
 
         # Synchronization lock
         self._lock = threading.Lock()
@@ -33,21 +43,21 @@ class TranscriptService:
         with self._lock:
             self._running_state = RunningState.STARTING
 
-        if self.input_asr is None:
-            self.input_asr = ASRService(
+        if self.self_asr is None:
+            self.self_asr = ASRService(
                 device_index=input_device_index,
-                on_final=self.on_input_final,
-                on_partial=self.on_input_partial,
+                on_final=self.on_self_final,
+                on_partial=self.on_self_partial,
             )
-        if self.loopback_asr is None:
-            self.loopback_asr = ASRService(
+        if self.other_asr is None:
+            self.other_asr = ASRService(
                 device_index=AudioService.get_loopback_device().get("index", 0),
-                on_final=self.on_loopback_final,
-                on_partial=self.on_loopback_partial,
+                on_final=self.on_other_final,
+                on_partial=self.on_other_partial,
             )
 
-        self.input_asr.start(device_index=input_device_index)
-        self.loopback_asr.start()
+        self.self_asr.start(device_index=input_device_index)
+        self.other_asr.start()
 
         with self._lock:
             self._running_state = RunningState.RUNNING
@@ -57,11 +67,11 @@ class TranscriptService:
             self._running_state = RunningState.STOPPING
 
         with self._lock:
-            if self.input_asr is not None:
-                self.input_asr.stop()
+            if self.self_asr is not None:
+                self.self_asr.stop()
 
-            if self.loopback_asr is not None:
-                self.loopback_asr.stop()
+            if self.other_asr is not None:
+                self.other_asr.stop()
 
             self._running_state = RunningState.STOPPED
 
@@ -84,11 +94,11 @@ class TranscriptService:
                 partial_transcript.timestamp = DatetimeUtil.get_current_timestamp()
             partial_transcript.text = text
 
-    def on_input_partial(self, result_json: str) -> None:
-        self._process_partial(result_json, Speaker.YOU, "transcript_input_partial")
+    def on_self_partial(self, result_json: str) -> None:
+        self._process_partial(result_json, Speaker.SELF, "transcript_self_partial")
 
-    def on_loopback_partial(self, result_json: str) -> None:
-        self._process_partial(result_json, Speaker.INTERVIEWER, "transcript_loopback_partial")
+    def on_other_partial(self, result_json: str) -> None:
+        self._process_partial(result_json, Speaker.OTHER, "transcript_other_partial")
 
     def _process_final(self, result_json: str, speaker: Speaker, partial_attr: str) -> None:
         result_dict: dict[str, Any] = json.loads(result_json)
@@ -120,21 +130,33 @@ class TranscriptService:
             # Reset the partial transcript
             setattr(self, partial_attr, Transcript(speaker=speaker, text="", timestamp=0))
 
-    def on_input_final(self, result_json: str) -> None:
-        self._process_final(result_json, Speaker.YOU, "transcript_input_partial")
+    def on_self_final(self, result_json: str) -> None:
+        self._process_final(result_json, Speaker.SELF, "transcript_self_partial")
 
-    def on_loopback_final(self, result_json: str) -> None:
-        self._process_final(result_json, Speaker.INTERVIEWER, "transcript_loopback_partial")
+        with self._lock:
+            transcripts = copy.deepcopy(self.transcripts)
+
+        if self.callback_on_self_final:
+            self.callback_on_self_final(transcripts)
+
+    def on_other_final(self, result_json: str) -> None:
+        self._process_final(result_json, Speaker.OTHER, "transcript_other_partial")
+
+        with self._lock:
+            transcripts = copy.deepcopy(self.transcripts)
+
+        if self.callback_on_other_final:
+            self.callback_on_other_final(transcripts)
 
     def get_transcripts(self) -> list[Transcript]:
         with self._lock:
             ret = copy.deepcopy(self.transcripts)
 
             partials: list[Transcript] = []
-            if self.transcript_input_partial.text != "":
-                partials.append(copy.deepcopy(self.transcript_input_partial))
-            if self.transcript_loopback_partial.text != "":
-                partials.append(copy.deepcopy(self.transcript_loopback_partial))
+            if self.transcript_self_partial.text != "":
+                partials.append(copy.deepcopy(self.transcript_self_partial))
+            if self.transcript_other_partial.text != "":
+                partials.append(copy.deepcopy(self.transcript_other_partial))
 
             partials.sort(key=lambda t: t.timestamp)
 
@@ -148,8 +170,10 @@ class TranscriptService:
     def clear_transcripts(self) -> None:
         with self._lock:
             self.transcripts = []
-            self.transcript_input_partial = Transcript(speaker=Speaker.YOU, text="", timestamp=0)
-            self.transcript_loopback_partial = Transcript(speaker=Speaker.INTERVIEWER, text="", timestamp=0)
+            self.transcript_self_partial = Transcript(speaker=Speaker.SELF, text="", timestamp=0)
+            self.transcript_other_partial = Transcript(speaker=Speaker.OTHER, text="", timestamp=0)
 
 
-transcriptor = TranscriptService()
+transcriptor = TranscriptService(
+    callback_on_other_final=suggestion_service.generate_suggestion,
+)

@@ -14,5 +14,5 @@ export interface SuggestionRecord {
 export interface Suggestion {
     timestamp: number
     last_question: string
-    suggestions: SuggestionRecord[]
+    records: SuggestionRecord[]
 }

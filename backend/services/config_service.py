@@ -1,9 +1,9 @@
+from collections.abc import Callable
+
 from loguru import logger
 
 from backend.cfg.fs import config as cfg_fs
 from backend.models.config import Config, ConfigUpdate
-from backend.schemas.app_state import RunningState
-from backend.services.transcript_service import transcriptor
 
 
 class ConfigService:
@@ -33,7 +33,11 @@ class ConfigService:
         )
 
     @classmethod
-    def update_config(cls, cfg: ConfigUpdate) -> Config:
+    def update_config(
+        cls,
+        cfg: ConfigUpdate,
+        callback_on_audio_input_device_change: Callable[[int], None] | None = None,
+    ) -> Config:
         update_dict = cfg.model_dump(exclude_unset=True)
         old_dict = cls._config.model_dump(exclude_unset=True)
 
@@ -45,7 +49,7 @@ class ConfigService:
         )
         cls.save_config()
 
-        if cfg.audio_input_device is not None and transcriptor.running_state() == RunningState.RUNNING:
-            transcriptor.start(cfg.audio_input_device)
+        if callback_on_audio_input_device_change is not None:
+            callback_on_audio_input_device_change(cfg.audio_input_device)
 
         return cls._config

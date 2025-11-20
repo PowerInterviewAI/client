@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field
 
-from backend.schemas.suggestion import SuggestionBatch, SuggestionState
+from backend.schemas.suggestion import Suggestion, SuggestionState
 from backend.schemas.transcript import Transcript
 
 
@@ -28,7 +28,7 @@ class AppState(BaseModel):
         SuggestionState,
         Field(description="The suggestion state"),
     ]
-    suggestions: Annotated[
-        SuggestionBatch,
-        Field(description="The suggestions"),
+    suggestion: Annotated[
+        Suggestion | None,
+        Field(description="The suggestion"),
     ]

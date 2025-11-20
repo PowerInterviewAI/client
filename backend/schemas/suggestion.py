@@ -3,6 +3,8 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field
 
+from backend.schemas.transcript import Transcript
+
 
 class SuggestionState(StrEnum):
     IDLE = "idle"
@@ -30,7 +32,7 @@ class SuggestionRecord(BaseModel):
     ]
 
 
-class SuggestionBatch(BaseModel):
+class Suggestion(BaseModel):
     timestamp: Annotated[
         int,
         Field(description="The Unix timestamp of the suggestions"),
@@ -39,7 +41,22 @@ class SuggestionBatch(BaseModel):
         str,
         Field(description="The last question"),
     ]
-    suggestions: Annotated[
+    records: Annotated[
         list[SuggestionRecord],
-        Field(description="The list of suggestions"),
+        Field(description="The list of suggestion records"),
+    ]
+
+
+class GenerateSuggestionRequest(BaseModel):
+    username: Annotated[
+        str,
+        Field(description="The username of the user"),
+    ]
+    profile_data: Annotated[
+        str,
+        Field(description="The profile data of the user"),
+    ]
+    transcripts: Annotated[
+        list[Transcript],
+        Field(description="The transcripts of the user"),
     ]
