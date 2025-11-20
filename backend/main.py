@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from backend.api.router import router as api_router
 from backend.cfg.api import config as cfg_api
 from backend.cfg.fs import config as cfg_fs
-from backend.init import init_app_state
+from backend.init import init_config
 
 # Create FastAPI instance
 app = FastAPI(
@@ -18,7 +18,7 @@ app = FastAPI(
         "email": str(cfg_api.APP_EMAIL),
     },
     on_startup=[
-        init_app_state,
+        init_config,
     ],
 )
 

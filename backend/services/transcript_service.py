@@ -5,7 +5,7 @@ from typing import Any
 
 from loguru import logger
 
-from backend.schemas.running_state import RunningState
+from backend.schemas.app_state import RunningState
 from backend.schemas.transcript import Speaker, Transcript
 from backend.services.asr_service import ASRService
 from backend.services.audio_service import AudioService

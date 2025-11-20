@@ -3,7 +3,7 @@ from typing import Annotated
 from pydantic import BaseModel, Field
 
 
-class Suggestion(BaseModel):
+class SuggestionRecord(BaseModel):
     score: Annotated[
         int,
         Field(
@@ -19,4 +19,19 @@ class Suggestion(BaseModel):
     content: Annotated[
         str,
         Field(description="The content of the suggestion"),
+    ]
+
+
+class SuggestionBatch(BaseModel):
+    timestamp: Annotated[
+        int,
+        Field(description="The Unix timestamp of the suggestions"),
+    ]
+    last_question: Annotated[
+        str,
+        Field(description="The last question"),
+    ]
+    suggestions: Annotated[
+        list[SuggestionRecord],
+        Field(description="The list of suggestions"),
     ]

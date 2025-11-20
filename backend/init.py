@@ -1,5 +1,5 @@
-from backend.services.app_config_service import AppStateService
+from backend.services.config_service import ConfigService
 
 
-def init_app_state() -> None:
-    AppStateService.load_app_state()
+def init_config() -> None:
+    ConfigService.load_config()
