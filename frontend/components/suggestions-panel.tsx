@@ -2,21 +2,19 @@
 
 import { Card } from '@/components/ui/card'
 import { Loader2, Zap } from 'lucide-react'
-import { SuggestionRecord, SuggestionBatch, SuggestionState } from '@/types/suggestion'
+import { SuggestionRecord, Suggestion, SuggestionState } from '@/types/suggestion'
 
 interface SuggestionsPanelProps {
-  suggestionsList: SuggestionBatch[]
+  suggestion?: Suggestion
   suggestionState: SuggestionState
 }
 
 export default function SuggestionsPanel({
-  suggestionsList,
+  suggestion,
   suggestionState,
 }: SuggestionsPanelProps) {
   // ensure newest-first ordering without mutating props
-  const history = [...(suggestionsList || [])].sort((a, b) => b.timestamp - a.timestamp)
-  const current: SuggestionBatch | undefined = history.length > 0 ? history[0] : undefined
-  const suggestions: SuggestionRecord[] = current?.suggestions ?? []
+  const suggestions: SuggestionRecord[] = suggestion?.suggestions ?? []
 
   const isLoading = suggestionState === SuggestionState.LOADING
   const isError = suggestionState === SuggestionState.ERROR
@@ -87,8 +85,8 @@ export default function SuggestionsPanel({
 
       <div className="border-t border-border p-3 flex-shrink-0">
         <div className="text-xs text-muted-foreground">
-          {current ? (
-            <span>Last generated: {new Date(current.timestamp).toLocaleString()}</span>
+          {suggestion ? (
+            <span>Last generated: {new Date(suggestion.timestamp).toLocaleString()}</span>
           ) : (
             <span>No generation yet</span>
           )}

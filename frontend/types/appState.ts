@@ -1,5 +1,4 @@
-import { PyAudioDevice } from "./audioDevice"
-import { SuggestionBatch, SuggestionState } from "./suggestion"
+import { Suggestion, SuggestionState } from "./suggestion"
 import { Transcript } from "./transcript"
 
 export enum RunningState {
@@ -11,10 +10,8 @@ export enum RunningState {
 }
 
 export interface AppState {
-    audio_input_devices: PyAudioDevice[]
-    audio_output_devices: PyAudioDevice[]
     transcripts: Transcript[]
     running_state: RunningState
     suggestion_state: SuggestionState
-    suggestions: SuggestionBatch[]
+    suggestions: Suggestion
 }

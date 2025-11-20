@@ -1,5 +1,5 @@
 from enum import StrEnum
-from typing import Annotated, Any
+from typing import Annotated
 
 from pydantic import BaseModel, Field
 
@@ -16,14 +16,6 @@ class RunningState(StrEnum):
 
 
 class AppState(BaseModel):
-    audio_input_devices: Annotated[
-        list[dict[str, Any]],
-        Field(description="The list of audio input devices"),
-    ]
-    audio_output_devices: Annotated[
-        list[dict[str, Any]],
-        Field(description="The list of audio output devices"),
-    ]
     transcripts: Annotated[
         list[Transcript],
         Field(description="The list of transcripts"),
@@ -37,6 +29,6 @@ class AppState(BaseModel):
         Field(description="The suggestion state"),
     ]
     suggestions: Annotated[
-        list[SuggestionBatch],
+        SuggestionBatch,
         Field(description="The suggestions"),
     ]

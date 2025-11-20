@@ -14,6 +14,7 @@ import { Config } from '@/types/config'
 import { Transcript } from '@/types/transcript'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
+import { PyAudioDevice } from '@/types/audioDevice'
 
 export default function Home() {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
@@ -31,6 +32,22 @@ export default function Home() {
   const updateConfigMutation = useMutation<Config, APIError, Partial<Config>>({
     mutationFn: async (config) => {
       const response = await axiosClient.put('/api/config/update', config);
+      return response.data;
+    },
+  })
+
+  const { data: audioInputDevices } = useQuery<PyAudioDevice[], APIError>({
+    queryKey: ['audioInputDevices'],
+    queryFn: async () => {
+      const response = await axiosClient.get<PyAudioDevice[]>('/api/app/audio-input-devices');
+      return response.data;
+    },
+  })
+
+  const { data: audioOutputDevices } = useQuery<PyAudioDevice[], APIError>({
+    queryKey: ['audioOutputDevices'],
+    queryFn: async () => {
+      const response = await axiosClient.get<PyAudioDevice[]>('/api/app/audio-output-devices');
       return response.data;
     },
   })
@@ -69,10 +86,10 @@ export default function Home() {
     }
   };
 
-  const updateConfig = (config: Partial<Config>) => {
-    const newConfig = { ...appState, ...config } as Config
+  const updateConfig = (cfg: Partial<Config>) => {
+    const newConfig = { ...config, ...cfg } as Config
     setConfig(newConfig)
-    updateConfigMutation.mutate(config)
+    updateConfigMutation.mutate(cfg)
   }
 
   useEffect(() => {
@@ -127,7 +144,7 @@ export default function Home() {
         {/* Center Column: Main Suggestions Panel */}
         <div className="flex-1 min-w-0 min-h-0 overflow-hidden">
           <SuggestionsPanel
-            suggestionsList={appState?.suggestions ?? []}
+            suggestion={appState?.suggestions}
             suggestionState={appState?.suggestion_state ?? SuggestionState.IDLE}
           />
         </div>
@@ -138,9 +155,9 @@ export default function Home() {
           runningState={appState?.running_state ?? RunningState.IDLE}
           startMutation={startMutation}
           stopMutation={stopMutation}
-          audioInputDevices={appState?.audio_input_devices ?? []}
+          audioInputDevices={audioInputDevices ?? []}
           selectedInputDevice={`${config?.audio_input_device ?? 0}`}
-          audioOutputDevices={appState?.audio_output_devices ?? []}
+          audioOutputDevices={audioOutputDevices ?? []}
           selectedOutputDevice={`${config?.audio_output_device ?? 0}`}
           updateConfig={updateConfig}
         />

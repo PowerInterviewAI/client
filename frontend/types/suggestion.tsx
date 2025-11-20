@@ -11,7 +11,7 @@ export interface SuggestionRecord {
     content: string
 }
 
-export interface SuggestionBatch {
+export interface Suggestion {
     timestamp: number
     last_question: string
     suggestions: SuggestionRecord[]
