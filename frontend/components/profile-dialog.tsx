@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -24,6 +24,13 @@ export default function ProfileDialog({
 }: ProfileDialogProps) {
   const [name, setName] = useState(initialName)
   const [profileData, setProfileData] = useState(initialProfileData)
+
+  useEffect(() => {
+    if (isOpen) {
+      setName(initialName)
+      setProfileData(initialProfileData)
+    }
+  }, [isOpen, initialName, initialProfileData])
 
   const handleSave = () => {
     updateState({ profile: { username: name, profile_data: profileData } })

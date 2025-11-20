@@ -141,7 +141,7 @@ export default function Home() {
           {/* Transcription Panel - Fill remaining space with scroll */}
           <div className="flex-1 min-h-0 overflow-hidden">
             <TranscriptPanel
-              transcripts={transcripts || []}
+              transcripts={transcripts ?? []}
             />
           </div>
         </div>
@@ -157,9 +157,9 @@ export default function Home() {
           runningState={runningState ?? RunningState.IDLE}
           startMutation={startMutation}
           stopMutation={stopMutation}
-          audioInputDevices={audioInputDevices || []}
+          audioInputDevices={audioInputDevices ?? []}
           selectedInputDevice={`${appState?.audio_input_device}`}
-          audioOutputDevices={audioOutputDevices || []}
+          audioOutputDevices={audioOutputDevices ?? []}
           selectedOutputDevice={`${appState?.audio_output_device}`}
           updateState={updateAppState}
         />
