@@ -26,7 +26,7 @@ export default function TranscriptPanel({ transcripts }: TranscriptionPanelProps
 
   return (
     <Card className="flex flex-col h-full bg-card p-0 overflow-hidden">
-      <div className="border-b border-border px-4 pt-4 pb-2 flex-shrink-0">
+      <div className="border-b border-border px-4 pt-4 pb-2 shrink-0">
         <h3 className="font-semibold text-foreground text-xs">Transcription</h3>
       </div>
 
@@ -41,7 +41,7 @@ export default function TranscriptPanel({ transcripts }: TranscriptionPanelProps
               <div key={idx} className="space-y-1 pb-1 border-b border-border/50 last:border-0">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-semibold text-primary">{item.speaker}</span>
-                  <span className="text-xs text-muted-foreground flex-shrink-0">
+                  <span className="text-xs text-muted-foreground shrink-0">
                     {new Date(item.timestamp).toLocaleString()}
                   </span>
                 </div>

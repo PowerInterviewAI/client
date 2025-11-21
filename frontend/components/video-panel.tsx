@@ -2,7 +2,7 @@ import { Card } from '@/components/ui/card'
 
 export default function VideoPanel() {
   return (
-    <Card className="relative w-full h-full overflow-hidden bg-black flex-shrink-0">
+    <Card className="relative w-full h-full overflow-hidden bg-black shrink-0">
       {/* Video placeholder from server */}
       <div className="h-full w-full flex items-center justify-center bg-gradient-to-b from-slate-900 to-black">
         <div className="text-center">

@@ -122,7 +122,7 @@ export default function ControlPanel({
         <div className='flex items-center'>
           <Mic className="mr-1.5 h-3.5 w-3.5" />
           <Select value={selectedInputDevice} onValueChange={(v) => updateConfig({ audio_input_device: Number(v) })}>
-            <SelectTrigger className="h-8 w-32 text-xs flex-shrink-0">
+            <SelectTrigger className="h-8 w-32 text-xs shrink-0">
               <SelectValue placeholder="Microphone" />
             </SelectTrigger>
             <SelectContent>
@@ -139,7 +139,7 @@ export default function ControlPanel({
         <div className='flex items-center'>
           <Speaker className="mr-1.5 h-3.5 w-3.5" />
           <Select value={selectedOutputDevice} onValueChange={(v) => updateConfig({ audio_output_device: Number(v) })}>
-            <SelectTrigger className="h-8 w-32 text-xs flex-shrink-0">
+            <SelectTrigger className="h-8 w-32 text-xs shrink-0">
               <SelectValue placeholder="Output" />
             </SelectTrigger>
             <SelectContent>
@@ -158,7 +158,7 @@ export default function ControlPanel({
         <div className='flex items-center'>
           <Languages className="mr-1.5 h-3.5 w-3.5" />
           <Select value="en">
-            <SelectTrigger className="h-8 w-28 text-xs flex-shrink-0">
+            <SelectTrigger className="h-8 w-28 text-xs shrink-0">
               <SelectValue placeholder="Language" />
             </SelectTrigger>
             <SelectContent>
@@ -174,7 +174,7 @@ export default function ControlPanel({
         <Button
           onClick={onClick}
           size="sm"
-          className={`flex-shrink-0 h-8 px-3 text-xs font-medium ${className}`}
+          className={`shrink-0 h-8 px-3 text-xs font-medium ${className}`}
           disabled={disabled}
         >
           {icon}

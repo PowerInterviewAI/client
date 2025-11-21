@@ -13,5 +13,5 @@ export interface AppState {
     transcripts: Transcript[]
     running_state: RunningState
     suggestion_state: SuggestionState
-    suggestions: Suggestion
+    suggestion: Suggestion
 }

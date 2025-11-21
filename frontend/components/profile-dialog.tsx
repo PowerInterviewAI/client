@@ -44,7 +44,7 @@ export default function ProfileDialog({
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
       <div className="bg-card rounded-lg shadow-lg w-full max-w-lg max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border px-6 py-4 flex-shrink-0">
+        <div className="flex items-center justify-between border-b border-border px-6 py-4 shrink-0">
           <h2 className="text-lg font-semibold text-foreground">Edit Profile</h2>
           <button
             onClick={() => onOpenChange(false)}
@@ -87,7 +87,7 @@ export default function ProfileDialog({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-border px-6 py-3 flex items-center justify-end gap-2 flex-shrink-0">
+        <div className="border-t border-border px-6 py-3 flex items-center justify-end gap-2 shrink-0">
           <Button
             variant="outline"
             size="sm"

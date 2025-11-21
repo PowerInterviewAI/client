@@ -10,11 +10,11 @@ interface TopBarProps {
 
 export default function TopBar({ userName, onProfileClick, onThemeToggle, isDark }: TopBarProps) {
   return (
-    <div className="border-b border-border bg-card px-4 py-3 flex-shrink-0">
+    <div className="border-b border-border bg-card px-4 py-3 shrink-0">
       <div className="flex items-center justify-between">
         {/* Left: App Logo and Title */}
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-accent flex-shrink-0" />
+          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-accent shrink-0" />
           <div>
             <h1 className="text-lg font-semibold text-foreground">Power Interview</h1>
             <p className="text-xs text-muted-foreground">Interview Assistant</p>

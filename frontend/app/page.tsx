@@ -127,9 +127,9 @@ export default function Home() {
 
       <div className="flex flex-1 overflow-hidden gap-2 p-2" style={{ height: 'calc(100vh - 120px)' }}>
         {/* Left Column: Video + Transcription */}
-        <div className="flex flex-col gap-2 w-96 flex-shrink-0 min-h-0">
+        <div className="flex flex-col gap-2 w-96 shrink-0 min-h-0">
           {/* Video Panel - Small and compact */}
-          <div className="h-48 flex-shrink-0">
+          <div className="h-48 shrink-0">
             <VideoPanel />
           </div>
 
@@ -144,7 +144,7 @@ export default function Home() {
         {/* Center Column: Main Suggestions Panel */}
         <div className="flex-1 min-w-0 min-h-0 overflow-hidden">
           <SuggestionsPanel
-            suggestion={appState?.suggestions}
+            suggestion={appState?.suggestion}
             suggestionState={appState?.suggestion_state ?? SuggestionState.IDLE}
           />
         </div>

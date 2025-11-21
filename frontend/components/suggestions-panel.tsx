@@ -13,7 +13,6 @@ export default function SuggestionsPanel({
   suggestion,
   suggestionState,
 }: SuggestionsPanelProps) {
-  // ensure newest-first ordering without mutating props
   const records: SuggestionRecord[] = suggestion?.records ?? []
 
   const isLoading = suggestionState === SuggestionState.LOADING
@@ -22,7 +21,7 @@ export default function SuggestionsPanel({
 
   return (
     <Card className="flex flex-col h-full bg-card p-0 overflow-hidden">
-      <div className="border-b border-border p-4 flex-shrink-0">
+      <div className="border-b border-border p-4 shrink-0">
         <h3 className="font-semibold text-foreground text-sm">Interview Suggestions</h3>
         <p className="text-xs text-muted-foreground mt-1">AI-powered recommendations</p>
       </div>
@@ -65,17 +64,17 @@ export default function SuggestionsPanel({
                 key={idx}
                 className="flex gap-3 pb-3 border-b border-border/40 last:border-0"
               >
-                <Zap className="h-4 w-4 mt-0.5 text-accent flex-shrink-0" />
+                <Zap className="h-4 w-4 mt-0.5 text-accent shrink-0" />
                 <div>
+                  {record.purpose && (
+                    <div className="text-xs text-muted-foreground mt-2">Purpose: {record.purpose}</div>
+                  )}
                   <div className="text-xs text-muted-foreground mb-1">
                     Score: <span className="text-foreground/80 font-medium">{record.score}</span>
                   </div>
                   <div className="text-sm text-foreground/80 leading-relaxed">
                     {record.content}
                   </div>
-                  {record.purpose && (
-                    <div className="text-xs text-muted-foreground mt-2">Purpose: {record.purpose}</div>
-                  )}
                 </div>
               </div>
             ))}
@@ -83,7 +82,7 @@ export default function SuggestionsPanel({
         )}
       </div>
 
-      <div className="border-t border-border p-3 flex-shrink-0">
+      <div className="border-t border-border p-3 shrink-0">
         <div className="text-xs text-muted-foreground">
           {suggestion ? (
             <span>Last generated: {new Date(suggestion.timestamp).toLocaleString()}</span>
