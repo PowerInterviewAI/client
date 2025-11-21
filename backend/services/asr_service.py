@@ -11,12 +11,12 @@ from scipy.signal import resample_poly
 from vosk import KaldiRecognizer, Model
 
 from backend.cfg.fs import config as cfg_fs
+from backend.services.audio_service import AudioService
 
 
 class ASRService:
     """Synchronous speech-to-text service using Vosk and PyAudio."""
 
-    _pa = pyaudio.PyAudio()
     _model: Model | None = None
 
     TARGET_RATE = 16_000
@@ -29,7 +29,7 @@ class ASRService:
         on_final: Callable[[str], None] | None = None,
         on_partial: Callable[[str], None] | None = None,
     ) -> None:
-        dev_info = self._pa.get_device_info_by_index(device_index)
+        dev_info = AudioService.get_device_info_by_index(device_index)
         self.sample_rate = int(dev_info["defaultSampleRate"])
         self.channels = dev_info["maxInputChannels"]
 
@@ -116,7 +116,7 @@ class ASRService:
         self.stop()
 
         if device_index is not None:
-            dev_info = self._pa.get_device_info_by_index(device_index)
+            dev_info = AudioService.get_device_info_by_index(device_index)
             self.sample_rate = int(dev_info["defaultSampleRate"])
             self.channels = dev_info["maxInputChannels"]
 

@@ -42,6 +42,7 @@ export default function Home() {
       const response = await axiosClient.get<PyAudioDevice[]>('/api/app/audio-input-devices');
       return response.data;
     },
+    refetchInterval: 1000,
   })
 
   const { data: audioOutputDevices } = useQuery<PyAudioDevice[], APIError>({
@@ -50,6 +51,7 @@ export default function Home() {
       const response = await axiosClient.get<PyAudioDevice[]>('/api/app/audio-output-devices');
       return response.data;
     },
+    refetchInterval: 1000,
   })
 
   const { data: appState } = useQuery<AppState, APIError>({

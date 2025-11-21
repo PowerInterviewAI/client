@@ -41,7 +41,15 @@ app.include_router(api_router, prefix="/api")
 app.mount("/", StaticFiles(directory=cfg_fs.PUBLIC_DIR, html=True), name="public")
 
 # Configure logging
-logging.getLogger("uvicorn.access").addFilter(EndpointFilter(["/api/app/get-state"]))
+logging.getLogger("uvicorn.access").addFilter(
+    EndpointFilter(
+        [
+            "/api/app/get-state",
+            "/api/app/audio-input-devices",
+            "/api/app/audio-output-devices",
+        ]
+    )
+)
 
 
 if __name__ == "__main__":
