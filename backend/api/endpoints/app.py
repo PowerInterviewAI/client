@@ -2,7 +2,7 @@ from typing import Any
 
 from fastapi import APIRouter
 
-from backend.api.custom import RouteErrorHandler
+from backend.api.error_handler import RouteErrorHandler
 from backend.schemas.app_state import AppState
 from backend.services.audio_service import AudioService
 from backend.services.config_service import ConfigService

@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from backend.api.custom import RouteErrorHandler
+from backend.api.error_handler import RouteErrorHandler
 
 router = APIRouter(
     route_class=RouteErrorHandler,

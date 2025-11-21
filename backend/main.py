@@ -1,8 +1,11 @@
+import logging
+
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from backend.api.endpint_filter import EndpointFilter
 from backend.api.router import router as api_router
 from backend.cfg.api import config as cfg_api
 from backend.cfg.fs import config as cfg_fs
@@ -36,6 +39,9 @@ app.include_router(api_router, prefix="/api")
 
 # Mound static files
 app.mount("/", StaticFiles(directory=cfg_fs.PUBLIC_DIR, html=True), name="public")
+
+# Configure logging
+logging.getLogger("uvicorn.access").addFilter(EndpointFilter(["/api/app/get-state"]))
 
 
 if __name__ == "__main__":

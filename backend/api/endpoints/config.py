@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from backend.api.custom import RouteErrorHandler
+from backend.api.error_handler import RouteErrorHandler
 from backend.models.config import Config, ConfigUpdate
 from backend.schemas.app_state import RunningState
 from backend.services.config_service import ConfigService
