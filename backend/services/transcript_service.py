@@ -106,11 +106,11 @@ class TranscriptService:
         speaker: Speaker,
         speaker_partial_attr: str,
         counter_partial_attr: str,
-    ) -> None:
+    ) -> bool:
         result_dict: dict[str, Any] = json.loads(result_json)
         text: str = result_dict.get("text", "").strip()
         if not text:
-            return
+            return False
 
         # Correct errors
         final = self.correct_text(text)
@@ -140,23 +140,23 @@ class TranscriptService:
             # Reset the partial transcript
             setattr(self, speaker_partial_attr, Transcript(speaker=speaker, text="", timestamp=0))
 
+        return True
+
     def on_self_final(self, result_json: str) -> None:
-        self._process_final(result_json, Speaker.SELF, "transcript_self_partial", "transcript_other_partial")
+        if self._process_final(result_json, Speaker.SELF, "transcript_self_partial", "transcript_other_partial"):
+            with self._lock:
+                transcripts = copy.deepcopy(self.transcripts)
 
-        with self._lock:
-            transcripts = copy.deepcopy(self.transcripts)
-
-        if self.callback_on_self_final:
-            self.callback_on_self_final(transcripts)
+            if self.callback_on_self_final:
+                self.callback_on_self_final(transcripts)
 
     def on_other_final(self, result_json: str) -> None:
-        self._process_final(result_json, Speaker.OTHER, "transcript_other_partial", "transcript_self_partial")
+        if self._process_final(result_json, Speaker.OTHER, "transcript_other_partial", "transcript_self_partial"):
+            with self._lock:
+                transcripts = copy.deepcopy(self.transcripts)
 
-        with self._lock:
-            transcripts = copy.deepcopy(self.transcripts)
-
-        if self.callback_on_other_final:
-            self.callback_on_other_final(transcripts)
+            if self.callback_on_other_final:
+                self.callback_on_other_final(transcripts)
 
     def get_transcripts(self) -> list[Transcript]:
         with self._lock:
