@@ -23,6 +23,9 @@ class SuggestionService:
 
     def generate_suggestion(self, transcripts: list[Transcript]) -> None:
         try:
+            if not transcripts:
+                return
+
             tstamp = DatetimeUtil.get_current_timestamp()
             with self._lock:
                 self._suggestions[tstamp] = Suggestion(
