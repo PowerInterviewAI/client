@@ -29,7 +29,9 @@ class ConfigService:
         cfg_fs.CONFIG_FILE.write_text(
             cls._config.model_dump_json(
                 indent=2,
-            )
+                ensure_ascii=True,
+            ),
+            encoding="utf-8",
         )
 
     @classmethod
