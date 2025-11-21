@@ -100,7 +100,13 @@ class TranscriptService:
     def on_other_partial(self, result_json: str) -> None:
         self._process_partial(result_json, Speaker.OTHER, "transcript_other_partial")
 
-    def _process_final(self, result_json: str, speaker: Speaker, partial_attr: str) -> None:
+    def _process_final(
+        self,
+        result_json: str,
+        speaker: Speaker,
+        speaker_partial_attr: str,
+        counter_partial_attr: str,
+    ) -> None:
         result_dict: dict[str, Any] = json.loads(result_json)
         text: str = result_dict.get("text", "").strip()
         if not text:
@@ -112,24 +118,30 @@ class TranscriptService:
         logger.debug(f"{speaker}: {final}")
 
         # Get the partial transcript object dynamically
-        partial_transcript: Transcript = getattr(self, partial_attr)
+        speaker_partial: Transcript = getattr(self, speaker_partial_attr)
+        counter_partial: Transcript = getattr(self, counter_partial_attr)
 
         with self._lock:
-            if self.transcripts and self.transcripts[-1].speaker == speaker:
+            if (
+                self.transcripts
+                and self.transcripts[-1].speaker == speaker
+                and counter_partial.timestamp
+                and counter_partial.timestamp > speaker_partial.timestamp
+            ):
                 self.transcripts[-1].text += " " + final
             else:
                 self.transcripts.append(
                     Transcript(
                         speaker=speaker,
                         text=final,
-                        timestamp=partial_transcript.timestamp or DatetimeUtil.get_current_timestamp(),
+                        timestamp=speaker_partial.timestamp or DatetimeUtil.get_current_timestamp(),
                     )
                 )
             # Reset the partial transcript
-            setattr(self, partial_attr, Transcript(speaker=speaker, text="", timestamp=0))
+            setattr(self, speaker_partial_attr, Transcript(speaker=speaker, text="", timestamp=0))
 
     def on_self_final(self, result_json: str) -> None:
-        self._process_final(result_json, Speaker.SELF, "transcript_self_partial")
+        self._process_final(result_json, Speaker.SELF, "transcript_self_partial", "transcript_other_partial")
 
         with self._lock:
             transcripts = copy.deepcopy(self.transcripts)
@@ -138,7 +150,7 @@ class TranscriptService:
             self.callback_on_self_final(transcripts)
 
     def on_other_final(self, result_json: str) -> None:
-        self._process_final(result_json, Speaker.OTHER, "transcript_other_partial")
+        self._process_final(result_json, Speaker.OTHER, "transcript_other_partial", "transcript_self_partial")
 
         with self._lock:
             transcripts = copy.deepcopy(self.transcripts)
