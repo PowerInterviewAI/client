@@ -106,10 +106,8 @@ class TranscriptService:
         if not text:
             return
 
-        # Normalize text
-        final = text[0].upper() + text[1:]
-        if not final.endswith("."):
-            final += "."
+        # Correct errors
+        final = self.correct_text(text)
 
         logger.debug(f"{speaker}: {final}")
 
@@ -118,7 +116,7 @@ class TranscriptService:
 
         with self._lock:
             if self.transcripts and self.transcripts[-1].speaker == speaker:
-                self.transcripts[-1].text += " " + final
+                self.transcripts[-1].text += "\n" + final
             else:
                 self.transcripts.append(
                     Transcript(
@@ -172,6 +170,13 @@ class TranscriptService:
             self.transcripts = []
             self.transcript_self_partial = Transcript(speaker=Speaker.SELF, text="", timestamp=0)
             self.transcript_other_partial = Transcript(speaker=Speaker.OTHER, text="", timestamp=0)
+
+    def correct_text(self, text: str) -> str:
+        """Recover errors on final transcript text."""
+        normalized = text[0].upper() + text[1:]
+        if not normalized.endswith("."):
+            normalized += "."
+        return normalized
 
 
 transcriptor = TranscriptService(
