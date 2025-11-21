@@ -5,8 +5,8 @@ from pydantic import BaseModel, Field
 
 
 class Speaker(StrEnum):
-    YOU = "You"
-    INTERVIEWER = "Interviewer"
+    SELF = "self"
+    OTHER = "other"
 
 
 class Transcript(BaseModel):

@@ -9,4 +9,4 @@ __pycache__
 /backend/public
 /models
 
-/app_state.json
+/config.json

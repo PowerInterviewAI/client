@@ -1,12 +1,15 @@
+import logging
+
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from backend.api.endpint_filter import EndpointFilter
 from backend.api.router import router as api_router
 from backend.cfg.api import config as cfg_api
 from backend.cfg.fs import config as cfg_fs
-from backend.init import init_app_state
+from backend.init import init_config
 
 # Create FastAPI instance
 app = FastAPI(
@@ -18,7 +21,7 @@ app = FastAPI(
         "email": str(cfg_api.APP_EMAIL),
     },
     on_startup=[
-        init_app_state,
+        init_config,
     ],
 )
 
@@ -36,6 +39,17 @@ app.include_router(api_router, prefix="/api")
 
 # Mound static files
 app.mount("/", StaticFiles(directory=cfg_fs.PUBLIC_DIR, html=True), name="public")
+
+# Configure logging
+logging.getLogger("uvicorn.access").addFilter(
+    EndpointFilter(
+        [
+            "/api/app/get-state",
+            "/api/app/audio-input-devices",
+            "/api/app/audio-output-devices",
+        ]
+    )
+)
 
 
 if __name__ == "__main__":

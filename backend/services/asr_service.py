@@ -11,10 +11,13 @@ from scipy.signal import resample_poly
 from vosk import KaldiRecognizer, Model
 
 from backend.cfg.fs import config as cfg_fs
+from backend.services.audio_service import AudioService
 
 
 class ASRService:
     """Synchronous speech-to-text service using Vosk and PyAudio."""
+
+    _model: Model | None = None
 
     TARGET_RATE = 16_000
 
@@ -26,15 +29,15 @@ class ASRService:
         on_final: Callable[[str], None] | None = None,
         on_partial: Callable[[str], None] | None = None,
     ) -> None:
-        pa = pyaudio.PyAudio()
-        dev_info = pa.get_device_info_by_index(device_index)
+        dev_info = AudioService.get_device_info_by_index(device_index)
         self.sample_rate = int(dev_info["defaultSampleRate"])
         self.channels = dev_info["maxInputChannels"]
-        pa.terminate()
 
-        self.model_path = model_path or cfg_fs.MODELS_DIR / "vosk-model-en-us-0.22-lgraph"
+        self.model_path = model_path or cfg_fs.MODELS_DIR / "vosk-model-en-us-0.42-gigaspeech"
+
         self.device_index = device_index
-        self.blocksize = int(self.sample_rate * block_duration)
+        self.block_duration = block_duration
+        self.blocksize = int(self.sample_rate * self.block_duration)
         self.on_final = on_final
         self.on_partial = on_partial
 
@@ -47,10 +50,12 @@ class ASRService:
         self.pa = pyaudio.PyAudio()
 
         # Vosk setup
-        logger.info(f"Loading Vosk model: {self.model_path}")
-        self.model = Model(str(self.model_path))
+        if not ASRService._model:
+            logger.info(f"Loading Vosk model: {self.model_path}")
+            ASRService._model = Model(str(self.model_path))
+
         logger.info("Loaded Vosk model")
-        self.recognizer = KaldiRecognizer(self.model, self.TARGET_RATE)
+        self.recognizer = KaldiRecognizer(self._model, self.TARGET_RATE)
         self.recognizer.SetWords(True)  # noqa: FBT003
 
         self.stream: pyaudio.Stream | None = None
@@ -104,10 +109,19 @@ class ASRService:
                     self.on_partial(partial)
         logger.debug("Recognition worker stopped.")
 
-    def start(self) -> None:
-        if self.running.is_set():
-            logger.warning("ASRService already running.")
-            return
+    def start(
+        self,
+        device_index: int | None = None,
+    ) -> None:
+        self.stop()
+
+        if device_index is not None:
+            dev_info = AudioService.get_device_info_by_index(device_index)
+            self.sample_rate = int(dev_info["defaultSampleRate"])
+            self.channels = dev_info["maxInputChannels"]
+
+            self.device_index = device_index
+            self.blocksize = int(self.sample_rate * self.block_duration)
 
         logger.info("Starting ASRService (sync)...")
         self.running.set()
@@ -143,6 +157,8 @@ class ASRService:
             self.stream.stop_stream()
         if self.stream:
             self.stream.close()
+
+        self.recognizer.Result()
 
         logger.info("ASRService stopped.")
 

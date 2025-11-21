@@ -8,7 +8,7 @@ class Config:
 
     PUBLIC_DIR: Path = BACKEND_DIR / "public"
 
-    APP_STATE_FILE: Path = ROOT_DIR / "app_state.json"
+    CONFIG_FILE: Path = ROOT_DIR / "config.json"
 
 
 config = Config()

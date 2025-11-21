@@ -7,135 +7,169 @@ import TopBar from '@/components/top-bar'
 import TranscriptPanel from '@/components/transcript-panel'
 import VideoPanel from '@/components/video-panel'
 import axiosClient from '@/lib/axiosClient'
-import { AppState } from '@/types/appState'
+import { AppState, RunningState } from '@/types/appState'
 import { PyAudioDevice } from '@/types/audioDevice'
+import { Config } from '@/types/config'
 import { APIError } from '@/types/error'
+import { SuggestionState } from '@/types/suggestion'
 import { Transcript } from '@/types/transcript'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 
 export default function Home() {
-  const [isRecording, setIsRecording] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
-  const [userName, setUserName] = useState('John Doe')
   const [isDark, setIsDark] = useState(false)
-  const [appState, setAppState] = useState<AppState>()
+  const [config, setConfig] = useState<Config>()
   const [transcripts, setTranscripts] = useState<Transcript[]>([])
 
-  const { data: appStateFetched, refetch: refetchAppState } = useQuery<AppState, APIError>({
-    queryKey: ['appState'],
+  const { data: configFetched } = useQuery<Config, APIError>({
+    queryKey: ['config'],
     queryFn: async () => {
-      const response = await axiosClient.get<AppState>('/api/app-state/get-app-state');
+      const response = await axiosClient.get<Config>('/api/config/get');
       return response.data;
     },
   })
-  const updateAppStateMutation = useMutation<AppState, APIError, Partial<AppState>>({
-    mutationFn: async (appState) => {
-      const response = await axiosClient.put('/api/app-state/update-app-state', appState);
+  const updateConfigMutation = useMutation<Config, APIError, Partial<Config>>({
+    mutationFn: async (config) => {
+      const response = await axiosClient.put('/api/config/update', config);
       return response.data;
     },
   })
-  const { data: audioInputDevices, refetch: refetchAudioInputDevices } = useQuery<PyAudioDevice[], APIError>({
+
+  const { data: audioInputDevices } = useQuery<PyAudioDevice[], APIError>({
     queryKey: ['audioInputDevices'],
     queryFn: async () => {
-      const response = await axiosClient.get<PyAudioDevice[]>('/api/app-state/audio-input-devices');
+      const response = await axiosClient.get<PyAudioDevice[]>('/api/app/audio-input-devices');
       return response.data;
     },
+    refetchInterval: 1000,
   })
-  const { data: audioOutputDevices, refetch: refetchAudioOutputDevices } = useQuery<PyAudioDevice[], APIError>({
+
+  const { data: audioOutputDevices } = useQuery<PyAudioDevice[], APIError>({
     queryKey: ['audioOutputDevices'],
     queryFn: async () => {
-      const response = await axiosClient.get<PyAudioDevice[]>('/api/app-state/audio-output-devices');
-      return response.data;
-    }
-  })
-  const { data: transcriptsFetched, refetch: refetchTranscriptions } = useQuery<Transcript[], APIError>({
-    queryKey: ['transcriptions'],
-    queryFn: async () => {
-      const response = await axiosClient.get<Transcript[]>('/api/app-state/get-transcriptions');
+      const response = await axiosClient.get<PyAudioDevice[]>('/api/app/audio-output-devices');
       return response.data;
     },
-    refetchInterval: 200,
-    refetchIntervalInBackground: true
+    refetchInterval: 1000,
+  })
+
+  const { data: appState } = useQuery<AppState, APIError>({
+    queryKey: ['appState'],
+    queryFn: async () => {
+      const response = await axiosClient.get<AppState>('/api/app/get-state');
+      return response.data;
+    },
+    refetchInterval: 50,
+  })
+  const startMutation = useMutation<void, APIError, void>({
+    mutationFn: async () => {
+      const response = await axiosClient.get('/api/app/start');
+      return response.data;
+    },
+  })
+  const stopMutation = useMutation<void, APIError, void>({
+    mutationFn: async () => {
+      const response = await axiosClient.get('/api/app/stop');
+      return response.data;
+    },
   })
 
   const handleThemeToggle = () => {
-    const newIsDark = !isDark
-    setIsDark(newIsDark)
+    const newIsDark = !isDark;
+    setIsDark(newIsDark);
+
     if (newIsDark) {
-      document.documentElement.classList.add('dark')
-      localStorage.setItem('theme', 'dark')
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
     } else {
-      document.documentElement.classList.remove('dark')
-      localStorage.setItem('theme', 'light')
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
     }
-  }
+  };
 
-  const updateAppState = (state: Partial<AppState>) => {
-    const newState = { ...appState, ...state } as AppState
-    setAppState(newState)
-    updateAppStateMutation.mutate(state)
+  const updateConfig = (cfg: Partial<Config>) => {
+    const newConfig = { ...config, ...cfg } as Config
+    setConfig(newConfig)
+    updateConfigMutation.mutate(cfg)
   }
 
   useEffect(() => {
-    if (appStateFetched) {
-      setAppState(appStateFetched)
+    if (configFetched) {
+      setConfig(configFetched);
     }
-  }, [appStateFetched])
+  }, [configFetched])
   useEffect(() => {
-    if (transcriptsFetched && transcriptsFetched !== transcripts) {
-      setTranscripts(transcriptsFetched)
+    if (appState?.transcripts && appState?.transcripts !== transcripts) {
+      setTranscripts(appState?.transcripts)
     }
-  }, [transcriptsFetched])
+  }, [appState?.transcripts])
+  useEffect(() => {
+    // Check localStorage or system preference
+    const storedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    if (storedTheme === 'dark' || (!storedTheme && prefersDark)) {
+      setIsDark(true);
+      document.documentElement.classList.add('dark');
+    } else {
+      setIsDark(false);
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col h-screen max-w-7xl mx-auto bg-background p-2">
       <TopBar
-        userName={userName}
+        userName={config?.profile?.username || ''}
         onProfileClick={() => setIsProfileOpen(true)}
         onThemeToggle={handleThemeToggle}
         isDark={isDark}
       />
 
-      <div className="flex flex-1 overflow-hidden gap-2 p-2" style={{ height: 'calc(100vh - 120px)' }}>
+      <div className="flex flex-1 overflow-y-hidden gap-2 py-2" style={{ height: 'calc(100vh - 120px)' }}>
         {/* Left Column: Video + Transcription */}
-        <div className="flex flex-col gap-2 w-80 flex-shrink-0 min-h-0">
+        <div className="flex flex-col gap-2 w-96 shrink-0 min-h-0">
           {/* Video Panel - Small and compact */}
-          <div className="h-48 flex-shrink-0">
+          <div className="h-48 shrink-0">
             <VideoPanel />
           </div>
 
           {/* Transcription Panel - Fill remaining space with scroll */}
-          <div className="flex-1 min-h-0 overflow-hidden">
+          <div className="flex-1 min-h-0 rounded-lg overflow-hidden">
             <TranscriptPanel
-              transcripts={transcripts || []}
+              transcripts={transcripts ?? []}
             />
           </div>
         </div>
 
         {/* Center Column: Main Suggestions Panel */}
-        <div className="flex-1 min-w-0 min-h-0 overflow-hidden">
-          <SuggestionsPanel />
+        <div className="flex-1 min-w-0 min-h-0 rounded-lg">
+          <SuggestionsPanel
+            suggestions={appState?.suggestions}
+          />
         </div>
       </div>
 
-      <div className="border-t border-border bg-card shadow-lg">
+      <div className="border border-border rounded-lg bg-card">
         <ControlPanel
-          isRecording={isRecording}
-          setIsRecording={setIsRecording}
-          audioInputDevices={audioInputDevices || []}
-          selectedInputDevice={`${appState?.audio_input_device}`}
-          audioOutputDevices={audioOutputDevices || []}
-          selectedOutputDevice={`${appState?.audio_output_device}`}
-          updateState={updateAppState}
+          runningState={appState?.running_state ?? RunningState.IDLE}
+          startMutation={startMutation}
+          stopMutation={stopMutation}
+          audioInputDevices={audioInputDevices ?? []}
+          selectedInputDevice={`${config?.audio_input_device ?? 0}`}
+          audioOutputDevices={audioOutputDevices ?? []}
+          selectedOutputDevice={`${config?.audio_output_device ?? 0}`}
+          updateConfig={updateConfig}
         />
       </div>
 
       <ProfileDialog
         isOpen={isProfileOpen}
         onOpenChange={setIsProfileOpen}
-        onNameChange={setUserName}
-        initialName={userName}
+        initialName={config?.profile?.username ?? ""}
+        initialProfileData={config?.profile?.profile_data ?? ""}
+        updateConfig={updateConfig}
       />
     </div>
   )

@@ -10,7 +10,7 @@ class Language(StrEnum):
     EN = "en"
 
 
-class AppState(BaseModel):
+class Config(BaseModel):
     profile: Annotated[
         UserProfile,
         Field(description="The user profile"),
@@ -29,7 +29,7 @@ class AppState(BaseModel):
     ] = Language.EN
 
 
-class AppStateUpdate(BaseModel):
+class ConfigUpdate(BaseModel):
     profile: UserProfile | None = None
     audio_input_device: int | None = None
     audio_output_device: int | None = None
