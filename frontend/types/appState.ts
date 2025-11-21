@@ -12,6 +12,5 @@ export enum RunningState {
 export interface AppState {
     transcripts: Transcript[]
     running_state: RunningState
-    suggestion_state: SuggestionState
-    suggestion: Suggestion
+    suggestions: Suggestion[]
 }

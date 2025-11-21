@@ -30,8 +30,7 @@ def get_app_state() -> AppState:
     return AppState(
         transcripts=transcriptor.get_transcripts(),
         running_state=transcriptor.running_state(),
-        suggestion_state=suggestion_service.suggestion_state(),
-        suggestion=suggestion_service.get_suggestion(),
+        suggestions=suggestion_service.get_suggestions(),
     )
 
 

@@ -144,8 +144,7 @@ export default function Home() {
         {/* Center Column: Main Suggestions Panel */}
         <div className="flex-1 min-w-0 min-h-0 overflow-hidden">
           <SuggestionsPanel
-            suggestion={appState?.suggestion}
-            suggestionState={appState?.suggestion_state ?? SuggestionState.IDLE}
+            suggestions={appState?.suggestions}
           />
         </div>
       </div>

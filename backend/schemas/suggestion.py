@@ -11,6 +11,7 @@ class SuggestionState(StrEnum):
     PENDING = "pending"
     LOADING = "loading"
     SUCCESS = "success"
+    STOPPED = "stopped"
     ERROR = "error"
 
 
@@ -26,6 +27,10 @@ class Suggestion(BaseModel):
     answer: Annotated[
         str,
         Field(description="The suggested answer"),
+    ]
+    state: Annotated[
+        SuggestionState,
+        Field(description="The state of the suggestion"),
     ]
 
 

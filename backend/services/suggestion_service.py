@@ -12,29 +12,26 @@ from backend.utils.datetime import DatetimeUtil
 
 class SuggestionService:
     def __init__(self) -> None:
-        self._suggestion: Suggestion | None = None
-        self._suggestion_state: SuggestionState = SuggestionState.IDLE
+        self._suggestions: list[Suggestion] = []
 
         self._lock = threading.Lock()
         self._suggestion_thread: threading.Thread | None = None
         self._stop_event = threading.Event()
 
-    def get_suggestion(self) -> Suggestion | None:
+    def get_suggestions(self) -> list[Suggestion]:
         with self._lock:
-            return self._suggestion
-
-    def suggestion_state(self) -> SuggestionState:
-        with self._lock:
-            return self._suggestion_state
+            return self._suggestions
 
     def generate_suggestion(self, transcripts: list[Transcript]) -> None:
         try:
             with self._lock:
-                self._suggestion_state = SuggestionState.PENDING
-                self._suggestion = Suggestion(
-                    timestamp=DatetimeUtil.get_current_timestamp(),
-                    last_question=transcripts[-1].text,
-                    answer="",
+                self._suggestions.append(
+                    Suggestion(
+                        timestamp=DatetimeUtil.get_current_timestamp(),
+                        last_question=transcripts[-1].text,
+                        answer="",
+                        state=SuggestionState.PENDING,
+                    )
                 )
 
             profile = ConfigService.load_config().profile
@@ -52,29 +49,30 @@ class SuggestionService:
                 resp.raise_for_status()
 
                 with self._lock:
-                    self._suggestion_state = SuggestionState.LOADING
+                    self._suggestions[-1].state = SuggestionState.LOADING
 
                 for chunk in resp.iter_content(chunk_size=None):
                     # check stop flag
                     if self._stop_event.is_set():
                         logger.info("Suggestion generation stopped by user")
+                        self._suggestions[-1].state = SuggestionState.STOPPED
                         break
 
                     if chunk:
                         with self._lock:
-                            self._suggestion.answer += chunk.decode("utf-8")
+                            self._suggestions[-1].answer += chunk.decode("utf-8")
 
             # mark as done if not stopped
             with self._lock:
                 if not self._stop_event.is_set():
-                    self._suggestion_state = SuggestionState.SUCCESS
+                    self._suggestions[-1].state = SuggestionState.SUCCESS
                 else:
-                    self._suggestion_state = SuggestionState.IDLE
+                    self._suggestions[-1].state = SuggestionState.IDLE
 
         except Exception as ex:
             logger.error(f"Failed to generate suggestion: {ex}")
             with self._lock:
-                self._suggestion_state = SuggestionState.ERROR
+                self._suggestions[-1].state = SuggestionState.ERROR
 
     def generate_suggestion_async(self, transcripts: list[Transcript]) -> None:
         """Spawn a background thread to run generate_suggestion."""
@@ -95,7 +93,6 @@ class SuggestionService:
             self._stop_event.set()
             logger.info("Stop signal sent to suggestion thread")
         with self._lock:
-            self._suggestion_state = SuggestionState.IDLE
             self._suggestion_thread = None
 
 
