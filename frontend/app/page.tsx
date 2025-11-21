@@ -119,7 +119,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex flex-col h-screen container mx-auto bg-background p-2">
+    <div className="flex flex-col h-screen max-w-7xl mx-auto bg-background p-2">
       <TopBar
         userName={config?.profile?.username || ''}
         onProfileClick={() => setIsProfileOpen(true)}
