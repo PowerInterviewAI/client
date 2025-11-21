@@ -50,9 +50,9 @@ class ASRService:
         self.pa = pyaudio.PyAudio()
 
         # Vosk setup
-        if not self._model:
+        if not ASRService._model:
             logger.info(f"Loading Vosk model: {self.model_path}")
-            self._model = Model(str(self.model_path))
+            ASRService._model = Model(str(self.model_path))
 
         logger.info("Loaded Vosk model")
         self.recognizer = KaldiRecognizer(self._model, self.TARGET_RATE)
