@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import { Card } from '@/components/ui/card'
 import { Loader2, Zap, PauseCircle } from 'lucide-react'
 import { Suggestion, SuggestionState } from '@/types/suggestion'
@@ -13,6 +14,21 @@ export default function SuggestionsPanel({
 }: SuggestionsPanelProps) {
   const hasSuggestions = suggestions.length > 0
 
+  const containerRef = useRef<HTMLDivElement>(null)
+  const endRef = useRef<HTMLDivElement>(null)
+
+  // Auto-scroll when 'suggestions' changes
+  useEffect(() => {
+    if (!containerRef.current) return
+    const container = containerRef.current
+    const isNearBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight < 100
+
+    if (isNearBottom) {
+      endRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [suggestions])
+
   return (
     <Card className="flex flex-col h-full bg-card p-0 overflow-hidden">
       <div className="border-b border-border p-4 shrink-0">
@@ -20,7 +36,7 @@ export default function SuggestionsPanel({
         <p className="text-xs text-muted-foreground mt-1">AI-powered recommendations</p>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div ref={containerRef} className="flex-1 overflow-y-auto">
         {/* Empty state */}
         {!hasSuggestions && (
           <div className="flex items-center justify-center h-full text-center p-4">
@@ -43,7 +59,7 @@ export default function SuggestionsPanel({
               >
                 <Zap className="h-4 w-4 mt-0.5 text-accent shrink-0" />
                 <div>
-                  <div className="text-xs text-muted-foreground mt-2">
+                  <div className="text-xs text-muted-foreground">
                     Question: {s.last_question}
                   </div>
 
@@ -91,6 +107,8 @@ export default function SuggestionsPanel({
                 </div>
               </div>
             ))}
+            {/* Invisible scroll target */}
+            <div ref={endRef} />
           </div>
         )}
       </div>
