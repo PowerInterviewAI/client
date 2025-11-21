@@ -40,12 +40,12 @@ export default function TranscriptPanel({ transcripts }: TranscriptionPanelProps
             {transcripts.map((item, idx) => (
               <div key={idx} className="space-y-1 pb-1 border-b border-border/50 last:border-0">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-semibold text-primary">{item.speaker === Speaker.SELF ? "Me" : "Other"}</span>
+                  <span className="text-xs font-semibold text-primary">{item.speaker === Speaker.SELF ? "ME" : "Interviewer"}</span>
                   <span className="text-xs text-muted-foreground shrink-0">
                     {new Date(item.timestamp).toLocaleString()}
                   </span>
                 </div>
-                <p className="text-sm text-foreground/80 leading-relaxed">{item.text}</p>
+                <pre className="text-sm text-foreground/80 leading-relaxed text-wrap">{item.text}</pre>
               </div>
             ))}
             {/* This invisible div acts as scroll target */}
