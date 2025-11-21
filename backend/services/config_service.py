@@ -49,7 +49,7 @@ class ConfigService:
         )
         cls.save_config()
 
-        if callback_on_audio_input_device_change is not None:
+        if callback_on_audio_input_device_change is not None and cfg.audio_input_device is not None:
             callback_on_audio_input_device_change(cfg.audio_input_device)
 
         return cls._config

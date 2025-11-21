@@ -2,7 +2,7 @@
 
 import { Card } from '@/components/ui/card'
 import { Loader2, Zap } from 'lucide-react'
-import { SuggestionRecord, Suggestion, SuggestionState } from '@/types/suggestion'
+import { Suggestion, SuggestionState } from '@/types/suggestion'
 
 interface SuggestionsPanelProps {
   suggestion?: Suggestion
@@ -13,8 +13,9 @@ export default function SuggestionsPanel({
   suggestion,
   suggestionState,
 }: SuggestionsPanelProps) {
-  const records: SuggestionRecord[] = suggestion?.records ?? []
+  const suggestedAnswer = suggestion?.answer ?? ""
 
+  const isPending = suggestionState === SuggestionState.PENDING
   const isLoading = suggestionState === SuggestionState.LOADING
   const isError = suggestionState === SuggestionState.ERROR
   const isSuccess = suggestionState === SuggestionState.SUCCESS
@@ -27,22 +28,12 @@ export default function SuggestionsPanel({
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {/* Empty state */}
-        {records.length === 0 && !isLoading && !isError && (
-          <div className="flex items-center justify-center h-full text-center p-4">
-            <div>
-              <p className="text-sm text-muted-foreground">No suggestions yet</p>
-              <p className="text-xs text-muted-foreground mt-1">Generate suggestions to get started</p>
-            </div>
-          </div>
-        )}
-
-        {/* Loading state */}
-        {isLoading && (
+        {/* Pending state (waiting to start streaming) */}
+        {isPending && (
           <div className="flex items-center justify-center h-40 p-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Generating suggestions...</span>
+              <span>Preparing to generate suggestions...</span>
             </div>
           </div>
         )}
@@ -56,28 +47,37 @@ export default function SuggestionsPanel({
           </div>
         )}
 
-        {/* Suggestions list (render only when we have results and not loading) */}
-        {records.length > 0 && (isSuccess || !isLoading) && (
+        {/* Streaming (LOADING) or Success → show content */}
+        {(isLoading || isSuccess) && suggestedAnswer.length > 0 && (
           <div className="p-4 space-y-3">
-            {records.map((record, idx) => (
-              <div
-                key={idx}
-                className="flex gap-3 pb-3 border-b border-border/40 last:border-0"
-              >
-                <Zap className="h-4 w-4 mt-0.5 text-accent shrink-0" />
-                <div>
-                  {record.purpose && (
-                    <div className="text-xs text-muted-foreground mt-2">Purpose: {record.purpose}</div>
-                  )}
-                  <div className="text-xs text-muted-foreground mb-1">
-                    Score: <span className="text-foreground/80 font-medium">{record.score}</span>
-                  </div>
-                  <div className="text-sm text-foreground/80 leading-relaxed">
-                    {record.content}
-                  </div>
+            <div className="flex gap-3 pb-3 border-b border-border/40 last:border-0">
+              <Zap className="h-4 w-4 mt-0.5 text-accent shrink-0" />
+              <div>
+                <div className="text-xs text-muted-foreground mt-2">
+                  Question: {suggestion?.last_question}
                 </div>
+                <div className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">
+                  {suggestedAnswer}
+                </div>
+                {isLoading && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    (streaming… more content may arrive)
+                  </div>
+                )}
               </div>
-            ))}
+            </div>
+          </div>
+        )}
+
+        {/* Empty state (idle, no answer yet) */}
+        {suggestedAnswer.length === 0 && !isLoading && !isError && !isPending && (
+          <div className="flex items-center justify-center h-full text-center p-4">
+            <div>
+              <p className="text-sm text-muted-foreground">No suggestions yet</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Generate suggestions to get started
+              </p>
+            </div>
           </div>
         )}
       </div>
@@ -85,7 +85,10 @@ export default function SuggestionsPanel({
       <div className="border-t border-border p-3 shrink-0">
         <div className="text-xs text-muted-foreground">
           {suggestion ? (
-            <span>Last generated: {new Date(suggestion.timestamp).toLocaleString()}</span>
+            <span>
+              Last generated:{" "}
+              {new Date(suggestion.timestamp).toLocaleString()}
+            </span>
           ) : (
             <span>No generation yet</span>
           )}

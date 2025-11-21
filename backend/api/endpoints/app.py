@@ -44,3 +44,4 @@ def start_engine() -> None:
 @router.get("/stop")
 def stop_engine() -> None:
     transcriptor.stop()
+    suggestion_service.stop_suggestion()

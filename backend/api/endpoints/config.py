@@ -2,8 +2,9 @@ from fastapi import APIRouter
 
 from backend.api.custom import RouteErrorHandler
 from backend.models.config import Config, ConfigUpdate
+from backend.schemas.app_state import RunningState
 from backend.services.config_service import ConfigService
-from backend.services.transcript_service import RunningState, transcriptor
+from backend.services.transcript_service import transcriptor
 
 router = APIRouter(
     route_class=RouteErrorHandler,

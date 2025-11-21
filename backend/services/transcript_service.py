@@ -28,8 +28,8 @@ class TranscriptService:
         self.other_asr: ASRService | None = None
 
         # Callbacks
-        self.callback_on_self_final: Callable[[list[Transcript]], None] = callback_on_self_final
-        self.callback_on_other_final: Callable[[list[Transcript]], None] = callback_on_other_final
+        self.callback_on_self_final = callback_on_self_final
+        self.callback_on_other_final = callback_on_other_final
 
         # Synchronization lock
         self._lock = threading.Lock()
@@ -175,5 +175,5 @@ class TranscriptService:
 
 
 transcriptor = TranscriptService(
-    callback_on_other_final=suggestion_service.generate_suggestion,
+    callback_on_other_final=suggestion_service.generate_suggestion_async,
 )

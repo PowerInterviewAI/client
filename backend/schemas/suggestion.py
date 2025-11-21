@@ -8,28 +8,10 @@ from backend.schemas.transcript import Transcript
 
 class SuggestionState(StrEnum):
     IDLE = "idle"
+    PENDING = "pending"
     LOADING = "loading"
     SUCCESS = "success"
     ERROR = "error"
-
-
-class SuggestionRecord(BaseModel):
-    score: Annotated[
-        int,
-        Field(
-            description="The score of the suggestion",
-            ge=0,
-            le=100,
-        ),
-    ]
-    purpose: Annotated[
-        str,
-        Field(description="The purpose of the suggestion"),
-    ]
-    content: Annotated[
-        str,
-        Field(description="The content of the suggestion"),
-    ]
 
 
 class Suggestion(BaseModel):
@@ -41,9 +23,9 @@ class Suggestion(BaseModel):
         str,
         Field(description="The last question"),
     ]
-    records: Annotated[
-        list[SuggestionRecord],
-        Field(description="The list of suggestion records"),
+    answer: Annotated[
+        str,
+        Field(description="The suggested answer"),
     ]
 
 
