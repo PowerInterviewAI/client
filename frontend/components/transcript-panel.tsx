@@ -30,13 +30,13 @@ export default function TranscriptPanel({ transcripts }: TranscriptionPanelProps
         <h3 className="font-semibold text-foreground text-xs">Transcription</h3>
       </div>
 
-      <div ref={containerRef} className="flex-1 overflow-y-auto">
+      <div ref={containerRef} className="flex-1 overflow-y-auto mb-2">
         {transcripts.length === 0 ? (
           <div className="flex items-center justify-center h-full text-center p-4">
             <p className="text-sm text-muted-foreground">No transcripts yet</p>
           </div>
         ) : (
-          <div className="p-2 space-y-2">
+          <div className="space-y-2 p-2">
             {transcripts.map((item, idx) => (
               <div key={idx} className="space-y-1 pb-1 border-b border-border/50 last:border-0">
                 <div className="flex items-center justify-between gap-2">

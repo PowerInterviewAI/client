@@ -119,7 +119,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col h-screen container mx-auto bg-background p-2">
       <TopBar
         userName={config?.profile?.username || ''}
         onProfileClick={() => setIsProfileOpen(true)}
@@ -127,7 +127,7 @@ export default function Home() {
         isDark={isDark}
       />
 
-      <div className="flex flex-1 overflow-hidden gap-2 p-2" style={{ height: 'calc(100vh - 120px)' }}>
+      <div className="flex flex-1 overflow-y-hidden gap-2 py-2" style={{ height: 'calc(100vh - 120px)' }}>
         {/* Left Column: Video + Transcription */}
         <div className="flex flex-col gap-2 w-96 shrink-0 min-h-0">
           {/* Video Panel - Small and compact */}
@@ -136,7 +136,7 @@ export default function Home() {
           </div>
 
           {/* Transcription Panel - Fill remaining space with scroll */}
-          <div className="flex-1 min-h-0 overflow-hidden">
+          <div className="flex-1 min-h-0 rounded-lg overflow-hidden">
             <TranscriptPanel
               transcripts={transcripts ?? []}
             />
@@ -144,14 +144,14 @@ export default function Home() {
         </div>
 
         {/* Center Column: Main Suggestions Panel */}
-        <div className="flex-1 min-w-0 min-h-0 overflow-hidden">
+        <div className="flex-1 min-w-0 min-h-0 rounded-lg">
           <SuggestionsPanel
             suggestions={appState?.suggestions}
           />
         </div>
       </div>
 
-      <div className="border-t border-border bg-card shadow-lg">
+      <div className="border border-border rounded-lg bg-card">
         <ControlPanel
           runningState={appState?.running_state ?? RunningState.IDLE}
           startMutation={startMutation}

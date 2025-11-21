@@ -42,7 +42,7 @@ export default function ProfileDialog({
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-      <div className="bg-card rounded-lg shadow-lg w-full max-w-lg max-h-[90vh] flex flex-col">
+      <div className="bg-card rounded-lg w-full max-w-lg max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-6 py-4 shrink-0">
           <h2 className="text-lg font-semibold text-foreground">Edit Profile</h2>
