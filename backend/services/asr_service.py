@@ -33,7 +33,7 @@ class ASRService:
         self.sample_rate = int(dev_info["defaultSampleRate"])
         self.channels = dev_info["maxInputChannels"]
 
-        self.model_path = model_path or cfg_fs.MODELS_DIR / "vosk-model-en-us-0.22-lgraph"
+        self.model_path = model_path or cfg_fs.MODELS_DIR / "vosk-model-en-us-0.42-gigaspeech"
 
         self.device_index = device_index
         self.block_duration = block_duration
