@@ -116,7 +116,7 @@ class TranscriptService:
 
         with self._lock:
             if self.transcripts and self.transcripts[-1].speaker == speaker:
-                self.transcripts[-1].text += "\n" + final
+                self.transcripts[-1].text += " " + final
             else:
                 self.transcripts.append(
                     Transcript(
