@@ -38,6 +38,7 @@ def get_app_state() -> AppState:
 def start_engine() -> None:
     app_state = ConfigService.load_config()
     transcriptor.start(input_device_index=app_state.audio_input_device)
+    suggestion_service.start_suggestion()
 
 
 @router.get("/stop")

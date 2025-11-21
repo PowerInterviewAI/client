@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Card } from '@/components/ui/card'
-import { Transcript } from '@/types/transcript'
+import { Speaker, Transcript } from '@/types/transcript'
 
 interface TranscriptionPanelProps {
   transcripts: Transcript[]
@@ -40,7 +40,7 @@ export default function TranscriptPanel({ transcripts }: TranscriptionPanelProps
             {transcripts.map((item, idx) => (
               <div key={idx} className="space-y-1 pb-1 border-b border-border/50 last:border-0">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-semibold text-primary">{item.speaker}</span>
+                  <span className="text-xs font-semibold text-primary">{item.speaker === Speaker.SELF ? "Me" : "Other"}</span>
                   <span className="text-xs text-muted-foreground shrink-0">
                     {new Date(item.timestamp).toLocaleString()}
                   </span>

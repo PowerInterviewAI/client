@@ -1,6 +1,6 @@
 export enum Speaker {
-    YOU = "You",
-    INTERVIEWER = "Interviewer",
+    SELF = "self",
+    OTHER = "other",
 }
 
 export interface Transcript {

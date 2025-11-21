@@ -58,7 +58,7 @@ export default function Home() {
       const response = await axiosClient.get<AppState>('/api/app/get-state');
       return response.data;
     },
-    refetchInterval: 100,
+    refetchInterval: 50,
   })
   const startMutation = useMutation<void, APIError, void>({
     mutationFn: async () => {
