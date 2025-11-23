@@ -16,6 +16,8 @@ class RunningState(StrEnum):
 
 
 class AppState(BaseModel):
+    """The app state."""
+
     transcripts: Annotated[
         list[Transcript],
         Field(description="The list of transcripts"),
@@ -27,4 +29,8 @@ class AppState(BaseModel):
     suggestions: Annotated[
         list[Suggestion],
         Field(description="The list of suggestions"),
+    ]
+    is_backend_live: Annotated[
+        bool,
+        Field(description="Whether the backend is live"),
     ]

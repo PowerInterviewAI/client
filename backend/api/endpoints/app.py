@@ -6,6 +6,7 @@ from backend.api.error_handler import RouteErrorHandler
 from backend.schemas.app_state import AppState
 from backend.services.audio_service import AudioService
 from backend.services.config_service import ConfigService
+from backend.services.service_status_manager import service_status_manager
 from backend.services.suggestion_service import suggestion_service
 from backend.services.transcript_service import transcriptor
 
@@ -31,6 +32,7 @@ def get_app_state() -> AppState:
         transcripts=transcriptor.get_transcripts(),
         running_state=transcriptor.running_state(),
         suggestions=suggestion_service.get_suggestions(),
+        is_backend_live=service_status_manager.is_backend_live(),
     )
 
 

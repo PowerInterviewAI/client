@@ -41,14 +41,14 @@ class AudioService:
     def get_loopback_device(cls) -> dict[str, Any]:
         with cls._lock:
             pa = pyaudio.PyAudio()
-            ret = pa.get_default_wasapi_loopback()  # type: ignore  # noqa: PGH003
+            ret = pa.get_default_wasapi_loopback()
             pa.terminate()
-            return ret
+            return ret  # type: ignore  # noqa: PGH003
 
     @classmethod
     def get_device_info_by_index(cls, index: int) -> dict[str, Any]:
         with cls._lock:
             pa = pyaudio.PyAudio()
-            ret = pa.get_device_info_by_index(index)  # type: ignore  # noqa: PGH003
+            ret = pa.get_device_info_by_index(index)
             pa.terminate()
-            return ret
+            return ret  # type: ignore  # noqa: PGH003

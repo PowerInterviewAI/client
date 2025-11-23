@@ -23,8 +23,8 @@ class ASRService:
 
     def __init__(
         self,
+        device_index: int,
         model_path: str | None = None,
-        device_index: int | None = None,
         block_duration: float = 0.25,
         on_final: Callable[[str], None] | None = None,
         on_partial: Callable[[str], None] | None = None,

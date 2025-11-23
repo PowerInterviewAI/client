@@ -9,7 +9,7 @@ from backend.api.endpint_filter import EndpointFilter
 from backend.api.router import router as api_router
 from backend.cfg.api import config as cfg_api
 from backend.cfg.fs import config as cfg_fs
-from backend.init import init_config
+from backend.init import init_backend_ping, init_config
 
 # Create FastAPI instance
 app = FastAPI(
@@ -22,6 +22,7 @@ app = FastAPI(
     },
     on_startup=[
         init_config,
+        init_backend_ping,
     ],
 )
 
