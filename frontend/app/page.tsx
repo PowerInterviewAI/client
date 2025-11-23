@@ -166,7 +166,7 @@ export default function Home() {
           audioDelay={config?.audio_delay ?? 0}
           // Video control options
           enableVideoControl={config?.enable_video_control ?? false}
-          cameraDevice={config?.camera_device ?? 0}
+          cameraDevice={config?.camera_device ?? ""}
           videoWidth={config?.video_width ?? 1280}
           videoHeight={config?.video_height ?? 720}
           enableFaceSwap={config?.enable_face_swap ?? false}

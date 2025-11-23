@@ -44,9 +44,9 @@ class Config(BaseModel):
         Field(description="Whether video control is enabled"),
     ] = False
     camera_device: Annotated[
-        int,
-        Field(description="The camera device index"),
-    ] = 0
+        str,
+        Field(description="The camera device id"),
+    ] = ""
     video_width: Annotated[
         int,
         Field(description="The video resolution width"),
@@ -77,7 +77,7 @@ class ConfigUpdate(BaseModel):
 
     # Video control options
     enable_video_control: bool | None = None
-    camera_device: int | None = None
+    camera_device: str | None = None
     video_width: int | None = None
     video_height: int | None = None
     enable_face_swap: bool | None = None

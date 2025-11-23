@@ -13,10 +13,12 @@ import { PyAudioDevice } from '@/types/audioDevice'
 import { Config } from '@/types/config'
 import { APIError } from '@/types/error'
 import { UseMutationResult } from '@tanstack/react-query'
-import { ArrowLeft, ArrowUp, Dot, Ellipsis, Languages, LucideMic2, Mic, Mic2, MicOff, Speaker } from 'lucide-react'
+import { ArrowLeft, ArrowUp, Camera, CameraOff, Dot, Ellipsis, Languages, LucideMic2, Mic, Mic2, MicOff, Speaker, Video, VideoOff } from 'lucide-react'
 import { Dialog, DialogContent, DialogTrigger } from './ui/dialog'
 import { DialogTitle } from '@radix-ui/react-dialog'
 import { toast } from 'sonner'
+import { useEffect, useRef, useState } from 'react'
+import { useVideoDevices } from '@/hooks/useVideoDevices'
 
 interface ControlPanelProps {
   runningState: RunningState
@@ -31,7 +33,7 @@ interface ControlPanelProps {
 
   // Video control options
   enableVideoControl: boolean
-  cameraDevice: number
+  cameraDevice: string
   videoWidth: number
   videoHeight: number
   enableFaceSwap: boolean
@@ -142,6 +144,62 @@ export default function ControlPanel({
   };
   const { dotClass: indicatorDotClass, label: indicatorLabel } = indicatorConfig[runningState];
 
+  const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false)
+  const videoPreviewRef = useRef<HTMLVideoElement>(null)
+  const previewStreamRef = useRef<MediaStream | null>(null)
+  const videoDevices = useVideoDevices();
+
+  useEffect(() => {
+    // Only run when dialog is open and video control enabled
+    if (!isVideoDialogOpen || !enableVideoControl) return
+    if (!navigator.mediaDevices?.getUserMedia) {
+      toast.error("Media devices API unavailable")
+      return
+    }
+
+    const startPreview = async () => {
+      // Stop previous stream before starting a new one
+      if (previewStreamRef.current) {
+        previewStreamRef.current.getTracks().forEach(t => t.stop())
+        previewStreamRef.current = null
+      }
+
+      const constraints: MediaStreamConstraints = {
+        video: {
+          deviceId: cameraDevice ? { exact: cameraDevice } : undefined,
+          width: videoWidth,
+          height: videoHeight,
+        },
+        audio: false,
+      }
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia(constraints)
+        previewStreamRef.current = stream
+        if (videoPreviewRef.current) {
+          videoPreviewRef.current.srcObject = stream
+          // Some browsers need play() after setting srcObject
+          await videoPreviewRef.current.play().catch(() => { })
+        }
+      } catch (err) {
+        toast.error("Unable to access camera")
+      }
+    }
+
+    startPreview()
+
+    // Cleanup when dialog closes or dependencies change
+    return () => {
+      if (previewStreamRef.current) {
+        previewStreamRef.current.getTracks().forEach(t => t.stop())
+        previewStreamRef.current = null
+      }
+      if (videoPreviewRef.current) {
+        videoPreviewRef.current.srcObject = null
+      }
+    }
+  }, [isVideoDialogOpen, enableVideoControl, cameraDevice, videoWidth, videoHeight])
+
   return (
     <div className="flex items-center gap-2 px-4 py-2">
       <div className='flex flex-1 justify-center gap-4 items-center'>
@@ -164,7 +222,7 @@ export default function ControlPanel({
         </div>
 
         {/* Audio Control Toggle + Dialog */}
-        <div className={`flex items-center rounded-md overflow-hidden border ${enableAudioControl ? '' : 'bg-destructive text-white'}`}>
+        <div className={`flex items-center rounded-xl overflow-hidden border ${enableAudioControl ? '' : 'bg-destructive text-white'}`}>
           <Button
             variant={enableAudioControl ? "outline" : "destructive"}
             size="icon"
@@ -221,6 +279,109 @@ export default function ControlPanel({
                   min={0}
                   step={10}
                 />
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {/* Video Control Toggle + Dialog */}
+        <div className={`flex items-center rounded-xl overflow-hidden border ${enableVideoControl ? '' : 'bg-destructive text-white'}`}>
+          <Button
+            variant={enableVideoControl ? "outline" : "destructive"}
+            size="icon"
+            className="h-8 w-8 border-none rounded-none"
+            onClick={() => {
+              toast.success(enableVideoControl ? "Video control disabled" : "Video control enabled")
+              updateConfig({ enable_video_control: !enableVideoControl })
+            }}
+          >
+            {enableVideoControl ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
+          </Button>
+
+          <Dialog open={isVideoDialogOpen} onOpenChange={setIsVideoDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant={enableVideoControl ? "outline" : "destructive"} size="icon" className="h-8 w-8 rounded-none border-none">
+                <Ellipsis className="h-4 w-4" />
+              </Button>
+            </DialogTrigger>
+
+            <DialogContent className="flex flex-col w-72 p-4 gap-4">
+              <DialogTitle>Video Control Options</DialogTitle>
+
+              {/* Camera Preview */}
+              <video
+                ref={videoPreviewRef}
+                autoPlay
+                muted
+                playsInline
+                className="w-full h-32 bg-black rounded-md object-contain"
+              />
+
+              {/* Camera Device Select */}
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Camera Device</label>
+                <Select
+                  value={`${cameraDevice}`}
+                  onValueChange={(v) => updateConfig({ camera_device: v })}
+                >
+                  <SelectTrigger className="h-8 w-full text-xs">
+                    <SelectValue placeholder="Select camera" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {videoDevices.map((device) => (
+                      <SelectItem key={device.deviceId} value={`${device.deviceId}`}>
+                        {device.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Resolution Select */}
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Resolution</label>
+                <Select
+                  value={`${videoWidth}x${videoHeight}`}
+                  onValueChange={(v) => {
+                    const [w, h] = v.split('x').map(Number)
+                    updateConfig({ video_width: w, video_height: h })
+                  }}
+                >
+                  <SelectTrigger className="h-8 w-full text-xs">
+                    <SelectValue placeholder="Select resolution" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {['640x480', '1280x720', '1920x1080'].map(res => (
+                      <SelectItem key={res} value={res}>{res}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Face Swap Toggle */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs">Face Swap</span>
+                <Button
+                  variant={enableFaceSwap ? "default" : "outline"}
+                  size="sm"
+                  className='w-16'
+                  onClick={() => updateConfig({ enable_face_swap: !enableFaceSwap })}
+                >
+                  {enableFaceSwap ? "On" : "Off"}
+                </Button>
+              </div>
+
+              {/* Face Enhance Toggle */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs">Face Enhance</span>
+                <Button
+                  variant={enableFaceEnhance ? "default" : "outline"}
+                  size="sm"
+                  className='w-16'
+                  onClick={() => updateConfig({ enable_face_enhance: !enableFaceEnhance })}
+                >
+                  {enableFaceEnhance ? "On" : "Off"}
+                </Button>
               </div>
             </DialogContent>
           </Dialog>

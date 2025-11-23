@@ -19,7 +19,7 @@ export interface Config {
 
     // Video control options
     enable_video_control: boolean;
-    camera_device: number;
+    camera_device: string;
     video_width: number;
     video_height: number;
     enable_face_swap: boolean;
