@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { useState } from 'react';
 import './globals.css';
+import { Toaster } from '@/components/ui/sonner';
 
 const geist = Geist({ subsets: ["latin"] });
 const geistMono = Geist_Mono({ subsets: ["latin"] });
@@ -41,6 +42,7 @@ export default function RootLayout({
           <QueryClientProvider client={queryClient}>
             {children}
           </QueryClientProvider>
+          <Toaster richColors={true} position="top-center" theme='dark' />
         </ThemeProvider>
       </body>
     </html>

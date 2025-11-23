@@ -13,7 +13,10 @@ import { PyAudioDevice } from '@/types/audioDevice'
 import { Config } from '@/types/config'
 import { APIError } from '@/types/error'
 import { UseMutationResult } from '@tanstack/react-query'
-import { Languages, Mic, MicOff, Speaker } from 'lucide-react'
+import { ArrowLeft, ArrowUp, Dot, Ellipsis, Languages, LucideMic2, Mic, Mic2, MicOff, Speaker } from 'lucide-react'
+import { Dialog, DialogContent, DialogTrigger } from './ui/dialog'
+import { DialogTitle } from '@radix-ui/react-dialog'
+import { toast } from 'sonner'
 
 interface ControlPanelProps {
   runningState: RunningState
@@ -57,12 +60,23 @@ type IndicatorConfig = {
 export default function ControlPanel({
   runningState,
   audioInputDevices,
-  audioInputDevice: audioInputDevice,
   audioOutputDevices,
-  audioControlDevice,
+  audioInputDevice,
   startMutation,
   stopMutation,
   updateConfig,
+
+  // Audio control options
+  enableAudioControl,
+  audioControlDevice,
+  audioDelay,
+  // Video control options
+  enableVideoControl,
+  cameraDevice,
+  videoWidth,
+  videoHeight,
+  enableFaceSwap,
+  enableFaceEnhance,
 }: ControlPanelProps) {
 
   const stateConfig: Record<RunningState, StateConfig> = {
@@ -134,7 +148,7 @@ export default function ControlPanel({
 
         {/* Microphone Select */}
         <div className='flex items-center'>
-          <Mic className="mr-1.5 h-3.5 w-3.5" />
+          <Mic2 className="mr-1.5 h-3.5 w-3.5" />
           <Select value={audioInputDevice} onValueChange={(v) => updateConfig({ audio_input_device: Number(v) })}>
             <SelectTrigger className="h-8 w-32 text-xs shrink-0">
               <SelectValue placeholder="Microphone" />
@@ -149,23 +163,67 @@ export default function ControlPanel({
           </Select>
         </div>
 
-        {/* Audio Control Options */}
-        <div className='flex items-center'>
-          <Speaker className="mr-1.5 h-3.5 w-3.5" />
-          <Select value={audioControlDevice} onValueChange={(v) => updateConfig({ audio_control_device: Number(v) })}>
-            <SelectTrigger className="h-8 w-32 text-xs shrink-0">
-              <SelectValue placeholder="Output" />
-            </SelectTrigger>
-            <SelectContent>
-              {
-                audioOutputDevices.map((device) => (
-                  <SelectItem key={device.index} value={`${device.index}`}>
-                    {device.name}
-                  </SelectItem>
-                ))
+        {/* Audio Control Toggle + Dialog */}
+        <div className={`flex items-center rounded-md overflow-hidden border ${enableAudioControl ? '' : 'bg-destructive text-white'}`}>
+          <Button
+            variant={enableAudioControl ? "outline" : "destructive"}
+            size="icon"
+            className={`h-8 w-8 border-none rounded-none ${enableAudioControl ? '' : ''}`}
+            onClick={() => {
+              if (enableAudioControl) {
+                toast.success("Audio control disabled");
+              } else {
+                toast.success("Audio control enabled");
               }
-            </SelectContent>
-          </Select>
+              updateConfig({ enable_audio_control: !enableAudioControl });
+            }}
+          >
+            {enableAudioControl ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
+          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant={enableAudioControl ? "outline" : "destructive"} size="icon" className="h-8 w-8 rounded-none border-none">
+                <Ellipsis className="h-4 w-4" />
+              </Button>
+            </DialogTrigger>
+
+            <DialogContent className="flex flex-col w-72 p-4">
+              <DialogTitle>Audio Control Options</DialogTitle>
+
+              {/* Output Device Select */}
+              <div className="mb-3">
+                <label className="text-xs text-muted-foreground mb-1 block">Output Device</label>
+                <Select
+                  value={audioControlDevice}
+                  onValueChange={(v) => updateConfig({ audio_control_device: Number(v) })}
+                >
+                  <SelectTrigger className="h-8 w-full text-xs">
+                    <SelectValue placeholder="Select device" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {audioOutputDevices.map((device) => (
+                      <SelectItem key={device.index} value={`${device.index}`}>
+                        {device.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Audio Delay Input */}
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Audio Delay (ms)</label>
+                <input
+                  type="number"
+                  value={audioDelay}
+                  onChange={(e) => updateConfig({ audio_delay: Number(e.target.value) })}
+                  className="w-full h-8 px-2 text-xs border rounded-md bg-background"
+                  min={0}
+                  step={10}
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Language Select */}
@@ -188,19 +246,20 @@ export default function ControlPanel({
         <Button
           onClick={onClick}
           size="sm"
-          className={`shrink-0 h-8 px-3 text-xs font-medium ${className}`}
+          className={`shrink-0 h-8 px-3 text-xs font-medium ${className}`
+          }
           disabled={disabled}
         >
           {icon}
           {label}
-        </Button>
-      </div>
+        </Button >
+      </div >
 
       {/* Status indicator */}
-      <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-muted/50">
+      < div className="flex items-center gap-2 px-2 py-1 rounded-md bg-muted/50" >
         <div className={`h-2 w-2 rounded-full ${indicatorDotClass}`} />
         <span className="text-xs text-muted-foreground">{indicatorLabel}</span>
-      </div>
-    </div>
+      </div >
+    </div >
   )
 }
