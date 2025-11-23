@@ -149,7 +149,7 @@ export default function ControlPanel({
           </Select>
         </div>
 
-        {/* Output Audio Select */}
+        {/* Audio Control Options */}
         <div className='flex items-center'>
           <Speaker className="mr-1.5 h-3.5 w-3.5" />
           <Select value={audioControlDevice} onValueChange={(v) => updateConfig({ audio_control_device: Number(v) })}>
