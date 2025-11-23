@@ -19,18 +19,66 @@ class Config(BaseModel):
         int,
         Field(description="The audio input device index"),
     ] = 0
-    audio_output_device: Annotated[
-        int,
-        Field(description="The audio output device index"),
-    ] = 0
     language: Annotated[
         Language,
         Field(description="The language"),
     ] = Language.EN
 
+    # Audio control options
+    enable_audio_control: Annotated[
+        bool,
+        Field(description="Whether audio control is enabled"),
+    ] = False
+    audio_control_device: Annotated[
+        int,
+        Field(description="The audio control device index"),
+    ] = 0
+    audio_delay: Annotated[
+        int,
+        Field(description="The audio delay in milliseconds"),
+    ] = 0
+
+    # Video control options
+    enable_video_control: Annotated[
+        bool,
+        Field(description="Whether video control is enabled"),
+    ] = False
+    camera_device: Annotated[
+        int,
+        Field(description="The camera device index"),
+    ] = 0
+    video_width: Annotated[
+        int,
+        Field(description="The video resolution width"),
+    ] = 1280
+    video_height: Annotated[
+        int,
+        Field(description="The video resolution height"),
+    ] = 720
+    enable_face_swap: Annotated[
+        bool,
+        Field(description="Whether face swap is enabled"),
+    ] = False
+    enable_face_enhance: Annotated[
+        bool,
+        Field(description="Whether face enhancement is enabled"),
+    ] = False
+
 
 class ConfigUpdate(BaseModel):
     profile: UserProfile | None = None
     audio_input_device: int | None = None
-    audio_output_device: int | None = None
     language: Language | None = None
+
+    # Audio control options
+    enable_audio_control: bool | None = None
+    audio_control_device: int | None = None
+    audio_delay: int | None = None
+
+    # Video control options
+    enable_video_control: bool | None = None
+    camera_device: int | None = None
+    video_width: int | None = None
+    video_height: int | None = None
+    enable_face_swap: bool | None = None
+    enable_face_enhance: bool | None = None

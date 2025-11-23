@@ -6,6 +6,10 @@ COLLECTION_NAME = "users"
 
 
 class UserProfile(BaseModel):
+    photo: Annotated[
+        str,
+        Field(description="The photo of the user"),
+    ] = ""
     username: Annotated[
         str,
         Field(description="The username of the user"),

@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { AppState, RunningState } from '@/types/appState'
+import { RunningState } from '@/types/appState'
 import { PyAudioDevice } from '@/types/audioDevice'
 import { Config } from '@/types/config'
 import { APIError } from '@/types/error'
@@ -19,8 +19,22 @@ interface ControlPanelProps {
   runningState: RunningState
   audioInputDevices: PyAudioDevice[]
   audioOutputDevices: PyAudioDevice[]
-  selectedInputDevice: string
-  selectedOutputDevice: string
+  audioInputDevice: string
+
+  // Audio control options
+  enableAudioControl: boolean
+  audioControlDevice: string
+  audioDelay: number
+
+  // Video control options
+  enableVideoControl: boolean
+  cameraDevice: number
+  videoWidth: number
+  videoHeight: number
+  enableFaceSwap: boolean
+  enableFaceEnhance: boolean
+
+  // Callbacks
   startMutation: UseMutationResult<void, APIError, void, unknown>
   stopMutation: UseMutationResult<void, APIError, void, unknown>
   updateConfig: (config: Partial<Config>) => void
@@ -43,9 +57,9 @@ type IndicatorConfig = {
 export default function ControlPanel({
   runningState,
   audioInputDevices,
-  selectedInputDevice,
+  audioInputDevice: audioInputDevice,
   audioOutputDevices,
-  selectedOutputDevice,
+  audioControlDevice,
   startMutation,
   stopMutation,
   updateConfig,
@@ -121,7 +135,7 @@ export default function ControlPanel({
         {/* Microphone Select */}
         <div className='flex items-center'>
           <Mic className="mr-1.5 h-3.5 w-3.5" />
-          <Select value={selectedInputDevice} onValueChange={(v) => updateConfig({ audio_input_device: Number(v) })}>
+          <Select value={audioInputDevice} onValueChange={(v) => updateConfig({ audio_input_device: Number(v) })}>
             <SelectTrigger className="h-8 w-32 text-xs shrink-0">
               <SelectValue placeholder="Microphone" />
             </SelectTrigger>
@@ -138,7 +152,7 @@ export default function ControlPanel({
         {/* Output Audio Select */}
         <div className='flex items-center'>
           <Speaker className="mr-1.5 h-3.5 w-3.5" />
-          <Select value={selectedOutputDevice} onValueChange={(v) => updateConfig({ audio_output_device: Number(v) })}>
+          <Select value={audioControlDevice} onValueChange={(v) => updateConfig({ audio_control_device: Number(v) })}>
             <SelectTrigger className="h-8 w-32 text-xs shrink-0">
               <SelectValue placeholder="Output" />
             </SelectTrigger>
