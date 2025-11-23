@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { X } from 'lucide-react'
-import { AppState } from '@/types/appState'
 import { Config } from '@/types/config'
 
 interface ProfileDialogProps {
