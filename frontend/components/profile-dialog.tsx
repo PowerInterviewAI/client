@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { X } from 'lucide-react'
-import { AppState } from '@/types/appState'
 import { Config } from '@/types/config'
 
 interface ProfileDialogProps {
@@ -80,7 +79,7 @@ export default function ProfileDialog({
                 value={profileData}
                 onChange={(e) => setProfileData(e.target.value)}
                 placeholder="Enter profile details"
-                className="text-sm min-h-[100px]"
+                className="text-sm min-h-[100px] max-h-[200px] overflow-auto"
               />
             </div>
           </div>

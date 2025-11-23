@@ -19,7 +19,7 @@ class SuggestionService:
 
     def get_suggestions(self) -> list[Suggestion]:
         with self._lock:
-            return self._suggestions.values()
+            return list(self._suggestions.values())
 
     def generate_suggestion(self, transcripts: list[Transcript]) -> None:
         try:
