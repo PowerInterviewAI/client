@@ -202,27 +202,49 @@ export default function ControlPanel({
 
   return (
     <div className="flex items-center gap-2 px-4 py-2">
-      <div className='flex flex-1 justify-center gap-4 items-center'>
+      <div className='flex flex-1 justify-center gap-2 items-center'>
 
-        {/* Microphone Select */}
-        <div className='flex items-center'>
-          <Mic2 className="mr-1.5 h-3.5 w-3.5" />
-          <Select value={audioInputDevice} onValueChange={(v) => updateConfig({ audio_input_device: Number(v) })}>
-            <SelectTrigger className="h-8 w-32 text-xs shrink-0">
-              <SelectValue placeholder="Microphone" />
-            </SelectTrigger>
-            <SelectContent>
-              {audioInputDevices.map((device) => (
-                <SelectItem key={device.index} value={`${device.index}`}>
-                  {device.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        {/* Microphone Select + Dialog */}
+        <div className="flex items-center rounded-full overflow-hidden border">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button
+                variant="default"
+                size="icon"
+                className="h-8 w-8 border-none rounded-none"
+              >
+                <Mic2 className="h-4 w-4" />
+              </Button>
+            </DialogTrigger>
+
+            <DialogContent className="flex flex-col w-72 p-4">
+              <DialogTitle>Microphone Options</DialogTitle>
+
+              {/* Microphone Select */}
+              <div className="mb-3">
+                <label className="text-xs text-muted-foreground mb-1 block">Microphone</label>
+                <Select
+                  value={audioInputDevice}
+                  onValueChange={(v) => updateConfig({ audio_input_device: Number(v) })}
+                >
+                  <SelectTrigger className="h-8 w-full text-xs">
+                    <SelectValue placeholder="Select microphone" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {audioInputDevices.map((device) => (
+                      <SelectItem key={device.index} value={`${device.index}`}>
+                        {device.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Audio Control Toggle + Dialog */}
-        <div className={`flex items-center rounded-xl overflow-hidden border ${enableAudioControl ? '' : 'bg-destructive text-white'}`}>
+        <div className={`flex items-center rounded-full overflow-hidden border ${enableAudioControl ? '' : 'bg-destructive text-white'}`}>
           <Button
             variant={enableAudioControl ? "outline" : "destructive"}
             size="icon"
@@ -285,7 +307,7 @@ export default function ControlPanel({
         </div>
 
         {/* Video Control Toggle + Dialog */}
-        <div className={`flex items-center rounded-xl overflow-hidden border ${enableVideoControl ? '' : 'bg-destructive text-white'}`}>
+        <div className={`flex items-center rounded-full overflow-hidden border ${enableVideoControl ? '' : 'bg-destructive text-white'}`}>
           <Button
             variant={enableVideoControl ? "outline" : "destructive"}
             size="icon"
