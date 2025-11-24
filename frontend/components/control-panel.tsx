@@ -96,16 +96,16 @@ export default function ControlPanel({
     },
     [RunningState.RUNNING]: {
       onClick: () => stopMutation.mutate(),
-      className: 'bg-destructive hover:bg-destructive/90 animate-pulse',
+      className: 'bg-destructive hover:bg-destructive/90',
       disabled: false,
       icon: <Square className="h-3.5 w-3.5" />,
       label: 'Stop',
     },
     [RunningState.STOPPING]: {
       onClick: () => {},
-      className: 'bg-destructive hover:bg-destructive/90 animate-pulse',
+      className: 'bg-destructive hover:bg-destructive/90',
       disabled: true,
-      icon: <Ellipsis className="h-3.5 w-3.5" />,
+      icon: <Ellipsis className="h-3.5 w-3.5 animate-pulse" />,
       label: 'Stopping...',
     },
     [RunningState.STOPPED]: {
