@@ -251,7 +251,6 @@ export default function ControlPanel({
             size="icon"
             className={`h-8 w-8 border-none rounded-none ${enableAudioControl ? '' : ''}`}
             title="Toggle audio control"
-            disabled={runningState === RunningState.IDLE}
             onClick={() => {
               if (enableAudioControl) {
                 toast.success("Audio control disabled");
