@@ -11,7 +11,6 @@ import { AppState, RunningState } from '@/types/appState'
 import { PyAudioDevice } from '@/types/audioDevice'
 import { Config } from '@/types/config'
 import { APIError } from '@/types/error'
-import { SuggestionState } from '@/types/suggestion'
 import { Transcript } from '@/types/transcript'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
@@ -177,6 +176,7 @@ export default function Home() {
       <ProfileDialog
         isOpen={isProfileOpen}
         onOpenChange={setIsProfileOpen}
+        initialPhoto={config?.profile?.photo ?? ""}
         initialName={config?.profile?.username ?? ""}
         initialProfileData={config?.profile?.profile_data ?? ""}
         updateConfig={updateConfig}

@@ -10,6 +10,7 @@ import { Config } from '@/types/config'
 interface ProfileDialogProps {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
+  initialPhoto: string
   initialName: string
   initialProfileData: string
   updateConfig: (config: Partial<Config>) => void
@@ -18,23 +19,37 @@ interface ProfileDialogProps {
 export default function ProfileDialog({
   isOpen,
   onOpenChange,
+  initialPhoto,
   initialName,
   initialProfileData,
   updateConfig,
 }: ProfileDialogProps) {
+  const [photo, setPhoto] = useState(initialPhoto)
   const [name, setName] = useState(initialName)
   const [profileData, setProfileData] = useState(initialProfileData)
 
   useEffect(() => {
     if (isOpen) {
+      setPhoto(initialPhoto)
       setName(initialName)
       setProfileData(initialProfileData)
     }
   }, [isOpen, initialName, initialProfileData])
 
   const handleSave = () => {
-    updateConfig({ profile: { username: name, profile_data: profileData } })
+    updateConfig({ profile: { photo: photo, username: name, profile_data: profileData } })
     onOpenChange(false)
+  }
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setPhoto(reader.result as string) // base64 string
+    }
+    reader.readAsDataURL(file)
   }
 
   if (!isOpen) return null
@@ -57,6 +72,26 @@ export default function ProfileDialog({
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
           <div className="p-6 space-y-5">
+            {/* Photo Upload */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                Profile Photo
+              </label>
+              {photo && (
+                <img
+                  src={photo}
+                  alt="Profile preview"
+                  className="w-24 h-24 rounded-full object-cover mb-2 border"
+                />
+              )}
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoUpload}
+                className="h-9 text-sm"
+              />
+            </div>
+
             {/* Username */}
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">

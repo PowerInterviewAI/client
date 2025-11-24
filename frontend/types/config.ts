@@ -1,4 +1,5 @@
 export interface UserProfile {
+    photo: string;
     username: string;
     profile_data: string;
 }
