@@ -3,6 +3,7 @@ import json
 import pyaudiowpatch as pyaudio
 from loguru import logger
 
+from backend.cfg.fs import config as cfg_fs
 from backend.services.asr_service import ASRService
 
 
@@ -32,6 +33,7 @@ def test_asr_service() -> None:
 
     service = ASRService(
         device_index=loopback_dev["index"],
+        model_path=str(cfg_fs.MODELS_DIR / "vosk-model-en-us-0.22-lgraph"),
         on_final=on_final,
         on_partial=on_partial,
     )

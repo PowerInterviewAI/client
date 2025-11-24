@@ -38,8 +38,11 @@ def get_app_state() -> AppState:
 
 @router.get("/start")
 def start_engine() -> None:
-    app_state = ConfigService.load_config()
-    transcriptor.start(input_device_index=app_state.audio_input_device)
+    app_cfg = ConfigService.load_config()
+    transcriptor.start(
+        input_device_index=app_cfg.audio_input_device,
+        asr_model_name=app_cfg.asr_model,
+    )
     suggestion_service.start_suggestion()
 
 

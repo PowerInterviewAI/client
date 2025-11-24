@@ -8,6 +8,7 @@ class Config(BaseSettings):
 
     BACKEND_PING_URL: str = f"{BACKEND_URL}/api/ping"
     BACKEND_SUGGESTIONS_URL: str = f"{BACKEND_URL}/api/llm/suggestion"
+    BACKEND_WEBRTC_OFFER_URL: str = f"{BACKEND_URL}/api/webrtc/offer"
 
     HTTP_TIMEOUT: int = 10
 

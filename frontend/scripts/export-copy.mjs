@@ -1,8 +1,8 @@
-import fs from "fs";
-import path from "path";
+import fs from 'fs';
+import path from 'path';
 
-const src = path.resolve("out");
-const dest = path.resolve("../backend/public");
+const src = path.resolve('out');
+const dest = path.resolve('../backend/public');
 
 function copyRecursive(srcDir, destDir) {
   if (!fs.existsSync(destDir)) {
@@ -22,4 +22,4 @@ function copyRecursive(srcDir, destDir) {
 }
 
 copyRecursive(src, dest);
-console.log("Export copied to backend/public");
+console.log('Export copied to backend/public');

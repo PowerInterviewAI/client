@@ -1,16 +1,23 @@
-import { Button } from '@/components/ui/button'
-import { User, Moon, Sun } from 'lucide-react'
+import { Button } from '@/components/ui/button';
+import { Moon, Sun } from 'lucide-react';
 
 interface TopBarProps {
-  userName: string
-  onProfileClick: () => void
-  onThemeToggle: () => void
-  isDark: boolean
+  photo: string;
+  userName: string;
+  onProfileClick: () => void;
+  onThemeToggle: () => void;
+  isDark: boolean;
 }
 
-export default function TopBar({ userName, onProfileClick, onThemeToggle, isDark }: TopBarProps) {
+export default function TopBar({
+  photo,
+  userName,
+  onProfileClick,
+  onThemeToggle,
+  isDark,
+}: TopBarProps) {
   return (
-    <div className="border border-border rounded-lg bg-card px-4 py-3 shrink-0">
+    <div className="border border-border rounded-lg bg-card p-2 shrink-0">
       <div className="flex items-center justify-between">
         {/* Left: App Logo and Title */}
         <div className="flex items-center gap-3">
@@ -37,16 +44,26 @@ export default function TopBar({ userName, onProfileClick, onThemeToggle, isDark
             variant="ghost"
             size="sm"
             onClick={onProfileClick}
-            className="rounded-md hover:bg-muted"
+            className="rounded-md hover:bg-muted h-10"
             title="Edit profile"
           >
             <div className="flex items-center gap-2 text-foreground">
+              {photo ? (
+                <img
+                  src={photo}
+                  alt="Profile preview"
+                  className="w-8 h-8 rounded-full object-cover border shadow-sm"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-lg font-semibold text-muted-foreground border shadow-sm">
+                  {userName ? userName.charAt(0).toUpperCase() : '?'}
+                </div>
+              )}
               <p className="text-sm font-medium">{userName}</p>
-              <User className="h-4 w-4" />
             </div>
           </Button>
         </div>
       </div>
     </div>
-  )
+  );
 }

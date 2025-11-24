@@ -1,5 +1,3 @@
-from collections.abc import Callable
-
 from loguru import logger
 
 from backend.cfg.fs import config as cfg_fs
@@ -38,7 +36,6 @@ class ConfigService:
     def update_config(
         cls,
         cfg: ConfigUpdate,
-        callback_on_audio_input_device_change: Callable[[int], None] | None = None,
     ) -> Config:
         update_dict = cfg.model_dump(exclude_unset=True)
         old_dict = cls._config.model_dump(exclude_unset=True)
@@ -50,8 +47,5 @@ class ConfigService:
             }
         )
         cls.save_config()
-
-        if callback_on_audio_input_device_change is not None and cfg.audio_input_device is not None:
-            callback_on_audio_input_device_change(cfg.audio_input_device)
 
         return cls._config
