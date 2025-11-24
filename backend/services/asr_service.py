@@ -17,6 +17,7 @@ class ASRService:
     """Synchronous speech-to-text service using Vosk and PyAudio."""
 
     _model: Model | None = None
+    _model_path: str | None = None
 
     TARGET_RATE = 16_000
 
@@ -47,9 +48,10 @@ class ASRService:
         self.pa = pyaudio.PyAudio()
 
         # Vosk setup
-        if not ASRService._model:
+        if not ASRService._model or ASRService._model_path != model_path:
             logger.info(f"Loading Vosk model: {model_path}")
             ASRService._model = Model(str(model_path))
+        ASRService._model_path = model_path
 
         logger.info("Loaded Vosk model")
         self.recognizer = KaldiRecognizer(self._model, self.TARGET_RATE)
