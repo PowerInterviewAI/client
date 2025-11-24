@@ -6,6 +6,7 @@ from typing import Any
 
 from loguru import logger
 
+from backend.cfg.fs import config as cfg_fs
 from backend.schemas.app_state import RunningState
 from backend.schemas.transcript import Speaker, Transcript
 from backend.services.asr_service import ASRService
@@ -24,6 +25,7 @@ class TranscriptService:
         self.transcript_self_partial = Transcript(speaker=Speaker.SELF, text="", timestamp=0)
         self.transcript_other_partial = Transcript(speaker=Speaker.OTHER, text="", timestamp=0)
 
+        self.asr_model_name: str | None = None
         self.self_asr: ASRService | None = None
         self.other_asr: ASRService | None = None
 
@@ -35,7 +37,7 @@ class TranscriptService:
         self._lock = threading.Lock()
         self._running_state = RunningState.IDLE
 
-    def start(self, input_device_index: int) -> None:
+    def start(self, input_device_index: int, asr_model_name: str) -> None:
         self.stop()
 
         self.clear_transcripts()
@@ -43,18 +45,21 @@ class TranscriptService:
         with self._lock:
             self._running_state = RunningState.STARTING
 
-        if self.self_asr is None:
+        if self.self_asr is None or self.asr_model_name != asr_model_name:
             self.self_asr = ASRService(
                 device_index=input_device_index,
+                model_path=str(cfg_fs.MODELS_DIR / asr_model_name),
                 on_final=self.on_self_final,
                 on_partial=self.on_self_partial,
             )
-        if self.other_asr is None:
+        if self.other_asr is None or self.asr_model_name != asr_model_name:
             self.other_asr = ASRService(
                 device_index=AudioService.get_loopback_device().get("index", 0),
+                model_path=str(cfg_fs.MODELS_DIR / asr_model_name),
                 on_final=self.on_other_final,
                 on_partial=self.on_other_partial,
             )
+        self.asr_model_name = asr_model_name
 
         self.self_asr.start(device_index=input_device_index)
         self.other_asr.start()

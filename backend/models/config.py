@@ -15,14 +15,20 @@ class Config(BaseModel):
         UserProfile,
         Field(description="The user profile"),
     ] = UserProfile()
-    audio_input_device: Annotated[
-        int,
-        Field(description="The audio input device index"),
-    ] = 0
     language: Annotated[
         Language,
         Field(description="The language"),
     ] = Language.EN
+
+    # Transcript options
+    audio_input_device: Annotated[
+        int,
+        Field(description="The audio input device index"),
+    ] = 0
+    asr_model: Annotated[
+        str,
+        Field(description="The ASR model name to be used"),
+    ] = "vosk-model-en-us-0.22-lgraph"
 
     # Audio control options
     enable_audio_control: Annotated[
@@ -67,8 +73,11 @@ class Config(BaseModel):
 
 class ConfigUpdate(BaseModel):
     profile: UserProfile | None = None
-    audio_input_device: int | None = None
     language: Language | None = None
+
+    # Transcript options
+    audio_input_device: int | None = None
+    asr_model: str | None = None
 
     # Audio control options
     enable_audio_control: bool | None = None
