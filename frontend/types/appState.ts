@@ -1,4 +1,4 @@
-import { Suggestion, SuggestionState } from "./suggestion"
+import { Suggestion } from "./suggestion"
 import { Transcript } from "./transcript"
 
 export enum RunningState {

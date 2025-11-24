@@ -8,17 +8,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useVideoDevices } from '@/hooks/useVideoDevices'
 import { RunningState } from '@/types/appState'
 import { PyAudioDevice } from '@/types/audioDevice'
 import { Config } from '@/types/config'
 import { APIError } from '@/types/error'
-import { UseMutationResult } from '@tanstack/react-query'
-import { ArrowLeft, ArrowUp, Camera, CameraOff, Dot, Ellipsis, Languages, LucideMic2, Mic, Mic2, MicOff, Speaker, Video, VideoOff } from 'lucide-react'
-import { Dialog, DialogContent, DialogTrigger } from './ui/dialog'
 import { DialogTitle } from '@radix-ui/react-dialog'
-import { toast } from 'sonner'
+import { UseMutationResult } from '@tanstack/react-query'
+import { Ellipsis, Mic, Mic2, MicOff, Play, Square, Video, VideoOff } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { useVideoDevices } from '@/hooks/useVideoDevices'
+import { toast } from 'sonner'
+import { Dialog, DialogContent, DialogTrigger } from './ui/dialog'
 
 interface ControlPanelProps {
   runningState: RunningState
@@ -86,35 +86,35 @@ export default function ControlPanel({
       onClick: () => startMutation.mutate(),
       className: "bg-primary hover:bg-primary/90",
       disabled: false,
-      icon: <Mic className="mr-1.5 h-3.5 w-3.5" />,
+      icon: <Play className="h-3.5 w-3.5" />,
       label: "Start",
     },
     [RunningState.STARTING]: {
       onClick: () => { },
-      className: "bg-primary hover:bg-primary/90",
+      className: "bg-primary hover:bg-primary/90 animate-pulse",
       disabled: true,
-      icon: <Mic className="mr-1.5 h-3.5 w-3.5" />,
+      icon: <Ellipsis className="h-3.5 w-3.5" />,
       label: "Starting...",
     },
     [RunningState.RUNNING]: {
       onClick: () => stopMutation.mutate(),
-      className: "bg-destructive hover:bg-destructive/90",
+      className: "bg-destructive hover:bg-destructive/90 animate-pulse",
       disabled: false,
-      icon: <MicOff className="mr-1.5 h-3.5 w-3.5" />,
+      icon: <Square className="h-3.5 w-3.5" />,
       label: "Stop",
     },
     [RunningState.STOPPING]: {
       onClick: () => { },
-      className: "bg-destructive hover:bg-destructive/90",
+      className: "bg-destructive hover:bg-destructive/90 animate-pulse",
       disabled: true,
-      icon: <MicOff className="mr-1.5 h-3.5 w-3.5" />,
+      icon: <Ellipsis className="h-3.5 w-3.5" />,
       label: "Stopping...",
     },
     [RunningState.STOPPED]: {
       onClick: () => startMutation.mutate(),
       className: "bg-primary hover:bg-primary/90",
       disabled: false,
-      icon: <Mic className="mr-1.5 h-3.5 w-3.5" />,
+      icon: <Play className="h-3.5 w-3.5" />,
       label: "Start",
     },
   };
@@ -212,13 +212,14 @@ export default function ControlPanel({
                 variant="default"
                 size="icon"
                 className="h-8 w-8 border-none rounded-none"
+                title='Select microphone'
               >
                 <Mic2 className="h-4 w-4" />
               </Button>
             </DialogTrigger>
 
             <DialogContent className="flex flex-col w-72 p-4">
-              <DialogTitle>Microphone Options</DialogTitle>
+              <DialogTitle>Select Microphone</DialogTitle>
 
               {/* Microphone Select */}
               <div className="mb-3">
@@ -249,6 +250,8 @@ export default function ControlPanel({
             variant={enableAudioControl ? "outline" : "destructive"}
             size="icon"
             className={`h-8 w-8 border-none rounded-none ${enableAudioControl ? '' : ''}`}
+            title="Toggle audio control"
+            disabled={runningState === RunningState.IDLE}
             onClick={() => {
               if (enableAudioControl) {
                 toast.success("Audio control disabled");
@@ -262,7 +265,12 @@ export default function ControlPanel({
           </Button>
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant={enableAudioControl ? "outline" : "destructive"} size="icon" className="h-8 w-8 rounded-none border-none">
+              <Button
+                variant={enableAudioControl ? "outline" : "destructive"}
+                size="icon"
+                className="h-8 w-8 rounded-none border-none"
+                title="Audio control options"
+              >
                 <Ellipsis className="h-4 w-4" />
               </Button>
             </DialogTrigger>
@@ -312,6 +320,7 @@ export default function ControlPanel({
             variant={enableVideoControl ? "outline" : "destructive"}
             size="icon"
             className="h-8 w-8 border-none rounded-none"
+            title="Toggle video control"
             onClick={() => {
               toast.success(enableVideoControl ? "Video control disabled" : "Video control enabled")
               updateConfig({ enable_video_control: !enableVideoControl })
@@ -322,7 +331,7 @@ export default function ControlPanel({
 
           <Dialog open={isVideoDialogOpen} onOpenChange={setIsVideoDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant={enableVideoControl ? "outline" : "destructive"} size="icon" className="h-8 w-8 rounded-none border-none">
+              <Button variant={enableVideoControl ? "outline" : "destructive"} size="icon" className="h-8 w-8 rounded-none border-none" title="Video control options">
                 <Ellipsis className="h-4 w-4" />
               </Button>
             </DialogTrigger>
@@ -416,17 +425,17 @@ export default function ControlPanel({
         <Button
           onClick={onClick}
           size="sm"
-          className={`shrink-0 h-8 px-3 text-xs font-medium ${className}`
-          }
+          className={`h-10 w-16 text-xs  font-medium rounded-full cursor-pointer ${className}`}
           disabled={disabled}
+          title="Start/Stop Assistant"
         >
           {icon}
-          {label}
+          {/* {label} */}
         </Button >
       </div >
 
       {/* Status indicator */}
-      < div className="flex items-center gap-2 px-2 py-1 rounded-md bg-muted/50" >
+      < div className="flex items-center gap-2 px-2 py-1 w-24 rounded-md bg-muted/50" >
         <div className={`h-2 w-2 rounded-full ${indicatorDotClass}`} />
         <span className="text-xs text-muted-foreground">{indicatorLabel}</span>
       </div >
