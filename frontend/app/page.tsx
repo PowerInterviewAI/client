@@ -120,7 +120,8 @@ export default function Home() {
   return (
     <div className="flex flex-col h-screen max-w-7xl mx-auto bg-background p-2">
       <TopBar
-        userName={config?.profile?.username || ''}
+        photo={config?.profile?.photo ?? ''}
+        userName={config?.profile?.username ?? ''}
         onProfileClick={() => setIsProfileOpen(true)}
         onThemeToggle={handleThemeToggle}
         isDark={isDark}

@@ -150,8 +150,8 @@ export default function ControlPanel({
   const videoDevices = useVideoDevices();
 
   useEffect(() => {
-    // Only run when dialog is open and video control enabled
-    if (!isVideoDialogOpen || !enableVideoControl) return
+    // Only run when dialog is open
+    if (!isVideoDialogOpen) return
     if (!navigator.mediaDevices?.getUserMedia) {
       toast.error("Media devices API unavailable")
       return
@@ -385,19 +385,6 @@ export default function ControlPanel({
               </div>
             </DialogContent>
           </Dialog>
-        </div>
-
-        {/* Language Select */}
-        <div className='flex items-center'>
-          <Languages className="mr-1.5 h-3.5 w-3.5" />
-          <Select value="en">
-            <SelectTrigger className="h-8 w-28 text-xs shrink-0">
-              <SelectValue placeholder="Language" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="en">English</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
 
         {/* Divider */}

@@ -78,15 +78,15 @@ export default function ProfileDialog({
                 Profile Photo
               </label>
 
-              <div className="relative w-24 h-24 mx-auto">
+              <div className="relative w-30 h-30 mx-auto">
                 {photo ? (
                   <img
                     src={photo}
                     alt="Profile preview"
-                    className="w-24 h-24 rounded-md object-cover border shadow-sm"
+                    className="w-30 h-30 rounded-md object-cover border shadow-sm"
                   />
                 ) : (
-                  <div className="w-24 h-24 rounded-md bg-muted flex items-center justify-center text-lg font-semibold text-muted-foreground border shadow-sm">
+                  <div className="w-30 h-30 rounded-md bg-muted flex items-center justify-center text-lg font-semibold text-muted-foreground border shadow-sm">
                     {name ? name.charAt(0).toUpperCase() : "?"}
                   </div>
                 )}
