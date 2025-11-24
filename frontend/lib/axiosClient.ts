@@ -6,7 +6,7 @@ const axiosClient: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // Optional: request timeout (in ms)
+  timeout: 30000, // Optional: request timeout (in ms)
 });
 
 // Response interceptor — centralized error handling
