@@ -22,7 +22,6 @@ export default function VideoPanel({
   enableFaceSwap,
   enableFaceEnhance,
 }: VideoPanelProps) {
-  const offerUrl = 'http://localhost:8000/offer';
   const videoRef = useRef<HTMLVideoElement>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -90,7 +89,7 @@ export default function VideoPanel({
   return (
     <Card className="relative w-full h-full overflow-hidden bg-black shrink-0">
       {/* Video element */}
-      <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+      <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-contain" />
 
       {!isStreaming && (
         <div className="absolute inset-0 flex items-center justify-center bg-linear-to-b from-slate-900 to-black">
