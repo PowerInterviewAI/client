@@ -2,7 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Geist, Geist_Mono } from 'next/font/google';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import './globals.css';
 import { Toaster } from '@/components/ui/sonner';
 
@@ -10,20 +10,28 @@ const geist = Geist({ subsets: ["latin"] });
 const geistMono = Geist_Mono({ subsets: ["latin"] });
 
 function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  useEffect(() => {
+    const stored = localStorage.getItem("theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+    if (stored === "dark" || (!stored && prefersDark)) {
+      document.documentElement.classList.add("dark");
+      setTheme("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      setTheme("light");
+    }
+  }, []);
+
   return (
     <div suppressHydrationWarning>
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-            if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-              document.documentElement.classList.add('dark')
-            }
-          `,
-        }}
-      />
       {children}
+      {/* Toaster adapts to theme */}
+      <Toaster richColors position="top-center" theme={theme} />
     </div>
-  )
+  );
 }
 
 
@@ -42,7 +50,6 @@ export default function RootLayout({
           <QueryClientProvider client={queryClient}>
             {children}
           </QueryClientProvider>
-          <Toaster richColors={true} position="top-center" theme='dark' />
         </ThemeProvider>
       </body>
     </html>
