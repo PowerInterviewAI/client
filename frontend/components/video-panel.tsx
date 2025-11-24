@@ -1,6 +1,8 @@
 'use client';
 
 import { Card } from '@/components/ui/card';
+import axiosClient from '@/lib/axiosClient';
+import { OfferRequest, WebRTCOptions } from '@/types/webrtc';
 import { useEffect, useRef, useState } from 'react';
 
 interface VideoPanelProps {
@@ -53,16 +55,16 @@ export default function VideoPanel({
     await pc.setLocalDescription(offer);
 
     // Send offer to server
-    const res = await fetch(offerUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sdp: offer.sdp,
-        type: offer.type,
-        options: { photo, enableFaceSwap, enableFaceEnhance },
-      }),
-    });
-    const answer = await res.json();
+    const res = await axiosClient.post('/api/webrtc/offer', {
+      sdp: offer.sdp,
+      type: offer.type,
+      options: {
+        photo: photo,
+        swap_face: enableFaceSwap,
+        enhance_face: enableFaceEnhance,
+      } as WebRTCOptions,
+    } as OfferRequest);
+    const answer = res.data;
 
     // Apply answer
     await pc.setRemoteDescription(new RTCSessionDescription(answer));
