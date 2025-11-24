@@ -72,23 +72,53 @@ export default function ProfileDialog({
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
           <div className="p-6 space-y-5">
-            {/* Photo Upload */}
+            {/* Profile Photo */}
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
                 Profile Photo
               </label>
-              {photo && (
-                <img
-                  src={photo}
-                  alt="Profile preview"
-                  className="w-24 h-24 rounded-full object-cover mb-2 border"
-                />
-              )}
-              <Input
+
+              <div className="relative w-24 h-24 mx-auto">
+                {photo ? (
+                  <img
+                    src={photo}
+                    alt="Profile preview"
+                    className="w-24 h-24 rounded-md object-cover border shadow-sm"
+                  />
+                ) : (
+                  <div className="w-24 h-24 rounded-md bg-muted flex items-center justify-center text-lg font-semibold text-muted-foreground border shadow-sm">
+                    {name ? name.charAt(0).toUpperCase() : "?"}
+                  </div>
+                )}
+
+                {/* Overlay for change photo */}
+                <label
+                  htmlFor="photo-upload"
+                  className="absolute inset-0 flex items-center justify-center bg-black/40 text-white text-xs opacity-0 hover:opacity-100 rounded-md cursor-pointer transition-opacity"
+                >
+                  Change
+                </label>
+
+                {/* Remove button */}
+                {photo && (
+                  <button
+                    type="button"
+                    onClick={() => setPhoto("")}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-md p-1 shadow hover:bg-red-600 transition-colors"
+                    title="Remove photo"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
+
+              {/* Hidden file input */}
+              <input
+                id="photo-upload"
                 type="file"
                 accept="image/*"
+                className="hidden"
                 onChange={handlePhotoUpload}
-                className="h-9 text-sm"
               />
             </div>
 
