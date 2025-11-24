@@ -201,7 +201,7 @@ export default function ControlPanel({
   }, [isVideoDialogOpen, enableVideoControl, cameraDevice, videoWidth, videoHeight])
 
   return (
-    <div className="flex items-center gap-2 px-4 py-2">
+    <div className="flex items-center justify-between gap-2 px-4 py-2">
       <div className='flex flex-1 justify-center gap-2 items-center'>
 
         {/* Microphone Select + Dialog */}
