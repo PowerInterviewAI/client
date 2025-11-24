@@ -3,7 +3,8 @@
 import { Card } from '@/components/ui/card';
 import axiosClient from '@/lib/axiosClient';
 import { OfferRequest, WebRTCOptions } from '@/types/webrtc';
-import { useEffect, useRef, useState } from 'react';
+import { User, User2, UserCircle, UserCircle2, UserCircle2Icon } from 'lucide-react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 interface VideoPanelProps {
   photo: string;
@@ -14,117 +15,110 @@ interface VideoPanelProps {
   enableFaceEnhance: boolean;
 }
 
-export default function VideoPanel({
-  photo,
-  cameraDevice,
-  videoWidth,
-  videoHeight,
-  enableFaceSwap,
-  enableFaceEnhance,
-}: VideoPanelProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const pcRef = useRef<RTCPeerConnection | null>(null);
-  const [isStreaming, setIsStreaming] = useState(false);
+export interface VideoPanelHandle {
+  startWebRTC: () => Promise<void>;
+  stopWebRTC: () => void;
+}
 
-  const startWebRTC = async () => {
-    if (pcRef.current) return;
-    const pc = new RTCPeerConnection();
-    pcRef.current = pc;
+export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
+  ({ photo, cameraDevice, videoWidth, videoHeight, enableFaceSwap, enableFaceEnhance }, ref) => {
+    const [videoMessage, setVideoMessage] = useState('Video Stream');
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const pcRef = useRef<RTCPeerConnection | null>(null);
+    const [isStreaming, setIsStreaming] = useState(false);
 
-    // Attach remote stream to video element
-    pc.ontrack = (event) => {
-      if (videoRef.current) {
-        videoRef.current.srcObject = event.streams[0];
-      }
+    const startWebRTC = async () => {
+      if (pcRef.current) return;
+
+      setVideoMessage('Waiting for processed video stream...');
+
+      const pc = new RTCPeerConnection();
+      pcRef.current = pc;
+
+      // Attach remote stream to video element
+      pc.ontrack = (event) => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = event.streams[0];
+        }
+      };
+
+      // Get local camera
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          deviceId: cameraDevice ? { exact: cameraDevice } : undefined,
+          width: videoWidth,
+          height: videoHeight,
+        },
+        audio: false,
+      });
+      stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+
+      // Create offer
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      // Send offer to server
+      const res = await axiosClient.post('/api/webrtc/offer', {
+        sdp: offer.sdp,
+        type: offer.type,
+        options: {
+          photo,
+          swap_face: enableFaceSwap,
+          enhance_face: enableFaceEnhance,
+        } as WebRTCOptions,
+      } as OfferRequest);
+      const answer = res.data;
+
+      // Apply answer
+      await pc.setRemoteDescription(new RTCSessionDescription(answer));
+
+      setIsStreaming(true);
     };
 
-    // Get local camera
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        deviceId: cameraDevice ? { exact: cameraDevice } : undefined,
-        width: videoWidth,
-        height: videoHeight,
-      },
-      audio: false,
-    });
-    stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+    const stopWebRTC = () => {
+      if (pcRef.current) {
+        pcRef.current.close();
+        pcRef.current = null;
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+      setVideoMessage("Video Stream");
+      setIsStreaming(false);
+    };
 
-    // Create offer
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
+    // cleanup on unmount
+    useEffect(() => {
+      return () => stopWebRTC();
+    }, []);
 
-    // Send offer to server
-    const res = await axiosClient.post('/api/webrtc/offer', {
-      sdp: offer.sdp,
-      type: offer.type,
-      options: {
-        photo: photo,
-        swap_face: enableFaceSwap,
-        enhance_face: enableFaceEnhance,
-      } as WebRTCOptions,
-    } as OfferRequest);
-    const answer = res.data;
+    // ⚡ Expose functions to parent via ref
+    useImperativeHandle(ref, () => ({
+      startWebRTC,
+      stopWebRTC,
+    }));
 
-    // Apply answer
-    await pc.setRemoteDescription(new RTCSessionDescription(answer));
+    return (
+      <Card className="relative w-full h-full overflow-hidden bg-black shrink-0 py-0">
+        <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-contain" />
 
-    setIsStreaming(true);
-  };
-
-  const stopWebRTC = () => {
-    if (pcRef.current) {
-      pcRef.current.close();
-      pcRef.current = null;
-    }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-    setIsStreaming(false);
-  };
-
-  useEffect(() => {
-    return () => stopWebRTC();
-  }, []);
-
-  return (
-    <Card className="relative w-full h-full overflow-hidden bg-black shrink-0">
-      {/* Video element */}
-      <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-contain" />
-
-      {!isStreaming && (
-        <div className="absolute inset-0 flex items-center justify-center bg-linear-to-b from-slate-900 to-black">
-          <div className="text-center">
-            <div className="mx-auto mb-2 h-10 w-10 rounded-full bg-gray-700" />
-            <p className="text-gray-400 text-xs">Waiting for stream...</p>
+        {!isStreaming && (
+          <div className="absolute inset-0 flex items-center justify-center bg-linear-to-b from-slate-900 to-black">
+            <div className="text-center">
+              <UserCircle2 className="mx-auto h-16 w-16 text-gray-400" />
+              <p className="text-gray-400 text-xs">{videoMessage}</p>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Video info overlay */}
-      {isStreaming && (
-        <div className="absolute bottom-2 left-2 flex items-center gap-1.5 bg-black/70 backdrop-blur px-2 py-1 rounded-md">
-          <div className="h-1.5 w-1.5 bg-red-500 rounded-full animate-pulse" />
-          <span className="text-white text-xs font-medium">LIVE</span>
-        </div>
-      )}
+        {isStreaming && (
+          <div className="absolute bottom-2 left-2 flex items-center gap-1.5 bg-black/70 backdrop-blur px-2 py-1 rounded-md">
+            <div className="h-1.5 w-1.5 bg-red-500 rounded-full animate-pulse" />
+            <span className="text-white text-xs font-medium">LIVE</span>
+          </div>
+        )}
+      </Card>
+    );
+  },
+);
 
-      {/* Controls */}
-      <div className="absolute bottom-2 right-2 flex gap-2">
-        <button
-          onClick={startWebRTC}
-          disabled={isStreaming}
-          className="px-3 py-1 text-xs rounded bg-green-600 text-white hover:bg-green-700 transition"
-        >
-          Start
-        </button>
-        <button
-          onClick={stopWebRTC}
-          disabled={!isStreaming}
-          className="px-3 py-1 text-xs rounded bg-red-600 text-white hover:bg-red-700 transition"
-        >
-          Stop
-        </button>
-      </div>
-    </Card>
-  );
-}

@@ -88,10 +88,10 @@ export default function ControlPanel({
       label: 'Start',
     },
     [RunningState.STARTING]: {
-      onClick: () => {},
-      className: 'bg-primary hover:bg-primary/90 animate-pulse',
+      onClick: () => { },
+      className: 'bg-primary hover:bg-primary/90',
       disabled: true,
-      icon: <Ellipsis className="h-3.5 w-3.5" />,
+      icon: <Ellipsis className="h-3.5 w-3.5 animate-pulse" />,
       label: 'Starting...',
     },
     [RunningState.RUNNING]: {
@@ -102,7 +102,7 @@ export default function ControlPanel({
       label: 'Stop',
     },
     [RunningState.STOPPING]: {
-      onClick: () => {},
+      onClick: () => { },
       className: 'bg-destructive hover:bg-destructive/90 animate-pulse',
       disabled: true,
       icon: <Ellipsis className="h-3.5 w-3.5" />,
@@ -177,7 +177,7 @@ export default function ControlPanel({
         if (videoPreviewRef.current) {
           videoPreviewRef.current.srcObject = stream;
           // Some browsers need play() after setting srcObject
-          await videoPreviewRef.current.play().catch(() => {});
+          await videoPreviewRef.current.play().catch(() => { });
         }
       } catch (err) {
         toast.error('Unable to access camera');

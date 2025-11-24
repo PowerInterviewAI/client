@@ -5,7 +5,7 @@ import ProfileDialog from '@/components/profile-dialog';
 import SuggestionsPanel from '@/components/suggestions-panel';
 import TopBar from '@/components/top-bar';
 import TranscriptPanel from '@/components/transcript-panel';
-import VideoPanel from '@/components/video-panel';
+import { VideoPanel, VideoPanelHandle } from '@/components/video-panel';
 import axiosClient from '@/lib/axiosClient';
 import { AppState, RunningState } from '@/types/appState';
 import { PyAudioDevice } from '@/types/audioDevice';
@@ -13,13 +13,14 @@ import { Config } from '@/types/config';
 import { APIError } from '@/types/error';
 import { Transcript } from '@/types/transcript';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function Home() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [config, setConfig] = useState<Config>();
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
+  const videoPanelRef = useRef<VideoPanelHandle>(null);
 
   const { data: configFetched } = useQuery<Config, APIError>({
     queryKey: ['config'],
@@ -63,14 +64,16 @@ export default function Home() {
   });
   const startMutation = useMutation<void, APIError, void>({
     mutationFn: async () => {
-      const response = await axiosClient.get('/api/app/start');
-      return response.data;
+      axiosClient.get('/api/app/start');
+      if (config?.enable_video_control) {
+        await videoPanelRef.current?.startWebRTC();
+      }
     },
   });
   const stopMutation = useMutation<void, APIError, void>({
     mutationFn: async () => {
-      const response = await axiosClient.get('/api/app/stop');
-      return response.data;
+      await axiosClient.get('/api/app/stop');
+      videoPanelRef.current?.stopWebRTC();
     },
   });
 
@@ -136,6 +139,7 @@ export default function Home() {
           {/* Video Panel - Small and compact */}
           <div className="h-48 shrink-0">
             <VideoPanel
+              ref={videoPanelRef}
               photo={config?.profile?.photo ?? ''}
               cameraDevice={config?.camera_device ?? ''}
               videoWidth={config?.video_width ?? 640}
