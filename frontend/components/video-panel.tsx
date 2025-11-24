@@ -3,7 +3,7 @@
 import { Card } from '@/components/ui/card';
 import axiosClient from '@/lib/axiosClient';
 import { OfferRequest, WebRTCOptions } from '@/types/webrtc';
-import { User, User2, UserCircle, UserCircle2, UserCircle2Icon } from 'lucide-react';
+import { UserCircle2 } from 'lucide-react';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 interface VideoPanelProps {
@@ -83,7 +83,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       if (videoRef.current) {
         videoRef.current.srcObject = null;
       }
-      setVideoMessage("Video Stream");
+      setVideoMessage('Video Stream');
       setIsStreaming(false);
     };
 
@@ -99,26 +99,25 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
     }));
 
     return (
-      <Card className="relative w-full h-full overflow-hidden bg-black shrink-0 py-0">
+      <Card className="relative w-full h-full overflow-hidden bg-white dark:bg-black shrink-0 py-0">
         <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-contain" />
 
         {!isStreaming && (
-          <div className="absolute inset-0 flex items-center justify-center bg-linear-to-b from-slate-900 to-black">
+          <div className="absolute inset-0 flex items-center justify-center bg-linear-to-b from-gray-200 to-white dark:from-slate-900 dark:to-black">
             <div className="text-center">
-              <UserCircle2 className="mx-auto h-16 w-16 text-gray-400" />
-              <p className="text-gray-400 text-xs">{videoMessage}</p>
+              <UserCircle2 className="mx-auto h-16 w-16 font-thin text-gray-500 dark:text-gray-400" />
+              <p className="text-gray-500 dark:text-gray-400 text-xs">{videoMessage}</p>
             </div>
           </div>
         )}
 
         {isStreaming && (
-          <div className="absolute bottom-2 left-2 flex items-center gap-1.5 bg-black/70 backdrop-blur px-2 py-1 rounded-md">
+          <div className="absolute bottom-2 left-2 flex items-center gap-1.5 bg-white/70 dark:bg-black/70 backdrop-blur px-2 py-1 rounded-md">
             <div className="h-1.5 w-1.5 bg-red-500 rounded-full animate-pulse" />
-            <span className="text-white text-xs font-medium">LIVE</span>
+            <span className="text-black dark:text-white text-xs font-medium">LIVE</span>
           </div>
         )}
       </Card>
     );
   },
 );
-
