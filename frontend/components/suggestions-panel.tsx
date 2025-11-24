@@ -1,48 +1,46 @@
-'use client'
+'use client';
 
-import { useEffect, useRef, useState } from 'react'
-import { Card } from '@/components/ui/card'
-import { Loader2, Zap, PauseCircle } from 'lucide-react'
-import { Suggestion, SuggestionState } from '@/types/suggestion'
+import { Card } from '@/components/ui/card';
+import { Suggestion, SuggestionState } from '@/types/suggestion';
+import { Loader2, PauseCircle, Zap } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 interface SuggestionsPanelProps {
-  suggestions?: Suggestion[]
+  suggestions?: Suggestion[];
 }
 
-export default function SuggestionsPanel({
-  suggestions = [],
-}: SuggestionsPanelProps) {
-  const hasSuggestions = suggestions.length > 0
+export default function SuggestionsPanel({ suggestions = [] }: SuggestionsPanelProps) {
+  const hasSuggestions = suggestions.length > 0;
 
-  const containerRef = useRef<HTMLDivElement>(null)
-  const endRef = useRef<HTMLDivElement>(null)
-  const [showScrollButton, setShowScrollButton] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null);
+  const endRef = useRef<HTMLDivElement>(null);
+  const [showScrollButton, setShowScrollButton] = useState(false);
 
   useEffect(() => {
-    const container = containerRef.current
-    if (!container) return
+    const container = containerRef.current;
+    if (!container) return;
 
     const handleScroll = () => {
       const isNearBottom =
-        container.scrollHeight - container.scrollTop - container.clientHeight < 100
-      setShowScrollButton(!isNearBottom)
-    }
+        container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+      setShowScrollButton(!isNearBottom);
+    };
 
-    container.addEventListener("scroll", handleScroll)
-    return () => container.removeEventListener("scroll", handleScroll)
-  }, [])
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Auto-scroll when 'suggestions' changes
   useEffect(() => {
-    if (!containerRef.current) return
-    const container = containerRef.current
+    if (!containerRef.current) return;
+    const container = containerRef.current;
     const isNearBottom =
-      container.scrollHeight - container.scrollTop - container.clientHeight < 100
+      container.scrollHeight - container.scrollTop - container.clientHeight < 100;
 
     if (isNearBottom) {
-      endRef.current?.scrollIntoView({ behavior: 'smooth' })
+      endRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [suggestions])
+  }, [suggestions]);
 
   return (
     <Card className="relative flex flex-col h-full bg-card p-0">
@@ -68,15 +66,10 @@ export default function SuggestionsPanel({
         {hasSuggestions && (
           <div className="p-4 space-y-3">
             {suggestions.map((s, idx) => (
-              <div
-                key={idx}
-                className="flex gap-3 pb-3 border-b border-border/40 last:border-0"
-              >
+              <div key={idx} className="flex gap-3 pb-3 border-b border-border/40 last:border-0">
                 <Zap className="h-4 w-4 mt-0.5 text-accent shrink-0" />
                 <div>
-                  <div className="text-xs text-muted-foreground">
-                    Question: {s.last_question}
-                  </div>
+                  <div className="text-xs text-muted-foreground">Question: {s.last_question}</div>
 
                   {/* State‑specific rendering */}
                   {s.state === SuggestionState.PENDING && (
@@ -148,5 +141,5 @@ export default function SuggestionsPanel({
         </button>
       )}
     </Card>
-  )
+  );
 }

@@ -1,19 +1,19 @@
-'use client'
+'use client';
 
-import { useEffect, useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { X } from 'lucide-react'
-import { Config } from '@/types/config'
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Config } from '@/types/config';
+import { X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface ProfileDialogProps {
-  isOpen: boolean
-  onOpenChange: (open: boolean) => void
-  initialPhoto: string
-  initialName: string
-  initialProfileData: string
-  updateConfig: (config: Partial<Config>) => void
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  initialPhoto: string;
+  initialName: string;
+  initialProfileData: string;
+  updateConfig: (config: Partial<Config>) => void;
 }
 
 export default function ProfileDialog({
@@ -24,35 +24,35 @@ export default function ProfileDialog({
   initialProfileData,
   updateConfig,
 }: ProfileDialogProps) {
-  const [photo, setPhoto] = useState(initialPhoto)
-  const [name, setName] = useState(initialName)
-  const [profileData, setProfileData] = useState(initialProfileData)
+  const [photo, setPhoto] = useState(initialPhoto);
+  const [name, setName] = useState(initialName);
+  const [profileData, setProfileData] = useState(initialProfileData);
 
   useEffect(() => {
     if (isOpen) {
-      setPhoto(initialPhoto)
-      setName(initialName)
-      setProfileData(initialProfileData)
+      setPhoto(initialPhoto);
+      setName(initialName);
+      setProfileData(initialProfileData);
     }
-  }, [isOpen, initialName, initialProfileData])
+  }, [isOpen, initialName, initialProfileData]);
 
   const handleSave = () => {
-    updateConfig({ profile: { photo: photo, username: name, profile_data: profileData } })
-    onOpenChange(false)
-  }
+    updateConfig({ profile: { photo: photo, username: name, profile_data: profileData } });
+    onOpenChange(false);
+  };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    const reader = new FileReader()
+    const reader = new FileReader();
     reader.onloadend = () => {
-      setPhoto(reader.result as string) // base64 string
-    }
-    reader.readAsDataURL(file)
-  }
+      setPhoto(reader.result as string); // base64 string
+    };
+    reader.readAsDataURL(file);
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
@@ -87,7 +87,7 @@ export default function ProfileDialog({
                   />
                 ) : (
                   <div className="w-30 h-30 rounded-md bg-muted flex items-center justify-center text-lg font-semibold text-muted-foreground border shadow-sm">
-                    {name ? name.charAt(0).toUpperCase() : "?"}
+                    {name ? name.charAt(0).toUpperCase() : '?'}
                   </div>
                 )}
 
@@ -103,7 +103,7 @@ export default function ProfileDialog({
                 {photo && (
                   <button
                     type="button"
-                    onClick={() => setPhoto("")}
+                    onClick={() => setPhoto('')}
                     className="absolute -top-2 -right-2 bg-red-500 text-white rounded-md p-1 shadow hover:bg-red-600 transition-colors"
                     title="Remove photo"
                   >
@@ -152,22 +152,14 @@ export default function ProfileDialog({
 
         {/* Footer */}
         <div className="border-t border-border px-6 py-3 flex items-center justify-end gap-2 shrink-0">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onOpenChange(false)}
-          >
+          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button
-            size="sm"
-            onClick={handleSave}
-            className="bg-primary hover:bg-primary/90"
-          >
+          <Button size="sm" onClick={handleSave} className="bg-primary hover:bg-primary/90">
             Save Changes
           </Button>
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -1,15 +1,15 @@
-'use client'
+'use client';
 
-import { useEffect, useRef, useState } from 'react'
-import { Card } from '@/components/ui/card'
+import { Card } from '@/components/ui/card';
+import { useEffect, useRef, useState } from 'react';
 
 interface VideoPanelProps {
-  photo: string
-  cameraDevice: string
-  videoWidth: number
-  videoHeight: number
-  enableFaceSwap: boolean
-  enableFaceEnhance: boolean
+  photo: string;
+  cameraDevice: string;
+  videoWidth: number;
+  videoHeight: number;
+  enableFaceSwap: boolean;
+  enableFaceEnhance: boolean;
 }
 
 export default function VideoPanel({
@@ -18,75 +18,77 @@ export default function VideoPanel({
   videoWidth,
   videoHeight,
   enableFaceSwap,
-  enableFaceEnhance
+  enableFaceEnhance,
 }: VideoPanelProps) {
-  const offerUrl = "http://localhost:8000/offer"
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const pcRef = useRef<RTCPeerConnection | null>(null)
-  const [isStreaming, setIsStreaming] = useState(false)
+  const offerUrl = 'http://localhost:8000/offer';
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const pcRef = useRef<RTCPeerConnection | null>(null);
+  const [isStreaming, setIsStreaming] = useState(false);
 
   const startWebRTC = async () => {
-    if (pcRef.current) return
-    const pc = new RTCPeerConnection()
-    pcRef.current = pc
+    if (pcRef.current) return;
+    const pc = new RTCPeerConnection();
+    pcRef.current = pc;
 
     // Attach remote stream to video element
     pc.ontrack = (event) => {
       if (videoRef.current) {
-        videoRef.current.srcObject = event.streams[0]
+        videoRef.current.srcObject = event.streams[0];
       }
-    }
+    };
 
     // Get local camera
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: { deviceId: cameraDevice ? { exact: cameraDevice } : undefined, width: videoWidth, height: videoHeight },
+      video: {
+        deviceId: cameraDevice ? { exact: cameraDevice } : undefined,
+        width: videoWidth,
+        height: videoHeight,
+      },
       audio: false,
-    })
-    stream.getTracks().forEach(track => pc.addTrack(track, stream))
+    });
+    stream.getTracks().forEach((track) => pc.addTrack(track, stream));
 
     // Create offer
-    const offer = await pc.createOffer()
-    await pc.setLocalDescription(offer)
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
 
     // Send offer to server
     const res = await fetch(offerUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sdp: offer.sdp, type: offer.type, options: { photo, enableFaceSwap, enableFaceEnhance } })
-    })
-    const answer = await res.json()
+      body: JSON.stringify({
+        sdp: offer.sdp,
+        type: offer.type,
+        options: { photo, enableFaceSwap, enableFaceEnhance },
+      }),
+    });
+    const answer = await res.json();
 
     // Apply answer
-    await pc.setRemoteDescription(new RTCSessionDescription(answer))
+    await pc.setRemoteDescription(new RTCSessionDescription(answer));
 
-    setIsStreaming(true)
-  }
+    setIsStreaming(true);
+  };
 
   const stopWebRTC = () => {
     if (pcRef.current) {
-      pcRef.current.close()
-      pcRef.current = null
+      pcRef.current.close();
+      pcRef.current = null;
     }
     if (videoRef.current) {
-      videoRef.current.srcObject = null
+      videoRef.current.srcObject = null;
     }
-    setIsStreaming(false)
-  }
+    setIsStreaming(false);
+  };
 
   useEffect(() => {
-    return () => stopWebRTC()
-  }, [])
+    return () => stopWebRTC();
+  }, []);
 
   return (
     <Card className="relative w-full h-full overflow-hidden bg-black shrink-0">
       {/* Video element */}
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        muted
-        className="w-full h-full object-cover"
-      />
+      <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
 
       {!isStreaming && (
         <div className="absolute inset-0 flex items-center justify-center bg-linear-to-b from-slate-900 to-black">
@@ -123,5 +125,5 @@ export default function VideoPanel({
         </button>
       </div>
     </Card>
-  )
+  );
 }

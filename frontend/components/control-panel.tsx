@@ -1,48 +1,48 @@
-'use client'
+'use client';
 
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { useVideoDevices } from '@/hooks/useVideoDevices'
-import { RunningState } from '@/types/appState'
-import { PyAudioDevice } from '@/types/audioDevice'
-import { Config } from '@/types/config'
-import { APIError } from '@/types/error'
-import { DialogTitle } from '@radix-ui/react-dialog'
-import { UseMutationResult } from '@tanstack/react-query'
-import { Ellipsis, Mic, Mic2, MicOff, Play, Square, Video, VideoOff } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
-import { toast } from 'sonner'
-import { Dialog, DialogContent, DialogTrigger } from './ui/dialog'
+} from '@/components/ui/select';
+import { useVideoDevices } from '@/hooks/useVideoDevices';
+import { RunningState } from '@/types/appState';
+import { PyAudioDevice } from '@/types/audioDevice';
+import { Config } from '@/types/config';
+import { APIError } from '@/types/error';
+import { DialogTitle } from '@radix-ui/react-dialog';
+import { UseMutationResult } from '@tanstack/react-query';
+import { Ellipsis, Mic, Mic2, MicOff, Play, Square, Video, VideoOff } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogTrigger } from './ui/dialog';
 
 interface ControlPanelProps {
-  runningState: RunningState
-  audioInputDevices: PyAudioDevice[]
-  audioOutputDevices: PyAudioDevice[]
-  audioInputDevice: string
+  runningState: RunningState;
+  audioInputDevices: PyAudioDevice[];
+  audioOutputDevices: PyAudioDevice[];
+  audioInputDevice: string;
 
   // Audio control options
-  enableAudioControl: boolean
-  audioControlDevice: string
-  audioDelay: number
+  enableAudioControl: boolean;
+  audioControlDevice: string;
+  audioDelay: number;
 
   // Video control options
-  enableVideoControl: boolean
-  cameraDevice: string
-  videoWidth: number
-  videoHeight: number
-  enableFaceSwap: boolean
-  enableFaceEnhance: boolean
+  enableVideoControl: boolean;
+  cameraDevice: string;
+  videoWidth: number;
+  videoHeight: number;
+  enableFaceSwap: boolean;
+  enableFaceEnhance: boolean;
 
   // Callbacks
-  startMutation: UseMutationResult<void, APIError, void, unknown>
-  stopMutation: UseMutationResult<void, APIError, void, unknown>
-  updateConfig: (config: Partial<Config>) => void
+  startMutation: UseMutationResult<void, APIError, void, unknown>;
+  stopMutation: UseMutationResult<void, APIError, void, unknown>;
+  updateConfig: (config: Partial<Config>) => void;
 }
 
 type StateConfig = {
@@ -57,7 +57,6 @@ type IndicatorConfig = {
   dotClass: string;
   label: string;
 };
-
 
 export default function ControlPanel({
   runningState,
@@ -80,88 +79,87 @@ export default function ControlPanel({
   enableFaceSwap,
   enableFaceEnhance,
 }: ControlPanelProps) {
-
   const stateConfig: Record<RunningState, StateConfig> = {
     [RunningState.IDLE]: {
       onClick: () => startMutation.mutate(),
-      className: "bg-primary hover:bg-primary/90",
+      className: 'bg-primary hover:bg-primary/90',
       disabled: false,
       icon: <Play className="h-3.5 w-3.5" />,
-      label: "Start",
+      label: 'Start',
     },
     [RunningState.STARTING]: {
-      onClick: () => { },
-      className: "bg-primary hover:bg-primary/90 animate-pulse",
+      onClick: () => {},
+      className: 'bg-primary hover:bg-primary/90 animate-pulse',
       disabled: true,
       icon: <Ellipsis className="h-3.5 w-3.5" />,
-      label: "Starting...",
+      label: 'Starting...',
     },
     [RunningState.RUNNING]: {
       onClick: () => stopMutation.mutate(),
-      className: "bg-destructive hover:bg-destructive/90 animate-pulse",
+      className: 'bg-destructive hover:bg-destructive/90 animate-pulse',
       disabled: false,
       icon: <Square className="h-3.5 w-3.5" />,
-      label: "Stop",
+      label: 'Stop',
     },
     [RunningState.STOPPING]: {
-      onClick: () => { },
-      className: "bg-destructive hover:bg-destructive/90 animate-pulse",
+      onClick: () => {},
+      className: 'bg-destructive hover:bg-destructive/90 animate-pulse',
       disabled: true,
       icon: <Ellipsis className="h-3.5 w-3.5" />,
-      label: "Stopping...",
+      label: 'Stopping...',
     },
     [RunningState.STOPPED]: {
       onClick: () => startMutation.mutate(),
-      className: "bg-primary hover:bg-primary/90",
+      className: 'bg-primary hover:bg-primary/90',
       disabled: false,
       icon: <Play className="h-3.5 w-3.5" />,
-      label: "Start",
+      label: 'Start',
     },
   };
   const { onClick, className, disabled, icon, label } = stateConfig[runningState];
 
   const indicatorConfig: Record<RunningState, IndicatorConfig> = {
     [RunningState.IDLE]: {
-      dotClass: "bg-muted-foreground",
-      label: "Idle",
+      dotClass: 'bg-muted-foreground',
+      label: 'Idle',
     },
     [RunningState.STARTING]: {
-      dotClass: "bg-primary animate-pulse",
-      label: "Starting",
+      dotClass: 'bg-primary animate-pulse',
+      label: 'Starting',
     },
     [RunningState.RUNNING]: {
-      dotClass: "bg-destructive animate-pulse",
-      label: "Running",
+      dotClass: 'bg-destructive animate-pulse',
+      label: 'Running',
     },
     [RunningState.STOPPING]: {
-      dotClass: "bg-destructive animate-pulse",
-      label: "Stopping",
+      dotClass: 'bg-destructive animate-pulse',
+      label: 'Stopping',
     },
     [RunningState.STOPPED]: {
-      dotClass: "bg-muted-foreground",
-      label: "Stopped",
+      dotClass: 'bg-muted-foreground',
+      label: 'Stopped',
     },
   };
   const { dotClass: indicatorDotClass, label: indicatorLabel } = indicatorConfig[runningState];
 
-  const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false)
-  const videoPreviewRef = useRef<HTMLVideoElement>(null)
-  const previewStreamRef = useRef<MediaStream | null>(null)
+  const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
+  const videoPreviewRef = useRef<HTMLVideoElement>(null);
+  const previewStreamRef = useRef<MediaStream | null>(null);
   const videoDevices = useVideoDevices();
 
   useEffect(() => {
     // Only run when dialog is open
-    if (!isVideoDialogOpen) return
+    if (!isVideoDialogOpen) return;
     if (!navigator.mediaDevices?.getUserMedia) {
-      toast.error("Media devices API unavailable")
-      return
+      toast.error('Media devices API unavailable');
+      return;
     }
 
     const startPreview = async () => {
       // Stop previous stream before starting a new one
       if (previewStreamRef.current) {
-        previewStreamRef.current.getTracks().forEach(t => t.stop())
-        previewStreamRef.current = null
+        previewStreamRef.current.getTracks().forEach((t) => t.stop());
+        previewStreamRef.current = null;
       }
 
       const constraints: MediaStreamConstraints = {
@@ -171,39 +169,38 @@ export default function ControlPanel({
           height: videoHeight,
         },
         audio: false,
-      }
+      };
 
       try {
-        const stream = await navigator.mediaDevices.getUserMedia(constraints)
-        previewStreamRef.current = stream
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        previewStreamRef.current = stream;
         if (videoPreviewRef.current) {
-          videoPreviewRef.current.srcObject = stream
+          videoPreviewRef.current.srcObject = stream;
           // Some browsers need play() after setting srcObject
-          await videoPreviewRef.current.play().catch(() => { })
+          await videoPreviewRef.current.play().catch(() => {});
         }
       } catch (err) {
-        toast.error("Unable to access camera")
+        toast.error('Unable to access camera');
       }
-    }
+    };
 
-    startPreview()
+    startPreview();
 
     // Cleanup when dialog closes or dependencies change
     return () => {
       if (previewStreamRef.current) {
-        previewStreamRef.current.getTracks().forEach(t => t.stop())
-        previewStreamRef.current = null
+        previewStreamRef.current.getTracks().forEach((t) => t.stop());
+        previewStreamRef.current = null;
       }
       if (videoPreviewRef.current) {
-        videoPreviewRef.current.srcObject = null
+        videoPreviewRef.current.srcObject = null;
       }
-    }
-  }, [isVideoDialogOpen, enableVideoControl, cameraDevice, videoWidth, videoHeight])
+    };
+  }, [isVideoDialogOpen, enableVideoControl, cameraDevice, videoWidth, videoHeight]);
 
   return (
     <div className="flex items-center justify-between gap-2 px-4 py-2">
-      <div className='flex flex-1 justify-center gap-2 items-center'>
-
+      <div className="flex flex-1 justify-center gap-2 items-center">
         {/* Microphone Select + Dialog */}
         <div className="flex items-center rounded-full overflow-hidden border">
           <Dialog>
@@ -212,7 +209,7 @@ export default function ControlPanel({
                 variant="default"
                 size="icon"
                 className="h-8 w-8 border-none rounded-none"
-                title='Select microphone'
+                title="Select microphone"
               >
                 <Mic2 className="h-4 w-4" />
               </Button>
@@ -245,17 +242,19 @@ export default function ControlPanel({
         </div>
 
         {/* Audio Control Toggle + Dialog */}
-        <div className={`flex items-center rounded-full overflow-hidden border ${enableAudioControl ? '' : 'bg-destructive text-white'}`}>
+        <div
+          className={`flex items-center rounded-full overflow-hidden border ${enableAudioControl ? '' : 'bg-destructive text-white'}`}
+        >
           <Button
-            variant={enableAudioControl ? "outline" : "destructive"}
+            variant={enableAudioControl ? 'outline' : 'destructive'}
             size="icon"
             className={`h-8 w-8 border-none rounded-none ${enableAudioControl ? '' : ''}`}
             title="Toggle audio control"
             onClick={() => {
               if (enableAudioControl) {
-                toast.success("Audio control disabled");
+                toast.success('Audio control disabled');
               } else {
-                toast.success("Audio control enabled");
+                toast.success('Audio control enabled');
               }
               updateConfig({ enable_audio_control: !enableAudioControl });
             }}
@@ -265,7 +264,7 @@ export default function ControlPanel({
           <Dialog>
             <DialogTrigger asChild>
               <Button
-                variant={enableAudioControl ? "outline" : "destructive"}
+                variant={enableAudioControl ? 'outline' : 'destructive'}
                 size="icon"
                 className="h-8 w-8 rounded-none border-none"
                 title="Audio control options"
@@ -314,15 +313,19 @@ export default function ControlPanel({
         </div>
 
         {/* Video Control Toggle + Dialog */}
-        <div className={`flex items-center rounded-full overflow-hidden border ${enableVideoControl ? '' : 'bg-destructive text-white'}`}>
+        <div
+          className={`flex items-center rounded-full overflow-hidden border ${enableVideoControl ? '' : 'bg-destructive text-white'}`}
+        >
           <Button
-            variant={enableVideoControl ? "outline" : "destructive"}
+            variant={enableVideoControl ? 'outline' : 'destructive'}
             size="icon"
             className="h-8 w-8 border-none rounded-none"
             title="Toggle video control"
             onClick={() => {
-              toast.success(enableVideoControl ? "Video control disabled" : "Video control enabled")
-              updateConfig({ enable_video_control: !enableVideoControl })
+              toast.success(
+                enableVideoControl ? 'Video control disabled' : 'Video control enabled',
+              );
+              updateConfig({ enable_video_control: !enableVideoControl });
             }}
           >
             {enableVideoControl ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
@@ -330,7 +333,12 @@ export default function ControlPanel({
 
           <Dialog open={isVideoDialogOpen} onOpenChange={setIsVideoDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant={enableVideoControl ? "outline" : "destructive"} size="icon" className="h-8 w-8 rounded-none border-none" title="Video control options">
+              <Button
+                variant={enableVideoControl ? 'outline' : 'destructive'}
+                size="icon"
+                className="h-8 w-8 rounded-none border-none"
+                title="Video control options"
+              >
                 <Ellipsis className="h-4 w-4" />
               </Button>
             </DialogTrigger>
@@ -373,16 +381,18 @@ export default function ControlPanel({
                 <Select
                   value={`${videoWidth}x${videoHeight}`}
                   onValueChange={(v) => {
-                    const [w, h] = v.split('x').map(Number)
-                    updateConfig({ video_width: w, video_height: h })
+                    const [w, h] = v.split('x').map(Number);
+                    updateConfig({ video_width: w, video_height: h });
                   }}
                 >
                   <SelectTrigger className="h-8 w-full text-xs">
                     <SelectValue placeholder="Select resolution" />
                   </SelectTrigger>
                   <SelectContent>
-                    {['640x360', '640x480', '1280x720', '1920x1080'].map(res => (
-                      <SelectItem key={res} value={res}>{res}</SelectItem>
+                    {['640x360', '640x480', '1280x720', '1920x1080'].map((res) => (
+                      <SelectItem key={res} value={res}>
+                        {res}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -392,12 +402,12 @@ export default function ControlPanel({
               <div className="flex items-center justify-between">
                 <span className="text-xs">Face Swap</span>
                 <Button
-                  variant={enableFaceSwap ? "default" : "outline"}
+                  variant={enableFaceSwap ? 'default' : 'outline'}
                   size="sm"
-                  className='w-16'
+                  className="w-16"
                   onClick={() => updateConfig({ enable_face_swap: !enableFaceSwap })}
                 >
-                  {enableFaceSwap ? "On" : "Off"}
+                  {enableFaceSwap ? 'On' : 'Off'}
                 </Button>
               </div>
 
@@ -405,12 +415,12 @@ export default function ControlPanel({
               <div className="flex items-center justify-between">
                 <span className="text-xs">Face Enhance</span>
                 <Button
-                  variant={enableFaceEnhance ? "default" : "outline"}
+                  variant={enableFaceEnhance ? 'default' : 'outline'}
                   size="sm"
-                  className='w-16'
+                  className="w-16"
                   onClick={() => updateConfig({ enable_face_enhance: !enableFaceEnhance })}
                 >
-                  {enableFaceEnhance ? "On" : "Off"}
+                  {enableFaceEnhance ? 'On' : 'Off'}
                 </Button>
               </div>
             </DialogContent>
@@ -430,14 +440,14 @@ export default function ControlPanel({
         >
           {icon}
           {/* {label} */}
-        </Button >
-      </div >
+        </Button>
+      </div>
 
       {/* Status indicator */}
-      < div className="flex items-center gap-2 px-2 py-1 w-24 rounded-md bg-muted/50" >
+      <div className="flex items-center gap-2 px-2 py-1 w-24 rounded-md bg-muted/50">
         <div className={`h-2 w-2 rounded-full ${indicatorDotClass}`} />
         <span className="text-xs text-muted-foreground">{indicatorLabel}</span>
-      </div >
-    </div >
-  )
+      </div>
+    </div>
+  );
 }

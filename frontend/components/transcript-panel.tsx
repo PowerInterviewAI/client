@@ -1,43 +1,43 @@
-import { useEffect, useRef, useState } from 'react'
-import { Card } from '@/components/ui/card'
-import { Speaker, Transcript } from '@/types/transcript'
+import { Card } from '@/components/ui/card';
+import { Speaker, Transcript } from '@/types/transcript';
+import { useEffect, useRef, useState } from 'react';
 
 interface TranscriptionPanelProps {
-  transcripts: Transcript[]
+  transcripts: Transcript[];
 }
 
 export default function TranscriptPanel({ transcripts }: TranscriptionPanelProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const endRef = useRef<HTMLDivElement>(null)
-  const [showScrollButton, setShowScrollButton] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null);
+  const endRef = useRef<HTMLDivElement>(null);
+  const [showScrollButton, setShowScrollButton] = useState(false);
 
   useEffect(() => {
-    const container = containerRef.current
-    if (!container) return
+    const container = containerRef.current;
+    if (!container) return;
 
     const handleScroll = () => {
       const isNearBottom =
-        container.scrollHeight - container.scrollTop - container.clientHeight < 100
-      setShowScrollButton(!isNearBottom)
-    }
+        container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+      setShowScrollButton(!isNearBottom);
+    };
 
-    container.addEventListener("scroll", handleScroll)
-    return () => container.removeEventListener("scroll", handleScroll)
-  }, [])
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Auto-scroll when 'transcripts' changes
   useEffect(() => {
     // Ensure the panel auto-scrolls only if the user is already near the bottom
-    if (!containerRef.current) return
+    if (!containerRef.current) return;
 
-    const container = containerRef.current
+    const container = containerRef.current;
     const isNearBottom =
-      container.scrollHeight - container.scrollTop - container.clientHeight < 100
+      container.scrollHeight - container.scrollTop - container.clientHeight < 100;
 
     if (isNearBottom) {
-      endRef.current?.scrollIntoView({ behavior: 'smooth' })
+      endRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [transcripts])
+  }, [transcripts]);
 
   return (
     <Card className="relative flex flex-col h-full bg-card p-0 overflow-hidden">
@@ -55,12 +55,16 @@ export default function TranscriptPanel({ transcripts }: TranscriptionPanelProps
             {transcripts.map((item, idx) => (
               <div key={idx} className="space-y-1 pb-1 border-b border-border/50 last:border-0">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-semibold text-primary">{item.speaker === Speaker.SELF ? "ME" : "Interviewer"}</span>
+                  <span className="text-xs font-semibold text-primary">
+                    {item.speaker === Speaker.SELF ? 'ME' : 'Interviewer'}
+                  </span>
                   <span className="text-xs text-muted-foreground shrink-0">
                     {new Date(item.timestamp).toLocaleString()}
                   </span>
                 </div>
-                <pre className="text-sm text-foreground/80 leading-relaxed text-wrap">{item.text}</pre>
+                <pre className="text-sm text-foreground/80 leading-relaxed text-wrap">
+                  {item.text}
+                </pre>
               </div>
             ))}
             {/* This invisible div acts as scroll target */}
@@ -88,5 +92,5 @@ export default function TranscriptPanel({ transcripts }: TranscriptionPanelProps
         </button>
       )}
     </Card>
-  )
+  );
 }

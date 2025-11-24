@@ -1,15 +1,21 @@
-import { Button } from '@/components/ui/button'
-import { User, Moon, Sun } from 'lucide-react'
+import { Button } from '@/components/ui/button';
+import { Moon, Sun } from 'lucide-react';
 
 interface TopBarProps {
-  photo: string
-  userName: string
-  onProfileClick: () => void
-  onThemeToggle: () => void
-  isDark: boolean
+  photo: string;
+  userName: string;
+  onProfileClick: () => void;
+  onThemeToggle: () => void;
+  isDark: boolean;
 }
 
-export default function TopBar({ photo, userName, onProfileClick, onThemeToggle, isDark }: TopBarProps) {
+export default function TopBar({
+  photo,
+  userName,
+  onProfileClick,
+  onThemeToggle,
+  isDark,
+}: TopBarProps) {
   return (
     <div className="border border-border rounded-lg bg-card p-2 shrink-0">
       <div className="flex items-center justify-between">
@@ -50,7 +56,7 @@ export default function TopBar({ photo, userName, onProfileClick, onThemeToggle,
                 />
               ) : (
                 <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-lg font-semibold text-muted-foreground border shadow-sm">
-                  {userName ? userName.charAt(0).toUpperCase() : "?"}
+                  {userName ? userName.charAt(0).toUpperCase() : '?'}
                 </div>
               )}
               <p className="text-sm font-medium">{userName}</p>
@@ -59,5 +65,5 @@ export default function TopBar({ photo, userName, onProfileClick, onThemeToggle,
         </div>
       </div>
     </div>
-  )
+  );
 }
