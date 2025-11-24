@@ -1,7 +1,20 @@
 import { Card } from '@/components/ui/card'
 
-export default function VideoPanel() {
+interface VideoPanelProps {
+  cameraDevice: string
+  videoWidth: number
+  videoHeight: number
+  enableFaceSwap: boolean
+  enableFaceEnhance: boolean
+}
 
+export default function VideoPanel({
+  cameraDevice,
+  videoWidth,
+  videoHeight,
+  enableFaceSwap,
+  enableFaceEnhance
+}: VideoPanelProps) {
   return (
     <Card className="relative w-full h-full overflow-hidden bg-black shrink-0">
       {/* Video placeholder from server */}

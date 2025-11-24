@@ -132,7 +132,13 @@ export default function Home() {
         <div className="flex flex-col gap-2 w-96 shrink-0 min-h-0">
           {/* Video Panel - Small and compact */}
           <div className="h-48 shrink-0">
-            <VideoPanel />
+            <VideoPanel
+              cameraDevice={config?.camera_device ?? ''}
+              videoWidth={config?.video_width ?? 640}
+              videoHeight={config?.video_height ?? 480}
+              enableFaceSwap={config?.enable_face_swap ?? false}
+              enableFaceEnhance={config?.enable_face_enhance ?? false}
+            />
           </div>
 
           {/* Transcription Panel - Fill remaining space with scroll */}
