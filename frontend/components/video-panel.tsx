@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Card } from '@/components/ui/card'
 
 interface VideoPanelProps {
+  photo: string
   cameraDevice: string
   videoWidth: number
   videoHeight: number
@@ -12,6 +13,7 @@ interface VideoPanelProps {
 }
 
 export default function VideoPanel({
+  photo,
   cameraDevice,
   videoWidth,
   videoHeight,
@@ -50,7 +52,7 @@ export default function VideoPanel({
     const res = await fetch(offerUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sdp: offer.sdp, type: offer.type, options: { enableFaceSwap, enableFaceEnhance } })
+      body: JSON.stringify({ sdp: offer.sdp, type: offer.type, options: { photo, enableFaceSwap, enableFaceEnhance } })
     })
     const answer = await res.json()
 

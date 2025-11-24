@@ -133,6 +133,7 @@ export default function Home() {
           {/* Video Panel - Small and compact */}
           <div className="h-48 shrink-0">
             <VideoPanel
+              photo={config?.profile?.photo ?? ""}
               cameraDevice={config?.camera_device ?? ''}
               videoWidth={config?.video_width ?? 640}
               videoHeight={config?.video_height ?? 480}
