@@ -260,9 +260,6 @@ export default function ControlPanel({
                     <SelectItem value="vosk-model-en-us-0.42-gigaspeech">
                       vosk-model-en-us-0.42-gigaspeech
                     </SelectItem>
-                    <SelectItem value="vosk-model-small-en-us-0.15">
-                      vosk-model-small-en-us-0.15
-                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
