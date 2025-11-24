@@ -10,8 +10,11 @@ export enum Language {
 
 export interface Config {
   profile: UserProfile;
-  audio_input_device: number;
   language: Language;
+
+  // Transcription options
+  audio_input_device: number;
+  asr_model: string;
 
   // Audio control options
   enable_audio_control: boolean;

@@ -24,7 +24,10 @@ interface ControlPanelProps {
   runningState: RunningState;
   audioInputDevices: PyAudioDevice[];
   audioOutputDevices: PyAudioDevice[];
+
+  // Transcription options
   audioInputDevice: string;
+  asrModel: string;
 
   // Audio control options
   enableAudioControl: boolean;
@@ -62,10 +65,13 @@ export default function ControlPanel({
   runningState,
   audioInputDevices,
   audioOutputDevices,
-  audioInputDevice,
   startMutation,
   stopMutation,
   updateConfig,
+
+  // Transcription options
+  audioInputDevice,
+  asrModel,
 
   // Audio control options
   enableAudioControl,
@@ -88,7 +94,7 @@ export default function ControlPanel({
       label: 'Start',
     },
     [RunningState.STARTING]: {
-      onClick: () => {},
+      onClick: () => { },
       className: 'bg-primary hover:bg-primary/90',
       disabled: true,
       icon: <Ellipsis className="h-3.5 w-3.5 animate-pulse" />,
@@ -102,7 +108,7 @@ export default function ControlPanel({
       label: 'Stop',
     },
     [RunningState.STOPPING]: {
-      onClick: () => {},
+      onClick: () => { },
       className: 'bg-destructive hover:bg-destructive/90',
       disabled: true,
       icon: <Ellipsis className="h-3.5 w-3.5 animate-pulse" />,
@@ -177,7 +183,7 @@ export default function ControlPanel({
         if (videoPreviewRef.current) {
           videoPreviewRef.current.srcObject = stream;
           // Some browsers need play() after setting srcObject
-          await videoPreviewRef.current.play().catch(() => {});
+          await videoPreviewRef.current.play().catch(() => { });
         }
       } catch (err) {
         toast.error('Unable to access camera');
@@ -201,7 +207,7 @@ export default function ControlPanel({
   return (
     <div className="flex items-center justify-between gap-2 px-4 py-2">
       <div className="flex flex-1 justify-center gap-2 items-center">
-        {/* Microphone Select + Dialog */}
+        {/* Transcription + Dialog */}
         <div className="flex items-center rounded-full overflow-hidden border">
           <Dialog>
             <DialogTrigger asChild>
@@ -216,7 +222,7 @@ export default function ControlPanel({
             </DialogTrigger>
 
             <DialogContent className="flex flex-col w-72 p-4">
-              <DialogTitle>Select Microphone</DialogTitle>
+              <DialogTitle>Transcription Options</DialogTitle>
 
               {/* Microphone Select */}
               <div className="mb-3">
@@ -234,6 +240,29 @@ export default function ControlPanel({
                         {device.name}
                       </SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {/* ASR Model Select */}
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">ASR Model</label>
+                <Select
+                  value={asrModel}
+                  onValueChange={(v) => updateConfig({ asr_model: v })}
+                >
+                  <SelectTrigger className="h-8 w-full text-xs">
+                    <SelectValue placeholder="Select ASR model" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="vosk-model-en-us-0.22-lgraph">
+                      vosk-model-en-us-0.22-lgraph
+                    </SelectItem>
+                    <SelectItem value="vosk-model-en-us-0.42-gigaspeech">
+                      vosk-model-en-us-0.42-gigaspeech
+                    </SelectItem>
+                    <SelectItem value="vosk-model-small-en-us-0.15">
+                      vosk-model-small-en-us-0.15
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>

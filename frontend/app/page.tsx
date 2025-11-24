@@ -168,8 +168,10 @@ export default function Home() {
           stopMutation={stopMutation}
           audioInputDevices={audioInputDevices ?? []}
           audioOutputDevices={audioOutputDevices ?? []}
-          audioInputDevice={`${config?.audio_input_device ?? 0}`}
           updateConfig={updateConfig}
+          // Transcription options
+          asrModel={config?.asr_model ?? ''}
+          audioInputDevice={`${config?.audio_input_device ?? 0}`}
           // Audio control options
           enableAudioControl={config?.enable_audio_control ?? false}
           audioControlDevice={`${config?.audio_control_device ?? 0}`}
