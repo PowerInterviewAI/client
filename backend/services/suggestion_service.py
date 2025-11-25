@@ -89,7 +89,7 @@ class SuggestionService:
     def start_suggestion(self) -> None:
         """Signal the suggestion thread to start."""
         self._stop_event.clear()
-        suggestion_service.clear_suggestions()
+        SUGGESTION_SERVICE.clear_suggestions()
         logger.info("Start signal sent to suggestion thread")
 
     def stop_suggestion(self) -> None:
@@ -102,4 +102,4 @@ class SuggestionService:
             self._suggestions = {}
 
 
-suggestion_service = SuggestionService()
+SUGGESTION_SERVICE = SuggestionService()

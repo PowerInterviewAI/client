@@ -7,6 +7,8 @@ import numpy as np
 import pyvirtualcam
 from loguru import logger
 
+from backend.models.config import Config
+
 
 class VirtualCameraService:
     """
@@ -157,12 +159,20 @@ class VirtualCameraService:
             thread.join(timeout=join_timeout)
             logger.debug("VirtualCameraService stopped")
 
-    def config(self, width: int, height: int, fps: int) -> None:
+    def set_parameters(self, width: int, height: int, fps: int) -> None:
         """Update camera configuration. Worker will restart camera with new settings."""
         with self._cond:
             self.width = int(width)
             self.height = int(height)
             self.fps = int(fps)
+            self._cond.notify_all()
+        logger.debug("VirtualCameraService config updated: {}x{} @ {}fps", self.width, self.height, self.fps)
+
+    def update_parameters_from_config(self, config: Config) -> None:
+        """Update camera configuration. Worker will restart camera with new settings."""
+        with self._cond:
+            self.width = int(config.video_width)
+            self.height = int(config.video_height)
             self._cond.notify_all()
         logger.debug("VirtualCameraService config updated: {}x{} @ {}fps", self.width, self.height, self.fps)
 
@@ -191,4 +201,4 @@ class VirtualCameraService:
 
 
 # module-level default instance
-virtual_camera_service = VirtualCameraService()
+VIRTUAL_CAMERA_SERVICE = VirtualCameraService()

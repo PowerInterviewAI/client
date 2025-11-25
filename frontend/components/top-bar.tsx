@@ -33,7 +33,7 @@ export default function TopBar({
           />
           <div>
             <h1 className="text-lg font-semibold text-foreground">Power Interview</h1>
-            <p className="text-xs text-muted-foreground">Live AI Assistant</p>
+            <p className="text-xs text-muted-foreground">Live AI Interview Assistant</p>
           </div>
         </div>
 

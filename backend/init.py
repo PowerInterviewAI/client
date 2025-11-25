@@ -5,8 +5,8 @@ import requests
 
 from backend.cfg.client import config as cfg_client
 from backend.services.config_service import ConfigService
-from backend.services.service_status_manager import service_status_manager
-from backend.services.virtual_camera import virtual_camera_service
+from backend.services.service_status_manager import SETVICE_STATUS_MANAGER
+from backend.services.virtual_camera import VIRTUAL_CAMERA_SERVICE
 
 
 def init_config() -> None:
@@ -23,9 +23,9 @@ def init_backend_ping() -> None:
                 )
                 resp.raise_for_status()
 
-                service_status_manager.set_backend_live(True)
+                SETVICE_STATUS_MANAGER.set_backend_live(True)
             except Exception:
-                service_status_manager.set_backend_live(False)
+                SETVICE_STATUS_MANAGER.set_backend_live(False)
 
             finally:
                 time.sleep(1)
@@ -35,4 +35,4 @@ def init_backend_ping() -> None:
 
 
 def init_virtual_camera_loop() -> None:
-    virtual_camera_service.start()
+    VIRTUAL_CAMERA_SERVICE.start()

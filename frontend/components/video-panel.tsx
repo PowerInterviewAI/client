@@ -13,6 +13,9 @@ interface VideoPanelProps {
   videoHeight: number;
   enableFaceSwap: boolean;
   enableFaceEnhance: boolean;
+  // Optional: streaming fps for websocket
+  fps?: number;
+  jpegQuality?: number; // 0.0 - 1.0
 }
 
 export interface VideoPanelHandle {
@@ -21,10 +24,29 @@ export interface VideoPanelHandle {
 }
 
 export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
-  ({ photo, cameraDevice, videoWidth, videoHeight, enableFaceSwap, enableFaceEnhance }, ref) => {
+  (
+    {
+      photo,
+      cameraDevice,
+      videoWidth,
+      videoHeight,
+      enableFaceSwap,
+      enableFaceEnhance,
+      fps = 30,
+      jpegQuality = 0.7,
+    },
+    ref,
+  ) => {
     const [videoMessage, setVideoMessage] = useState('Video Stream');
     const videoRef = useRef<HTMLVideoElement>(null);
     const pcRef = useRef<RTCPeerConnection | null>(null);
+
+    // WebSocket and frame loop references
+    const wsRef = useRef<WebSocket | null>(null);
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    const streamRef = useRef<MediaStream | null>(null);
+    const frameTimerRef = useRef<number | null>(null);
+
     const [isStreaming, setIsStreaming] = useState(false);
 
     const startWebRTC = async () => {
@@ -72,7 +94,65 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       // Apply answer
       await pc.setRemoteDescription(new RTCSessionDescription(answer));
 
+      // Start WebSocket frame streaming to FastAPI
+      await startWebSocketFrameStreaming(stream, videoWidth, videoHeight, fps, jpegQuality);
+
       setIsStreaming(true);
+    };
+
+    const startWebSocketFrameStreaming = async (
+      stream: MediaStream,
+      width: number,
+      height: number,
+      fps: number,
+      quality: number,
+    ) => {
+      // Create canvas to extract frames
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      canvasRef.current = canvas;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        throw new Error('Canvas 2D context not available');
+      }
+
+      // Create a hidden <video> element that plays the local stream into the canvas
+      const feederVideo = document.createElement('video');
+      feederVideo.playsInline = true;
+      feederVideo.muted = true;
+      feederVideo.srcObject = stream;
+      await feederVideo.play();
+
+      // Connect WebSocket (adjust base path if your backend is proxied)
+      const ws = new WebSocket('ws://localhost:8081/api/webrtc/frames');
+      wsRef.current = ws;
+
+      // Send init message with width,height,fps so backend sizes the virtual cam
+      ws.onopen = () => {
+        ws.send(`${width},${height},${fps}`);
+      };
+
+      // Start frame loop at desired fps
+      const intervalMs = Math.round(1000 / fps);
+      const loop = () => {
+        try {
+          ctx.drawImage(feederVideo, 0, 0, width, height);
+          canvas.toBlob(
+            (blob) => {
+              if (blob && ws.readyState === WebSocket.OPEN) {
+                blob.arrayBuffer().then((buf) => ws.send(buf));
+              }
+            },
+            'image/jpeg',
+            quality,
+          );
+        } catch {
+          // Swallow draw errors during state changes
+        }
+      };
+
+      frameTimerRef.current = window.setInterval(loop, intervalMs);
     };
 
     const stopWebRTC = () => {
