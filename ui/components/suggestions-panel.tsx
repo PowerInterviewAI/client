@@ -75,7 +75,7 @@ export default function SuggestionsPanel({ suggestions = [] }: SuggestionsPanelP
                   {s.state === SuggestionState.PENDING && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Preparing to generate…</span>
+                      <span>Generating...</span>
                     </div>
                   )}
 
@@ -83,7 +83,7 @@ export default function SuggestionsPanel({ suggestions = [] }: SuggestionsPanelP
                     <div className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">
                       {s.answer}
                       <div className="text-xs text-muted-foreground mt-1">
-                        (streaming… more content may arrive)
+                        (streaming... more content may arrive)
                       </div>
                     </div>
                   )}
