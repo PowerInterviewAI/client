@@ -9,7 +9,14 @@ class Config:
 
     PUBLIC_DIR: Path = ENGINE_DIR / "public"
 
-    CONFIG_FILE: Path = ROOT_DIR / "config.json"
+    APP_DATA_DIR: Path = Path.home() / ".power-interview"
+    CONFIG_FILE: Path = APP_DATA_DIR / "config.json"
 
+    @classmethod
+    def ensure_dirs(cls) -> None:
+        cls.APP_DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+
+Config.ensure_dirs()
 
 config = Config()

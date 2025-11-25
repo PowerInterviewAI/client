@@ -12,7 +12,7 @@ from engine.services.transcript_service import Transcriber
 
 class PowerInterviewApp:
     def __init__(self) -> None:
-        self.config = self.load_config()
+        self.config = Config()
 
         self.transcriber = Transcriber(
             callback_on_self_final=self.on_transcriber_self_final,
