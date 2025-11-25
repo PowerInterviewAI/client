@@ -179,6 +179,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
           );
         } catch (err) {
           // ignore transient errors (e.g., video not ready)
+          console.error(err);
         }
       };
 
