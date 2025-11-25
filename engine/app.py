@@ -9,7 +9,7 @@ from engine.models.config import Config, ConfigUpdate
 from engine.schemas.app_state import AppState
 from engine.schemas.transcript import Transcript
 from engine.services.audio_service import AudioController
-from engine.services.service_status_manager import SETVICE_STATUS_MANAGER
+from engine.services.service_monitor import ServiceMonitor
 from engine.services.suggestion_service import SuggestionService
 from engine.services.transcript_service import Transcriber
 from engine.services.virtual_camera import VirtualCameraService
@@ -18,6 +18,8 @@ from engine.services.virtual_camera import VirtualCameraService
 class PowerInterviewApp:
     def __init__(self) -> None:
         self.config = Config()
+
+        self.service_status_monitor = ServiceMonitor()
 
         self.transcriber = Transcriber(
             callback_on_self_final=self.on_transcriber_self_final,
@@ -105,7 +107,7 @@ class PowerInterviewApp:
             transcripts=self.transcriber.get_transcripts(),
             running_state=self.transcriber.running_state(),
             suggestions=self.suggestion_service.get_suggestions(),
-            is_backend_live=SETVICE_STATUS_MANAGER.is_backend_live(),
+            is_backend_live=self.service_status_monitor.is_backend_live(),
         )
 
     # ---- Callbacks ----
@@ -117,6 +119,10 @@ class PowerInterviewApp:
 
     def on_virtual_camera_frame(self, frame_bgr: np.ndarray[Any, Any]) -> None:
         self.virtual_camera_service.set_frame(frame_bgr)
+
+    # ---- Background Tasks ----
+    def start_background_tasks(self) -> None:
+        self.service_status_monitor.start_backend_monitor()
 
 
 the_app = PowerInterviewApp()

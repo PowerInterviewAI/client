@@ -9,7 +9,7 @@ from engine.api.endpint_filter import EndpointFilter
 from engine.api.router import router as api_router
 from engine.cfg.api import config as cfg_api
 from engine.cfg.fs import config as cfg_fs
-from engine.init import init_backend_ping
+from engine.init import init_app
 
 # Create FastAPI instance
 api = FastAPI(
@@ -21,7 +21,7 @@ api = FastAPI(
         "email": str(cfg_api.APP_EMAIL),
     },
     on_startup=[
-        init_backend_ping,
+        init_app,
     ],
 )
 
