@@ -15,6 +15,7 @@ export default function SuggestionsPanel({ suggestions = [] }: SuggestionsPanelP
   const containerRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [autoScroll, setAutoScroll] = useState(true);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -30,23 +31,42 @@ export default function SuggestionsPanel({ suggestions = [] }: SuggestionsPanelP
     return () => container.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Auto-scroll when 'suggestions' changes
+  // Scroll to end when suggestions change only if autoScroll is enabled
   useEffect(() => {
-    if (!containerRef.current) return;
-    const container = containerRef.current;
-    const isNearBottom =
-      container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+    if (!autoScroll) return;
+    endRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [suggestions, autoScroll]);
 
-    if (isNearBottom) {
+  // If user enables autoScroll, jump to end immediately
+  useEffect(() => {
+    if (autoScroll) {
       endRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [suggestions]);
+  }, [autoScroll]);
 
   return (
     <Card className="relative flex flex-col h-full bg-card p-0">
       <div className="border-b border-border p-4 shrink-0">
-        <h3 className="font-semibold text-foreground text-sm">Interview Suggestions</h3>
-        <p className="text-xs text-muted-foreground mt-1">AI-powered recommendations</p>
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <h3 className="font-semibold text-foreground text-sm">Interview Suggestions</h3>
+            <p className="text-xs text-muted-foreground mt-1">AI-powered recommendations</p>
+          </div>
+
+          {/* Auto-scroll checkbox */}
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={autoScroll}
+                onChange={(e) => setAutoScroll(e.target.checked)}
+                className="h-4 w-4 rounded border-border bg-background text-primary focus:ring-0"
+                aria-label="Enable auto-scroll"
+              />
+              <span className="text-xs text-muted-foreground">Auto-scroll</span>
+            </label>
+          </div>
+        </div>
       </div>
 
       <div ref={containerRef} className="flex-1 overflow-y-auto mb-2">

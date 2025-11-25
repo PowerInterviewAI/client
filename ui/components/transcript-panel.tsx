@@ -11,6 +11,7 @@ export default function TranscriptPanel({ transcripts, username }: Transcription
   const containerRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [autoScroll, setAutoScroll] = useState(true);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -23,27 +24,33 @@ export default function TranscriptPanel({ transcripts, username }: Transcription
     };
 
     container.addEventListener('scroll', handleScroll);
+    // run once to set initial state
+    handleScroll();
+
     return () => container.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Auto-scroll when 'transcripts' changes
+  // Auto-scroll when 'transcripts' changes only if autoScroll is enabled
   useEffect(() => {
-    // Ensure the panel auto-scrolls only if the user is already near the bottom
-    if (!containerRef.current) return;
-
-    const container = containerRef.current;
-    const isNearBottom =
-      container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-
-    if (isNearBottom) {
-      endRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [transcripts]);
+    if (!autoScroll) return;
+    endRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [transcripts, autoScroll]);
 
   return (
     <Card className="relative flex flex-col h-full bg-card p-0 overflow-hidden">
-      <div className="border-b border-border px-4 pt-4 pb-2 shrink-0">
+      <div className="border-b border-border px-4 pt-4 pb-2 shrink-0 flex items-center justify-between gap-4">
         <h3 className="font-semibold text-foreground text-xs">Transcription</h3>
+
+        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={autoScroll}
+            onChange={(e) => setAutoScroll(e.target.checked)}
+            className="h-4 w-4 rounded border-border bg-background"
+            aria-label="Enable auto-scroll"
+          />
+          <span className="select-none">Auto-scroll</span>
+        </label>
       </div>
 
       <div ref={containerRef} className="flex-1 overflow-y-auto mb-2">
@@ -73,6 +80,7 @@ export default function TranscriptPanel({ transcripts, username }: Transcription
           </div>
         )}
       </div>
+
       {/* Scroll to End Button */}
       {transcripts.length > 0 && showScrollButton && (
         <button
