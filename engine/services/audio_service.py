@@ -237,6 +237,3 @@ class AudioControlService:
 
             # Backoff before retrying
             time.sleep(0.5)
-
-
-AUDIO_CONTROL_SERVICE = AudioControlService()

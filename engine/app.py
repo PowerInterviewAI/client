@@ -3,7 +3,7 @@ from loguru import logger
 from engine.cfg.fs import config as cfg_fs
 from engine.models.config import Config, ConfigUpdate
 from engine.schemas.app_state import AppState
-from engine.services.audio_service import AUDIO_CONTROL_SERVICE, AudioControlService
+from engine.services.audio_service import AudioControlService
 from engine.services.service_status_manager import SETVICE_STATUS_MANAGER
 from engine.services.suggestion_service import SUGGESTION_SERVICE
 from engine.services.transcript_service import TRANSCRIPT_SERVICE
@@ -62,7 +62,7 @@ class PowerInterviewApp:
         SUGGESTION_SERVICE.start_suggestion()
 
         if self.config.enable_audio_control:
-            AUDIO_CONTROL_SERVICE.start(
+            self.audio_controller.start(
                 input_device_id=self.config.audio_input_device,
                 output_device_id=self.config.audio_control_device,
                 delay_secs=self.config.audio_delay_ms / 1000,
@@ -71,6 +71,8 @@ class PowerInterviewApp:
     def stop_assistant(self) -> None:
         TRANSCRIPT_SERVICE.stop()
         SUGGESTION_SERVICE.stop_suggestion()
+
+        self.audio_controller.stop()
 
     # ---- State Management ----
     def get_app_state(self) -> AppState:
