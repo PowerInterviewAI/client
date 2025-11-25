@@ -5,7 +5,7 @@ from loguru import logger
 
 from backend.cfg.client import config as cfg_client
 from backend.schemas.suggestion import GenerateSuggestionRequest, Suggestion, SuggestionState
-from backend.schemas.transcript import Transcript
+from backend.schemas.transcript import Speaker, Transcript
 from backend.services.config_service import ConfigService
 from backend.utils.datetime import DatetimeUtil
 
@@ -79,6 +79,10 @@ class SuggestionService:
         """Spawn a background thread to run generate_suggestion."""
         if self._stop_event.is_set():
             return
+
+        # Trim trailing self transcripts
+        while transcripts and transcripts[-1].speaker == Speaker.SELF:
+            transcripts.pop()
 
         threading.Thread(
             target=self.generate_suggestion,
