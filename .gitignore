@@ -5,7 +5,7 @@ __pycache__
 
 /venv
 /ui/node_modules
-/ui-container/node_modules
+/ui_container/node_modules
 /app/public
 /models
 
