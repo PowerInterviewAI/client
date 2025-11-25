@@ -326,7 +326,7 @@ export default function ControlPanel({
                 <input
                   type="number"
                   value={audioDelay}
-                  onChange={(e) => updateConfig({ audio_delay: Number(e.target.value) })}
+                  onChange={(e) => updateConfig({ audio_delay_ms: Number(e.target.value) })}
                   className="w-full h-8 px-2 text-xs border rounded-md bg-background"
                   min={0}
                   step={10}

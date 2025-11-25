@@ -19,7 +19,7 @@ export interface Config {
   // Audio control options
   enable_audio_control: boolean;
   audio_control_device: number;
-  audio_delay: number;
+  audio_delay_ms: number;
 
   // Video control options
   enable_video_control: boolean;
