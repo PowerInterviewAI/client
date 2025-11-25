@@ -39,7 +39,7 @@ class Config(BaseModel):
         int,
         Field(description="The audio control device index"),
     ] = 0
-    audio_delay: Annotated[
+    audio_delay_ms: Annotated[
         int,
         Field(description="The audio delay in milliseconds"),
     ] = 0

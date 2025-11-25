@@ -147,7 +147,7 @@ class VirtualCameraService:
             self._thread.start()
             logger.debug("VirtualCameraService started")
 
-    def stop(self, join_timeout: float = 2.0) -> None:
+    def stop(self, join_timeout: float = 5.0) -> None:
         """Stop the background worker and wait up to join_timeout seconds."""
         self._stop_event.set()
         with self._cond:

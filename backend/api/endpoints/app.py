@@ -4,7 +4,7 @@ from fastapi import APIRouter
 
 from backend.api.error_handler import RouteErrorHandler
 from backend.schemas.app_state import AppState
-from backend.services.audio_service import AudioService
+from backend.services.audio_service import AUDIO_CONTROL_SERVICE, AudioService
 from backend.services.config_service import ConfigService
 from backend.services.service_status_manager import SETVICE_STATUS_MANAGER
 from backend.services.suggestion_service import SUGGESTION_SERVICE
@@ -44,6 +44,13 @@ def start_engine() -> None:
         asr_model_name=app_cfg.asr_model,
     )
     SUGGESTION_SERVICE.start_suggestion()
+
+    if app_cfg.enable_audio_control:
+        AUDIO_CONTROL_SERVICE.start(
+            input_device_id=app_cfg.audio_input_device,
+            output_device_id=app_cfg.audio_control_device,
+            delay_secs=app_cfg.audio_delay_ms / 1000,
+        )
 
 
 @router.get("/stop")

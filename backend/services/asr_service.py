@@ -141,7 +141,7 @@ class ASRService:
         self.worker_thread.start()
         logger.info("Audio input stream started (sync mode).")
 
-    def stop(self) -> None:
+    def stop(self, join_timeout: float = 5.0) -> None:
         if not self.running.is_set():
             logger.warning("ASRService not running.")
             return
@@ -150,7 +150,7 @@ class ASRService:
         self.running.clear()
 
         if self.worker_thread and self.worker_thread.is_alive():
-            self.worker_thread.join(timeout=2)
+            self.worker_thread.join(timeout=join_timeout)
 
         if self.stream and self.stream.is_active():
             self.stream.stop_stream()
