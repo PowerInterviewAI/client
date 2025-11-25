@@ -4,13 +4,8 @@ import time
 import requests
 
 from app.cfg.client import config as cfg_client
-from app.services.config_service import ConfigService
 from app.services.service_status_manager import SETVICE_STATUS_MANAGER
 from app.services.virtual_camera import VIRTUAL_CAMERA_SERVICE
-
-
-def init_config() -> None:
-    ConfigService.load_config()
 
 
 def init_backend_ping() -> None:

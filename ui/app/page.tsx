@@ -25,13 +25,13 @@ export default function Home() {
   const { data: configFetched } = useQuery<Config, APIError>({
     queryKey: ['config'],
     queryFn: async () => {
-      const response = await axiosClient.get<Config>('/api/config/get');
+      const response = await axiosClient.get<Config>('/api/app/get-config');
       return response.data;
     },
   });
   const updateConfigMutation = useMutation<Config, APIError, Partial<Config>>({
     mutationFn: async (config) => {
-      const response = await axiosClient.put('/api/config/update', config);
+      const response = await axiosClient.put('/api/app/update-config', config);
       return response.data;
     },
   });
@@ -64,7 +64,7 @@ export default function Home() {
   });
   const startMutation = useMutation<void, APIError, void>({
     mutationFn: async () => {
-      axiosClient.get('/api/app/start');
+      axiosClient.get('/api/app/start-assistant');
       if (config?.enable_video_control) {
         await videoPanelRef.current?.startWebRTC();
       }
@@ -72,7 +72,7 @@ export default function Home() {
   });
   const stopMutation = useMutation<void, APIError, void>({
     mutationFn: async () => {
-      await axiosClient.get('/api/app/stop');
+      await axiosClient.get('/api/app/stop-assistant');
       videoPanelRef.current?.stopWebRTC();
     },
   });
@@ -178,7 +178,7 @@ export default function Home() {
           // Audio control options
           enableAudioControl={config?.enable_audio_control ?? false}
           audioControlDevice={`${config?.audio_control_device ?? 0}`}
-          audioDelay={config?.audio_delay ?? 0}
+          audioDelay={config?.audio_delay_ms ?? 0}
           // Video control options
           enableVideoControl={config?.enable_video_control ?? false}
           cameraDevice={config?.camera_device ?? ''}

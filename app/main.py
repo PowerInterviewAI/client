@@ -9,7 +9,7 @@ from app.api.endpint_filter import EndpointFilter
 from app.api.router import router as api_router
 from app.cfg.api import config as cfg_api
 from app.cfg.fs import config as cfg_fs
-from app.init import init_backend_ping, init_config, init_virtual_camera_loop
+from app.init import init_backend_ping, init_virtual_camera_loop
 
 # Create FastAPI instance
 api = FastAPI(
@@ -21,7 +21,6 @@ api = FastAPI(
         "email": str(cfg_api.APP_EMAIL),
     },
     on_startup=[
-        init_config,
         init_backend_ping,
         init_virtual_camera_loop,
     ],

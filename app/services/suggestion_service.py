@@ -3,10 +3,10 @@ import threading
 import requests
 from loguru import logger
 
+from app.app import the_app
 from app.cfg.client import config as cfg_client
 from app.schemas.suggestion import GenerateSuggestionRequest, Suggestion, SuggestionState
 from app.schemas.transcript import Speaker, Transcript
-from app.services.config_service import ConfigService
 from app.utils.datetime import DatetimeUtil
 
 
@@ -35,7 +35,7 @@ class SuggestionService:
                     state=SuggestionState.PENDING,
                 )
 
-            profile = ConfigService.load_config().profile
+            profile = the_app.load_config().profile
 
             with requests.post(
                 cfg_client.BACKEND_SUGGESTIONS_URL,

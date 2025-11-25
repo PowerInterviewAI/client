@@ -82,7 +82,7 @@ class ConfigUpdate(BaseModel):
     # Audio control options
     enable_audio_control: bool | None = None
     audio_control_device: int | None = None
-    audio_delay: int | None = None
+    audio_delay_ms: int | None = None
 
     # Video control options
     enable_video_control: bool | None = None
