@@ -22,10 +22,18 @@ export default function TopBar({
       <div className="flex items-center justify-between">
         {/* Left: App Logo and Title */}
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-linear-to-br from-primary to-accent shrink-0" />
+          {/* <div className="h-8 w-8 rounded-lg bg-linear-to-br from-primary to-accent shrink-0" /> */}
+          <Image
+            src="/logo.svg"
+            alt="Logo"
+            width={32}
+            height={32}
+            className="w-8 h-8 object-cover"
+            unoptimized
+          />
           <div>
             <h1 className="text-lg font-semibold text-foreground">Power Interview</h1>
-            <p className="text-xs text-muted-foreground">Interview Assistant</p>
+            <p className="text-xs text-muted-foreground">Live AI Assistant</p>
           </div>
         </div>
 
