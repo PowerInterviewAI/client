@@ -121,3 +121,5 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
     );
   },
 );
+
+VideoPanel.displayName = 'VideoPanel';

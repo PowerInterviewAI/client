@@ -187,6 +187,7 @@ export default function ControlPanel({
         }
       } catch (err) {
         toast.error('Unable to access camera');
+        console.error(err);
       }
     };
 
@@ -462,7 +463,7 @@ export default function ControlPanel({
           title="Start/Stop Assistant"
         >
           {icon}
-          {/* {label} */}
+          <span hidden>{label}</span>
         </Button>
       </div>
 

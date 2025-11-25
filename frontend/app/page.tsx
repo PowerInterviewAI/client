@@ -105,7 +105,7 @@ export default function Home() {
     if (appState?.transcripts && appState?.transcripts !== transcripts) {
       setTranscripts(appState?.transcripts);
     }
-  }, [appState?.transcripts]);
+  }, [appState?.transcripts, transcripts]);
   useEffect(() => {
     // Check localStorage or system preference
     const storedTheme = localStorage.getItem('theme');

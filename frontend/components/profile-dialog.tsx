@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Config } from '@/types/config';
 import { X } from 'lucide-react';
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 interface ProfileDialogProps {
@@ -34,7 +35,7 @@ export default function ProfileDialog({
       setName(initialName);
       setProfileData(initialProfileData);
     }
-  }, [isOpen, initialName, initialProfileData]);
+  }, [isOpen, initialPhoto, initialName, initialProfileData]);
 
   const handleSave = () => {
     updateConfig({ profile: { photo: photo, username: name, profile_data: profileData } });
@@ -80,10 +81,12 @@ export default function ProfileDialog({
 
               <div className="relative w-30 h-30 mx-auto">
                 {photo ? (
-                  <img
+                  <Image
                     src={photo}
                     alt="Profile preview"
                     className="w-30 h-30 rounded-md object-cover border shadow-sm"
+                    width={30}
+                    height={30}
                   />
                 ) : (
                   <div className="w-30 h-30 rounded-md bg-muted flex items-center justify-center text-lg font-semibold text-muted-foreground border shadow-sm">
