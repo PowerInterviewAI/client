@@ -12,7 +12,7 @@ from app.cfg.fs import config as cfg_fs
 from app.init import init_backend_ping, init_config, init_virtual_camera_loop
 
 # Create FastAPI instance
-app = FastAPI(
+api = FastAPI(
     debug=cfg_api.DEBUG,
     title=cfg_api.APP_TITLE,
     contact={
@@ -28,7 +28,7 @@ app = FastAPI(
 )
 
 # Add middlewares
-app.add_middleware(
+api.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
@@ -37,10 +37,10 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(api_router, prefix="/api")
+api.include_router(api_router, prefix="/api")
 
 # Mound static files
-app.mount("/", StaticFiles(directory=cfg_fs.PUBLIC_DIR, html=True), name="public")
+api.mount("/", StaticFiles(directory=cfg_fs.PUBLIC_DIR, html=True), name="public")
 
 # Configure logging
 logging.getLogger("uvicorn.access").addFilter(
@@ -56,7 +56,7 @@ logging.getLogger("uvicorn.access").addFilter(
 
 if __name__ == "__main__":
     uvicorn.run(
-        "app.main:app",
+        "app.main:api",
         reload=cfg_api.DEBUG,
         host="0.0.0.0",  # noqa: S104
         port=cfg_api.APP_PORT,
