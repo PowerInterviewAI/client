@@ -57,23 +57,39 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       const pc = new RTCPeerConnection();
       pcRef.current = pc;
 
-      // Attach remote stream to video element
+      // Hold the remote stream when it arrives
+      const remoteStream = new MediaStream();
       pc.ontrack = (event) => {
+        // Add incoming tracks to remoteStream
+        event.streams?.[0]
+          ? (remoteStream.addTrack(event.streams[0].getTracks()[0]))
+          : event.track && remoteStream.addTrack(event.track);
+
+        // Attach remote stream to visible video element
         if (videoRef.current) {
-          videoRef.current.srcObject = event.streams[0];
+          videoRef.current.srcObject = remoteStream;
+          videoRef.current.play().catch(() => { });
+        }
+
+        // Start sending frames from the remote stream to the backend
+        // Only start once (guard)
+        if (!wsRef.current) {
+          startWebSocketFrameStreamingFromStream(remoteStream, videoWidth, videoHeight, fps, jpegQuality)
+            .catch((err) => console.error('Frame streaming failed', err));
         }
       };
 
-      // Get local camera
-      const stream = await navigator.mediaDevices.getUserMedia({
+      // Acquire local camera only if you still want to send local tracks to the peer
+      const localStream = await navigator.mediaDevices.getUserMedia({
         video: {
           deviceId: cameraDevice ? { exact: cameraDevice } : undefined,
-          width: videoWidth,
-          height: videoHeight,
+          width: { ideal: videoWidth },
+          height: { ideal: videoHeight },
         },
         audio: false,
       });
-      stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+      streamRef.current = localStream;
+      localStream.getTracks().forEach((t) => pc.addTrack(t, localStream));
 
       // Create offer
       const offer = await pc.createOffer();
@@ -94,56 +110,70 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       // Apply answer
       await pc.setRemoteDescription(new RTCSessionDescription(answer));
 
-      // Start WebSocket frame streaming to FastAPI
-      await startWebSocketFrameStreaming(stream, videoWidth, videoHeight, fps, jpegQuality);
-
       setIsStreaming(true);
     };
 
-    const startWebSocketFrameStreaming = async (
+    const startWebSocketFrameStreamingFromStream = async (
       stream: MediaStream,
       width: number,
       height: number,
       fps: number,
-      quality: number,
+      quality: number
     ) => {
-      // Create canvas to extract frames
+      // Create canvas and hidden video feeder
       const canvas = document.createElement('canvas');
       canvas.width = width;
       canvas.height = height;
       canvasRef.current = canvas;
       const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        throw new Error('Canvas 2D context not available');
-      }
+      if (!ctx) throw new Error('Canvas 2D context not available');
 
-      // Create a hidden <video> element that plays the local stream into the canvas
       const feederVideo = document.createElement('video');
       feederVideo.playsInline = true;
       feederVideo.muted = true;
+      feederVideo.autoplay = true;
       feederVideo.srcObject = stream;
-      await feederVideo.play();
 
-      // Connect WebSocket (adjust base path if your backend is proxied)
-      const ws = new WebSocket('ws://localhost:8081/api/webrtc/frames');
+      // Ensure the remote video is playing before drawing frames
+      await feederVideo.play().catch(() => {
+        // play() may fail if autoplay blocked; user interaction may be required
+      });
+
+      // Open WebSocket
+      const ws = new WebSocket('http://localhost:8081/api/webrtc/frames');
       wsRef.current = ws;
 
-      // Start frame loop at desired fps
+      ws.onopen = () => {
+        // Start frame loop
+      };
+
+      ws.onclose = () => {
+        // cleanup handled elsewhere
+      };
+
+      ws.onerror = (ev) => {
+        console.error('WebSocket error', ev);
+      };
+
+      // Frame loop
       const intervalMs = Math.round(1000 / fps);
       const loop = () => {
         try {
+          // draw remote frame into canvas
           ctx.drawImage(feederVideo, 0, 0, width, height);
           canvas.toBlob(
             (blob) => {
-              if (blob && ws.readyState === WebSocket.OPEN) {
+              if (!blob) return;
+              if (ws.readyState === WebSocket.OPEN) {
+                // send ArrayBuffer for binary websocket
                 blob.arrayBuffer().then((buf) => ws.send(buf));
               }
             },
             'image/jpeg',
-            quality,
+            quality
           );
-        } catch {
-          // Swallow draw errors during state changes
+        } catch (err) {
+          // ignore transient errors (e.g., video not ready)
         }
       };
 
