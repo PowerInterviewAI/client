@@ -2,12 +2,11 @@
 
 import { Toaster } from '@/components/ui/sonner';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import { useEffect, useState } from 'react';
 import './globals.css';
 
-const geist = Geist({ subsets: ['latin'] });
-const geistMono = Geist_Mono({ subsets: ['latin'] });
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
@@ -43,8 +42,7 @@ export default function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geist.className} ${geistMono.className} antialiased`}>
-        {/* </body><body className={`font-sans antialiased`}> */}
+      <body className={`${inter.className} antialiased`}>
         <ThemeProvider>
           <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
         </ThemeProvider>

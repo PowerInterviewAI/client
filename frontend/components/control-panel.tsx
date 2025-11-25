@@ -94,7 +94,7 @@ export default function ControlPanel({
       label: 'Start',
     },
     [RunningState.STARTING]: {
-      onClick: () => { },
+      onClick: () => {},
       className: 'bg-primary hover:bg-primary/90',
       disabled: true,
       icon: <Ellipsis className="h-3.5 w-3.5 animate-pulse" />,
@@ -108,7 +108,7 @@ export default function ControlPanel({
       label: 'Stop',
     },
     [RunningState.STOPPING]: {
-      onClick: () => { },
+      onClick: () => {},
       className: 'bg-destructive hover:bg-destructive/90',
       disabled: true,
       icon: <Ellipsis className="h-3.5 w-3.5 animate-pulse" />,
@@ -183,7 +183,7 @@ export default function ControlPanel({
         if (videoPreviewRef.current) {
           videoPreviewRef.current.srcObject = stream;
           // Some browsers need play() after setting srcObject
-          await videoPreviewRef.current.play().catch(() => { });
+          await videoPreviewRef.current.play().catch(() => {});
         }
       } catch (err) {
         toast.error('Unable to access camera');
@@ -246,10 +246,7 @@ export default function ControlPanel({
               {/* ASR Model Select */}
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">ASR Model</label>
-                <Select
-                  value={asrModel}
-                  onValueChange={(v) => updateConfig({ asr_model: v })}
-                >
+                <Select value={asrModel} onValueChange={(v) => updateConfig({ asr_model: v })}>
                   <SelectTrigger className="h-8 w-full text-xs">
                     <SelectValue placeholder="Select ASR model" />
                   </SelectTrigger>
