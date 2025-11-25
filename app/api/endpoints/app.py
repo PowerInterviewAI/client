@@ -2,13 +2,13 @@ from typing import Any
 
 from fastapi import APIRouter
 
-from engine.api.error_handler import RouteErrorHandler
-from engine.schemas.app_state import AppState
-from engine.services.audio_service import AUDIO_CONTROL_SERVICE, AudioService
-from engine.services.config_service import ConfigService
-from engine.services.service_status_manager import SETVICE_STATUS_MANAGER
-from engine.services.suggestion_service import SUGGESTION_SERVICE
-from engine.services.transcript_service import TRANSCRIPT_SERVICE
+from app.api.error_handler import RouteErrorHandler
+from app.schemas.app_state import AppState
+from app.services.audio_service import AUDIO_CONTROL_SERVICE, AudioService
+from app.services.config_service import ConfigService
+from app.services.service_status_manager import SETVICE_STATUS_MANAGER
+from app.services.suggestion_service import SUGGESTION_SERVICE
+from app.services.transcript_service import TRANSCRIPT_SERVICE
 
 router = APIRouter(
     route_class=RouteErrorHandler,

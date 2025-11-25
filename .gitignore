@@ -6,7 +6,7 @@ __pycache__
 /venv
 /ui/node_modules
 /ui-container/node_modules
-/engine/public
+/app/public
 /models
 
 /config.json

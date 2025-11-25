@@ -1,8 +1,8 @@
 import requests
 from fastapi.responses import JSONResponse
 
-from engine.cfg.client import config as cfg_client
-from engine.schemas.webrtc import WebRTCOfferRequest
+from app.cfg.client import config as cfg_client
+from app.schemas.webrtc import WebRTCOfferRequest
 
 
 class WebRTCService:

@@ -7,7 +7,7 @@ import numpy as np
 import pyvirtualcam
 from loguru import logger
 
-from engine.models.config import Config
+from app.models.config import Config
 
 
 class VirtualCameraService:

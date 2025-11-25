@@ -3,11 +3,11 @@ import threading
 import requests
 from loguru import logger
 
-from engine.cfg.client import config as cfg_client
-from engine.schemas.suggestion import GenerateSuggestionRequest, Suggestion, SuggestionState
-from engine.schemas.transcript import Speaker, Transcript
-from engine.services.config_service import ConfigService
-from engine.utils.datetime import DatetimeUtil
+from app.cfg.client import config as cfg_client
+from app.schemas.suggestion import GenerateSuggestionRequest, Suggestion, SuggestionState
+from app.schemas.transcript import Speaker, Transcript
+from app.services.config_service import ConfigService
+from app.utils.datetime import DatetimeUtil
 
 
 class SuggestionService:

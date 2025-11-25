@@ -1,9 +1,9 @@
 from fastapi import APIRouter
 
-from engine.api.error_handler import RouteErrorHandler
-from engine.models.config import Config, ConfigUpdate
-from engine.services.config_service import ConfigService
-from engine.services.virtual_camera import VIRTUAL_CAMERA_SERVICE
+from app.api.error_handler import RouteErrorHandler
+from app.models.config import Config, ConfigUpdate
+from app.services.config_service import ConfigService
+from app.services.virtual_camera import VIRTUAL_CAMERA_SERVICE
 
 router = APIRouter(
     route_class=RouteErrorHandler,

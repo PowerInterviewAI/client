@@ -3,8 +3,8 @@ import json
 import pyaudiowpatch as pyaudio
 from loguru import logger
 
-from engine.cfg.fs import config as cfg_fs
-from engine.services.asr_service import ASRService
+from app.cfg.fs import config as cfg_fs
+from app.services.asr_service import ASRService
 
 
 def test_asr_service() -> None:

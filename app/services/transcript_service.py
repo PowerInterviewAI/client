@@ -6,13 +6,13 @@ from typing import Any
 
 from loguru import logger
 
-from engine.cfg.fs import config as cfg_fs
-from engine.schemas.app_state import RunningState
-from engine.schemas.transcript import Speaker, Transcript
-from engine.services.asr_service import ASRService
-from engine.services.audio_service import AudioService
-from engine.services.suggestion_service import SUGGESTION_SERVICE
-from engine.utils.datetime import DatetimeUtil
+from app.cfg.fs import config as cfg_fs
+from app.schemas.app_state import RunningState
+from app.schemas.transcript import Speaker, Transcript
+from app.services.asr_service import ASRService
+from app.services.audio_service import AudioService
+from app.services.suggestion_service import SUGGESTION_SERVICE
+from app.utils.datetime import DatetimeUtil
 
 
 class TranscriptService:
