@@ -32,7 +32,4 @@ async def frames(ws: WebSocket) -> None:
             # Skip bad frames
             continue
 
-        # pyvirtualcam expects RGB
-        frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
-
-        VIRTUAL_CAMERA_SERVICE.set_frame(frame_rgb)
+        VIRTUAL_CAMERA_SERVICE.set_frame(frame_bgr)
