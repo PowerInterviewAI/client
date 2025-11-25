@@ -56,7 +56,7 @@ logging.getLogger("uvicorn.access").addFilter(
 
 if __name__ == "__main__":
     uvicorn.run(
-        "backend.main:app",
+        "app.main:app",
         reload=cfg_api.DEBUG,
         host="0.0.0.0",  # noqa: S104
         port=cfg_api.APP_PORT,
