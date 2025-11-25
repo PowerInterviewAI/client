@@ -9,7 +9,7 @@ function createWindow() {
         }
     });
 
-    // Load NiceGUI backend
+    // Load App backend
     win.loadURL('http://localhost:8080');
 }
 
