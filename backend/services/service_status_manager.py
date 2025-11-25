@@ -15,4 +15,4 @@ class ServiceStatusManager:
             return self._is_backend_live
 
 
-service_status_manager = ServiceStatusManager()
+SETVICE_STATUS_MANAGER = ServiceStatusManager()

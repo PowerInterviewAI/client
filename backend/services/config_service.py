@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 from loguru import logger
 
 from backend.cfg.fs import config as cfg_fs
@@ -36,6 +38,7 @@ class ConfigService:
     def update_config(
         cls,
         cfg: ConfigUpdate,
+        callbacks: list[Callable[[Config], None]] | None = None,
     ) -> Config:
         update_dict = cfg.model_dump(exclude_unset=True)
         old_dict = cls._config.model_dump(exclude_unset=True)
@@ -47,5 +50,9 @@ class ConfigService:
             }
         )
         cls.save_config()
+
+        if callbacks:
+            for callback in callbacks:
+                callback(cls._config)
 
         return cls._config

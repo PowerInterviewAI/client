@@ -24,5 +24,11 @@ strict = true
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-module = ["uuid_extensions", "vosk", "sounddevice", "pyaudiowpatch"]
+module = [
+    "pyaudiowpatch",
+    "pyvirtualcam",
+    "sounddevice",
+    "uuid_extensions",
+    "vosk",
+]
 ignore_missing_imports = true

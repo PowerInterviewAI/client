@@ -40,7 +40,7 @@ class ASRService:
         self.on_partial = on_partial
 
         # Threading
-        self.audio_queue: Queue[np.ndarray] = Queue(maxsize=20)
+        self.audio_queue: Queue[np.ndarray[Any, Any]] = Queue(maxsize=20)
         self.running = threading.Event()
         self.worker_thread: threading.Thread | None = None
 

@@ -11,7 +11,7 @@ from backend.schemas.app_state import RunningState
 from backend.schemas.transcript import Speaker, Transcript
 from backend.services.asr_service import ASRService
 from backend.services.audio_service import AudioService
-from backend.services.suggestion_service import suggestion_service
+from backend.services.suggestion_service import SUGGESTION_SERVICE
 from backend.utils.datetime import DatetimeUtil
 
 
@@ -181,6 +181,6 @@ class TranscriptService:
         return normalized
 
 
-transcriptor = TranscriptService(
-    callback_on_other_final=suggestion_service.generate_suggestion_async,
+TRANSCRIPT_SERVICE = TranscriptService(
+    callback_on_other_final=SUGGESTION_SERVICE.generate_suggestion_async,
 )

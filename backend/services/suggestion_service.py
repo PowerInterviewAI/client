@@ -5,7 +5,7 @@ from loguru import logger
 
 from backend.cfg.client import config as cfg_client
 from backend.schemas.suggestion import GenerateSuggestionRequest, Suggestion, SuggestionState
-from backend.schemas.transcript import Transcript
+from backend.schemas.transcript import Speaker, Transcript
 from backend.services.config_service import ConfigService
 from backend.utils.datetime import DatetimeUtil
 
@@ -80,6 +80,10 @@ class SuggestionService:
         if self._stop_event.is_set():
             return
 
+        # Trim trailing self transcripts
+        while transcripts and transcripts[-1].speaker == Speaker.SELF:
+            transcripts.pop()
+
         threading.Thread(
             target=self.generate_suggestion,
             args=(transcripts,),
@@ -89,7 +93,7 @@ class SuggestionService:
     def start_suggestion(self) -> None:
         """Signal the suggestion thread to start."""
         self._stop_event.clear()
-        suggestion_service.clear_suggestions()
+        SUGGESTION_SERVICE.clear_suggestions()
         logger.info("Start signal sent to suggestion thread")
 
     def stop_suggestion(self) -> None:
@@ -102,4 +106,4 @@ class SuggestionService:
             self._suggestions = {}
 
 
-suggestion_service = SuggestionService()
+SUGGESTION_SERVICE = SuggestionService()

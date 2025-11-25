@@ -4,9 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 
 interface TranscriptionPanelProps {
   transcripts: Transcript[];
+  username: string;
 }
 
-export default function TranscriptPanel({ transcripts }: TranscriptionPanelProps) {
+export default function TranscriptPanel({ transcripts, username }: TranscriptionPanelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
@@ -56,15 +57,15 @@ export default function TranscriptPanel({ transcripts }: TranscriptionPanelProps
               <div key={idx} className="space-y-1 pb-1 border-b border-border/50 last:border-0">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-semibold text-primary">
-                    {item.speaker === Speaker.SELF ? 'ME' : 'Interviewer'}
+                    {item.speaker === Speaker.SELF ? username : 'Interviewer'}
                   </span>
                   <span className="text-xs text-muted-foreground shrink-0">
                     {new Date(item.timestamp).toLocaleString()}
                   </span>
                 </div>
-                <pre className="text-sm text-foreground/80 leading-relaxed text-wrap">
+                <div className="text-sm text-foreground/80 leading-relaxed text-wrap">
                   {item.text}
-                </pre>
+                </div>
               </div>
             ))}
             {/* This invisible div acts as scroll target */}

@@ -7,7 +7,7 @@
     "build": "next build --turbopack",
     "export": "next build && node scripts/export-copy.mjs",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "prettier --write . & eslint",
     "format": "prettier --write ."
   },
   "dependencies": {
