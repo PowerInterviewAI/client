@@ -128,11 +128,6 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       const ws = new WebSocket('ws://localhost:8081/api/webrtc/frames');
       wsRef.current = ws;
 
-      // Send init message with width,height,fps so backend sizes the virtual cam
-      ws.onopen = () => {
-        ws.send(`${width},${height},${fps}`);
-      };
-
       // Start frame loop at desired fps
       const intervalMs = Math.round(1000 / fps);
       const loop = () => {
@@ -156,13 +151,42 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
     };
 
     const stopWebRTC = () => {
+      // Stop frame loop
+      if (frameTimerRef.current !== null) {
+        window.clearInterval(frameTimerRef.current);
+        frameTimerRef.current = null;
+      }
+
+      // Close WebSocket
+      if (wsRef.current) {
+        try {
+          wsRef.current.close();
+        } catch { }
+        wsRef.current = null;
+      }
+
+      // Close RTCPeerConnection
       if (pcRef.current) {
-        pcRef.current.close();
+        try {
+          pcRef.current.close();
+        } catch { }
         pcRef.current = null;
       }
+
+      // Stop media tracks
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+      }
+
+      // Clear video element
       if (videoRef.current) {
         videoRef.current.srcObject = null;
       }
+
+      // Clear canvas
+      canvasRef.current = null;
+
       setVideoMessage('Video Stream');
       setIsStreaming(false);
     };
