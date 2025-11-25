@@ -3,9 +3,9 @@ import time
 
 import requests
 
-from app.cfg.client import config as cfg_client
-from app.services.service_status_manager import SETVICE_STATUS_MANAGER
-from app.services.virtual_camera import VIRTUAL_CAMERA_SERVICE
+from engine.cfg.client import config as cfg_client
+from engine.services.service_status_manager import SETVICE_STATUS_MANAGER
+from engine.services.virtual_camera import VIRTUAL_CAMERA_SERVICE
 
 
 def init_backend_ping() -> None:

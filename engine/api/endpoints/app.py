@@ -2,11 +2,11 @@ from typing import Any
 
 from fastapi import APIRouter
 
-from app.api.error_handler import RouteErrorHandler
-from app.app import the_app
-from app.models.config import Config, ConfigUpdate
-from app.schemas.app_state import AppState
-from app.services.audio_service import AudioService
+from engine.api.error_handler import RouteErrorHandler
+from engine.app import the_app
+from engine.models.config import Config, ConfigUpdate
+from engine.schemas.app_state import AppState
+from engine.services.audio_service import AudioService
 
 router = APIRouter(
     route_class=RouteErrorHandler,

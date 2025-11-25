@@ -3,8 +3,8 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field
 
-from app.schemas.suggestion import Suggestion
-from app.schemas.transcript import Transcript
+from engine.schemas.suggestion import Suggestion
+from engine.schemas.transcript import Transcript
 
 
 class RunningState(StrEnum):

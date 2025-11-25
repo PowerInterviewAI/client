@@ -1,12 +1,12 @@
 from loguru import logger
 
-from app.cfg.fs import config as cfg_fs
-from app.models.config import Config, ConfigUpdate
-from app.schemas.app_state import AppState
-from app.services.audio_service import AUDIO_CONTROL_SERVICE, AudioControlService
-from app.services.service_status_manager import SETVICE_STATUS_MANAGER
-from app.services.suggestion_service import SUGGESTION_SERVICE
-from app.services.transcript_service import TRANSCRIPT_SERVICE
+from engine.cfg.fs import config as cfg_fs
+from engine.models.config import Config, ConfigUpdate
+from engine.schemas.app_state import AppState
+from engine.services.audio_service import AUDIO_CONTROL_SERVICE, AudioControlService
+from engine.services.service_status_manager import SETVICE_STATUS_MANAGER
+from engine.services.suggestion_service import SUGGESTION_SERVICE
+from engine.services.transcript_service import TRANSCRIPT_SERVICE
 
 
 class PowerInterviewApp:

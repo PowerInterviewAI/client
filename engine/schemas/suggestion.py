@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field
 
-from app.schemas.transcript import Transcript
+from engine.schemas.transcript import Transcript
 
 
 class SuggestionState(StrEnum):

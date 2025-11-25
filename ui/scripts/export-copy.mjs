@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 const src = path.resolve('out');
-const dest = path.resolve('../app/public');
+const dest = path.resolve('../engine/public');
 
 function copyRecursive(srcDir, destDir) {
   if (!fs.existsSync(destDir)) {
@@ -22,4 +22,4 @@ function copyRecursive(srcDir, destDir) {
 }
 
 copyRecursive(src, dest);
-console.log('Export copied to app/public');
+console.log('Export copied to engine/public');
