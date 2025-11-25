@@ -6,6 +6,7 @@ import requests
 from backend.cfg.client import config as cfg_client
 from backend.services.config_service import ConfigService
 from backend.services.service_status_manager import service_status_manager
+from backend.services.virtual_camera import virtual_camera_service
 
 
 def init_config() -> None:
@@ -31,3 +32,7 @@ def init_backend_ping() -> None:
 
     thread = threading.Thread(target=worker, daemon=True)
     thread.start()
+
+
+def init_virtual_camera_loop() -> None:
+    virtual_camera_service.start()
