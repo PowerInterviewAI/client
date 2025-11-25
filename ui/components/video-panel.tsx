@@ -62,20 +62,25 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       pc.ontrack = (event) => {
         // Add incoming tracks to remoteStream
         event.streams?.[0]
-          ? (remoteStream.addTrack(event.streams[0].getTracks()[0]))
+          ? remoteStream.addTrack(event.streams[0].getTracks()[0])
           : event.track && remoteStream.addTrack(event.track);
 
         // Attach remote stream to visible video element
         if (videoRef.current) {
           videoRef.current.srcObject = remoteStream;
-          videoRef.current.play().catch(() => { });
+          videoRef.current.play().catch(() => {});
         }
 
         // Start sending frames from the remote stream to the backend
         // Only start once (guard)
         if (!wsRef.current) {
-          startWebSocketFrameStreamingFromStream(remoteStream, videoWidth, videoHeight, fps, jpegQuality)
-            .catch((err) => console.error('Frame streaming failed', err));
+          startWebSocketFrameStreamingFromStream(
+            remoteStream,
+            videoWidth,
+            videoHeight,
+            fps,
+            jpegQuality,
+          ).catch((err) => console.error('Frame streaming failed', err));
         }
       };
 
@@ -118,7 +123,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       width: number,
       height: number,
       fps: number,
-      quality: number
+      quality: number,
     ) => {
       // Create canvas and hidden video feeder
       const canvas = document.createElement('canvas');
@@ -170,7 +175,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
               }
             },
             'image/jpeg',
-            quality
+            quality,
           );
         } catch (err) {
           // ignore transient errors (e.g., video not ready)
@@ -191,7 +196,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       if (wsRef.current) {
         try {
           wsRef.current.close();
-        } catch { }
+        } catch {}
         wsRef.current = null;
       }
 
@@ -199,7 +204,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       if (pcRef.current) {
         try {
           pcRef.current.close();
-        } catch { }
+        } catch {}
         pcRef.current = null;
       }
 
