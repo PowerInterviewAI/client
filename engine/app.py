@@ -3,17 +3,23 @@ from loguru import logger
 from engine.cfg.fs import config as cfg_fs
 from engine.models.config import Config, ConfigUpdate
 from engine.schemas.app_state import AppState
-from engine.services.audio_service import AudioControlService
+from engine.schemas.transcript import Transcript
+from engine.services.audio_service import AudioController
 from engine.services.service_status_manager import SETVICE_STATUS_MANAGER
-from engine.services.suggestion_service import SUGGESTION_SERVICE
-from engine.services.transcript_service import TRANSCRIPT_SERVICE
+from engine.services.suggestion_service import SuggestionService
+from engine.services.transcript_service import Transcriber
 
 
 class PowerInterviewApp:
     def __init__(self) -> None:
         self.config = self.load_config()
 
-        self.audio_controller = AudioControlService()
+        self.transcriber = Transcriber(
+            callback_on_self_final=self.on_transcriber_self_final,
+            callback_on_other_final=self.on_transcriber_other_final,
+        )
+        self.suggestion_service = SuggestionService()
+        self.audio_controller = AudioController()
 
     # ---- Configuration Management ----
     def load_config(self) -> Config:
@@ -55,11 +61,11 @@ class PowerInterviewApp:
 
     # ---- Assistant Control ----
     def start_assistant(self) -> None:
-        TRANSCRIPT_SERVICE.start(
+        self.transcriber.start(
             input_device_index=self.config.audio_input_device,
             asr_model_name=self.config.asr_model,
         )
-        SUGGESTION_SERVICE.start_suggestion()
+        self.suggestion_service.start_suggestion()
 
         if self.config.enable_audio_control:
             self.audio_controller.start(
@@ -69,19 +75,26 @@ class PowerInterviewApp:
             )
 
     def stop_assistant(self) -> None:
-        TRANSCRIPT_SERVICE.stop()
-        SUGGESTION_SERVICE.stop_suggestion()
+        self.transcriber.stop()
+        self.suggestion_service.stop_suggestion()
 
         self.audio_controller.stop()
 
     # ---- State Management ----
     def get_app_state(self) -> AppState:
         return AppState(
-            transcripts=TRANSCRIPT_SERVICE.get_transcripts(),
-            running_state=TRANSCRIPT_SERVICE.running_state(),
-            suggestions=SUGGESTION_SERVICE.get_suggestions(),
+            transcripts=self.transcriber.get_transcripts(),
+            running_state=self.transcriber.running_state(),
+            suggestions=self.suggestion_service.get_suggestions(),
             is_backend_live=SETVICE_STATUS_MANAGER.is_backend_live(),
         )
+
+    # ---- Callbacks ----
+    def on_transcriber_self_final(self, transcripts: list[Transcript]) -> None:
+        pass
+
+    def on_transcriber_other_final(self, transcripts: list[Transcript]) -> None:
+        self.suggestion_service.generate_suggestion_async(transcripts, self.config.profile)
 
 
 the_app = PowerInterviewApp()

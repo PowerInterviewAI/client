@@ -58,7 +58,7 @@ class AudioService:
             return ret  # type: ignore  # noqa: PGH003
 
 
-class AudioControlService:
+class AudioController:
     def __init__(self) -> None:
         self.input_device_id: int = 0
         self.output_device_id: int = 0

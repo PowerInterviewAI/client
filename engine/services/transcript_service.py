@@ -11,11 +11,10 @@ from engine.schemas.app_state import RunningState
 from engine.schemas.transcript import Speaker, Transcript
 from engine.services.asr_service import ASRService
 from engine.services.audio_service import AudioService
-from engine.services.suggestion_service import SUGGESTION_SERVICE
 from engine.utils.datetime import DatetimeUtil
 
 
-class TranscriptService:
+class Transcriber:
     def __init__(
         self,
         callback_on_self_final: Callable[[list[Transcript]], None] | None = None,
@@ -179,8 +178,3 @@ class TranscriptService:
         if not normalized.endswith("."):
             normalized += "."
         return normalized
-
-
-TRANSCRIPT_SERVICE = TranscriptService(
-    callback_on_other_final=SUGGESTION_SERVICE.generate_suggestion_async,
-)

@@ -3,8 +3,8 @@ import threading
 import requests
 from loguru import logger
 
-from engine.app import the_app
 from engine.cfg.client import config as cfg_client
+from engine.models.user_profile import UserProfile
 from engine.schemas.suggestion import GenerateSuggestionRequest, Suggestion, SuggestionState
 from engine.schemas.transcript import Speaker, Transcript
 from engine.utils.datetime import DatetimeUtil
@@ -21,7 +21,7 @@ class SuggestionService:
         with self._lock:
             return list(self._suggestions.values())
 
-    def generate_suggestion(self, transcripts: list[Transcript]) -> None:
+    def generate_suggestion(self, transcripts: list[Transcript], profile: UserProfile) -> None:
         try:
             if not transcripts:
                 return
@@ -34,8 +34,6 @@ class SuggestionService:
                     answer="",
                     state=SuggestionState.PENDING,
                 )
-
-            profile = the_app.load_config().profile
 
             with requests.post(
                 cfg_client.BACKEND_SUGGESTIONS_URL,
@@ -75,7 +73,7 @@ class SuggestionService:
             with self._lock:
                 self._suggestions[tstamp].state = SuggestionState.ERROR
 
-    def generate_suggestion_async(self, transcripts: list[Transcript]) -> None:
+    def generate_suggestion_async(self, transcripts: list[Transcript], profile: UserProfile) -> None:
         """Spawn a background thread to run generate_suggestion."""
         if self._stop_event.is_set():
             return
@@ -86,14 +84,14 @@ class SuggestionService:
 
         threading.Thread(
             target=self.generate_suggestion,
-            args=(transcripts,),
+            args=(transcripts, profile),
             daemon=True,
         ).start()
 
     def start_suggestion(self) -> None:
         """Signal the suggestion thread to start."""
         self._stop_event.clear()
-        SUGGESTION_SERVICE.clear_suggestions()
+        self.clear_suggestions()
         logger.info("Start signal sent to suggestion thread")
 
     def stop_suggestion(self) -> None:
@@ -104,6 +102,3 @@ class SuggestionService:
     def clear_suggestions(self) -> None:
         with self._lock:
             self._suggestions = {}
-
-
-SUGGESTION_SERVICE = SuggestionService()
