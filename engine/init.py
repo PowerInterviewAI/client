@@ -5,7 +5,6 @@ import requests
 
 from engine.cfg.client import config as cfg_client
 from engine.services.service_status_manager import SETVICE_STATUS_MANAGER
-from engine.services.virtual_camera import VIRTUAL_CAMERA_SERVICE
 
 
 def init_backend_ping() -> None:
@@ -27,7 +26,3 @@ def init_backend_ping() -> None:
 
     thread = threading.Thread(target=worker, daemon=True)
     thread.start()
-
-
-def init_virtual_camera_loop() -> None:
-    VIRTUAL_CAMERA_SERVICE.start()

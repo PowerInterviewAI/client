@@ -5,8 +5,8 @@ from fastapi.responses import JSONResponse
 from loguru import logger
 
 from engine.api.error_handler import RouteErrorHandler
+from engine.app import the_app
 from engine.schemas.webrtc import WebRTCOfferRequest
-from engine.services.virtual_camera import VIRTUAL_CAMERA_SERVICE
 from engine.services.webrtc_service import WebRTCService
 
 router = APIRouter(
@@ -34,6 +34,6 @@ async def frames(ws: WebSocket) -> None:
                 # Skip bad frames
                 continue
 
-            VIRTUAL_CAMERA_SERVICE.set_frame(frame_bgr)
+            the_app.on_virtual_camera_frame(frame_bgr)
         except Exception as ex:
             logger.warning(f"Failed to process frame: {ex}")

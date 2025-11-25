@@ -7,8 +7,6 @@ import numpy as np
 import pyvirtualcam
 from loguru import logger
 
-from engine.models.config import Config
-
 
 class VirtualCameraService:
     """
@@ -22,15 +20,10 @@ class VirtualCameraService:
         svc.stop()
     """
 
-    def __init__(
-        self,
-        width: int = 1280,
-        height: int = 720,
-        fps: int = 30,
-    ) -> None:
-        self.width = int(width)
-        self.height = int(height)
-        self.fps = int(fps)
+    def __init__(self, width: int, height: int, fps: int) -> None:
+        self.width = width
+        self.height = height
+        self.fps = fps
 
         self._lock = threading.Lock()
         self._cond = threading.Condition(self._lock)
@@ -159,20 +152,12 @@ class VirtualCameraService:
             thread.join(timeout=join_timeout)
             logger.debug("VirtualCameraService stopped")
 
-    def set_parameters(self, width: int, height: int, fps: int) -> None:
+    def update_parameters(self, width: int, height: int, fps: int) -> None:
         """Update camera configuration. Worker will restart camera with new settings."""
         with self._cond:
             self.width = int(width)
             self.height = int(height)
             self.fps = int(fps)
-            self._cond.notify_all()
-        logger.debug("VirtualCameraService config updated: {}x{} @ {}fps", self.width, self.height, self.fps)
-
-    def update_parameters_from_config(self, config: Config) -> None:
-        """Update camera configuration. Worker will restart camera with new settings."""
-        with self._cond:
-            self.width = int(config.video_width)
-            self.height = int(config.video_height)
             self._cond.notify_all()
         logger.debug("VirtualCameraService config updated: {}x{} @ {}fps", self.width, self.height, self.fps)
 
@@ -198,7 +183,3 @@ class VirtualCameraService:
     def is_running(self) -> bool:
         with self._lock:
             return bool(self._thread and self._thread.is_alive())
-
-
-# module-level default instance
-VIRTUAL_CAMERA_SERVICE = VirtualCameraService()

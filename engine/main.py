@@ -9,7 +9,7 @@ from engine.api.endpint_filter import EndpointFilter
 from engine.api.router import router as api_router
 from engine.cfg.api import config as cfg_api
 from engine.cfg.fs import config as cfg_fs
-from engine.init import init_backend_ping, init_virtual_camera_loop
+from engine.init import init_backend_ping
 
 # Create FastAPI instance
 api = FastAPI(
@@ -22,7 +22,6 @@ api = FastAPI(
     },
     on_startup=[
         init_backend_ping,
-        init_virtual_camera_loop,
     ],
 )
 
