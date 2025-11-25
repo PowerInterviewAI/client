@@ -4,10 +4,10 @@ from fastapi import APIRouter, WebSocket
 from fastapi.responses import JSONResponse
 from loguru import logger
 
-from backend.api.error_handler import RouteErrorHandler
-from backend.schemas.webrtc import WebRTCOfferRequest
-from backend.services.virtual_camera import VIRTUAL_CAMERA_SERVICE
-from backend.services.webrtc_service import WebRTCService
+from engine.api.error_handler import RouteErrorHandler
+from engine.schemas.webrtc import WebRTCOfferRequest
+from engine.services.virtual_camera import VIRTUAL_CAMERA_SERVICE
+from engine.services.webrtc_service import WebRTCService
 
 router = APIRouter(
     route_class=RouteErrorHandler,

@@ -2,8 +2,8 @@ from collections.abc import Callable
 
 from loguru import logger
 
-from backend.cfg.fs import config as cfg_fs
-from backend.models.config import Config, ConfigUpdate
+from engine.cfg.fs import config as cfg_fs
+from engine.models.config import Config, ConfigUpdate
 
 
 class ConfigService:

@@ -6,8 +6,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.routing import APIRoute
 from loguru import logger
 
-from backend.cfg.api import config as cfg_api
-from backend.schemas.error import ErrorCode500, InternalServerException
+from engine.cfg.api import config as cfg_api
+from engine.schemas.error import ErrorCode500, InternalServerException
 
 
 class RouteErrorHandler(APIRoute):

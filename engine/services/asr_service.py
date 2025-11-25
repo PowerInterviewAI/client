@@ -10,7 +10,7 @@ from loguru import logger
 from scipy.signal import resample_poly
 from vosk import KaldiRecognizer, Model
 
-from backend.services.audio_service import AudioService
+from engine.services.audio_service import AudioService
 
 
 class ASRService:

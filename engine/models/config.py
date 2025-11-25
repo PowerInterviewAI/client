@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field
 
-from backend.models.user_profile import UserProfile
+from engine.models.user_profile import UserProfile
 
 
 class Language(StrEnum):

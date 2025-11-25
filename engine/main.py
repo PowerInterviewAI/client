@@ -5,11 +5,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from backend.api.endpint_filter import EndpointFilter
-from backend.api.router import router as api_router
-from backend.cfg.api import config as cfg_api
-from backend.cfg.fs import config as cfg_fs
-from backend.init import init_backend_ping, init_config, init_virtual_camera_loop
+from engine.api.endpint_filter import EndpointFilter
+from engine.api.router import router as api_router
+from engine.cfg.api import config as cfg_api
+from engine.cfg.fs import config as cfg_fs
+from engine.init import init_backend_ping, init_config, init_virtual_camera_loop
 
 # Create FastAPI instance
 app = FastAPI(

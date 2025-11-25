@@ -2,11 +2,11 @@ from enum import StrEnum
 
 from fastapi import APIRouter
 
-from backend.api.endpoints.app import router as router_app
-from backend.api.endpoints.config import router as router_config
-from backend.api.endpoints.ping import router as router_ping
-from backend.api.endpoints.webrtc import router as router_webrtc
-from backend.api.error_handler import RouteErrorHandler
+from engine.api.endpoints.app import router as router_app
+from engine.api.endpoints.config import router as router_config
+from engine.api.endpoints.ping import router as router_ping
+from engine.api.endpoints.webrtc import router as router_webrtc
+from engine.api.error_handler import RouteErrorHandler
 
 router = APIRouter(route_class=RouteErrorHandler)
 

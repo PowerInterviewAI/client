@@ -3,10 +3,10 @@ import time
 
 import requests
 
-from backend.cfg.client import config as cfg_client
-from backend.services.config_service import ConfigService
-from backend.services.service_status_manager import SETVICE_STATUS_MANAGER
-from backend.services.virtual_camera import VIRTUAL_CAMERA_SERVICE
+from engine.cfg.client import config as cfg_client
+from engine.services.config_service import ConfigService
+from engine.services.service_status_manager import SETVICE_STATUS_MANAGER
+from engine.services.virtual_camera import VIRTUAL_CAMERA_SERVICE
 
 
 def init_config() -> None:
