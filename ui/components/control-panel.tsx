@@ -95,7 +95,7 @@ export default function ControlPanel({
       label: 'Start',
     },
     [RunningState.STARTING]: {
-      onClick: () => {},
+      onClick: () => { },
       className: 'bg-primary hover:bg-primary/90',
       disabled: true,
       icon: <Ellipsis className="h-3.5 w-3.5 animate-pulse" />,
@@ -109,7 +109,7 @@ export default function ControlPanel({
       label: 'Stop',
     },
     [RunningState.STOPPING]: {
-      onClick: () => {},
+      onClick: () => { },
       className: 'bg-destructive hover:bg-destructive/90',
       disabled: true,
       icon: <Ellipsis className="h-3.5 w-3.5 animate-pulse" />,
@@ -184,7 +184,7 @@ export default function ControlPanel({
         if (videoPreviewRef.current) {
           videoPreviewRef.current.srcObject = stream;
           // Some browsers need play() after setting srcObject
-          await videoPreviewRef.current.play().catch(() => {});
+          await videoPreviewRef.current.play().catch(() => { });
         }
       } catch (err) {
         toast.error('Unable to access camera');
@@ -212,7 +212,7 @@ export default function ControlPanel({
         {/* Transcription + Dialog */}
         <div className="flex items-center rounded-full overflow-hidden border">
           <Dialog>
-            <DialogTrigger asChild>
+            <DialogTrigger>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -299,7 +299,7 @@ export default function ControlPanel({
             </TooltipContent>
           </Tooltip>
           <Dialog>
-            <DialogTrigger asChild>
+            <DialogTrigger>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -385,7 +385,7 @@ export default function ControlPanel({
           </Tooltip>
 
           <Dialog open={isVideoDialogOpen} onOpenChange={setIsVideoDialogOpen}>
-            <DialogTrigger asChild>
+            <DialogTrigger>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -495,7 +495,7 @@ export default function ControlPanel({
             <Button
               onClick={onClick}
               size="sm"
-              className={`h-10 w-16 text-xs  font-medium rounded-full cursor-pointer ${className}`}
+              className={`h-8 w-16 text-xs  font-medium rounded-full cursor-pointer ${className}`}
               disabled={disabled}
             >
               {icon}
