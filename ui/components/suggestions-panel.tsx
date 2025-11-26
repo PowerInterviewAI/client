@@ -90,7 +90,9 @@ export default function SuggestionsPanel({ suggestions = [] }: SuggestionsPanelP
               <div key={idx} className="flex gap-3 pb-3 border-b border-border/40 last:border-0">
                 <Zap className="h-4 w-4 mt-0.5 text-accent shrink-0" />
                 <div>
-                  <div className="text-xs text-muted-foreground">Question: {s.last_question}</div>
+                  <div className="text-xs text-muted-foreground">
+                    <strong>Interviewer:</strong> {s.last_question}
+                  </div>
 
                   {/* State‑specific rendering */}
                   {s.state === SuggestionState.PENDING && (
@@ -118,7 +120,7 @@ export default function SuggestionsPanel({ suggestions = [] }: SuggestionsPanelP
                   {s.state === SuggestionState.STOPPED && (
                     <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                       <PauseCircle className="h-4 w-4 text-muted-foreground" />
-                      <span>Generation stopped</span>
+                      <span>Generation canceled</span>
                     </div>
                   )}
 
