@@ -120,7 +120,7 @@ export default function SuggestionsPanel({ suggestions = [] }: SuggestionsPanelP
                   {s.state === SuggestionState.STOPPED && (
                     <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                       <PauseCircle className="h-4 w-4 text-muted-foreground" />
-                      <span>Generation canceled</span>
+                      <span>Suggestion canceled</span>
                     </div>
                   )}
 

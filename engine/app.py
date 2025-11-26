@@ -73,10 +73,13 @@ class PowerInterviewApp:
 
     # ---- Assistant Control ----
     def start_assistant(self) -> None:
+        self.transcriber.clear_transcripts()
         self.transcriber.start(
             input_device_index=self.config.audio_input_device,
             asr_model_name=self.config.asr_model,
         )
+
+        self.suggestion_service.clear_suggestions()
 
         if self.config.enable_audio_control:
             self.audio_controller.update_parameters(

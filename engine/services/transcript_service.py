@@ -39,8 +39,6 @@ class Transcriber:
     def start(self, input_device_index: int, asr_model_name: str) -> None:
         self.stop()
 
-        self.clear_transcripts()
-
         with self._lock:
             self._state = RunningState.STARTING
 
@@ -67,17 +65,20 @@ class Transcriber:
             self._state = RunningState.RUNNING
 
     def stop(self) -> None:
-        with self._lock:
-            self._state = RunningState.STOPPING
+        def worker() -> None:
+            with self._lock:
+                self._state = RunningState.STOPPING
 
-        with self._lock:
             if self.self_asr is not None:
                 self.self_asr.stop()
 
             if self.other_asr is not None:
                 self.other_asr.stop()
 
-            self._state = RunningState.STOPPED
+            with self._lock:
+                self._state = RunningState.STOPPED
+
+        threading.Thread(target=worker, daemon=True).start()
 
     def get_state(self) -> RunningState:
         return self._state
