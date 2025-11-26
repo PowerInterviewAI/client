@@ -274,12 +274,12 @@ export default function ControlPanel({
 
         {/* Audio Control Toggle + Dialog */}
         <div
-          className={`flex items-center rounded-full overflow-hidden border ${enableAudioControl ? '' : 'bg-destructive text-white'}`}
+          className={`flex items-center overflow-hidden border ${enableAudioControl ? 'rounded-full' : 'rounded-xl text-white'}`}
         >
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant={enableAudioControl ? 'outline' : 'destructive'}
+                variant={enableAudioControl ? 'secondary' : 'destructive'}
                 size="icon"
                 className={`h-8 w-8 border-none rounded-none ${enableAudioControl ? '' : ''}`}
                 disabled={getDisabled(runningState)}
@@ -304,7 +304,7 @@ export default function ControlPanel({
               <TooltipTrigger asChild>
                 <DialogTrigger asChild>
                   <Button
-                    variant={enableAudioControl ? 'outline' : 'destructive'}
+                    variant={enableAudioControl ? 'secondary' : 'destructive'}
                     size="icon"
                     className="h-8 w-8 rounded-none border-none"
                     disabled={getDisabled(runningState)}
@@ -359,12 +359,12 @@ export default function ControlPanel({
 
         {/* Video Control Toggle + Dialog */}
         <div
-          className={`flex items-center rounded-full overflow-hidden border ${enableVideoControl ? '' : 'bg-destructive text-white'}`}
+          className={`flex items-center overflow-hidden border ${enableVideoControl ? 'rounded-full' : 'rounded-xl text-white'}`}
         >
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant={enableVideoControl ? 'outline' : 'destructive'}
+                variant={enableVideoControl ? 'secondary' : 'destructive'}
                 size="icon"
                 className="h-8 w-8 border-none rounded-none"
                 disabled={getDisabled(runningState)}
@@ -392,7 +392,7 @@ export default function ControlPanel({
               <TooltipTrigger asChild>
                 <DialogTrigger asChild>
                   <Button
-                    variant={enableVideoControl ? 'outline' : 'destructive'}
+                    variant={enableVideoControl ? 'secondary' : 'destructive'}
                     size="icon"
                     className="h-8 w-8 rounded-none border-none"
                     disabled={getDisabled(runningState)}
