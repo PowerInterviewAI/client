@@ -37,3 +37,4 @@ async def frames(ws: WebSocket) -> None:
             the_app.on_virtual_camera_frame(frame_bgr)
         except Exception as ex:
             logger.warning(f"Failed to process frame: {ex}")
+            break
