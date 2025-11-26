@@ -166,7 +166,7 @@ export default function Home() {
 
       <div className="border border-border rounded-lg bg-card">
         <ControlPanel
-          runningState={appState?.running_state ?? RunningState.IDLE}
+          runningState={appState?.assistant_state ?? RunningState.IDLE}
           startMutation={startMutation}
           stopMutation={stopMutation}
           audioInputDevices={audioInputDevices ?? []}

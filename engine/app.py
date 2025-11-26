@@ -105,7 +105,7 @@ class PowerInterviewApp:
     def get_app_state(self) -> AppState:
         return AppState(
             transcripts=self.transcriber.get_transcripts(),
-            running_state=self.transcriber.running_state(),
+            assistant_state=self.transcriber.get_state(),
             suggestions=self.suggestion_service.get_suggestions(),
             is_backend_live=self.service_status_monitor.is_backend_live(),
         )

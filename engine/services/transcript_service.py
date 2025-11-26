@@ -34,7 +34,7 @@ class Transcriber:
 
         # Synchronization lock
         self._lock = threading.Lock()
-        self._running_state = RunningState.IDLE
+        self._state = RunningState.IDLE
 
     def start(self, input_device_index: int, asr_model_name: str) -> None:
         self.stop()
@@ -42,7 +42,7 @@ class Transcriber:
         self.clear_transcripts()
 
         with self._lock:
-            self._running_state = RunningState.STARTING
+            self._state = RunningState.STARTING
 
         if self.self_asr is None or self.asr_model_name != asr_model_name:
             self.self_asr = ASRService(
@@ -64,11 +64,11 @@ class Transcriber:
         self.other_asr.start()
 
         with self._lock:
-            self._running_state = RunningState.RUNNING
+            self._state = RunningState.RUNNING
 
     def stop(self) -> None:
         with self._lock:
-            self._running_state = RunningState.STOPPING
+            self._state = RunningState.STOPPING
 
         with self._lock:
             if self.self_asr is not None:
@@ -77,10 +77,10 @@ class Transcriber:
             if self.other_asr is not None:
                 self.other_asr.stop()
 
-            self._running_state = RunningState.STOPPED
+            self._state = RunningState.STOPPED
 
-    def running_state(self) -> RunningState:
-        return self._running_state
+    def get_state(self) -> RunningState:
+        return self._state
 
     def _process_partial(self, result_json: str, speaker: Speaker, partial_attr: str) -> None:
         result_dict: dict[str, Any] = json.loads(result_json)

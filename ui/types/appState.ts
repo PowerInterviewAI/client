@@ -10,7 +10,8 @@ export enum RunningState {
 }
 
 export interface AppState {
+  assistant_state: RunningState;
   transcripts: Transcript[];
-  running_state: RunningState;
   suggestions: Suggestion[];
+  is_backend_live: boolean;
 }

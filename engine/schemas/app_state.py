@@ -18,13 +18,13 @@ class RunningState(StrEnum):
 class AppState(BaseModel):
     """The app state."""
 
+    assistant_state: Annotated[
+        RunningState,
+        Field(description="The running state of the assistant"),
+    ]
     transcripts: Annotated[
         list[Transcript],
         Field(description="The list of transcripts"),
-    ]
-    running_state: Annotated[
-        RunningState,
-        Field(description="The running state"),
     ]
     suggestions: Annotated[
         list[Suggestion],
