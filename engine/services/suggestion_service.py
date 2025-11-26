@@ -15,6 +15,7 @@ class SuggestionService:
         self._suggestions: dict[int, Suggestion] = {}
 
         self._lock = threading.Lock()
+        self._thread: threading.Thread | None = None
         self._stop_event = threading.Event()
 
     def get_suggestions(self) -> list[Suggestion]:
@@ -48,25 +49,21 @@ class SuggestionService:
                 resp.raise_for_status()
 
                 for chunk in resp.iter_content(chunk_size=None):
-                    with self._lock:
-                        self._suggestions[tstamp].state = SuggestionState.LOADING
-
                     # check stop flag
                     if self._stop_event.is_set():
                         logger.info("Suggestion generation stopped by user")
                         self._suggestions[tstamp].state = SuggestionState.STOPPED
                         break
 
-                    if chunk:
-                        with self._lock:
+                    with self._lock:
+                        self._suggestions[tstamp].state = SuggestionState.LOADING
+                        if chunk:
                             self._suggestions[tstamp].answer += chunk.decode("utf-8")
 
             # mark as done if not stopped
             with self._lock:
-                if not self._stop_event.is_set():
+                if self._suggestions[tstamp].state == SuggestionState.LOADING:
                     self._suggestions[tstamp].state = SuggestionState.SUCCESS
-                else:
-                    self._suggestions[tstamp].state = SuggestionState.IDLE
 
         except Exception as ex:
             logger.error(f"Failed to generate suggestion: {ex}")
@@ -75,30 +72,31 @@ class SuggestionService:
 
     def generate_suggestion_async(self, transcripts: list[Transcript], profile: UserProfile) -> None:
         """Spawn a background thread to run generate_suggestion."""
-        if self._stop_event.is_set():
-            return
-
         # Trim trailing self transcripts
         while transcripts and transcripts[-1].speaker == Speaker.SELF:
             transcripts.pop()
 
-        threading.Thread(
+        # Stop current thread
+        self.stop_current_thread()
+
+        # Start new thread
+        self._stop_event.clear()
+        self._thread = threading.Thread(
             target=self.generate_suggestion,
             args=(transcripts, profile),
             daemon=True,
-        ).start()
+        )
+        self._thread.start()
 
-    def start_suggestion(self) -> None:
-        """Signal the suggestion thread to start."""
-        self._stop_event.clear()
-        self.clear_suggestions()
-        logger.info("Start signal sent to suggestion thread")
-
-    def stop_suggestion(self) -> None:
+    def stop_current_thread(self, join_timeout: float = 5.0) -> None:
         """Signal the suggestion thread to stop safely."""
         self._stop_event.set()
-        logger.info("Stop signal sent to suggestion thread")
+        if self._thread:
+            self._thread.join(timeout=join_timeout)
+            if self._thread.is_alive():
+                logger.warning("Suggestion thread did not stop in time")
 
     def clear_suggestions(self) -> None:
         with self._lock:
+            self.stop_current_thread()
             self._suggestions = {}

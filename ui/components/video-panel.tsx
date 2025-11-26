@@ -2,11 +2,14 @@
 
 import { Card } from '@/components/ui/card';
 import axiosClient from '@/lib/axiosClient';
+import { RunningState } from '@/types/appState';
 import { OfferRequest, WebRTCOptions } from '@/types/webrtc';
 import { UserCircle2 } from 'lucide-react';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 interface VideoPanelProps {
+  runningState: RunningState;
+  // Video control options
   photo: string;
   cameraDevice: string;
   videoWidth: number;
@@ -26,6 +29,7 @@ export interface VideoPanelHandle {
 export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
   (
     {
+      runningState,
       photo,
       cameraDevice,
       videoWidth,
@@ -226,6 +230,17 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       setVideoMessage('Video Stream');
       setIsStreaming(false);
     };
+
+    // Start/stop WebRTC on running state change
+    useEffect(() => {
+      if (
+        runningState === RunningState.STOPPING ||
+        runningState === RunningState.STOPPED ||
+        runningState === RunningState.IDLE
+      ) {
+        stopWebRTC();
+      }
+    }, [runningState]);
 
     // cleanup on unmount
     useEffect(() => {

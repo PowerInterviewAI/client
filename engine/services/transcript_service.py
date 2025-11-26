@@ -24,6 +24,7 @@ class Transcriber:
         self.transcript_self_partial = Transcript(speaker=Speaker.SELF, text="", timestamp=0)
         self.transcript_other_partial = Transcript(speaker=Speaker.OTHER, text="", timestamp=0)
 
+        # ASR
         self.asr_model_name: str | None = None
         self.self_asr: ASRService | None = None
         self.other_asr: ASRService | None = None
@@ -34,15 +35,13 @@ class Transcriber:
 
         # Synchronization lock
         self._lock = threading.Lock()
-        self._running_state = RunningState.IDLE
+        self._state = RunningState.IDLE
 
     def start(self, input_device_index: int, asr_model_name: str) -> None:
         self.stop()
 
-        self.clear_transcripts()
-
         with self._lock:
-            self._running_state = RunningState.STARTING
+            self._state = RunningState.STARTING
 
         if self.self_asr is None or self.asr_model_name != asr_model_name:
             self.self_asr = ASRService(
@@ -64,29 +63,34 @@ class Transcriber:
         self.other_asr.start()
 
         with self._lock:
-            self._running_state = RunningState.RUNNING
+            self._state = RunningState.RUNNING
 
     def stop(self) -> None:
-        with self._lock:
-            self._running_state = RunningState.STOPPING
+        def worker() -> None:
+            with self._lock:
+                self._state = RunningState.STOPPING
 
-        with self._lock:
             if self.self_asr is not None:
                 self.self_asr.stop()
 
             if self.other_asr is not None:
                 self.other_asr.stop()
 
-            self._running_state = RunningState.STOPPED
+            with self._lock:
+                self._state = RunningState.STOPPED
 
-    def running_state(self) -> RunningState:
-        return self._running_state
+        threading.Thread(target=worker, daemon=True).start()
+
+    def get_state(self) -> RunningState:
+        return self._state
 
     def _process_partial(self, result_json: str, speaker: Speaker, partial_attr: str) -> None:
         result_dict: dict[str, Any] = json.loads(result_json)
         text: str = result_dict.get("partial", "")
         if not text:
             return
+
+        text = self.correct_text(text)
 
         partial_transcript: Transcript = getattr(self, partial_attr)
         if partial_transcript.text == text:
@@ -174,7 +178,4 @@ class Transcriber:
 
     def correct_text(self, text: str) -> str:
         """Recover errors on final transcript text."""
-        normalized = text[0].upper() + text[1:]
-        if not normalized.endswith("."):
-            normalized += "."
-        return normalized
+        return text[0].upper() + text[1:].strip(".") + "."

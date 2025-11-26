@@ -1,6 +1,8 @@
 import { Card } from '@/components/ui/card';
 import { Speaker, Transcript } from '@/types/transcript';
 import { useEffect, useRef, useState } from 'react';
+import { Checkbox } from './ui/checkbox';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 interface TranscriptionPanelProps {
   transcripts: Transcript[];
@@ -42,10 +44,9 @@ export default function TranscriptPanel({ transcripts, username }: Transcription
         <h3 className="font-semibold text-foreground text-xs">Transcription</h3>
 
         <label className="flex items-center gap-2 text-xs text-muted-foreground">
-          <input
-            type="checkbox"
+          <Checkbox
             checked={autoScroll}
-            onChange={(e) => setAutoScroll(e.target.checked)}
+            onCheckedChange={(v) => setAutoScroll(v === true)}
             className="h-4 w-4 rounded border-border bg-background"
             aria-label="Enable auto-scroll"
           />
@@ -83,22 +84,28 @@ export default function TranscriptPanel({ transcripts, username }: Transcription
 
       {/* Scroll to End Button */}
       {transcripts.length > 0 && showScrollButton && (
-        <button
-          onClick={() => endRef.current?.scrollIntoView({ behavior: 'smooth' })}
-          className="absolute bottom-4 right-4 z-10 flex items-center gap-2 px-3 py-2 rounded-full bg-primary text-white shadow-lg hover:bg-primary/90 transition-all"
-          title="Scroll to latest suggestion"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => endRef.current?.scrollIntoView({ behavior: 'smooth' })}
+              className="absolute bottom-4 right-4 z-10 flex items-center gap-2 px-3 py-2 rounded-full bg-primary text-white shadow-lg hover:bg-primary/90 transition-all"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Scroll to latest suggestion</p>
+          </TooltipContent>
+        </Tooltip>
       )}
     </Card>
   );

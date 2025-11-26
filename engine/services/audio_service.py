@@ -59,13 +59,23 @@ class AudioService:
 
 
 class AudioController:
-    def __init__(self) -> None:
-        self.input_device_id: int = 0
-        self.output_device_id: int = 0
-        self.delay_secs: float = 0
-        self.sample_rate: int = 0
-        self.channels: int = 0
-        self.frames_per_buffer: int = 0
+    def __init__(
+        self,
+        input_device_id: int = 0,
+        output_device_id: int = 0,
+        delay_secs: float = 0,
+        sample_rate: int = 44100,
+        channels: int = 1,
+        frames_per_buffer: int = 1024,
+    ) -> None:
+        self.input_device_id: int = input_device_id
+        self.output_device_id: int = output_device_id
+        self.delay_secs: float = delay_secs
+        self.sample_rate: int = sample_rate
+        self.channels: int = channels
+        self.frames_per_buffer: int = frames_per_buffer
+
+        # buffer holds interleaved samples (1D)
         self.buffer_size: int = 0
         self.delay_buffer = np.zeros(self.buffer_size, dtype=np.float32)
         self.buffer_index = 0
@@ -78,6 +88,22 @@ class AudioController:
         # PyAudio objects
         self._pa: pyaudio.PyAudio | None = None
         self._stream: Any = None  # pyaudio.Stream
+
+    def update_parameters(
+        self,
+        input_device_id: int,
+        output_device_id: int,
+        delay_secs: float,
+        sample_rate: int = 44100,
+        channels: int = 1,
+        frames_per_buffer: int = 1024,
+    ) -> None:
+        self.input_device_id = input_device_id
+        self.output_device_id = output_device_id
+        self.delay_secs = delay_secs
+        self.sample_rate = sample_rate
+        self.channels = channels
+        self.frames_per_buffer = frames_per_buffer
 
     def _pa_callback(
         self,
@@ -124,29 +150,17 @@ class AudioController:
             out_silence = (np.zeros(frame_count * self.channels, dtype=np.float32)).tobytes()
             return (out_silence, pyaudio.paContinue)
 
-    def start(
-        self,
-        input_device_id: int,
-        output_device_id: int,
-        delay_secs: float,
-        sample_rate: int = 44100,
-        channels: int = 1,
-        frames_per_buffer: int = 1024,
-    ) -> None:
+    def start(self) -> None:
         """
         Start the background thread that opens a PyAudio full-duplex stream and keeps it running.
         """
-        self.input_device_id = input_device_id
-        self.output_device_id = output_device_id
-        self.delay_secs = delay_secs if delay_secs > 0 else 0.05
-        self.sample_rate = sample_rate
-        self.channels = channels
-        self.frames_per_buffer = frames_per_buffer
+        # Stop existing thread
+        self.stop()
 
         # buffer holds interleaved samples (1D)
         self.buffer_size = int(self.delay_secs * self.sample_rate * self.channels)
         if self.buffer_size <= 0:
-            self.buffer_size = max(1, frames_per_buffer * self.channels)
+            self.buffer_size = max(1, self.frames_per_buffer * self.channels)
         self.delay_buffer = np.zeros(self.buffer_size, dtype=np.float32)
         self.buffer_index = 0
 

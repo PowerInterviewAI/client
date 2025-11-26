@@ -140,6 +140,7 @@ export default function Home() {
           <div className="h-48 shrink-0">
             <VideoPanel
               ref={videoPanelRef}
+              runningState={appState?.assistant_state ?? RunningState.IDLE}
               photo={config?.profile?.photo ?? ''}
               cameraDevice={config?.camera_device ?? ''}
               videoWidth={config?.video_width ?? 640}
@@ -166,7 +167,7 @@ export default function Home() {
 
       <div className="border border-border rounded-lg bg-card">
         <ControlPanel
-          runningState={appState?.running_state ?? RunningState.IDLE}
+          runningState={appState?.assistant_state ?? RunningState.IDLE}
           startMutation={startMutation}
           stopMutation={stopMutation}
           audioInputDevices={audioInputDevices ?? []}

@@ -4,6 +4,8 @@ import { Card } from '@/components/ui/card';
 import { Suggestion, SuggestionState } from '@/types/suggestion';
 import { Loader2, PauseCircle, Zap } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { Checkbox } from './ui/checkbox';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 interface SuggestionsPanelProps {
   suggestions?: Suggestion[];
@@ -56,10 +58,9 @@ export default function SuggestionsPanel({ suggestions = [] }: SuggestionsPanelP
           {/* Auto-scroll checkbox */}
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={autoScroll}
-                onChange={(e) => setAutoScroll(e.target.checked)}
+                onCheckedChange={(v) => setAutoScroll(v === true)}
                 className="h-4 w-4 rounded border-border bg-background text-primary focus:ring-0"
                 aria-label="Enable auto-scroll"
               />
@@ -89,7 +90,9 @@ export default function SuggestionsPanel({ suggestions = [] }: SuggestionsPanelP
               <div key={idx} className="flex gap-3 pb-3 border-b border-border/40 last:border-0">
                 <Zap className="h-4 w-4 mt-0.5 text-accent shrink-0" />
                 <div>
-                  <div className="text-xs text-muted-foreground">Question: {s.last_question}</div>
+                  <div className="text-xs text-muted-foreground">
+                    <strong>Interviewer:</strong> {s.last_question}
+                  </div>
 
                   {/* State‑specific rendering */}
                   {s.state === SuggestionState.PENDING && (
@@ -117,7 +120,7 @@ export default function SuggestionsPanel({ suggestions = [] }: SuggestionsPanelP
                   {s.state === SuggestionState.STOPPED && (
                     <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                       <PauseCircle className="h-4 w-4 text-muted-foreground" />
-                      <span>Generation stopped</span>
+                      <span>Suggestion canceled</span>
                     </div>
                   )}
 
@@ -143,22 +146,28 @@ export default function SuggestionsPanel({ suggestions = [] }: SuggestionsPanelP
 
       {/* Scroll to End Button */}
       {hasSuggestions && showScrollButton && (
-        <button
-          onClick={() => endRef.current?.scrollIntoView({ behavior: 'smooth' })}
-          className="absolute bottom-4 right-4 z-10 flex items-center gap-2 px-3 py-2 rounded-full bg-primary text-white shadow-lg hover:bg-primary/90 transition-all"
-          title="Scroll to latest transcript"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => endRef.current?.scrollIntoView({ behavior: 'smooth' })}
+              className="absolute bottom-4 right-4 z-10 flex items-center gap-2 px-3 py-2 rounded-full bg-primary text-white shadow-lg hover:bg-primary/90 transition-all"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Scroll to latest transcript</p>
+          </TooltipContent>
+        </Tooltip>
       )}
     </Card>
   );
