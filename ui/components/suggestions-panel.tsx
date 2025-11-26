@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Suggestion, SuggestionState } from '@/types/suggestion';
 import { Loader2, PauseCircle, Zap } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 interface SuggestionsPanelProps {
   suggestions?: Suggestion[];
@@ -143,22 +144,28 @@ export default function SuggestionsPanel({ suggestions = [] }: SuggestionsPanelP
 
       {/* Scroll to End Button */}
       {hasSuggestions && showScrollButton && (
-        <button
-          onClick={() => endRef.current?.scrollIntoView({ behavior: 'smooth' })}
-          className="absolute bottom-4 right-4 z-10 flex items-center gap-2 px-3 py-2 rounded-full bg-primary text-white shadow-lg hover:bg-primary/90 transition-all"
-          title="Scroll to latest transcript"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => endRef.current?.scrollIntoView({ behavior: 'smooth' })}
+              className="absolute bottom-4 right-4 z-10 flex items-center gap-2 px-3 py-2 rounded-full bg-primary text-white shadow-lg hover:bg-primary/90 transition-all"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Scroll to latest transcript</p>
+          </TooltipContent>
+        </Tooltip>
       )}
     </Card>
   );

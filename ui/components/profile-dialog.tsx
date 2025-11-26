@@ -7,6 +7,7 @@ import { Config } from '@/types/config';
 import { X } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 interface ProfileDialogProps {
   isOpen: boolean;
@@ -61,13 +62,19 @@ export default function ProfileDialog({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-6 py-4 shrink-0">
           <h2 className="text-lg font-semibold text-foreground">Edit Profile</h2>
-          <button
-            onClick={() => onOpenChange(false)}
-            className="h-6 w-6 rounded-md hover:bg-muted flex items-center justify-center transition-colors"
-            title="Close"
-          >
-            <X className="h-4 w-4" />
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => onOpenChange(false)}
+                className="h-6 w-6 rounded-md hover:bg-muted flex items-center justify-center transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Close</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
 
         {/* Content */}
@@ -104,14 +111,20 @@ export default function ProfileDialog({
 
                 {/* Remove button */}
                 {photo && (
-                  <button
-                    type="button"
-                    onClick={() => setPhoto('')}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-md p-1 shadow hover:bg-red-600 transition-colors"
-                    title="Remove photo"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={() => setPhoto('')}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-md p-1 shadow hover:bg-red-600 transition-colors"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Remove photo</p>
+                    </TooltipContent>
+                  </Tooltip>
                 )}
               </div>
 

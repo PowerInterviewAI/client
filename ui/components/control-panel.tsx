@@ -19,6 +19,7 @@ import { Ellipsis, Mic, Mic2, MicOff, Play, Square, Video, VideoOff } from 'luci
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogTrigger } from './ui/dialog';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 interface ControlPanelProps {
   runningState: RunningState;
@@ -94,7 +95,7 @@ export default function ControlPanel({
       label: 'Start',
     },
     [RunningState.STARTING]: {
-      onClick: () => { },
+      onClick: () => {},
       className: 'bg-primary hover:bg-primary/90',
       disabled: true,
       icon: <Ellipsis className="h-3.5 w-3.5 animate-pulse" />,
@@ -108,7 +109,7 @@ export default function ControlPanel({
       label: 'Stop',
     },
     [RunningState.STOPPING]: {
-      onClick: () => { },
+      onClick: () => {},
       className: 'bg-destructive hover:bg-destructive/90',
       disabled: true,
       icon: <Ellipsis className="h-3.5 w-3.5 animate-pulse" />,
@@ -183,7 +184,7 @@ export default function ControlPanel({
         if (videoPreviewRef.current) {
           videoPreviewRef.current.srcObject = stream;
           // Some browsers need play() after setting srcObject
-          await videoPreviewRef.current.play().catch(() => { });
+          await videoPreviewRef.current.play().catch(() => {});
         }
       } catch (err) {
         toast.error('Unable to access camera');
@@ -212,14 +213,20 @@ export default function ControlPanel({
         <div className="flex items-center rounded-full overflow-hidden border">
           <Dialog>
             <DialogTrigger asChild>
-              <Button
-                variant="default"
-                size="icon"
-                className="h-8 w-8 border-none rounded-none"
-                title="Transcription options"
-              >
-                <Mic2 className="h-4 w-4" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="default"
+                    size="icon"
+                    className="h-8 w-8 border-none rounded-none"
+                  >
+                    <Mic2 className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Transcription options</p>
+                </TooltipContent>
+              </Tooltip>
             </DialogTrigger>
 
             <DialogContent className="flex flex-col w-72 p-4">
@@ -269,32 +276,44 @@ export default function ControlPanel({
         <div
           className={`flex items-center rounded-full overflow-hidden border ${enableAudioControl ? '' : 'bg-destructive text-white'}`}
         >
-          <Button
-            variant={enableAudioControl ? 'outline' : 'destructive'}
-            size="icon"
-            className={`h-8 w-8 border-none rounded-none ${enableAudioControl ? '' : ''}`}
-            title="Toggle audio control"
-            onClick={() => {
-              if (enableAudioControl) {
-                toast.success('Audio control disabled');
-              } else {
-                toast.success('Audio control enabled');
-              }
-              updateConfig({ enable_audio_control: !enableAudioControl });
-            }}
-          >
-            {enableAudioControl ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
-          </Button>
-          <Dialog>
-            <DialogTrigger asChild>
+          <Tooltip>
+            <TooltipTrigger asChild>
               <Button
                 variant={enableAudioControl ? 'outline' : 'destructive'}
                 size="icon"
-                className="h-8 w-8 rounded-none border-none"
-                title="Audio control options"
+                className={`h-8 w-8 border-none rounded-none ${enableAudioControl ? '' : ''}`}
+                onClick={() => {
+                  if (enableAudioControl) {
+                    toast.success('Audio control disabled');
+                  } else {
+                    toast.success('Audio control enabled');
+                  }
+                  updateConfig({ enable_audio_control: !enableAudioControl });
+                }}
               >
-                <Ellipsis className="h-4 w-4" />
+                {enableAudioControl ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
               </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Toggle audio control</p>
+            </TooltipContent>
+          </Tooltip>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={enableAudioControl ? 'outline' : 'destructive'}
+                    size="icon"
+                    className="h-8 w-8 rounded-none border-none"
+                  >
+                    <Ellipsis className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Audio control options</p>
+                </TooltipContent>
+              </Tooltip>
             </DialogTrigger>
 
             <DialogContent className="flex flex-col w-72 p-4">
@@ -340,31 +359,47 @@ export default function ControlPanel({
         <div
           className={`flex items-center rounded-full overflow-hidden border ${enableVideoControl ? '' : 'bg-destructive text-white'}`}
         >
-          <Button
-            variant={enableVideoControl ? 'outline' : 'destructive'}
-            size="icon"
-            className="h-8 w-8 border-none rounded-none"
-            title="Toggle video control"
-            onClick={() => {
-              toast.success(
-                enableVideoControl ? 'Video control disabled' : 'Video control enabled',
-              );
-              updateConfig({ enable_video_control: !enableVideoControl });
-            }}
-          >
-            {enableVideoControl ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
-          </Button>
-
-          <Dialog open={isVideoDialogOpen} onOpenChange={setIsVideoDialogOpen}>
-            <DialogTrigger asChild>
+          <Tooltip>
+            <TooltipTrigger asChild>
               <Button
                 variant={enableVideoControl ? 'outline' : 'destructive'}
                 size="icon"
-                className="h-8 w-8 rounded-none border-none"
-                title="Video control options"
+                className="h-8 w-8 border-none rounded-none"
+                onClick={() => {
+                  toast.success(
+                    enableVideoControl ? 'Video control disabled' : 'Video control enabled',
+                  );
+                  updateConfig({ enable_video_control: !enableVideoControl });
+                }}
               >
-                <Ellipsis className="h-4 w-4" />
+                {enableVideoControl ? (
+                  <Video className="h-4 w-4" />
+                ) : (
+                  <VideoOff className="h-4 w-4" />
+                )}
               </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Toggle video control</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Dialog open={isVideoDialogOpen} onOpenChange={setIsVideoDialogOpen}>
+            <DialogTrigger asChild>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={enableVideoControl ? 'outline' : 'destructive'}
+                    size="icon"
+                    className="h-8 w-8 rounded-none border-none"
+                  >
+                    <Ellipsis className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Video control options</p>
+                </TooltipContent>
+              </Tooltip>
             </DialogTrigger>
 
             <DialogContent className="flex flex-col w-72 p-4 gap-4">
@@ -455,16 +490,22 @@ export default function ControlPanel({
         <div className="h-4 w-px bg-border" />
 
         {/* Start/Stop Button */}
-        <Button
-          onClick={onClick}
-          size="sm"
-          className={`h-10 w-16 text-xs  font-medium rounded-full cursor-pointer ${className}`}
-          disabled={disabled}
-          title="Start/Stop Assistant"
-        >
-          {icon}
-          <span hidden>{label}</span>
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              onClick={onClick}
+              size="sm"
+              className={`h-10 w-16 text-xs  font-medium rounded-full cursor-pointer ${className}`}
+              disabled={disabled}
+            >
+              {icon}
+              <span hidden>{label}</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Start/Stop Assistant</p>
+          </TooltipContent>
+        </Tooltip>
       </div>
 
       {/* Status indicator */}
