@@ -4,6 +4,7 @@ import threading
 from collections.abc import Callable
 from typing import Any
 
+from deepmultilingualpunctuation import PunctuationModel
 from loguru import logger
 
 from engine.cfg.fs import config as cfg_fs
@@ -24,9 +25,13 @@ class Transcriber:
         self.transcript_self_partial = Transcript(speaker=Speaker.SELF, text="", timestamp=0)
         self.transcript_other_partial = Transcript(speaker=Speaker.OTHER, text="", timestamp=0)
 
+        # ASR
         self.asr_model_name: str | None = None
         self.self_asr: ASRService | None = None
         self.other_asr: ASRService | None = None
+
+        # Punctuation
+        self.punct = PunctuationModel(model="oliverguhr/fullstop-punctuation-multilingual-base")
 
         # Callbacks
         self.callback_on_self_final = callback_on_self_final
@@ -88,6 +93,8 @@ class Transcriber:
         text: str = result_dict.get("partial", "")
         if not text:
             return
+
+        text = self.correct_text(text)
 
         partial_transcript: Transcript = getattr(self, partial_attr)
         if partial_transcript.text == text:
@@ -175,7 +182,5 @@ class Transcriber:
 
     def correct_text(self, text: str) -> str:
         """Recover errors on final transcript text."""
-        normalized = text[0].upper() + text[1:]
-        if not normalized.endswith("."):
-            normalized += "."
-        return normalized
+        text = self.punct.restore_punctuation(text=text)
+        return text[0].upper() + text[1:]
