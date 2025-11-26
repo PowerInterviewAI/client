@@ -1,3 +1,7 @@
+import contextlib
+import os
+import tempfile
+import threading
 from typing import Any
 
 import numpy as np
@@ -17,6 +21,7 @@ from engine.services.virtual_camera import VirtualCameraService
 
 class PowerInterviewApp:
     def __init__(self) -> None:
+        self._file_lock = threading.Lock()
         self.config = Config()
 
         self.service_status_monitor = ServiceMonitor()
@@ -49,13 +54,41 @@ class PowerInterviewApp:
         return self.config
 
     def save_config(self) -> None:
-        cfg_fs.CONFIG_FILE.write_text(
-            self.config.model_dump_json(
-                indent=2,
-                ensure_ascii=True,
-            ),
-            encoding="utf-8",
+        json_str = self.config.model_dump_json(
+            indent=2,
+            ensure_ascii=True,
         )
+
+        # Ensure directory exists
+        cfg_fs.CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
+
+        with self._file_lock:  # thread/process safety
+            tmp_fd, tmp_path = tempfile.mkstemp(
+                dir=str(cfg_fs.CONFIG_FILE.parent), prefix=cfg_fs.CONFIG_FILE.name, suffix=".tmp"
+            )
+            try:
+                # Write to temp file
+                with os.fdopen(tmp_fd, "w", encoding="utf-8") as f:
+                    f.write(json_str)
+                    f.flush()
+                    os.fsync(f.fileno())  # force write to disk
+
+                # Backup existing config before replacing
+                if cfg_fs.CONFIG_FILE.exists():
+                    backup_path = cfg_fs.CONFIG_FILE.with_suffix(".bak")
+                    try:
+                        cfg_fs.CONFIG_FILE.replace(backup_path)
+                    except Exception as ex:
+                        logger.warning(f"Failed to create backup: {ex}")
+
+                # Atomic replace
+                os.replace(tmp_path, cfg_fs.CONFIG_FILE)  # noqa: PTH105
+
+            except Exception as ex:
+                logger.error(f"Failed to save config: {ex}")
+                # Clean up temp file if something goes wrong
+                with contextlib.suppress(Exception):
+                    os.remove(tmp_path)  # noqa: PTH107
 
     def update_config(self, cfg: ConfigUpdate) -> Config:
         update_dict = cfg.model_dump(exclude_unset=True)
