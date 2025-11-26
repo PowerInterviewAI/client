@@ -278,7 +278,7 @@ export default function ControlPanel({
 
         {/* Audio Control Toggle + Dialog */}
         <div
-          className={`flex items-center overflow-hidden border ${enableAudioControl ? 'rounded-full' : 'rounded-xl text-white'}`}
+          className={`flex items-center overflow-hidden border ${enableAudioControl ? 'rounded-full' : 'border-destructive rounded-xl text-white'}`}
         >
           <Tooltip>
             <TooltipTrigger asChild>
@@ -363,7 +363,7 @@ export default function ControlPanel({
 
         {/* Video Control Toggle + Dialog */}
         <div
-          className={`flex items-center overflow-hidden border ${enableVideoControl ? 'rounded-full' : 'rounded-xl text-white'}`}
+          className={`flex items-center overflow-hidden border ${enableVideoControl ? 'rounded-full' : 'border-destructive rounded-xl text-white'}`}
         >
           <Tooltip>
             <TooltipTrigger asChild>
