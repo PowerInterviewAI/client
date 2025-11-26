@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Suggestion, SuggestionState } from '@/types/suggestion';
 import { Loader2, PauseCircle, Zap } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { Checkbox } from './ui/checkbox';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 interface SuggestionsPanelProps {
@@ -57,10 +58,9 @@ export default function SuggestionsPanel({ suggestions = [] }: SuggestionsPanelP
           {/* Auto-scroll checkbox */}
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={autoScroll}
-                onChange={(e) => setAutoScroll(e.target.checked)}
+                onCheckedChange={(v) => setAutoScroll(v === true)}
                 className="h-4 w-4 rounded border-border bg-background text-primary focus:ring-0"
                 aria-label="Enable auto-scroll"
               />

@@ -1,6 +1,7 @@
 import { Card } from '@/components/ui/card';
 import { Speaker, Transcript } from '@/types/transcript';
 import { useEffect, useRef, useState } from 'react';
+import { Checkbox } from './ui/checkbox';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 interface TranscriptionPanelProps {
@@ -43,10 +44,9 @@ export default function TranscriptPanel({ transcripts, username }: Transcription
         <h3 className="font-semibold text-foreground text-xs">Transcription</h3>
 
         <label className="flex items-center gap-2 text-xs text-muted-foreground">
-          <input
-            type="checkbox"
+          <Checkbox
             checked={autoScroll}
-            onChange={(e) => setAutoScroll(e.target.checked)}
+            onCheckedChange={(v) => setAutoScroll(v === true)}
             className="h-4 w-4 rounded border-border bg-background"
             aria-label="Enable auto-scroll"
           />

@@ -19,6 +19,7 @@ import { Ellipsis, Mic, Mic2, MicOff, Play, Square, Video, VideoOff } from 'luci
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogTrigger } from './ui/dialog';
+import { Input } from './ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 interface ControlPanelProps {
@@ -344,7 +345,7 @@ export default function ControlPanel({
               {/* Audio Delay Input */}
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Audio Delay (ms)</label>
-                <input
+                <Input
                   type="number"
                   value={audioDelay}
                   onChange={(e) => updateConfig({ audio_delay_ms: Number(e.target.value) })}
