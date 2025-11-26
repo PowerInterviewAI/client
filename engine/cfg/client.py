@@ -7,6 +7,7 @@ class Config(BaseSettings):
     BACKEND_URL: str = BACKEND_URL_ONLINE
 
     BACKEND_PING_URL: str = f"{BACKEND_URL}/api/ping"
+    BACKEND_PUNCTUATION_URL: str = f"{BACKEND_URL}/api/llm/punctuation"
     BACKEND_SUGGESTIONS_URL: str = f"{BACKEND_URL}/api/llm/suggestion"
     BACKEND_WEBRTC_OFFER_URL: str = f"{BACKEND_URL}/api/webrtc/offer"
 

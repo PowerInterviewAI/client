@@ -4,7 +4,6 @@ import threading
 from collections.abc import Callable
 from typing import Any
 
-from deepmultilingualpunctuation import PunctuationModel
 from loguru import logger
 
 from engine.cfg.fs import config as cfg_fs
@@ -29,9 +28,6 @@ class Transcriber:
         self.asr_model_name: str | None = None
         self.self_asr: ASRService | None = None
         self.other_asr: ASRService | None = None
-
-        # Punctuation
-        self.punct = PunctuationModel(model="oliverguhr/fullstop-punctuation-multilingual-base")
 
         # Callbacks
         self.callback_on_self_final = callback_on_self_final
@@ -182,5 +178,4 @@ class Transcriber:
 
     def correct_text(self, text: str) -> str:
         """Recover errors on final transcript text."""
-        text = self.punct.restore_punctuation(text=text)
-        return text[0].upper() + text[1:]
+        return text[0].upper() + text[1:].strip(".") + "."
