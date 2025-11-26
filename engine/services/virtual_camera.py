@@ -131,10 +131,9 @@ class VirtualCameraService:
     # --- Public API ----------------------------------------------------
     def start(self) -> None:
         """Start the background worker. Idempotent."""
+        self.stop()
+
         with self._lock:
-            if self._thread and self._thread.is_alive():
-                logger.debug("VirtualCameraService already running")
-                return
             self._stop_event.clear()
             self._thread = threading.Thread(target=self._worker, daemon=True)
             self._thread.start()
