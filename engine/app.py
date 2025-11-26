@@ -77,14 +77,14 @@ class PowerInterviewApp:
             input_device_index=self.config.audio_input_device,
             asr_model_name=self.config.asr_model,
         )
-        self.suggestion_service.start_suggestion()
 
         if self.config.enable_audio_control:
-            self.audio_controller.start(
+            self.audio_controller.update_parameters(
                 input_device_id=self.config.audio_input_device,
                 output_device_id=self.config.audio_control_device,
                 delay_secs=self.config.audio_delay_ms / 1000,
             )
+            self.audio_controller.start()
 
         if self.config.enable_video_control:
             self.virtual_camera_service.update_parameters(
@@ -96,7 +96,7 @@ class PowerInterviewApp:
 
     def stop_assistant(self) -> None:
         self.transcriber.stop()
-        self.suggestion_service.stop_suggestion()
+        self.suggestion_service.stop_current_thread()
 
         self.audio_controller.stop()
         self.virtual_camera_service.stop()
@@ -104,8 +104,8 @@ class PowerInterviewApp:
     # ---- State Management ----
     def get_app_state(self) -> AppState:
         return AppState(
-            transcripts=self.transcriber.get_transcripts(),
             assistant_state=self.transcriber.get_state(),
+            transcripts=self.transcriber.get_transcripts(),
             suggestions=self.suggestion_service.get_suggestions(),
             is_backend_live=self.service_status_monitor.is_backend_live(),
         )
