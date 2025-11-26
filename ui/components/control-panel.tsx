@@ -208,6 +208,9 @@ export default function ControlPanel({
 
   return (
     <div className="flex items-center justify-between gap-2 px-4 py-2">
+      {/* Invisible placeholder */}
+      <div className="w-24"></div>
+
       <div className="flex flex-1 justify-center gap-2 items-center">
         {/* Transcription + Dialog */}
         <div className="flex items-center rounded-full overflow-hidden border">
