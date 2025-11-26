@@ -140,6 +140,7 @@ export default function Home() {
           <div className="h-48 shrink-0">
             <VideoPanel
               ref={videoPanelRef}
+              runningState={appState?.assistant_state ?? RunningState.IDLE}
               photo={config?.profile?.photo ?? ''}
               cameraDevice={config?.camera_device ?? ''}
               videoWidth={config?.video_width ?? 640}
