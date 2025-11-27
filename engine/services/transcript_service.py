@@ -203,5 +203,6 @@ class Transcriber:
             "their",
             "who",
         ]:
+            logger.warning(f"Filtered: {text}")
             return None
         return text
