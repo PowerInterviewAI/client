@@ -15,6 +15,11 @@ export function useVideoDevices() {
     }
 
     fetchDevices();
+    navigator.mediaDevices.addEventListener('devicechange', fetchDevices);
+
+    return () => {
+      navigator.mediaDevices.removeEventListener('devicechange', fetchDevices);
+    };
   }, []);
 
   return videoDevices;
