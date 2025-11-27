@@ -28,17 +28,17 @@ interface ControlPanelProps {
   audioOutputDevices: PyAudioDevice[];
 
   // Transcription options
-  audioInputDevice: string;
-  asrModel: string;
+  audioInputDeviceName: string;
+  asrModelName: string;
 
   // Audio control options
   enableAudioControl: boolean;
-  audioControlDevice: string;
+  audioControlDeviceName: string;
   audioDelay: number;
 
   // Video control options
   enableVideoControl: boolean;
-  cameraDevice: string;
+  cameraDeviceName: string;
   videoWidth: number;
   videoHeight: number;
   enableFaceSwap: boolean;
@@ -71,16 +71,16 @@ export default function ControlPanel({
   updateConfig,
 
   // Transcription options
-  audioInputDevice,
-  asrModel,
+  audioInputDeviceName,
+  asrModelName,
 
   // Audio control options
   enableAudioControl,
-  audioControlDevice,
+  audioControlDeviceName,
   audioDelay,
   // Video control options
   enableVideoControl,
-  cameraDevice,
+  cameraDeviceName,
   videoWidth,
   videoHeight,
   enableFaceSwap,
@@ -94,7 +94,7 @@ export default function ControlPanel({
       label: 'Start',
     },
     [RunningState.STARTING]: {
-      onClick: () => {},
+      onClick: () => { },
       className: 'bg-primary hover:bg-primary/90',
       icon: <Ellipsis className="h-3.5 w-3.5 animate-pulse" />,
       label: 'Starting...',
@@ -106,7 +106,7 @@ export default function ControlPanel({
       label: 'Stop',
     },
     [RunningState.STOPPING]: {
-      onClick: () => {},
+      onClick: () => { },
       className: 'bg-destructive hover:bg-destructive/90',
       icon: <Ellipsis className="h-3.5 w-3.5 animate-pulse" />,
       label: 'Stopping...',
@@ -169,9 +169,13 @@ export default function ControlPanel({
         previewStreamRef.current = null;
       }
 
+      // Find camera device id by name
+      const videoDeviceId = videoDevices.find((d) => d.label === cameraDeviceName)?.deviceId;
+
+      // Create media stream
       const constraints: MediaStreamConstraints = {
         video: {
-          deviceId: cameraDevice ? { exact: cameraDevice } : undefined,
+          deviceId: videoDeviceId ? { exact: videoDeviceId } : undefined,
           width: videoWidth,
           height: videoHeight,
         },
@@ -184,7 +188,7 @@ export default function ControlPanel({
         if (videoPreviewRef.current) {
           videoPreviewRef.current.srcObject = stream;
           // Some browsers need play() after setting srcObject
-          await videoPreviewRef.current.play().catch(() => {});
+          await videoPreviewRef.current.play().catch(() => { });
         }
       } catch (err) {
         toast.error('Unable to access camera');
@@ -204,7 +208,14 @@ export default function ControlPanel({
         videoPreviewRef.current.srcObject = null;
       }
     };
-  }, [isVideoDialogOpen, enableVideoControl, cameraDevice, videoWidth, videoHeight]);
+  }, [
+    isVideoDialogOpen,
+    enableVideoControl,
+    videoDevices,
+    cameraDeviceName,
+    videoWidth,
+    videoHeight,
+  ]);
 
   return (
     <div className="flex items-center justify-between gap-2 px-4 py-2">
@@ -240,7 +251,7 @@ export default function ControlPanel({
               <div className="mb-3">
                 <label className="text-xs text-muted-foreground mb-1 block">Microphone</label>
                 <Select
-                  value={audioInputDevice}
+                  value={audioInputDeviceName}
                   onValueChange={(v) => updateConfig({ audio_input_device_name: v })}
                 >
                   <SelectTrigger className="h-8 w-full text-xs">
@@ -258,7 +269,10 @@ export default function ControlPanel({
               {/* ASR Model Select */}
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">ASR Model</label>
-                <Select value={asrModel} onValueChange={(v) => updateConfig({ asr_model_name: v })}>
+                <Select
+                  value={asrModelName}
+                  onValueChange={(v) => updateConfig({ asr_model_name: v })}
+                >
                   <SelectTrigger className="h-8 w-full text-xs">
                     <SelectValue placeholder="Select ASR model" />
                   </SelectTrigger>
@@ -329,7 +343,7 @@ export default function ControlPanel({
               <div className="mb-3">
                 <label className="text-xs text-muted-foreground mb-1 block">Output Device</label>
                 <Select
-                  value={audioControlDevice}
+                  value={audioControlDeviceName}
                   onValueChange={(v) => updateConfig({ audio_control_device_name: v })}
                 >
                   <SelectTrigger className="h-8 w-full text-xs">
@@ -426,7 +440,7 @@ export default function ControlPanel({
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Camera Device</label>
                 <Select
-                  value={`${cameraDevice}`}
+                  value={`${cameraDeviceName}`}
                   onValueChange={(v) => updateConfig({ camera_device_name: v })}
                 >
                   <SelectTrigger className="h-8 w-full text-xs">
@@ -434,7 +448,7 @@ export default function ControlPanel({
                   </SelectTrigger>
                   <SelectContent>
                     {videoDevices.map((device) => (
-                      <SelectItem key={device.label} value={`${device.label}`}>
+                      <SelectItem key={device.label} value={device.label}>
                         {device.label}
                       </SelectItem>
                     ))}
