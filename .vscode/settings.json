@@ -1,6 +1,6 @@
 {
     "python.testing.pytestArgs": [
-        "app_test",
+        "engine_test",
         "-s",
     ],
     "python.testing.unittestEnabled": false,
