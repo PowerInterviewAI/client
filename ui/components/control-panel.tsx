@@ -11,7 +11,7 @@ import {
 import { useVideoDevices } from '@/hooks/useVideoDevices';
 import { RunningState } from '@/types/appState';
 import { PyAudioDevice } from '@/types/audioDevice';
-import { Config } from '@/types/config';
+import { Config, UserProfile } from '@/types/config';
 import { APIError } from '@/types/error';
 import { DialogTitle } from '@radix-ui/react-dialog';
 import { UseMutationResult } from '@tanstack/react-query';
@@ -24,6 +24,7 @@ import { Input } from './ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 interface ControlPanelProps {
+  profile?: UserProfile;
   runningState: RunningState;
   audioInputDevices: PyAudioDevice[];
   audioOutputDevices: PyAudioDevice[];
@@ -64,6 +65,7 @@ type IndicatorConfig = {
 };
 
 export default function ControlPanel({
+  profile,
   runningState,
   audioInputDevices,
   audioOutputDevices,
@@ -89,7 +91,10 @@ export default function ControlPanel({
 }: ControlPanelProps) {
   const stateConfig: Record<RunningState, StateConfig> = {
     [RunningState.IDLE]: {
-      onClick: () => startMutation.mutate(),
+      onClick: () => {
+        if (!checkCanStart()) return;
+        startMutation.mutate();
+      },
       className: 'bg-primary hover:bg-primary/90',
       icon: <Play className="h-3.5 w-3.5" />,
       label: 'Start',
@@ -113,7 +118,10 @@ export default function ControlPanel({
       label: 'Stopping...',
     },
     [RunningState.STOPPED]: {
-      onClick: () => startMutation.mutate(),
+      onClick: () => {
+        if (!checkCanStart()) return;
+        startMutation.mutate();
+      },
       className: 'bg-primary hover:bg-primary/90',
       icon: <Play className="h-3.5 w-3.5" />,
       label: 'Start',
@@ -155,6 +163,37 @@ export default function ControlPanel({
   const audioControlDeviceNotFound =
     audioOutputDevices.find((d) => d.name === audioControlDeviceName) === undefined;
   const videoDeviceNotFound = videoDevices.find((d) => d.label === cameraDeviceName) === undefined;
+
+  const checkCanStart = () => {
+    const checks: { ok: boolean; message: string }[] = [
+      { ok: !!profile, message: 'Profile is not set' },
+      { ok: !!profile?.username, message: 'Username is not set' },
+      { ok: !!profile?.photo, message: 'Photo is not set' },
+      { ok: !!profile?.profile_data, message: 'Profile data is not set' },
+
+      {
+        ok: !audioInputDeviceNotFound,
+        message: `Audio input device "${audioInputDeviceName}" is not found`,
+      },
+      {
+        ok: !enableAudioControl || !audioControlDeviceNotFound,
+        message: `Audio control device "${audioControlDeviceName}" is not found`,
+      },
+      {
+        ok: !enableVideoControl || !videoDeviceNotFound,
+        message: `Video device "${cameraDeviceName}" is not found`,
+      },
+    ];
+
+    for (const { ok, message } of checks) {
+      if (!ok) {
+        alert(message);
+        return false;
+      }
+    }
+
+    return true;
+  };
 
   const getDisabled = (state: RunningState, disableOnRunning: boolean = true): boolean => {
     if (disableOnRunning && state === RunningState.RUNNING) return true;
