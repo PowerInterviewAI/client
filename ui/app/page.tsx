@@ -121,7 +121,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex flex-col h-screen max-w-7xl mx-auto bg-background p-2">
+    <div className="flex flex-col h-screen max-w-5xl mx-auto bg-background p-2">
       <TopBar
         photo={config?.profile?.photo ?? ''}
         userName={config?.profile?.username ?? ''}
