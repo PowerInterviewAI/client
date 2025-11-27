@@ -183,6 +183,25 @@ class Transcriber:
         return text[0].upper() + text[1:].strip(".") + "."
 
     def filter_transcript(self, text: str) -> str | None:
-        if text.lower().strip(",.!?") in ["", "the"]:
+        if text.lower().strip(",.!?") in [
+            "",
+            "the",
+            "a",
+            "i",
+            "you",
+            "he",
+            "she",
+            "it",
+            "we",
+            "they",
+            "my",
+            "your",
+            "his",
+            "her",
+            "its",
+            "our",
+            "their",
+            "who",
+        ]:
             return None
         return text
