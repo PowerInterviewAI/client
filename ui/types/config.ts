@@ -13,17 +13,17 @@ export interface Config {
   language: Language;
 
   // Transcription options
-  audio_input_device: number;
-  asr_model: string;
+  audio_input_device_name: string;
+  asr_model_name: string;
 
   // Audio control options
   enable_audio_control: boolean;
-  audio_control_device: number;
+  audio_control_device_name: string;
   audio_delay_ms: number;
 
   // Video control options
   enable_video_control: boolean;
-  camera_device: string;
+  camera_device_name: string;
   video_width: number;
   video_height: number;
   enable_face_swap: boolean;

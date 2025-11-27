@@ -241,14 +241,14 @@ export default function ControlPanel({
                 <label className="text-xs text-muted-foreground mb-1 block">Microphone</label>
                 <Select
                   value={audioInputDevice}
-                  onValueChange={(v) => updateConfig({ audio_input_device: Number(v) })}
+                  onValueChange={(v) => updateConfig({ audio_input_device_name: v })}
                 >
                   <SelectTrigger className="h-8 w-full text-xs">
                     <SelectValue placeholder="Select microphone" />
                   </SelectTrigger>
                   <SelectContent>
                     {audioInputDevices.map((device) => (
-                      <SelectItem key={device.index} value={`${device.index}`}>
+                      <SelectItem key={device.name} value={`${device.name}`}>
                         {device.name}
                       </SelectItem>
                     ))}
@@ -258,7 +258,7 @@ export default function ControlPanel({
               {/* ASR Model Select */}
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">ASR Model</label>
-                <Select value={asrModel} onValueChange={(v) => updateConfig({ asr_model: v })}>
+                <Select value={asrModel} onValueChange={(v) => updateConfig({ asr_model_name: v })}>
                   <SelectTrigger className="h-8 w-full text-xs">
                     <SelectValue placeholder="Select ASR model" />
                   </SelectTrigger>
@@ -330,14 +330,14 @@ export default function ControlPanel({
                 <label className="text-xs text-muted-foreground mb-1 block">Output Device</label>
                 <Select
                   value={audioControlDevice}
-                  onValueChange={(v) => updateConfig({ audio_control_device: Number(v) })}
+                  onValueChange={(v) => updateConfig({ audio_control_device_name: v })}
                 >
                   <SelectTrigger className="h-8 w-full text-xs">
                     <SelectValue placeholder="Select device" />
                   </SelectTrigger>
                   <SelectContent>
                     {audioOutputDevices.map((device) => (
-                      <SelectItem key={device.index} value={`${device.index}`}>
+                      <SelectItem key={device.name} value={`${device.name}`}>
                         {device.name}
                       </SelectItem>
                     ))}
@@ -427,14 +427,14 @@ export default function ControlPanel({
                 <label className="text-xs text-muted-foreground mb-1 block">Camera Device</label>
                 <Select
                   value={`${cameraDevice}`}
-                  onValueChange={(v) => updateConfig({ camera_device: v })}
+                  onValueChange={(v) => updateConfig({ camera_device_name: v })}
                 >
                   <SelectTrigger className="h-8 w-full text-xs">
                     <SelectValue placeholder="Select camera" />
                   </SelectTrigger>
                   <SelectContent>
                     {videoDevices.map((device) => (
-                      <SelectItem key={device.deviceId} value={`${device.deviceId}`}>
+                      <SelectItem key={device.label} value={`${device.label}`}>
                         {device.label}
                       </SelectItem>
                     ))}
