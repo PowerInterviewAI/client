@@ -40,12 +40,13 @@ export default function SuggestionsPanel({ suggestions = [] }: SuggestionsPanelP
   useEffect(() => {
     const container = containerRef.current;
     const spacer = spacerRef.current;
+    const lastItem = lastItemRef.current;
     if (!container || !spacer) return;
 
     // function to sync spacer height
     const sync = () => {
       // set height equal to container inner height (clientHeight)
-      spacer.style.height = `${container.clientHeight}px`;
+      spacer.style.height = `${container.clientHeight - (lastItem?.clientHeight ?? 0)}px`;
     };
 
     // initial sync
