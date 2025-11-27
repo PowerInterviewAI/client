@@ -12,6 +12,22 @@ class AudioService:
     _lock = threading.Lock()
 
     @classmethod
+    def get_audio_devices(cls) -> list[dict[str, Any]]:
+        with cls._lock:
+            pa = pyaudio.PyAudio()
+            mme_host_apis = [
+                host_api["index"] for host_api in pa.get_host_api_info_generator() if host_api["name"] == "MME"
+            ]
+            ret = [
+                device
+                for device in pa.get_device_info_generator()
+                if (device["maxInputChannels"] > 0 or device["maxOutputChannels"] > 0)
+                and device["hostApi"] in mme_host_apis
+            ]
+            pa.terminate()
+            return ret
+
+    @classmethod
     def get_input_devices(cls) -> list[dict[str, Any]]:
         with cls._lock:
             pa = pyaudio.PyAudio()
@@ -56,6 +72,17 @@ class AudioService:
             ret = pa.get_device_info_by_index(index)
             pa.terminate()
             return ret  # type: ignore  # noqa: PGH003
+
+    @classmethod
+    def get_device_index_by_name(cls, name: str) -> int:
+        try:
+            audio_devices = cls.get_audio_devices()
+            for device in audio_devices:
+                if device["name"] == name:
+                    return int(device["index"])
+        except Exception as ex:
+            logger.error(f"Failed to get device index by name: {name} {ex}")
+        return -1
 
 
 class AudioController:

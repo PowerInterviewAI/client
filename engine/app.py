@@ -12,7 +12,7 @@ from engine.cfg.video import config as cfg_video
 from engine.models.config import Config, ConfigUpdate
 from engine.schemas.app_state import AppState
 from engine.schemas.transcript import Transcript
-from engine.services.audio_service import AudioController
+from engine.services.audio_service import AudioController, AudioService
 from engine.services.service_monitor import ServiceMonitor
 from engine.services.suggestion_service import SuggestionService
 from engine.services.transcript_service import Transcriber
@@ -108,16 +108,16 @@ class PowerInterviewApp:
     def start_assistant(self) -> None:
         self.transcriber.clear_transcripts()
         self.transcriber.start(
-            input_device_index=self.config.audio_input_device,
-            asr_model_name=self.config.asr_model,
+            input_device_index=AudioService.get_device_index_by_name(self.config.audio_input_device_name),
+            asr_model_name=self.config.asr_model_name,
         )
 
         self.suggestion_service.clear_suggestions()
 
         if self.config.enable_audio_control:
             self.audio_controller.update_parameters(
-                input_device_id=self.config.audio_input_device,
-                output_device_id=self.config.audio_control_device,
+                input_device_id=AudioService.get_device_index_by_name(self.config.audio_input_device_name),
+                output_device_id=AudioService.get_device_index_by_name(self.config.audio_control_device_name),
                 delay_secs=self.config.audio_delay_ms / 1000,
             )
             self.audio_controller.start()
