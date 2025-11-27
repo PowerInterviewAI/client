@@ -21,11 +21,11 @@ class Config(BaseModel):
     ] = Language.EN
 
     # Transcript options
-    audio_input_device: Annotated[
-        int,
-        Field(description="The audio input device index"),
-    ] = 0
-    asr_model: Annotated[
+    audio_input_device_name: Annotated[
+        str,
+        Field(description="The audio input device name"),
+    ] = ""
+    asr_model_name: Annotated[
         str,
         Field(description="The ASR model name to be used"),
     ] = "vosk-model-en-us-0.22-lgraph"
@@ -35,10 +35,10 @@ class Config(BaseModel):
         bool,
         Field(description="Whether audio control is enabled"),
     ] = False
-    audio_control_device: Annotated[
-        int,
-        Field(description="The audio control device index"),
-    ] = 0
+    audio_control_device_name: Annotated[
+        str,
+        Field(description="The audio control device name"),
+    ] = ""
     audio_delay_ms: Annotated[
         int,
         Field(description="The audio delay in milliseconds"),
@@ -49,9 +49,9 @@ class Config(BaseModel):
         bool,
         Field(description="Whether video control is enabled"),
     ] = False
-    camera_device: Annotated[
+    camera_device_name: Annotated[
         str,
-        Field(description="The camera device id"),
+        Field(description="The camera device name"),
     ] = ""
     video_width: Annotated[
         int,
@@ -76,17 +76,17 @@ class ConfigUpdate(BaseModel):
     language: Language | None = None
 
     # Transcript options
-    audio_input_device: int | None = None
-    asr_model: str | None = None
+    audio_input_device_name: str | None = None
+    asr_model_name: str | None = None
 
     # Audio control options
     enable_audio_control: bool | None = None
-    audio_control_device: int | None = None
+    audio_control_device_name: str | None = None
     audio_delay_ms: int | None = None
 
     # Video control options
     enable_video_control: bool | None = None
-    camera_device: str | None = None
+    camera_device_name: str | None = None
     video_width: int | None = None
     video_height: int | None = None
     enable_face_swap: bool | None = None

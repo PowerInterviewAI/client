@@ -121,7 +121,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex flex-col h-screen max-w-7xl mx-auto bg-background p-2">
+    <div className="flex flex-col h-screen max-w-5xl mx-auto bg-background p-2">
       <TopBar
         photo={config?.profile?.photo ?? ''}
         userName={config?.profile?.username ?? ''}
@@ -142,7 +142,7 @@ export default function Home() {
               ref={videoPanelRef}
               runningState={appState?.assistant_state ?? RunningState.IDLE}
               photo={config?.profile?.photo ?? ''}
-              cameraDevice={config?.camera_device ?? ''}
+              cameraDeviceName={config?.camera_device_name ?? ''}
               videoWidth={config?.video_width ?? 640}
               videoHeight={config?.video_height ?? 480}
               enableFaceSwap={config?.enable_face_swap ?? false}
@@ -167,6 +167,7 @@ export default function Home() {
 
       <div className="border border-border rounded-lg bg-card">
         <ControlPanel
+          profile={config?.profile}
           runningState={appState?.assistant_state ?? RunningState.IDLE}
           startMutation={startMutation}
           stopMutation={stopMutation}
@@ -174,15 +175,15 @@ export default function Home() {
           audioOutputDevices={audioOutputDevices ?? []}
           updateConfig={updateConfig}
           // Transcription options
-          asrModel={config?.asr_model ?? ''}
-          audioInputDevice={`${config?.audio_input_device ?? 0}`}
+          asrModelName={config?.asr_model_name ?? ''}
+          audioInputDeviceName={`${config?.audio_input_device_name ?? 0}`}
           // Audio control options
           enableAudioControl={config?.enable_audio_control ?? false}
-          audioControlDevice={`${config?.audio_control_device ?? 0}`}
+          audioControlDeviceName={`${config?.audio_control_device_name ?? 0}`}
           audioDelay={config?.audio_delay_ms ?? 0}
           // Video control options
           enableVideoControl={config?.enable_video_control ?? false}
-          cameraDevice={config?.camera_device ?? ''}
+          cameraDeviceName={config?.camera_device_name ?? ''}
           videoWidth={config?.video_width ?? 1280}
           videoHeight={config?.video_height ?? 720}
           enableFaceSwap={config?.enable_face_swap ?? false}

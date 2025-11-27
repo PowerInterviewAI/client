@@ -86,7 +86,8 @@ class Transcriber:
 
     def _process_partial(self, result_json: str, speaker: Speaker, partial_attr: str) -> None:
         result_dict: dict[str, Any] = json.loads(result_json)
-        text: str = result_dict.get("partial", "")
+        text: str | None = result_dict.get("partial")
+        text = self.filter_transcript(text)
         if not text:
             return
 
@@ -110,7 +111,8 @@ class Transcriber:
 
     def _process_final(self, result_json: str, speaker: Speaker, partial_attr: str) -> bool:
         result_dict: dict[str, Any] = json.loads(result_json)
-        text: str = result_dict.get("text", "").strip()
+        text: str | None = result_dict.get("text")
+        text = self.filter_transcript(text)
         if not text:
             return False
 
@@ -179,3 +181,31 @@ class Transcriber:
     def correct_text(self, text: str) -> str:
         """Recover errors on final transcript text."""
         return text[0].upper() + text[1:].strip(".") + "."
+
+    def filter_transcript(self, text: str | None) -> str | None:
+        if not text:
+            return None
+
+        if text.lower().strip(",.!?") in [
+            "",
+            "the",
+            "a",
+            "i",
+            "you",
+            "he",
+            "she",
+            "it",
+            "we",
+            "they",
+            "my",
+            "your",
+            "his",
+            "her",
+            "its",
+            "our",
+            "their",
+            "who",
+        ]:
+            logger.warning(f"Filtered: {text}")
+            return None
+        return text

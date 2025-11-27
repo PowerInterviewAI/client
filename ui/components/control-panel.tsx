@@ -11,34 +11,36 @@ import {
 import { useVideoDevices } from '@/hooks/useVideoDevices';
 import { RunningState } from '@/types/appState';
 import { PyAudioDevice } from '@/types/audioDevice';
-import { Config } from '@/types/config';
+import { Config, UserProfile } from '@/types/config';
 import { APIError } from '@/types/error';
 import { DialogTitle } from '@radix-ui/react-dialog';
 import { UseMutationResult } from '@tanstack/react-query';
 import { Ellipsis, Mic, Mic2, MicOff, Play, Square, Video, VideoOff } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { Badge } from './ui/badge';
 import { Dialog, DialogContent, DialogTrigger } from './ui/dialog';
 import { Input } from './ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 interface ControlPanelProps {
+  profile?: UserProfile;
   runningState: RunningState;
   audioInputDevices: PyAudioDevice[];
   audioOutputDevices: PyAudioDevice[];
 
   // Transcription options
-  audioInputDevice: string;
-  asrModel: string;
+  audioInputDeviceName: string;
+  asrModelName: string;
 
   // Audio control options
   enableAudioControl: boolean;
-  audioControlDevice: string;
+  audioControlDeviceName: string;
   audioDelay: number;
 
   // Video control options
   enableVideoControl: boolean;
-  cameraDevice: string;
+  cameraDeviceName: string;
   videoWidth: number;
   videoHeight: number;
   enableFaceSwap: boolean;
@@ -63,6 +65,7 @@ type IndicatorConfig = {
 };
 
 export default function ControlPanel({
+  profile,
   runningState,
   audioInputDevices,
   audioOutputDevices,
@@ -71,16 +74,16 @@ export default function ControlPanel({
   updateConfig,
 
   // Transcription options
-  audioInputDevice,
-  asrModel,
+  audioInputDeviceName,
+  asrModelName,
 
   // Audio control options
   enableAudioControl,
-  audioControlDevice,
+  audioControlDeviceName,
   audioDelay,
   // Video control options
   enableVideoControl,
-  cameraDevice,
+  cameraDeviceName,
   videoWidth,
   videoHeight,
   enableFaceSwap,
@@ -88,7 +91,10 @@ export default function ControlPanel({
 }: ControlPanelProps) {
   const stateConfig: Record<RunningState, StateConfig> = {
     [RunningState.IDLE]: {
-      onClick: () => startMutation.mutate(),
+      onClick: () => {
+        if (!checkCanStart()) return;
+        startMutation.mutate();
+      },
       className: 'bg-primary hover:bg-primary/90',
       icon: <Play className="h-3.5 w-3.5" />,
       label: 'Start',
@@ -112,7 +118,10 @@ export default function ControlPanel({
       label: 'Stopping...',
     },
     [RunningState.STOPPED]: {
-      onClick: () => startMutation.mutate(),
+      onClick: () => {
+        if (!checkCanStart()) return;
+        startMutation.mutate();
+      },
       className: 'bg-primary hover:bg-primary/90',
       icon: <Play className="h-3.5 w-3.5" />,
       label: 'Start',
@@ -149,6 +158,43 @@ export default function ControlPanel({
   const previewStreamRef = useRef<MediaStream | null>(null);
   const videoDevices = useVideoDevices();
 
+  const audioInputDeviceNotFound =
+    audioInputDevices.find((d) => d.name === audioInputDeviceName) === undefined;
+  const audioControlDeviceNotFound =
+    audioOutputDevices.find((d) => d.name === audioControlDeviceName) === undefined;
+  const videoDeviceNotFound = videoDevices.find((d) => d.label === cameraDeviceName) === undefined;
+
+  const checkCanStart = () => {
+    const checks: { ok: boolean; message: string }[] = [
+      { ok: !!profile, message: 'Profile is not set' },
+      { ok: !!profile?.username, message: 'Username is not set' },
+      { ok: !!profile?.photo, message: 'Photo is not set' },
+      { ok: !!profile?.profile_data, message: 'Profile data is not set' },
+
+      {
+        ok: !audioInputDeviceNotFound,
+        message: `Audio input device "${audioInputDeviceName}" is not found`,
+      },
+      {
+        ok: !enableAudioControl || !audioControlDeviceNotFound,
+        message: `Audio control device "${audioControlDeviceName}" is not found`,
+      },
+      {
+        ok: !enableVideoControl || !videoDeviceNotFound,
+        message: `Video device "${cameraDeviceName}" is not found`,
+      },
+    ];
+
+    for (const { ok, message } of checks) {
+      if (!ok) {
+        alert(message);
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   const getDisabled = (state: RunningState, disableOnRunning: boolean = true): boolean => {
     if (disableOnRunning && state === RunningState.RUNNING) return true;
     return state === RunningState.STARTING || state === RunningState.STOPPING;
@@ -169,9 +215,13 @@ export default function ControlPanel({
         previewStreamRef.current = null;
       }
 
+      // Find camera device id by name
+      const videoDeviceId = videoDevices.find((d) => d.label === cameraDeviceName)?.deviceId;
+
+      // Create media stream
       const constraints: MediaStreamConstraints = {
         video: {
-          deviceId: cameraDevice ? { exact: cameraDevice } : undefined,
+          deviceId: videoDeviceId ? { exact: videoDeviceId } : undefined,
           width: videoWidth,
           height: videoHeight,
         },
@@ -204,7 +254,14 @@ export default function ControlPanel({
         videoPreviewRef.current.srcObject = null;
       }
     };
-  }, [isVideoDialogOpen, enableVideoControl, cameraDevice, videoWidth, videoHeight]);
+  }, [
+    isVideoDialogOpen,
+    enableVideoControl,
+    videoDevices,
+    cameraDeviceName,
+    videoWidth,
+    videoHeight,
+  ]);
 
   return (
     <div className="flex items-center justify-between gap-2 px-4 py-2">
@@ -213,19 +270,29 @@ export default function ControlPanel({
 
       <div className="flex flex-1 justify-center gap-2 items-center">
         {/* Transcription + Dialog */}
-        <div className="flex items-center rounded-full overflow-hidden border">
+        <div className="flex items-center">
           <Dialog>
             <Tooltip>
               <TooltipTrigger asChild>
                 <DialogTrigger asChild>
-                  <Button
-                    variant="default"
-                    size="icon"
-                    className="h-8 w-8 border-none rounded-none"
-                    disabled={getDisabled(runningState)}
-                  >
-                    <Mic2 className="h-4 w-4" />
-                  </Button>
+                  <div className="relative">
+                    <Button
+                      variant="default"
+                      size="icon"
+                      className="h-8 w-8 border-none rounded-full"
+                      disabled={getDisabled(runningState)}
+                    >
+                      <Mic2 className="h-4 w-4" />
+                    </Button>
+                    {audioInputDeviceNotFound && (
+                      <Badge
+                        variant="destructive"
+                        className="absolute -bottom-1 -right-1 h-4 min-w-4 rounded-full px-1 flex items-center justify-center text-[10px] border"
+                      >
+                        !
+                      </Badge>
+                    )}
+                  </div>
                 </DialogTrigger>
               </TooltipTrigger>
               <TooltipContent>
@@ -240,15 +307,15 @@ export default function ControlPanel({
               <div className="mb-3">
                 <label className="text-xs text-muted-foreground mb-1 block">Microphone</label>
                 <Select
-                  value={audioInputDevice}
-                  onValueChange={(v) => updateConfig({ audio_input_device: Number(v) })}
+                  value={audioInputDeviceName}
+                  onValueChange={(v) => updateConfig({ audio_input_device_name: v })}
                 >
                   <SelectTrigger className="h-8 w-full text-xs">
                     <SelectValue placeholder="Select microphone" />
                   </SelectTrigger>
                   <SelectContent>
                     {audioInputDevices.map((device) => (
-                      <SelectItem key={device.index} value={`${device.index}`}>
+                      <SelectItem key={device.name} value={`${device.name}`}>
                         {device.name}
                       </SelectItem>
                     ))}
@@ -258,7 +325,10 @@ export default function ControlPanel({
               {/* ASR Model Select */}
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">ASR Model</label>
-                <Select value={asrModel} onValueChange={(v) => updateConfig({ asr_model: v })}>
+                <Select
+                  value={asrModelName}
+                  onValueChange={(v) => updateConfig({ asr_model_name: v })}
+                >
                   <SelectTrigger className="h-8 w-full text-xs">
                     <SelectValue placeholder="Select ASR model" />
                   </SelectTrigger>
@@ -277,221 +347,246 @@ export default function ControlPanel({
         </div>
 
         {/* Audio Control Toggle + Dialog */}
-        <div
-          className={`flex items-center overflow-hidden border ${enableAudioControl ? 'rounded-full' : 'border-destructive rounded-xl text-white'}`}
-        >
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant={enableAudioControl ? 'secondary' : 'destructive'}
-                size="icon"
-                className={`h-8 w-8 border-none rounded-none ${enableAudioControl ? '' : ''}`}
-                disabled={getDisabled(runningState)}
-                onClick={() => {
-                  if (enableAudioControl) {
-                    toast.success('Audio control disabled');
-                  } else {
-                    toast.success('Audio control enabled');
-                  }
-                  updateConfig({ enable_audio_control: !enableAudioControl });
-                }}
-              >
-                {enableAudioControl ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Toggle audio control</p>
-            </TooltipContent>
-          </Tooltip>
-          <Dialog>
+        <div className="relative">
+          <div
+            className={`flex items-center overflow-hidden border ${enableAudioControl ? 'rounded-full' : 'border-destructive rounded-xl text-white'}`}
+          >
             <Tooltip>
               <TooltipTrigger asChild>
-                <DialogTrigger asChild>
-                  <Button
-                    variant={enableAudioControl ? 'secondary' : 'destructive'}
-                    size="icon"
-                    className="h-8 w-8 rounded-none border-none"
-                    disabled={getDisabled(runningState)}
-                  >
-                    <Ellipsis className="h-4 w-4" />
-                  </Button>
-                </DialogTrigger>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Audio control options</p>
-              </TooltipContent>
-            </Tooltip>
-
-            <DialogContent className="flex flex-col w-72 p-4">
-              <DialogTitle>Audio Control Options</DialogTitle>
-
-              {/* Output Device Select */}
-              <div className="mb-3">
-                <label className="text-xs text-muted-foreground mb-1 block">Output Device</label>
-                <Select
-                  value={audioControlDevice}
-                  onValueChange={(v) => updateConfig({ audio_control_device: Number(v) })}
-                >
-                  <SelectTrigger className="h-8 w-full text-xs">
-                    <SelectValue placeholder="Select device" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {audioOutputDevices.map((device) => (
-                      <SelectItem key={device.index} value={`${device.index}`}>
-                        {device.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Audio Delay Input */}
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Audio Delay (ms)</label>
-                <Input
-                  type="number"
-                  value={audioDelay}
-                  onChange={(e) => updateConfig({ audio_delay_ms: Number(e.target.value) })}
-                  className="w-full h-8 px-2 text-xs border rounded-md bg-background"
-                  min={0}
-                  step={10}
-                />
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        {/* Video Control Toggle + Dialog */}
-        <div
-          className={`flex items-center overflow-hidden border ${enableVideoControl ? 'rounded-full' : 'border-destructive rounded-xl text-white'}`}
-        >
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant={enableVideoControl ? 'secondary' : 'destructive'}
-                size="icon"
-                className="h-8 w-8 border-none rounded-none"
-                disabled={getDisabled(runningState)}
-                onClick={() => {
-                  toast.success(
-                    enableVideoControl ? 'Video control disabled' : 'Video control enabled',
-                  );
-                  updateConfig({ enable_video_control: !enableVideoControl });
-                }}
-              >
-                {enableVideoControl ? (
-                  <Video className="h-4 w-4" />
-                ) : (
-                  <VideoOff className="h-4 w-4" />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Toggle video control</p>
-            </TooltipContent>
-          </Tooltip>
-
-          <Dialog open={isVideoDialogOpen} onOpenChange={setIsVideoDialogOpen}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <DialogTrigger asChild>
-                  <Button
-                    variant={enableVideoControl ? 'secondary' : 'destructive'}
-                    size="icon"
-                    className="h-8 w-8 rounded-none border-none"
-                    disabled={getDisabled(runningState)}
-                  >
-                    <Ellipsis className="h-4 w-4" />
-                  </Button>
-                </DialogTrigger>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Video control options</p>
-              </TooltipContent>
-            </Tooltip>
-
-            <DialogContent className="flex flex-col w-72 p-4 gap-4">
-              <DialogTitle>Video Control Options</DialogTitle>
-
-              {/* Camera Preview */}
-              <video
-                ref={videoPreviewRef}
-                autoPlay
-                muted
-                playsInline
-                className="w-full h-32 bg-black rounded-md object-contain"
-              />
-
-              {/* Camera Device Select */}
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Camera Device</label>
-                <Select
-                  value={`${cameraDevice}`}
-                  onValueChange={(v) => updateConfig({ camera_device: v })}
-                >
-                  <SelectTrigger className="h-8 w-full text-xs">
-                    <SelectValue placeholder="Select camera" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {videoDevices.map((device) => (
-                      <SelectItem key={device.deviceId} value={`${device.deviceId}`}>
-                        {device.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Resolution Select */}
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Resolution</label>
-                <Select
-                  value={`${videoWidth}x${videoHeight}`}
-                  onValueChange={(v) => {
-                    const [w, h] = v.split('x').map(Number);
-                    updateConfig({ video_width: w, video_height: h });
+                <Button
+                  variant={enableAudioControl ? 'secondary' : 'destructive'}
+                  size="icon"
+                  className={`h-8 w-8 border-none rounded-none ${enableAudioControl ? '' : ''}`}
+                  disabled={getDisabled(runningState)}
+                  onClick={() => {
+                    if (enableAudioControl) {
+                      toast.success('Audio control disabled');
+                    } else {
+                      toast.success('Audio control enabled');
+                    }
+                    updateConfig({ enable_audio_control: !enableAudioControl });
                   }}
                 >
-                  <SelectTrigger className="h-8 w-full text-xs">
-                    <SelectValue placeholder="Select resolution" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {['640x360', '640x480', '1280x720', '1920x1080'].map((res) => (
-                      <SelectItem key={res} value={res}>
-                        {res}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Face Swap Toggle */}
-              <div className="flex items-center justify-between">
-                <span className="text-xs">Face Swap</span>
-                <Button
-                  variant={enableFaceSwap ? 'default' : 'outline'}
-                  size="sm"
-                  className="w-16"
-                  onClick={() => updateConfig({ enable_face_swap: !enableFaceSwap })}
-                >
-                  {enableFaceSwap ? 'On' : 'Off'}
+                  {enableAudioControl ? (
+                    <Mic className="h-4 w-4" />
+                  ) : (
+                    <MicOff className="h-4 w-4" />
+                  )}
                 </Button>
-              </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Toggle audio control</p>
+              </TooltipContent>
+            </Tooltip>
+            <Dialog>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant={enableAudioControl ? 'secondary' : 'destructive'}
+                      size="icon"
+                      className="h-8 w-8 rounded-none border-none"
+                      disabled={getDisabled(runningState)}
+                    >
+                      <Ellipsis className="h-4 w-4" />
+                    </Button>
+                  </DialogTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Audio control options</p>
+                </TooltipContent>
+              </Tooltip>
 
-              {/* Face Enhance Toggle */}
-              <div className="flex items-center justify-between">
-                <span className="text-xs">Face Enhance</span>
+              <DialogContent className="flex flex-col w-72 p-4">
+                <DialogTitle>Audio Control Options</DialogTitle>
+
+                {/* Output Device Select */}
+                <div className="mb-3">
+                  <label className="text-xs text-muted-foreground mb-1 block">Output Device</label>
+                  <Select
+                    value={audioControlDeviceName}
+                    onValueChange={(v) => updateConfig({ audio_control_device_name: v })}
+                  >
+                    <SelectTrigger className="h-8 w-full text-xs">
+                      <SelectValue placeholder="Select device" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {audioOutputDevices.map((device) => (
+                        <SelectItem key={device.name} value={`${device.name}`}>
+                          {device.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Audio Delay Input */}
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">
+                    Audio Delay (ms)
+                  </label>
+                  <Input
+                    type="number"
+                    value={audioDelay}
+                    onChange={(e) => updateConfig({ audio_delay_ms: Number(e.target.value) })}
+                    className="w-full h-8 px-2 text-xs border rounded-md bg-background"
+                    min={0}
+                    step={10}
+                  />
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+          {audioControlDeviceNotFound && (
+            <Badge
+              variant="destructive"
+              className="absolute -bottom-1 -right-1 h-4 min-w-4 rounded-full px-1 flex items-center justify-center text-[10px]"
+            >
+              !
+            </Badge>
+          )}
+        </div>
+        {/* Video Control Toggle + Dialog */}
+        <div className="relative">
+          <div
+            className={`flex items-center overflow-hidden border ${enableVideoControl ? 'rounded-full' : 'border-destructive rounded-xl text-white'}`}
+          >
+            <Tooltip>
+              <TooltipTrigger asChild>
                 <Button
-                  variant={enableFaceEnhance ? 'default' : 'outline'}
-                  size="sm"
-                  className="w-16"
-                  onClick={() => updateConfig({ enable_face_enhance: !enableFaceEnhance })}
+                  variant={enableVideoControl ? 'secondary' : 'destructive'}
+                  size="icon"
+                  className="h-8 w-8 border-none rounded-none"
+                  disabled={getDisabled(runningState)}
+                  onClick={() => {
+                    toast.success(
+                      enableVideoControl ? 'Video control disabled' : 'Video control enabled',
+                    );
+                    updateConfig({ enable_video_control: !enableVideoControl });
+                  }}
                 >
-                  {enableFaceEnhance ? 'On' : 'Off'}
+                  {enableVideoControl ? (
+                    <Video className="h-4 w-4" />
+                  ) : (
+                    <VideoOff className="h-4 w-4" />
+                  )}
                 </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Toggle video control</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Dialog open={isVideoDialogOpen} onOpenChange={setIsVideoDialogOpen}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant={enableVideoControl ? 'secondary' : 'destructive'}
+                      size="icon"
+                      className="h-8 w-8 rounded-none border-none"
+                      disabled={getDisabled(runningState)}
+                    >
+                      <Ellipsis className="h-4 w-4" />
+                    </Button>
+                  </DialogTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Video control options</p>
+                </TooltipContent>
+              </Tooltip>
+
+              <DialogContent className="flex flex-col w-72 p-4 gap-4">
+                <DialogTitle>Video Control Options</DialogTitle>
+
+                {/* Camera Preview */}
+                <video
+                  ref={videoPreviewRef}
+                  autoPlay
+                  muted
+                  playsInline
+                  className="w-full h-32 bg-black rounded-md object-contain"
+                />
+
+                {/* Camera Device Select */}
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Camera Device</label>
+                  <Select
+                    value={`${cameraDeviceName}`}
+                    onValueChange={(v) => updateConfig({ camera_device_name: v })}
+                  >
+                    <SelectTrigger className="h-8 w-full text-xs">
+                      <SelectValue placeholder="Select camera" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {videoDevices.map((device) => (
+                        <SelectItem key={device.label} value={device.label}>
+                          {device.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Resolution Select */}
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Resolution</label>
+                  <Select
+                    value={`${videoWidth}x${videoHeight}`}
+                    onValueChange={(v) => {
+                      const [w, h] = v.split('x').map(Number);
+                      updateConfig({ video_width: w, video_height: h });
+                    }}
+                  >
+                    <SelectTrigger className="h-8 w-full text-xs">
+                      <SelectValue placeholder="Select resolution" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {['640x360', '640x480', '1280x720', '1920x1080'].map((res) => (
+                        <SelectItem key={res} value={res}>
+                          {res}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Face Swap Toggle */}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs">Face Swap</span>
+                  <Button
+                    variant={enableFaceSwap ? 'default' : 'outline'}
+                    size="sm"
+                    className="w-16"
+                    onClick={() => updateConfig({ enable_face_swap: !enableFaceSwap })}
+                  >
+                    {enableFaceSwap ? 'On' : 'Off'}
+                  </Button>
+                </div>
+
+                {/* Face Enhance Toggle */}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs">Face Enhance</span>
+                  <Button
+                    variant={enableFaceEnhance ? 'default' : 'outline'}
+                    size="sm"
+                    className="w-16"
+                    onClick={() => updateConfig({ enable_face_enhance: !enableFaceEnhance })}
+                  >
+                    {enableFaceEnhance ? 'On' : 'Off'}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+          {videoDeviceNotFound && (
+            <Badge
+              variant="destructive"
+              className="absolute -bottom-1 -right-1 h-4 min-w-4 rounded-full px-1 flex items-center justify-center text-[10px] border"
+            >
+              !
+            </Badge>
+          )}{' '}
         </div>
 
         {/* Divider */}

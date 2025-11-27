@@ -1,6 +1,7 @@
 'use client';
 
 import { Card } from '@/components/ui/card';
+import { useVideoDevices } from '@/hooks/useVideoDevices';
 import axiosClient from '@/lib/axiosClient';
 import { RunningState } from '@/types/appState';
 import { OfferRequest, WebRTCOptions } from '@/types/webrtc';
@@ -11,7 +12,7 @@ interface VideoPanelProps {
   runningState: RunningState;
   // Video control options
   photo: string;
-  cameraDevice: string;
+  cameraDeviceName: string;
   videoWidth: number;
   videoHeight: number;
   enableFaceSwap: boolean;
@@ -31,7 +32,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
     {
       runningState,
       photo,
-      cameraDevice,
+      cameraDeviceName,
       videoWidth,
       videoHeight,
       enableFaceSwap,
@@ -41,6 +42,8 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
     },
     ref,
   ) => {
+    const videoDevices = useVideoDevices();
+
     const [videoMessage, setVideoMessage] = useState('Video Stream');
     const videoRef = useRef<HTMLVideoElement>(null);
     const pcRef = useRef<RTCPeerConnection | null>(null);
@@ -88,10 +91,14 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
         }
       };
 
+      // Find video device id from name
+      const videoDeviceId = videoDevices.find((d) => d.label === cameraDeviceName)?.deviceId;
+      console.log('Video device id', videoDevices, cameraDeviceName, videoDeviceId);
+
       // Acquire local camera only if you still want to send local tracks to the peer
       const localStream = await navigator.mediaDevices.getUserMedia({
         video: {
-          deviceId: cameraDevice ? { exact: cameraDevice } : undefined,
+          deviceId: videoDeviceId ? { exact: videoDeviceId } : undefined,
           width: { ideal: videoWidth },
           height: { ideal: videoHeight },
         },

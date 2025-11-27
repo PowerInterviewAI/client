@@ -1,5 +1,6 @@
 import contextlib
 import os
+import shutil
 import tempfile
 import threading
 from typing import Any
@@ -12,7 +13,7 @@ from engine.cfg.video import config as cfg_video
 from engine.models.config import Config, ConfigUpdate
 from engine.schemas.app_state import AppState
 from engine.schemas.transcript import Transcript
-from engine.services.audio_service import AudioController
+from engine.services.audio_service import AudioController, AudioService
 from engine.services.service_monitor import ServiceMonitor
 from engine.services.suggestion_service import SuggestionService
 from engine.services.transcript_service import Transcriber
@@ -39,85 +40,98 @@ class PowerInterviewApp:
         )
 
     # ---- Configuration Management ----
+
     def load_config(self) -> Config:
-        try:
-            config_content = cfg_fs.CONFIG_FILE.read_text()
-            if config_content:
-                self.config = Config.model_validate_json(config_content)
-            else:
+        with self._file_lock:
+            try:
+                if not cfg_fs.CONFIG_FILE.exists():
+                    self.save_config()  # create default
+                    return self.config
+
+                text = cfg_fs.CONFIG_FILE.read_text()
+
+                # Avoid parsing empty or corrupted file
+                if not text.strip():
+                    logger.warning("Config file empty, restoring default.")
+                    self.save_config()
+                    return self.config
+
+                self.config = Config.model_validate_json(text)
+                return self.config  # noqa: TRY300
+
+            except Exception as ex:
+                logger.error(f"Failed to load config: {ex}")
+
+                # Attempt restore from backup
+                backup = cfg_fs.CONFIG_FILE.with_suffix(".bak")
+                if backup.exists():
+                    try:
+                        cfg_fs.CONFIG_FILE.write_text(backup.read_text())
+                        self.config = Config.model_validate_json(cfg_fs.CONFIG_FILE.read_text())
+                        logger.warning("Config restored from backup.")
+                        return self.config  # noqa: TRY300
+                    except Exception as ex2:
+                        logger.error(f"Backup restore failed: {ex2}")
+
+                # Final fallback: use defaults
                 self.save_config()
-
-        except Exception as ex:
-            logger.warning(f"Failed to load config: {ex}")
-            self.save_config()
-
-        return self.config
+                return self.config
 
     def save_config(self) -> None:
-        json_str = self.config.model_dump_json(
-            indent=2,
-            ensure_ascii=True,
-        )
+        with self._file_lock:
+            json_str = self.config.model_dump_json(indent=2, ensure_ascii=True)
+            cfg_fs.CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
 
-        # Ensure directory exists
-        cfg_fs.CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
-
-        with self._file_lock:  # thread/process safety
-            tmp_fd, tmp_path = tempfile.mkstemp(
-                dir=str(cfg_fs.CONFIG_FILE.parent), prefix=cfg_fs.CONFIG_FILE.name, suffix=".tmp"
+            fd, tmp_path = tempfile.mkstemp(
+                dir=str(cfg_fs.CONFIG_FILE.parent),
+                prefix=cfg_fs.CONFIG_FILE.name,
+                suffix=".tmp",
             )
+
             try:
-                # Write to temp file
-                with os.fdopen(tmp_fd, "w", encoding="utf-8") as f:
+                with os.fdopen(fd, "w", encoding="utf-8") as f:
                     f.write(json_str)
                     f.flush()
-                    os.fsync(f.fileno())  # force write to disk
+                    os.fsync(f.fileno())
 
-                # Backup existing config before replacing
+                # Create backup only once per successful save
                 if cfg_fs.CONFIG_FILE.exists():
-                    backup_path = cfg_fs.CONFIG_FILE.with_suffix(".bak")
-                    try:
-                        cfg_fs.CONFIG_FILE.replace(backup_path)
-                    except Exception as ex:
-                        logger.warning(f"Failed to create backup: {ex}")
+                    backup = cfg_fs.CONFIG_FILE.with_suffix(".bak")
+                    shutil.copy2(cfg_fs.CONFIG_FILE, backup)
 
-                # Atomic replace
                 os.replace(tmp_path, cfg_fs.CONFIG_FILE)  # noqa: PTH105
 
             except Exception as ex:
                 logger.error(f"Failed to save config: {ex}")
-                # Clean up temp file if something goes wrong
                 with contextlib.suppress(Exception):
                     os.remove(tmp_path)  # noqa: PTH107
+                raise
 
     def update_config(self, cfg: ConfigUpdate) -> Config:
-        update_dict = cfg.model_dump(exclude_unset=True)
-        old_dict = self.config.model_dump(exclude_unset=True)
-
-        self.config = Config.model_validate(
-            {
-                **old_dict,
-                **update_dict,
+        with self._file_lock:
+            merged = {
+                **self.config.model_dump(),
+                **cfg.model_dump(exclude_unset=True),
             }
-        )
-        self.save_config()
+            self.config = Config.model_validate(merged)
 
-        return self.config
+            self.save_config()
+            return self.config
 
     # ---- Assistant Control ----
     def start_assistant(self) -> None:
         self.transcriber.clear_transcripts()
         self.transcriber.start(
-            input_device_index=self.config.audio_input_device,
-            asr_model_name=self.config.asr_model,
+            input_device_index=AudioService.get_device_index_by_name(self.config.audio_input_device_name),
+            asr_model_name=self.config.asr_model_name,
         )
 
         self.suggestion_service.clear_suggestions()
 
         if self.config.enable_audio_control:
             self.audio_controller.update_parameters(
-                input_device_id=self.config.audio_input_device,
-                output_device_id=self.config.audio_control_device,
+                input_device_id=AudioService.get_device_index_by_name(self.config.audio_input_device_name),
+                output_device_id=AudioService.get_device_index_by_name(self.config.audio_control_device_name),
                 delay_secs=self.config.audio_delay_ms / 1000,
             )
             self.audio_controller.start()

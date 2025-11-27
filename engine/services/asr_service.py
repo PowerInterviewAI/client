@@ -157,6 +157,9 @@ class ASRService:
         if self.stream:
             self.stream.close()
 
+        if self.pa:
+            self.pa.terminate()
+
         self.recognizer.Result()
 
         logger.info("ASRService stopped.")
