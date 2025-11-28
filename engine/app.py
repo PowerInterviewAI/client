@@ -40,42 +40,102 @@ class PowerInterviewApp:
         )
 
     # ---- Configuration Management ----
-
     def load_config(self) -> Config:
+        """
+        Load configuration from disk in a thread-safe way.
+
+        - Only take decisions while holding self._file_lock.
+        - Perform any action that may re-acquire the same lock (save/restore) AFTER releasing the lock.
+        - Return the final config at the end.
+        """
+        need_save_default = False
+        need_restore_backup = False
+        backup_data = None
+        parsed_successfully = False
+
         with self._file_lock:
             try:
                 if not cfg_fs.CONFIG_FILE.exists():
-                    self.save_config()  # create default
-                    return self.config
+                    # file missing -> create default after releasing lock
+                    need_save_default = True
+                else:
+                    text = cfg_fs.CONFIG_FILE.read_text()
+                    if not text.strip():
+                        logger.warning("Config file empty, will restore defaults.")
+                        need_save_default = True
+                    else:
+                        # Try parsing; parsing errors are handled here
+                        try:
+                            self.config = Config.model_validate_json(text)
+                            parsed_successfully = True
+                        except Exception as parse_ex:
+                            logger.error(f"Failed to parse config: {parse_ex}")
 
-                text = cfg_fs.CONFIG_FILE.read_text()
+                            # Try to prepare to restore from backup (read backup while still under lock)
+                            backup = cfg_fs.CONFIG_FILE.with_suffix(".bak")
+                            if backup.exists():
+                                try:
+                                    backup_data = backup.read_text()
+                                    need_restore_backup = True
+                                except Exception as backup_read_ex:
+                                    logger.error(f"Failed to read backup file: {backup_read_ex}")
+                                    # If backup read fails, fall back to saving defaults
+                                    need_save_default = True
+                            else:
+                                # No backup available, we'll save defaults
+                                need_save_default = True
 
-                # Avoid parsing empty or corrupted file
-                if not text.strip():
-                    logger.warning("Config file empty, restoring default.")
-                    self.save_config()
-                    return self.config
+            except Exception as read_ex:
+                # Any I/O error while checking/reading file
+                logger.error(f"Failed to read config file: {read_ex}")
 
-                self.config = Config.model_validate_json(text)
-                return self.config  # noqa: TRY300
-
-            except Exception as ex:
-                logger.error(f"Failed to load config: {ex}")
-
-                # Attempt restore from backup
+                # Try to prepare to restore from backup
                 backup = cfg_fs.CONFIG_FILE.with_suffix(".bak")
                 if backup.exists():
                     try:
-                        cfg_fs.CONFIG_FILE.write_text(backup.read_text())
-                        self.config = Config.model_validate_json(cfg_fs.CONFIG_FILE.read_text())
-                        logger.warning("Config restored from backup.")
-                        return self.config  # noqa: TRY300
-                    except Exception as ex2:
-                        logger.error(f"Backup restore failed: {ex2}")
+                        backup_data = backup.read_text()
+                        need_restore_backup = True
+                    except Exception as backup_read_ex:
+                        logger.error(f"Failed to read backup file: {backup_read_ex}")
+                        need_save_default = True
+                else:
+                    need_save_default = True
 
-                # Final fallback: use defaults
+        # --- Outside the lock: perform writes/restores that might re-acquire the lock ---
+
+        if need_restore_backup and backup_data is not None:
+            try:
+                with self._file_lock:
+                    # Overwrite the config file with the backup data
+                    cfg_fs.CONFIG_FILE.write_text(backup_data)
+                    # Re-parse to update in-memory config
+                    self.config = Config.model_validate_json(cfg_fs.CONFIG_FILE.read_text())
+                logger.warning("Config restored from backup.")
+                return self.config  # noqa: TRY300
+
+            except Exception as restore_ex:
+                logger.error(f"Backup restore failed during write/parse: {restore_ex}")
+                # fall through to saving defaults
+
+        if need_save_default:
+            try:
+                # save_config() is expected to acquire self._file_lock internally
                 self.save_config()
-                return self.config
+                logger.info("Default config saved.")
+            except Exception as save_ex:
+                logger.error(f"Failed to save default config: {save_ex}")
+            return self.config
+
+        if parsed_successfully:
+            return self.config
+
+        # If we got here, something unexpected happened. As a final fallback, try to return
+        # current in-memory config (which may be defaults). Optionally attempt to save it.
+        logger.error("load_config reached final fallback: returning in-memory config.")
+        with contextlib.suppress(Exception):
+            # best-effort: ensure there's a persisted config consistent with in-memory one
+            self.save_config()
+        return self.config
 
     def save_config(self) -> None:
         with self._file_lock:
