@@ -43,6 +43,12 @@ class Transcriber:
         with self._lock:
             self._state = RunningState.STARTING
 
+        if self.self_asr is not None:
+            self.self_asr.stop()
+
+        if self.other_asr is not None:
+            self.other_asr.stop()
+
         if self.self_asr is None or self.asr_model_name != asr_model_name:
             self.self_asr = ASRService(
                 device_index=input_device_index,
