@@ -115,8 +115,8 @@ class PowerInterviewApp:
             }
             self.config = Config.model_validate(merged)
 
-            self.save_config()
-            return self.config
+        self.save_config()
+        return self.config
 
     # ---- Assistant Control ----
     def start_assistant(self) -> None:
