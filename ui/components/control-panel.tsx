@@ -15,7 +15,16 @@ import { Config, UserProfile } from '@/types/config';
 import { APIError } from '@/types/error';
 import { DialogTitle } from '@radix-ui/react-dialog';
 import { UseMutationResult } from '@tanstack/react-query';
-import { Ellipsis, Mic, Mic2, MicOff, Play, Square, Video, VideoOff } from 'lucide-react';
+import {
+  Ellipsis,
+  MessageSquareText,
+  Mic,
+  MicOff,
+  Play,
+  Square,
+  Video,
+  VideoOff,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from './ui/badge';
@@ -282,7 +291,7 @@ export default function ControlPanel({
                       className="h-8 w-8 border-none rounded-full"
                       disabled={getDisabled(runningState)}
                     >
-                      <Mic2 className="h-4 w-4" />
+                      <MessageSquareText className="h-4 w-4" />
                     </Button>
                     {audioInputDeviceNotFound && (
                       <Badge
