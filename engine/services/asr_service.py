@@ -45,7 +45,7 @@ class ASRService:
         self.worker_thread: threading.Thread | None = None
 
         # PyAudio setup
-        self.pa = pyaudio.PyAudio()
+        self.pa: pyaudio.PyAudio | None = None
 
         # Vosk setup
         if not ASRService._model or ASRService._model_path != model_path:
@@ -125,6 +125,7 @@ class ASRService:
         logger.info("Starting ASRService (sync)...")
         self.running.set()
 
+        self.pa = pyaudio.PyAudio()
         self.stream = self.pa.open(
             format=pyaudio.paInt16,
             channels=self.channels,
