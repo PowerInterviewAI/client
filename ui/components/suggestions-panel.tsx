@@ -108,9 +108,6 @@ export default function SuggestionsPanel({ suggestions = [] }: SuggestionsPanelP
           <div className="flex items-center justify-center h-full text-center p-4">
             <div>
               <p className="text-sm text-muted-foreground">No suggestions yet</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Generate suggestions to get started
-              </p>
             </div>
           </div>
         )}
