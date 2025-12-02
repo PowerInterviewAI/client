@@ -10,7 +10,7 @@ import pyaudiowpatch as pyaudio
 import websockets
 from loguru import logger
 from scipy.signal import resample_poly
-from websockets.legacy.client import WebSocketClientProtocol
+from websockets import ClientConnection
 
 from engine.schemas.asr import ASRResult, ASRResultType
 from engine.services.audio_service import AudioService
@@ -57,7 +57,7 @@ class ASRService:
 
         # Websocket / connection
         self.ws_uri = ws_uri
-        self._ws: WebSocketClientProtocol | None = None
+        self._ws: ClientConnection | None = None
         self._connect_task: asyncio.Task[Any] | None = None
         self._send_task: asyncio.Task[Any] | None = None
         self._recv_task: asyncio.Task[Any] | None = None
@@ -178,7 +178,7 @@ class ASRService:
         pcm16 = (data_np * 32767).astype(np.int16).tobytes()
         return pcm16  # noqa: RET504
 
-    async def _send_loop(self, ws: WebSocketClientProtocol) -> None:
+    async def _send_loop(self, ws: ClientConnection) -> None:
         """Pull audio frames from queue and send to websocket as binary frames."""
         logger.info("Send loop started.")
         try:
@@ -213,7 +213,7 @@ class ASRService:
         finally:
             logger.info("Send loop stopped.")
 
-    async def _recv_loop(self, ws: WebSocketClientProtocol) -> None:
+    async def _recv_loop(self, ws: ClientConnection) -> None:
         """
         Receive transcript messages from server and call callbacks.
         Expects server to send JSON text messages like:
@@ -294,7 +294,7 @@ class ASRService:
                 for d in done:
                     ex = d.exception()
                     if ex:
-                        raise d.exception() from ex  # noqa: TRY301
+                        raise d.exception() from ex  # type: ignore  # noqa: PGH003, TRY301
 
         except asyncio.CancelledError:
             logger.info("Connect task cancelled.")
