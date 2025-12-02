@@ -325,7 +325,7 @@ class ASRService:
     # -------------------------
     # Public async control
     # -------------------------
-    async def start(self) -> None:
+    async def start(self, device_index: int | None = None) -> None:
         """
         Start capture (sync) and start the asyncio connect/stream task.
         Must be called from an asyncio event loop.
@@ -334,6 +334,9 @@ class ASRService:
             self._loop = asyncio.get_running_loop()
 
         # Start capture synchronously
+        if device_index is not None:
+            self.device_index = device_index
+
         self.start_capture()
 
         # Start connect task (single connect, no reconnect)
