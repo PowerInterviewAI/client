@@ -29,7 +29,7 @@ async def test_asr_service() -> None:
     pa.terminate()
 
     service = ASRService(
-        ws_uri="ws://localhost:8080/api/transcribe/streaming",
+        ws_uri="ws://localhost:8080/api/asr/streaming",
         device_index=loopback_dev["index"],
         on_final=on_final,
         on_partial=on_partial,
