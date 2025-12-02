@@ -42,10 +42,10 @@ def get_app_state() -> AppState:
 
 
 @router.get("/start-assistant")
-def start_assistant() -> None:
-    the_app.start_assistant()
+async def start_assistant() -> None:
+    await the_app.start_assistant()
 
 
 @router.get("/stop-assistant")
-def stop_assistant() -> None:
-    the_app.stop_assistant()
+async def stop_assistant() -> None:
+    await the_app.stop_assistant()

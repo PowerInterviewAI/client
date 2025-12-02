@@ -179,9 +179,9 @@ class PowerInterviewApp:
         return self.config
 
     # ---- Assistant Control ----
-    def start_assistant(self) -> None:
+    async def start_assistant(self) -> None:
         self.transcriber.clear_transcripts()
-        self.transcriber.start(
+        await self.transcriber.start(
             input_device_index=AudioService.get_device_index_by_name(self.config.audio_input_device_name),
             asr_model_name=self.config.asr_model_name,
         )
@@ -204,8 +204,8 @@ class PowerInterviewApp:
             )
             self.virtual_camera_service.start()
 
-    def stop_assistant(self) -> None:
-        self.transcriber.stop()
+    async def stop_assistant(self) -> None:
+        await self.transcriber.stop()
         self.suggestion_service.stop_current_thread()
 
         self.audio_controller.stop()
