@@ -1,8 +1,6 @@
 import copy
-import json
 import threading
 from collections.abc import Callable
-from typing import Any
 
 from loguru import logger
 
@@ -133,48 +131,31 @@ class Transcriber:
         with self._lock:
             return self._state
 
-    def _process_partial(self, result_json: str, speaker: Speaker, partial_attr: str) -> None:
-        result_dict: dict[str, Any] = json.loads(result_json)
-        text: str | None = result_dict.get("partial")
-        text = self.filter_transcript(text)
-        if not text:
-            return
-
-        text = self.correct_text_partial(text)
-
+    def _process_partial(self, partial: str, speaker: Speaker, partial_attr: str) -> None:
         partial_transcript: Transcript = getattr(self, partial_attr)
-        if partial_transcript.text == text:
+        if partial_transcript.text == partial:
             return
 
-        logger.debug(f"{speaker}: {text}")
+        logger.debug(f"{speaker}: {partial}")
         with self._lock:
             if partial_transcript.timestamp == 0:
                 partial_transcript.timestamp = DatetimeUtil.get_current_timestamp()
-            partial_transcript.text = text
+            partial_transcript.text = partial
 
-    def on_self_partial(self, result_json: str) -> None:
+    def on_self_partial(self, partial: str) -> None:
         # callback from ASRService (synchronous)
         try:
-            self._process_partial(result_json, Speaker.SELF, "transcript_self_partial")
+            self._process_partial(partial, Speaker.SELF, "transcript_self_partial")
         except Exception:
             logger.exception("on_self_partial failed")
 
-    def on_other_partial(self, result_json: str) -> None:
+    def on_other_partial(self, partial: str) -> None:
         try:
-            self._process_partial(result_json, Speaker.OTHER, "transcript_other_partial")
+            self._process_partial(partial, Speaker.OTHER, "transcript_other_partial")
         except Exception:
             logger.exception("on_other_partial failed")
 
-    def _process_final(self, result_json: str, speaker: Speaker, partial_attr: str) -> bool:
-        result_dict: dict[str, Any] = json.loads(result_json)
-        text: str | None = result_dict.get("text")
-        text = self.filter_transcript(text)
-        if not text:
-            return False
-
-        # Correct errors
-        final = self.correct_text(text)
-
+    def _process_final(self, final: str, speaker: Speaker, partial_attr: str) -> bool:
         logger.debug(f"{speaker}: {final}")
 
         # Get the partial transcript object dynamically
@@ -193,22 +174,16 @@ class Transcriber:
 
         return True
 
-    def on_self_final(self, result_json: str) -> None:
+    def on_self_final(self, final: str) -> None:
         try:
-            if (
-                self._process_final(result_json, Speaker.SELF, "transcript_self_partial")
-                and self.callback_on_self_final
-            ):
+            if self._process_final(final, Speaker.SELF, "transcript_self_partial") and self.callback_on_self_final:
                 self.callback_on_self_final(self.get_final_transcripts())
         except Exception:
             logger.exception("on_self_final failed")
 
-    def on_other_final(self, result_json: str) -> None:
+    def on_other_final(self, final: str) -> None:
         try:
-            if (
-                self._process_final(result_json, Speaker.OTHER, "transcript_other_partial")
-                and self.callback_on_other_final
-            ):
+            if self._process_final(final, Speaker.OTHER, "transcript_other_partial") and self.callback_on_other_final:
                 self.callback_on_other_final(self.get_final_transcripts())
         except Exception:
             logger.exception("on_other_final failed")
