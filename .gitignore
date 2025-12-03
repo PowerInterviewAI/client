@@ -10,3 +10,4 @@ __pycache__
 /models
 
 /dist
+/ui_container/bin

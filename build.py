@@ -3,14 +3,12 @@ import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent
-
 UI_DIR = PROJECT_ROOT / "ui"
+ELECTRON_DIR = PROJECT_ROOT / "ui_container"
 
 ENGINE_MAIN = PROJECT_ROOT / "engine" / "main.py"
-ENGINE_OUTPUT_DIR = PROJECT_ROOT / "dist"
+ENGINE_OUTPUT_DIR = ELECTRON_DIR / "bin"
 ENGINE_OUTPUT_NAME = "engine.exe"
-
-ELECTRON_DIR = PROJECT_ROOT / "ui_container"
 
 
 def run(command, cwd=None):
