@@ -38,7 +38,7 @@ class Config(BaseModel):
     audio_delay_ms: Annotated[
         int,
         Field(description="The audio delay in milliseconds"),
-    ] = 0
+    ] = 300
 
     # Video control options
     enable_video_control: Annotated[
