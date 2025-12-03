@@ -108,9 +108,8 @@ class SuggestionService:
         if self._task:
             # cancel if still running
             if not self._task.done():
-                self._task.cancel()
                 try:
-                    await self._task
+                    await self._task  # wait for task to finish
                 except asyncio.CancelledError:
-                    logger.info("Suggestion task cancelled")
+                    logger.debug("Suggestion task cancelled")
             self._task = None
