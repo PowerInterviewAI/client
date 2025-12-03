@@ -1,7 +1,7 @@
 [tool.ruff]
 target-version = "py312"
 line-length = 120
-exclude = ["venv"]
+exclude = ["venv", "build.py"]
 
 [tool.ruff.lint]
 select = ["ALL"]
