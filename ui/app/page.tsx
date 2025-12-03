@@ -175,7 +175,6 @@ export default function Home() {
           audioOutputDevices={audioOutputDevices ?? []}
           updateConfig={updateConfig}
           // Transcription options
-          asrModelName={config?.asr_model_name ?? ''}
           audioInputDeviceName={`${config?.audio_input_device_name ?? 0}`}
           // Audio control options
           enableAudioControl={config?.enable_audio_control ?? false}

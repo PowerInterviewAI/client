@@ -24,7 +24,6 @@ class Transcriber:
         self.transcript_other_partial = Transcript(speaker=Speaker.OTHER, text="", timestamp=0)
 
         # ASR
-        self.asr_model_name: str | None = None
         self.self_asr: ASRService | None = None
         self.other_asr: ASRService | None = None
 
@@ -36,7 +35,7 @@ class Transcriber:
         self._lock = asyncio.Lock()
         self._state = RunningState.IDLE
 
-    async def start(self, input_device_index: int, asr_model_name: str) -> None:
+    async def start(self, input_device_index: int) -> None:
         """
         Async start: stops any running services, (re)creates ASRService instances if needed,
         and starts them. This method is async because ASRService.start is async.
@@ -61,8 +60,7 @@ class Transcriber:
                 logger.exception("Error stopping previous other_asr during start()")
 
         # Create or recreate ASRService instances if model changed or missing
-        recreate = self.asr_model_name != asr_model_name
-        if self.self_asr is None or recreate:
+        if self.self_asr is None:
             self.self_asr = ASRService(
                 ws_uri=cfg_client.BACKEND_ASR_STREAMING_URL,
                 device_index=input_device_index,
@@ -70,7 +68,7 @@ class Transcriber:
                 on_partial=self.on_self_partial,
             )
 
-        if self.other_asr is None or recreate:
+        if self.other_asr is None:
             loopback_index = AudioService.get_loopback_device().get("index", 0)
             self.other_asr = ASRService(
                 ws_uri=cfg_client.BACKEND_ASR_STREAMING_URL,
@@ -78,8 +76,6 @@ class Transcriber:
                 on_final=self.on_other_final,
                 on_partial=self.on_other_partial,
             )
-
-        self.asr_model_name = asr_model_name
 
         # Start both ASR services (await because start is async)
         try:

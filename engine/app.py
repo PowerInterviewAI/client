@@ -183,7 +183,6 @@ class PowerInterviewApp:
         await self.transcriber.clear_transcripts()
         await self.transcriber.start(
             input_device_index=AudioService.get_device_index_by_name(self.config.audio_input_device_name),
-            asr_model_name=self.config.asr_model_name,
         )
 
         await self.suggestion_service.clear_suggestions()

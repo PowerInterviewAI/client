@@ -14,7 +14,6 @@ export interface Config {
 
   // Transcription options
   audio_input_device_name: string;
-  asr_model_name: string;
 
   // Audio control options
   enable_audio_control: boolean;
