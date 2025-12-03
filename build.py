@@ -3,10 +3,14 @@ import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent
+
 UI_DIR = PROJECT_ROOT / "ui"
+
 ENGINE_MAIN = PROJECT_ROOT / "engine" / "main.py"
 ENGINE_OUTPUT_DIR = PROJECT_ROOT / "dist"
 ENGINE_OUTPUT_NAME = "engine.exe"
+
+ELECTRON_DIR = PROJECT_ROOT / "ui_container"
 
 
 def run(command, cwd=None):
@@ -21,7 +25,7 @@ def run(command, cwd=None):
 
 
 def main():
-    # 1. Build UI export
+    # ---- 1. Build UI export ----
     if not UI_DIR.exists():
         print("Error: ui directory not found.")
         sys.exit(1)
@@ -30,8 +34,7 @@ def main():
     run("npm install", cwd=UI_DIR)
     run("npm run export", cwd=UI_DIR)
 
-    # 2. Run Nuitka build
-
+    # ---- 2. Run Nuitka build ----
     if not ENGINE_MAIN.exists():
         print("Error: engine/main.py not found.")
         sys.exit(1)
@@ -54,6 +57,16 @@ def main():
     print("\n🎉 Build complete!")
     print(f"Executable created:")
     print(f"  {ENGINE_OUTPUT_DIR / ENGINE_OUTPUT_NAME}")
+
+    # ---- 3. Run Electron Build ----
+    print("\n=== Step 3: Building Electron App ===")
+
+    run("npm install", cwd=ELECTRON_DIR)
+    run("npm run build", cwd=ELECTRON_DIR)
+
+    print("\n🎉 Build complete!")
+    print(f"Executable created:")
+    print(f"  {ELECTRON_DIR / 'dist' / 'PowerInterview-Setup-*.*.*.exe'}")
 
 
 if __name__ == "__main__":
