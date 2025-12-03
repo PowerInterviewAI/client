@@ -3,10 +3,53 @@
   "version": "1.0.0",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build": "electron-builder --win"
   },
   "devDependencies": {
     "electron": "^39.2.4",
     "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "ai.power-interview",
+    "productName": "Power Interview",
+    "copyright": "Copyright ©2025 Power Interview",
+    "directories": {
+      "output": "../dist",
+      "buildResources": "build"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "installerLanguages": [
+        "en_US"
+      ],
+      "shortcutName": "Power Interview",
+      "artifactName": "PowerInterview-Setup-${version}.exe"
+    },
+    "extraResources": [
+      {
+        "from": "resources/",
+        "to": "resources",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ]
   }
 }
