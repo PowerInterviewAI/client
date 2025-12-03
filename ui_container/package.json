@@ -6,6 +6,9 @@
     "start": "electron .",
     "build": "electron-builder --win"
   },
+  "dependencies": {
+    "electron-store": "^11.0.2"
+  },
   "devDependencies": {
     "electron": "^39.2.4",
     "electron-builder": "^26.0.12"
