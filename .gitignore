@@ -8,3 +8,5 @@ __pycache__
 /ui_container/node_modules
 /engine/public
 /models
+
+/dist
