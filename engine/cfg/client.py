@@ -11,7 +11,9 @@ class Config(BaseSettings):
     BACKEND_SUGGESTIONS_URL: str = f"{BACKEND_URL}/api/llm/suggestion"
     BACKEND_WEBRTC_OFFER_URL: str = f"{BACKEND_URL}/api/webrtc/offer"
 
-    BACKEND_ASR_STREAMING_URL: str = f"{BACKEND_URL}/api/asr/streaming"
+    BACKEND_ASR_STREAMING_URL: str = (
+        f"{BACKEND_URL.replace('http://', 'ws://').replace('https://', 'wss://')}/api/asr/streaming"
+    )
 
     HTTP_TIMEOUT: int = 10
 
