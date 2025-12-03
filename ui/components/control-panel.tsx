@@ -40,7 +40,6 @@ interface ControlPanelProps {
 
   // Transcription options
   audioInputDeviceName: string;
-  asrModelName: string;
 
   // Audio control options
   enableAudioControl: boolean;
@@ -84,7 +83,6 @@ export default function ControlPanel({
 
   // Transcription options
   audioInputDeviceName,
-  asrModelName,
 
   // Audio control options
   enableAudioControl,
@@ -328,26 +326,6 @@ export default function ControlPanel({
                         {device.name}
                       </SelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              {/* ASR Model Select */}
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">ASR Model</label>
-                <Select
-                  value={asrModelName}
-                  onValueChange={(v) => updateConfig({ asr_model_name: v })}
-                >
-                  <SelectTrigger className="h-8 w-full text-xs">
-                    <SelectValue placeholder="Select ASR model" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="vosk-model-en-us-0.22-lgraph">
-                      vosk-model-en-us-0.22-lgraph
-                    </SelectItem>
-                    <SelectItem value="vosk-model-en-us-0.42-gigaspeech">
-                      vosk-model-en-us-0.42-gigaspeech
-                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>

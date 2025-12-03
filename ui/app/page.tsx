@@ -54,7 +54,7 @@ export default function Home() {
     refetchInterval: 1000,
   });
 
-  const { data: appState } = useQuery<AppState, APIError>({
+  const { data: appState, error: appStateError } = useQuery<AppState, APIError>({
     queryKey: ['appState'],
     queryFn: async () => {
       const response = await axiosClient.get<AppState>('/api/app/get-state');
@@ -140,7 +140,11 @@ export default function Home() {
           <div className="h-48 shrink-0">
             <VideoPanel
               ref={videoPanelRef}
-              runningState={appState?.assistant_state ?? RunningState.IDLE}
+              runningState={
+                appStateError
+                  ? RunningState.STOPPED
+                  : (appState?.assistant_state ?? RunningState.IDLE)
+              }
               photo={config?.profile?.photo ?? ''}
               cameraDeviceName={config?.camera_device_name ?? ''}
               videoWidth={config?.video_width ?? 640}
@@ -175,7 +179,6 @@ export default function Home() {
           audioOutputDevices={audioOutputDevices ?? []}
           updateConfig={updateConfig}
           // Transcription options
-          asrModelName={config?.asr_model_name ?? ''}
           audioInputDeviceName={`${config?.audio_input_device_name ?? 0}`}
           // Audio control options
           enableAudioControl={config?.enable_audio_control ?? false}

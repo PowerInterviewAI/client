@@ -25,10 +25,6 @@ class Config(BaseModel):
         str,
         Field(description="The audio input device name"),
     ] = ""
-    asr_model_name: Annotated[
-        str,
-        Field(description="The ASR model name to be used"),
-    ] = "vosk-model-en-us-0.22-lgraph"
 
     # Audio control options
     enable_audio_control: Annotated[
@@ -77,7 +73,6 @@ class ConfigUpdate(BaseModel):
 
     # Transcript options
     audio_input_device_name: str | None = None
-    asr_model_name: str | None = None
 
     # Audio control options
     enable_audio_control: bool | None = None
