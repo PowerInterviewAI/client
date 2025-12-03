@@ -2,6 +2,7 @@ const { app, BrowserWindow } = require('electron');
 
 function createWindow() {
     const win = new BrowserWindow({
+        title: 'Power Interview',
         width: 800,
         height: 600,
         webPreferences: {
