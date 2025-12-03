@@ -55,13 +55,13 @@ logging.getLogger("uvicorn.access").addFilter(
 
 def parse_args() -> argparse.Namespace:
     """Read CLI arguments safely for Python and packaged executables."""
-    parser = argparse.ArgumentParser(description="Power Interview Local Backend")
+    parser = argparse.ArgumentParser(description="Power Interview Local Engine")
 
     parser.add_argument(
         "--port",
         type=int,
         default=cfg_api.APP_PORT,
-        help=f"Port to run server (default: {cfg_api.APP_PORT})",
+        help=f"Port to run engine (default: {cfg_api.APP_PORT})",
     )
 
     parser.add_argument(
