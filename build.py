@@ -2,6 +2,12 @@ import subprocess
 import sys
 from pathlib import Path
 
+PROJECT_ROOT = Path(__file__).resolve().parent
+UI_DIR = PROJECT_ROOT / "ui"
+ENGINE_MAIN = PROJECT_ROOT / "engine" / "main.py"
+ENGINE_OUTPUT_DIR = PROJECT_ROOT / "dist"
+ENGINE_OUTPUT_NAME = "engine.exe"
+
 
 def run(command, cwd=None):
     """
@@ -15,39 +21,39 @@ def run(command, cwd=None):
 
 
 def main():
-    project_root = Path(__file__).resolve().parent
-
     # 1. Build UI export
-    ui_dir = project_root / "ui"
-    if not ui_dir.exists():
+    if not UI_DIR.exists():
         print("Error: ui directory not found.")
         sys.exit(1)
 
     print("=== Step 1: Exporting UI ===")
-    run("npm install", cwd=ui_dir)
-    run("npm run export", cwd=ui_dir)
+    run("npm install", cwd=UI_DIR)
+    run("npm run export", cwd=UI_DIR)
 
     # 2. Run Nuitka build
-    engine_main = project_root / "engine" / "main.py"
-    if not engine_main.exists():
+
+    if not ENGINE_MAIN.exists():
         print("Error: engine/main.py not found.")
         sys.exit(1)
 
     print("=== Step 2: Building EXE with Nuitka ===")
 
     nuitka_cmd = (
-        f"python -m nuitka {engine_main} "
+        f"python -m nuitka {ENGINE_MAIN} "
         f"--standalone "
         f"--onefile "
         f"--follow-imports "
+        f"--output-dir={ENGINE_OUTPUT_DIR} "
+        f"--output-filename={ENGINE_OUTPUT_NAME} "
         f"--include-data-dir=engine/public=engine/public "
         f"--assume-yes-for-downloads"
     )
 
-    run(nuitka_cmd, cwd=project_root)
+    run(nuitka_cmd, cwd=PROJECT_ROOT)
 
     print("\n🎉 Build complete!")
-    print("Check the 'main.dist' or resulting .exe file.")
+    print(f"Executable created:")
+    print(f"  {ENGINE_OUTPUT_DIR / ENGINE_OUTPUT_NAME}")
 
 
 if __name__ == "__main__":
