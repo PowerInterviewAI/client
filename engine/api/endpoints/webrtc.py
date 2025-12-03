@@ -16,8 +16,8 @@ router = APIRouter(
 
 
 @router.post("/offer")
-def offer(request: WebRTCOfferRequest) -> JSONResponse:
-    return WebRTCService.process_offer(request=request)
+async def offer(request: WebRTCOfferRequest) -> JSONResponse:
+    return await WebRTCService.process_offer(request=request)
 
 
 @router.websocket("/frames")
