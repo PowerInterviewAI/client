@@ -1,6 +1,7 @@
-import threading
+import asyncio
+from typing import Any
 
-import requests
+import aiohttp
 from loguru import logger
 
 from engine.cfg.client import config as cfg_client
@@ -13,90 +14,103 @@ from engine.utils.datetime import DatetimeUtil
 class SuggestionService:
     def __init__(self) -> None:
         self._suggestions: dict[int, Suggestion] = {}
+        self._lock = asyncio.Lock()
+        self._task: asyncio.Task[Any] | None = None
+        self._stop_event = asyncio.Event()
 
-        self._lock = threading.Lock()
-        self._thread: threading.Thread | None = None
-        self._stop_event = threading.Event()
+    # --------------------------
+    # Public API
+    # --------------------------
 
-    def get_suggestions(self) -> list[Suggestion]:
-        with self._lock:
+    async def get_suggestions(self) -> list[Suggestion]:
+        async with self._lock:
             return list(self._suggestions.values())
 
-    def generate_suggestion(self, transcripts: list[Transcript], profile: UserProfile) -> None:
+    async def clear_suggestions(self) -> None:
+        await self.stop_current_task()
+        async with self._lock:
+            self._suggestions.clear()
+
+    async def generate_suggestion(self, transcripts: list[Transcript], profile: UserProfile) -> None:
+        """The main async worker to call backend and stream response."""
+        if not transcripts:
+            return
+
+        tstamp = DatetimeUtil.get_current_timestamp()
+        async with self._lock:
+            self._suggestions[tstamp] = Suggestion(
+                timestamp=tstamp,
+                last_question=transcripts[-1].text,
+                answer="",
+                state=SuggestionState.PENDING,
+            )
+
         try:
-            if not transcripts:
-                return
-
-            tstamp = DatetimeUtil.get_current_timestamp()
-            with self._lock:
-                self._suggestions[tstamp] = Suggestion(
-                    timestamp=tstamp,
-                    last_question=transcripts[-1].text,
-                    answer="",
-                    state=SuggestionState.PENDING,
-                )
-
-            with requests.post(
-                cfg_client.BACKEND_SUGGESTIONS_URL,
-                json=GenerateSuggestionRequest(
-                    username=profile.username,
-                    profile_data=profile.profile_data,
-                    transcripts=transcripts,
-                ).model_dump(),
-                timeout=10,
-                stream=True,
-            ) as resp:
+            timeout = aiohttp.ClientTimeout(total=cfg_client.HTTP_TIMEOUT)
+            async with (
+                aiohttp.ClientSession(timeout=timeout) as session,
+                session.post(
+                    cfg_client.BACKEND_SUGGESTIONS_URL,
+                    json=GenerateSuggestionRequest(
+                        username=profile.username,
+                        profile_data=profile.profile_data,
+                        transcripts=transcripts,
+                    ).model_dump(),
+                ) as resp,
+            ):
                 resp.raise_for_status()
 
-                for chunk in resp.iter_content(chunk_size=None):
-                    # check stop flag
+                async for chunk, _ in resp.content.iter_chunks():
+                    # handle stop request
                     if self._stop_event.is_set():
                         logger.info("Suggestion generation stopped by user")
-                        self._suggestions[tstamp].state = SuggestionState.STOPPED
-                        break
+                        async with self._lock:
+                            self._suggestions[tstamp].state = SuggestionState.STOPPED
+                        return
 
-                    with self._lock:
-                        self._suggestions[tstamp].state = SuggestionState.LOADING
-                        if chunk:
-                            self._suggestions[tstamp].answer += chunk.decode("utf-8")
+                    if chunk:
+                        decoded = chunk.decode("utf-8")
+                        async with self._lock:
+                            self._suggestions[tstamp].state = SuggestionState.LOADING
+                            self._suggestions[tstamp].answer += decoded
 
             # mark as done if not stopped
-            with self._lock:
+            async with self._lock:
                 if self._suggestions[tstamp].state == SuggestionState.LOADING:
                     self._suggestions[tstamp].state = SuggestionState.SUCCESS
 
         except Exception as ex:
             logger.error(f"Failed to generate suggestion: {ex}")
-            with self._lock:
+            async with self._lock:
                 self._suggestions[tstamp].state = SuggestionState.ERROR
 
-    def generate_suggestion_async(self, transcripts: list[Transcript], profile: UserProfile) -> None:
-        """Spawn a background thread to run generate_suggestion."""
-        # Trim trailing self transcripts
+    async def generate_suggestion_async(self, transcripts: list[Transcript], profile: UserProfile) -> None:
+        """Spawn a background asyncio Task to run generate_suggestion."""
+        # Remove trailing SELF transcripts
         while transcripts and transcripts[-1].speaker == Speaker.SELF:
             transcripts.pop()
+        if not transcripts:
+            return
 
-        # Stop current thread
-        self.stop_current_thread()
+        # cancel the current task if running
+        await self.stop_current_task()
 
-        # Start new thread
+        # clear the stop signal
         self._stop_event.clear()
-        self._thread = threading.Thread(
-            target=self.generate_suggestion,
-            args=(transcripts, profile),
-            daemon=True,
-        )
-        self._thread.start()
 
-    def stop_current_thread(self, join_timeout: float = 5.0) -> None:
-        """Signal the suggestion thread to stop safely."""
+        # start new task
+        self._task = asyncio.create_task(self.generate_suggestion(transcripts, profile))
+
+    async def stop_current_task(self) -> None:
+        """Signal the suggestion task to stop safely."""
         self._stop_event.set()
-        if self._thread:
-            self._thread.join(timeout=join_timeout)
-            if self._thread.is_alive():
-                logger.warning("Suggestion thread did not stop in time")
 
-    def clear_suggestions(self) -> None:
-        with self._lock:
-            self.stop_current_thread()
-            self._suggestions = {}
+        if self._task:
+            # cancel if still running
+            if not self._task.done():
+                self._task.cancel()
+                try:
+                    await self._task
+                except asyncio.CancelledError:
+                    logger.info("Suggestion task cancelled")
+            self._task = None

@@ -1,6 +1,7 @@
+import asyncio
 import copy
-import threading
-from collections.abc import Callable
+from collections.abc import Callable, Coroutine
+from typing import Any
 
 from loguru import logger
 
@@ -15,8 +16,8 @@ from engine.utils.datetime import DatetimeUtil
 class Transcriber:
     def __init__(
         self,
-        callback_on_self_final: Callable[[list[Transcript]], None] | None = None,
-        callback_on_other_final: Callable[[list[Transcript]], None] | None = None,
+        callback_on_self_final: Callable[[list[Transcript]], Coroutine[Any, Any, None]] | None = None,
+        callback_on_other_final: Callable[[list[Transcript]], Coroutine[Any, Any, None]] | None = None,
     ) -> None:
         self.transcripts: list[Transcript] = []
         self.transcript_self_partial = Transcript(speaker=Speaker.SELF, text="", timestamp=0)
@@ -32,7 +33,7 @@ class Transcriber:
         self.callback_on_other_final = callback_on_other_final
 
         # Synchronization lock (thread-safe because callbacks may be invoked from non-async contexts)
-        self._lock = threading.Lock()
+        self._lock = asyncio.Lock()
         self._state = RunningState.IDLE
 
     async def start(self, input_device_index: int, asr_model_name: str) -> None:
@@ -43,7 +44,7 @@ class Transcriber:
         # Stop existing services first
         await self.stop()
 
-        with self._lock:
+        async with self._lock:
             self._state = RunningState.STARTING
 
         # Ensure previous instances are stopped (defensive)
@@ -89,11 +90,11 @@ class Transcriber:
         except Exception:
             logger.exception("Failed to start ASR services")
             # If start failed, ensure we set state appropriately and re-raise
-            with self._lock:
+            async with self._lock:
                 self._state = RunningState.STOPPED
             raise
 
-        with self._lock:
+        async with self._lock:
             self._state = RunningState.RUNNING
 
     async def stop(self) -> None:
@@ -101,7 +102,7 @@ class Transcriber:
         Async stop: stops both ASR services and updates state.
         Safe to call multiple times.
         """
-        with self._lock:
+        async with self._lock:
             # If already stopping or stopped, still attempt to stop services
             self._state = RunningState.STOPPING
 
@@ -123,45 +124,45 @@ class Transcriber:
             finally:
                 self.other_asr = None
 
-        with self._lock:
+        async with self._lock:
             self._state = RunningState.STOPPED
 
-    def get_state(self) -> RunningState:
+    async def get_state(self) -> RunningState:
         # simple getter; protected by lock for consistency
-        with self._lock:
+        async with self._lock:
             return self._state
 
-    def _process_partial(self, partial: str, speaker: Speaker, partial_attr: str) -> None:
+    async def _process_partial(self, partial: str, speaker: Speaker, partial_attr: str) -> None:
         partial_transcript: Transcript = getattr(self, partial_attr)
         if partial_transcript.text == partial:
             return
 
         logger.debug(f"{speaker}: {partial}")
-        with self._lock:
+        async with self._lock:
             if partial_transcript.timestamp == 0:
                 partial_transcript.timestamp = DatetimeUtil.get_current_timestamp()
             partial_transcript.text = partial
 
-    def on_self_partial(self, partial: str) -> None:
+    async def on_self_partial(self, partial: str) -> None:
         # callback from ASRService (synchronous)
         try:
-            self._process_partial(partial, Speaker.SELF, "transcript_self_partial")
+            await self._process_partial(partial, Speaker.SELF, "transcript_self_partial")
         except Exception:
             logger.exception("on_self_partial failed")
 
-    def on_other_partial(self, partial: str) -> None:
+    async def on_other_partial(self, partial: str) -> None:
         try:
-            self._process_partial(partial, Speaker.OTHER, "transcript_other_partial")
+            await self._process_partial(partial, Speaker.OTHER, "transcript_other_partial")
         except Exception:
             logger.exception("on_other_partial failed")
 
-    def _process_final(self, final: str, speaker: Speaker, partial_attr: str) -> bool:
+    async def _process_final(self, final: str, speaker: Speaker, partial_attr: str) -> bool:
         logger.debug(f"{speaker}: {final}")
 
         # Get the partial transcript object dynamically
         partial: Transcript = getattr(self, partial_attr)
 
-        with self._lock:
+        async with self._lock:
             self.transcripts.append(
                 Transcript(
                     speaker=speaker,
@@ -174,22 +175,28 @@ class Transcriber:
 
         return True
 
-    def on_self_final(self, final: str) -> None:
+    async def on_self_final(self, final: str) -> None:
         try:
-            if self._process_final(final, Speaker.SELF, "transcript_self_partial") and self.callback_on_self_final:
-                self.callback_on_self_final(self.get_final_transcripts())
+            if (
+                await self._process_final(final, Speaker.SELF, "transcript_self_partial")
+                and self.callback_on_self_final
+            ):
+                await self.callback_on_self_final(await self.get_final_transcripts())
         except Exception:
             logger.exception("on_self_final failed")
 
-    def on_other_final(self, final: str) -> None:
+    async def on_other_final(self, final: str) -> None:
         try:
-            if self._process_final(final, Speaker.OTHER, "transcript_other_partial") and self.callback_on_other_final:
-                self.callback_on_other_final(self.get_final_transcripts())
+            if (
+                await self._process_final(final, Speaker.OTHER, "transcript_other_partial")
+                and self.callback_on_other_final
+            ):
+                await self.callback_on_other_final(await self.get_final_transcripts())
         except Exception:
             logger.exception("on_other_final failed")
 
-    def get_final_transcripts(self) -> list[Transcript]:
-        with self._lock:
+    async def get_final_transcripts(self) -> list[Transcript]:
+        async with self._lock:
             final_transcripts = copy.deepcopy(self.transcripts)
 
         return self.merge_transcripts(final_transcripts)
@@ -204,8 +211,8 @@ class Transcriber:
                 ret.append(t)
         return ret
 
-    def get_transcripts(self) -> list[Transcript]:
-        with self._lock:
+    async def get_transcripts(self) -> list[Transcript]:
+        async with self._lock:
             transcripts = copy.deepcopy(self.transcripts)
 
             if self.transcript_self_partial.text != "":
@@ -215,8 +222,8 @@ class Transcriber:
 
         return self.merge_transcripts(transcripts=transcripts)
 
-    def clear_transcripts(self) -> None:
-        with self._lock:
+    async def clear_transcripts(self) -> None:
+        async with self._lock:
             self.transcripts = []
             self.transcript_self_partial = Transcript(speaker=Speaker.SELF, text="", timestamp=0)
             self.transcript_other_partial = Transcript(speaker=Speaker.OTHER, text="", timestamp=0)

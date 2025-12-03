@@ -37,8 +37,8 @@ def get_audio_output_devices() -> list[dict[str, Any]]:
 
 
 @router.get("/get-state")
-def get_app_state() -> AppState:
-    return the_app.get_app_state()
+async def get_app_state() -> AppState:
+    return await the_app.get_app_state()
 
 
 @router.get("/start-assistant")

@@ -12,13 +12,13 @@ async def test_asr_service() -> None:
     last_text = ""
     last_partial = ""
 
-    def on_final(final: str) -> None:
+    async def on_final(final: str) -> None:
         nonlocal last_text
         if final != last_text:
             logger.debug(f"FINAL: {final}")
             last_text = final
 
-    def on_partial(partial: str) -> None:
+    async def on_partial(partial: str) -> None:
         nonlocal last_partial
         if partial != last_partial:
             logger.debug(f"PARTIAL: {partial}")

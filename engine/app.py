@@ -180,13 +180,13 @@ class PowerInterviewApp:
 
     # ---- Assistant Control ----
     async def start_assistant(self) -> None:
-        self.transcriber.clear_transcripts()
+        await self.transcriber.clear_transcripts()
         await self.transcriber.start(
             input_device_index=AudioService.get_device_index_by_name(self.config.audio_input_device_name),
             asr_model_name=self.config.asr_model_name,
         )
 
-        self.suggestion_service.clear_suggestions()
+        await self.suggestion_service.clear_suggestions()
 
         if self.config.enable_audio_control:
             self.audio_controller.update_parameters(
@@ -206,33 +206,33 @@ class PowerInterviewApp:
 
     async def stop_assistant(self) -> None:
         await self.transcriber.stop()
-        self.suggestion_service.stop_current_thread()
+        await self.suggestion_service.stop_current_task()
 
         self.audio_controller.stop()
         self.virtual_camera_service.stop()
 
     # ---- State Management ----
-    def get_app_state(self) -> AppState:
+    async def get_app_state(self) -> AppState:
         return AppState(
-            assistant_state=self.transcriber.get_state(),
-            transcripts=self.transcriber.get_transcripts(),
-            suggestions=self.suggestion_service.get_suggestions(),
-            is_backend_live=self.service_status_monitor.is_backend_live(),
+            assistant_state=await self.transcriber.get_state(),
+            transcripts=await self.transcriber.get_transcripts(),
+            suggestions=await self.suggestion_service.get_suggestions(),
+            is_backend_live=await self.service_status_monitor.is_backend_live(),
         )
 
     # ---- Callbacks ----
-    def on_transcriber_self_final(self, transcripts: list[Transcript]) -> None:
+    async def on_transcriber_self_final(self, transcripts: list[Transcript]) -> None:
         pass
 
-    def on_transcriber_other_final(self, transcripts: list[Transcript]) -> None:
-        self.suggestion_service.generate_suggestion_async(transcripts, self.config.profile)
+    async def on_transcriber_other_final(self, transcripts: list[Transcript]) -> None:
+        await self.suggestion_service.generate_suggestion_async(transcripts, self.config.profile)
 
     def on_virtual_camera_frame(self, frame_bgr: np.ndarray[Any, Any]) -> None:
         self.virtual_camera_service.set_frame(frame_bgr)
 
     # ---- Background Tasks ----
-    def start_background_tasks(self) -> None:
-        self.service_status_monitor.start_backend_monitor()
+    async def start_background_tasks(self) -> None:
+        await self.service_status_monitor.start_backend_monitor()
 
 
 the_app = PowerInterviewApp()

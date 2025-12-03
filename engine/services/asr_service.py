@@ -1,7 +1,7 @@
 import asyncio
 import contextlib
 import threading
-from collections.abc import Callable
+from collections.abc import Callable, Coroutine
 from queue import Queue
 from typing import Any
 
@@ -30,8 +30,8 @@ class ASRService:
         ws_uri: str,
         device_index: int,
         block_duration: float = 0.25,
-        on_final: Callable[[str], None] | None = None,
-        on_partial: Callable[[str], None] | None = None,
+        on_final: Callable[[str], Coroutine[Any, Any, None]] | None = None,
+        on_partial: Callable[[str], Coroutine[Any, Any, None]] | None = None,
         queue_maxsize: int = 40,
     ) -> None:
         # Audio config
@@ -249,13 +249,13 @@ class ASRService:
                 if asr_result.type is ASRResultType.FINAL:
                     if self.on_final:
                         try:
-                            self.on_final(asr_result.content)
+                            await self.on_final(asr_result.content)
                         except Exception:
                             logger.exception("on_final callback failed")
                 elif asr_result.type is ASRResultType.PARTIAL:
                     if self.on_partial:
                         try:
-                            self.on_partial(asr_result.content)
+                            await self.on_partial(asr_result.content)
                         except Exception:
                             logger.exception("on_partial callback failed")
                 elif asr_result.type is ASRResultType.ERROR:
