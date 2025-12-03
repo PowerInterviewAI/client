@@ -1,3 +1,4 @@
+import argparse
 import logging
 
 import uvicorn
@@ -52,10 +53,33 @@ logging.getLogger("uvicorn.access").addFilter(
 )
 
 
+def parse_args() -> argparse.Namespace:
+    """Read CLI arguments safely for Python and packaged executables."""
+    parser = argparse.ArgumentParser(description="Power Interview Local Backend")
+
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=cfg_api.APP_PORT,
+        help=f"Port to run server (default: {cfg_api.APP_PORT})",
+    )
+
+    parser.add_argument(
+        "--host",
+        type=str,
+        default="0.0.0.0",  # noqa: S104
+        help="Host address (default: 0.0.0.0)",
+    )
+
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
+    args = parse_args()
+
     uvicorn.run(
         "engine.main:api",
         reload=cfg_api.DEBUG,
-        host="0.0.0.0",  # noqa: S104
-        port=cfg_api.APP_PORT,
+        host=args.host,
+        port=args.port,
     )
