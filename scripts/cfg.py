@@ -11,6 +11,7 @@ class Config:
     ENGINE_MAIN = PROJECT_ROOT / "engine" / "main.py"
     ENGINE_OUTPUT_DIR = ELECTRON_DIR / "bin"
     ENGINE_OUTPUT_NAME = "engine.exe"
+    ENGINE_ICON_FILE_PATH = UI_EXPORT_DIR / "icon.ico"
 
 
 config = Config()

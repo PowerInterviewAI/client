@@ -19,7 +19,8 @@ def build_engine() -> None:
         f"--output-dir={cfg_scripts.ENGINE_OUTPUT_DIR} "
         f"--output-filename={cfg_scripts.ENGINE_OUTPUT_NAME} "
         f"--include-data-dir=engine/public=engine/public "
-        f"--assume-yes-for-downloads"
+        f"--assume-yes-for-downloads "
+        f"--windows-icon-from-ico={cfg_scripts.ENGINE_ICON_FILE_PATH}"
     )
 
     run(nuitka_cmd, cwd=cfg_scripts.PROJECT_ROOT)
