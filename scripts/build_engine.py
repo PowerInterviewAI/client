@@ -1,7 +1,20 @@
+import pathlib
+import subprocess
 import sys
 
-from scripts.cfg import config as cfg_scripts
-from scripts.proc import run
+
+def init_venv() -> None:
+    venv_python = cfg_scripts.PROJECT_ROOT / "venv" / "Scripts" / "python.exe"
+
+    if pathlib.Path("venv").exists() and sys.prefix != str(pathlib.Path("venv").resolve()):
+        print("Re-executing inside venv...")  # noqa: T201
+        # Re-run as a module, not a file
+        subprocess.check_call([str(venv_python), "-m", "scripts.build_engine", *sys.argv[1:]])  # noqa: S603
+        sys.exit(0)
+
+
+from scripts.cfg import config as cfg_scripts  # noqa: E402
+from scripts.proc import run  # noqa: E402
 
 
 def build_engine() -> None:
@@ -12,7 +25,7 @@ def build_engine() -> None:
     print("==== Building EXE with Nuitka ====")  # noqa: T201
 
     nuitka_cmd = (
-        f"python -m nuitka {cfg_scripts.ENGINE_MAIN} "
+        f"{sys.executable} -m nuitka {cfg_scripts.ENGINE_MAIN} "
         f"--standalone "
         f"--onefile "
         f"--follow-imports "
@@ -35,4 +48,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    init_venv()
     main()
