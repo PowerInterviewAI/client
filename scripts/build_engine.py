@@ -15,6 +15,7 @@ def build_engine() -> None:
         f"python -m nuitka {cfg_scripts.ENGINE_MAIN} "
         f"--standalone "
         f"--onefile "
+        "--include-package=websockets.asyncio "
         f"--follow-imports "
         f"--output-dir={cfg_scripts.ENGINE_OUTPUT_DIR} "
         f"--output-filename={cfg_scripts.ENGINE_OUTPUT_NAME} "
