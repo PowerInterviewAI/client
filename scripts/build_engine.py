@@ -16,6 +16,8 @@ def build_engine() -> None:
         f"--standalone "
         f"--onefile "
         "--include-package=websockets.asyncio "
+        "--include-package=engine "
+        "--include-module=engine.main "
         f"--follow-imports "
         f"--output-dir={cfg_scripts.ENGINE_OUTPUT_DIR} "
         f"--output-filename={cfg_scripts.ENGINE_OUTPUT_NAME} "
