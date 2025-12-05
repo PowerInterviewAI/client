@@ -166,7 +166,9 @@ async function createWindow() {
     });
 
     const port = await startEngine();
-    win.loadURL(`http://localhost:${port}`);
+    win.webContents.session.clearCache().then(() => {
+        win.loadURL(`http://localhost:${port}`);
+    });
 }
 
 // -------------------------------------------------------------
