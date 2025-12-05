@@ -9,4 +9,7 @@ __pycache__
 /engine/public
 /models
 
-/config.json
+/dist
+/ui_container/bin
+
+/nuitka-crash-report.xml

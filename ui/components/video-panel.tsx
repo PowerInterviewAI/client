@@ -112,7 +112,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       await pc.setLocalDescription(offer);
 
       // Send offer to server
-      const res = await axiosClient.post('/api/webrtc/offer', {
+      const res = await axiosClient.post('/webrtc/offer', {
         sdp: offer.sdp,
         type: offer.type,
         options: {
@@ -156,7 +156,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       });
 
       // Open WebSocket
-      const ws = new WebSocket('http://localhost:8081/api/webrtc/frames');
+      const ws = new WebSocket(`${window.location.origin}/api/webrtc/frames`);
       wsRef.current = ws;
 
       ws.onopen = () => {

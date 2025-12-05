@@ -5,9 +5,10 @@ const src = path.resolve('out');
 const dest = path.resolve('../engine/public');
 
 function copyRecursive(srcDir, destDir) {
-  if (!fs.existsSync(destDir)) {
-    fs.mkdirSync(destDir, { recursive: true });
+  if (fs.existsSync(destDir)) {
+    fs.rmSync(destDir, { recursive: true, force: true });
   }
+  fs.mkdirSync(destDir, { recursive: true });
 
   for (const item of fs.readdirSync(srcDir)) {
     const srcPath = path.join(srcDir, item);
