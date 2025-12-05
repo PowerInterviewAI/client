@@ -59,7 +59,7 @@
         "from": "bin/",
         "to": "bin",
         "filter": [
-          "cong.txt",
+          "conf.txt",
           "engine.exe"
         ]
       }
