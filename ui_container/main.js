@@ -64,9 +64,11 @@ async function startEngine() {
 
     currentPort = await findFreePort(currentPort);
 
-    const exePath = app.isPackaged
-        ? path.join(process.__dirname, "bin", "engine.exe")
+    let exePath = app.isPackaged
+        ? path.join(process.resourcesPath, "..", "bin", "engine.exe")
         : path.join(__dirname, "bin", "main.dist", "engine.exe");
+    exePath = path.normalize(exePath);
+    console.log(`📂 Using engine path: ${exePath}`);
 
     console.log(`🚀 Starting engine on port ${currentPort}`);
 
