@@ -72,7 +72,11 @@ async function startEngine() {
 
     console.log(`🚀 Starting engine on port ${currentPort}`);
 
-    engine = spawn(exePath, ["--port", currentPort, "--watch-parent", "true", "--reload", "false"], {
+    engine = spawn(exePath, [
+        "--port", currentPort,
+        "--watch-parent", "true",
+        "--reload", "false"
+    ], {
         detached: process.platform !== "win32",
         stdio: ["ignore", "pipe", "pipe"]
     });
