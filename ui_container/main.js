@@ -9,7 +9,6 @@ const store = new Store();
 let win = null;
 let engine = null;
 let currentPort = 28080;
-let shuttingDown = false;
 let isRestarting = false;
 let restartTimestamps = [];
 
@@ -49,7 +48,6 @@ function findFreePort(start) {
 // START ENGINE
 // -------------------------------------------------------------
 async function startEngine() {
-    if (shuttingDown) return;
     if (isRestarting) return;
     isRestarting = true;
 
@@ -87,7 +85,6 @@ async function startEngine() {
     engine.on("exit", async (code, signal) => {
         console.log("⚠ engine exited:", { code, signal });
 
-        if (shuttingDown) return;
         console.log("🔁 Restarting engine...");
 
         // Restart safely
