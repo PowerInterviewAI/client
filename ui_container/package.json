@@ -56,11 +56,10 @@
     ],
     "extraFiles": [
       {
-        "from": "bin/",
+        "from": "bin/main.dist/",
         "to": "bin",
         "filter": [
-          "conf.txt",
-          "engine.exe"
+          "**/*"
         ]
       }
     ]
