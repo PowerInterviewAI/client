@@ -32,7 +32,7 @@ def build_engine() -> None:
     print(f"  {cfg_scripts.ENGINE_OUTPUT_DIR / cfg_scripts.ENGINE_OUTPUT_NAME}")  # noqa: T201
 
 
-def main() -> Nare:
+def main() -> None:
     build_engine()
 
 
