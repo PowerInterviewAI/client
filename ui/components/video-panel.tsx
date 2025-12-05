@@ -75,7 +75,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
         // Attach remote stream to visible video element
         if (videoRef.current) {
           videoRef.current.srcObject = remoteStream;
-          videoRef.current.play().catch(() => {});
+          videoRef.current.play().catch(() => { });
         }
 
         // Start sending frames from the remote stream to the backend
@@ -112,7 +112,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       await pc.setLocalDescription(offer);
 
       // Send offer to server
-      const res = await axiosClient.post('/api/webrtc/offer', {
+      const res = await axiosClient.post('/webrtc/offer', {
         sdp: offer.sdp,
         type: offer.type,
         options: {
@@ -156,7 +156,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       });
 
       // Open WebSocket
-      const ws = new WebSocket('http://localhost:8081/api/webrtc/frames');
+      const ws = new WebSocket(`${window.location.origin}/api/webrtc/frames`);
       wsRef.current = ws;
 
       ws.onopen = () => {
@@ -208,7 +208,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       if (wsRef.current) {
         try {
           wsRef.current.close();
-        } catch {}
+        } catch { }
         wsRef.current = null;
       }
 
@@ -216,7 +216,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       if (pcRef.current) {
         try {
           pcRef.current.close();
-        } catch {}
+        } catch { }
         pcRef.current = null;
       }
 

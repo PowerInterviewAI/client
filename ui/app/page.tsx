@@ -25,13 +25,13 @@ export default function Home() {
   const { data: configFetched } = useQuery<Config, APIError>({
     queryKey: ['config'],
     queryFn: async () => {
-      const response = await axiosClient.get<Config>('/api/app/get-config');
+      const response = await axiosClient.get<Config>('/app/get-config');
       return response.data;
     },
   });
   const updateConfigMutation = useMutation<Config, APIError, Partial<Config>>({
     mutationFn: async (config) => {
-      const response = await axiosClient.put('/api/app/update-config', config);
+      const response = await axiosClient.put('/app/update-config', config);
       return response.data;
     },
   });
@@ -39,7 +39,7 @@ export default function Home() {
   const { data: audioInputDevices } = useQuery<PyAudioDevice[], APIError>({
     queryKey: ['audioInputDevices'],
     queryFn: async () => {
-      const response = await axiosClient.get<PyAudioDevice[]>('/api/app/audio-input-devices');
+      const response = await axiosClient.get<PyAudioDevice[]>('/app/audio-input-devices');
       return response.data;
     },
     refetchInterval: 1000,
@@ -48,7 +48,7 @@ export default function Home() {
   const { data: audioOutputDevices } = useQuery<PyAudioDevice[], APIError>({
     queryKey: ['audioOutputDevices'],
     queryFn: async () => {
-      const response = await axiosClient.get<PyAudioDevice[]>('/api/app/audio-output-devices');
+      const response = await axiosClient.get<PyAudioDevice[]>('/app/audio-output-devices');
       return response.data;
     },
     refetchInterval: 1000,
@@ -57,14 +57,14 @@ export default function Home() {
   const { data: appState, error: appStateError } = useQuery<AppState, APIError>({
     queryKey: ['appState'],
     queryFn: async () => {
-      const response = await axiosClient.get<AppState>('/api/app/get-state');
+      const response = await axiosClient.get<AppState>('/get-state');
       return response.data;
     },
     refetchInterval: 50,
   });
   const startMutation = useMutation<void, APIError, void>({
     mutationFn: async () => {
-      axiosClient.get('/api/app/start-assistant');
+      axiosClient.get('/app/start-assistant');
       if (config?.enable_video_control) {
         await videoPanelRef.current?.startWebRTC();
       }
@@ -72,7 +72,7 @@ export default function Home() {
   });
   const stopMutation = useMutation<void, APIError, void>({
     mutationFn: async () => {
-      await axiosClient.get('/api/app/stop-assistant');
+      await axiosClient.get('/app/stop-assistant');
       videoPanelRef.current?.stopWebRTC();
     },
   });
