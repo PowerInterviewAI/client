@@ -8,7 +8,7 @@ const store = new Store();
 
 let win = null;
 let engine = null;
-let currentPort = 18081;
+let currentPort = 28080;
 let shuttingDown = false;
 let isRestarting = false;
 let restartTimestamps = [];
@@ -46,27 +46,6 @@ function findFreePort(start) {
 }
 
 // -------------------------------------------------------------
-// KILL ENGINE SAFELY
-// -------------------------------------------------------------
-async function killEngine() {
-    try {
-        if (engine && !engine.killed) {
-            engine.kill("SIGTERM");
-        }
-    } catch (_) { }
-
-    await new Promise(r => setTimeout(r, 200));
-
-    try {
-        if (engine && !engine.killed) {
-            engine.kill("SIGKILL");
-        }
-    } catch (_) { }
-
-    engine = null;
-}
-
-// -------------------------------------------------------------
 // START ENGINE
 // -------------------------------------------------------------
 async function startEngine() {
@@ -93,8 +72,8 @@ async function startEngine() {
 
     console.log(`🚀 Starting engine on port ${currentPort}`);
 
-    engine = spawn(exePath, ["--port", currentPort], {
-        detached: false,
+    engine = spawn(exePath, ["--port", currentPort, "--watch-parent", "true", "--reload", "false"], {
+        detached: process.platform !== "win32",
         stdio: ["ignore", "pipe", "pipe"]
     });
 
@@ -175,27 +154,3 @@ async function createWindow() {
 // APP LIFECYCLE
 // -------------------------------------------------------------
 app.whenReady().then(createWindow);
-
-app.on("before-quit", async () => {
-    shuttingDown = true;
-    await killEngine();
-});
-
-app.on("will-quit", killEngine);
-app.on("quit", killEngine);
-
-// -------------------------------------------------------------
-// PROCESS-LEVEL FAILSAFE KILL HOOKS
-// -------------------------------------------------------------
-function emergencyExit() {
-    shuttingDown = true;
-    killEngine().then(() => process.exit(0));
-}
-
-process.on("SIGINT", emergencyExit);
-process.on("SIGTERM", emergencyExit);
-process.on("exit", killEngine);
-process.on("uncaughtException", err => {
-    console.error("Uncaught exception:", err);
-    emergencyExit();
-});
