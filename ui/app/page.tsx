@@ -57,7 +57,7 @@ export default function Home() {
   const { data: appState, error: appStateError } = useQuery<AppState, APIError>({
     queryKey: ['appState'],
     queryFn: async () => {
-      const response = await axiosClient.get<AppState>('/get-state');
+      const response = await axiosClient.get<AppState>('/app/get-state');
       return response.data;
     },
     refetchInterval: 50,
