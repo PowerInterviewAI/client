@@ -1,32 +1,199 @@
-const { app, BrowserWindow } = require('electron');
-const Store = require('electron-store').default;
+const path = require("path");
+const { app, BrowserWindow } = require("electron");
+const { spawn } = require("child_process");
+const net = require("net");
+const Store = require("electron-store").default;
 
 const store = new Store();
 
-function createWindow() {
-    const savedBounds = store.get('windowBounds') || { width: 800, height: 600 };
+let win = null;
+let engine = null;
+let currentPort = 18081;
+let shuttingDown = false;
+let isRestarting = false;
+let restartTimestamps = [];
 
-    const win = new BrowserWindow({
-        title: 'Power Interview',
-        x: savedBounds.x,
-        y: savedBounds.y,
-        width: savedBounds.width,
-        height: savedBounds.height,
+// -------------------------------------------------------------
+// SINGLE INSTANCE LOCK
+// -------------------------------------------------------------
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+    app.quit();
+} else {
+    app.on("second-instance", () => {
+        if (win) {
+            if (win.isMinimized()) win.restore();
+            win.focus();
+        }
+    });
+}
+
+// -------------------------------------------------------------
+// FIND FREE PORT
+// -------------------------------------------------------------
+function findFreePort(start) {
+    return new Promise(resolve => {
+        function tryPort(port) {
+            const server = net.createServer();
+            server.once("error", () => tryPort(port + 1));
+            server.once("listening", () => {
+                server.close(() => resolve(port));
+            });
+            server.listen(port, "127.0.0.1");
+        }
+        tryPort(start);
+    });
+}
+
+// -------------------------------------------------------------
+// KILL ENGINE SAFELY
+// -------------------------------------------------------------
+async function killEngine() {
+    try {
+        if (engine && !engine.killed) {
+            engine.kill("SIGTERM");
+        }
+    } catch (_) { }
+
+    await new Promise(r => setTimeout(r, 200));
+
+    try {
+        if (engine && !engine.killed) {
+            engine.kill("SIGKILL");
+        }
+    } catch (_) { }
+
+    engine = null;
+}
+
+// -------------------------------------------------------------
+// START ENGINE
+// -------------------------------------------------------------
+async function startEngine() {
+    if (shuttingDown) return;
+    if (isRestarting) return;
+    isRestarting = true;
+
+    // Track restart rate to avoid loops
+    const now = Date.now();
+    restartTimestamps.push(now);
+    restartTimestamps = restartTimestamps.filter(t => now - t < 10000);
+
+    if (restartTimestamps.length > 5) {
+        console.error("❌ Engine restarting too fast. Not restarting again.");
+        isRestarting = false;
+        return;
+    }
+
+    currentPort = await findFreePort(currentPort);
+
+    const exePath = app.isPackaged
+        ? path.join(process.__dirname, "bin", "engine.exe")
+        : path.join(__dirname, "bin", "main.dist", "engine.exe");
+
+    console.log(`🚀 Starting engine on port ${currentPort}`);
+
+    engine = spawn(exePath, ["--port", currentPort], {
+        detached: false,
+        stdio: ["ignore", "pipe", "pipe"]
+    });
+
+    engine.stdout.on("data", d => console.log("[engine]", d.toString()));
+    engine.stderr.on("data", d => console.error("[engine ERR]", d.toString()));
+
+    engine.on("exit", async (code, signal) => {
+        console.log("⚠ engine exited:", { code, signal });
+
+        if (shuttingDown) return;
+        console.log("🔁 Restarting engine...");
+
+        // Restart safely
+        isRestarting = false;
+        await startEngine();
+
+        if (win && !win.isDestroyed()) {
+            win.loadURL(`http://localhost:${currentPort}`);
+        }
+    });
+
+    // Wait for engine to fully boot
+    await waitForServer(`http://localhost:${currentPort}`);
+
+    isRestarting = false;
+    return currentPort;
+}
+
+// -------------------------------------------------------------
+// WAIT FOR ENGINE SERVER
+// -------------------------------------------------------------
+function waitForServer(url) {
+    const http = require("http");
+
+    return new Promise(resolve => {
+        let attempts = 0;
+
+        function check() {
+            if (attempts++ > 50) return resolve(); // timeout fail-safe
+
+            http.get(url, () => resolve()).on("error", () => {
+                setTimeout(check, 200);
+            });
+        }
+
+        check();
+    });
+}
+
+// -------------------------------------------------------------
+// CREATE WINDOW
+// -------------------------------------------------------------
+async function createWindow() {
+    const savedBounds = store.get("windowBounds") || {
+        width: 800,
+        height: 600
+    };
+
+    win = new BrowserWindow({
+        title: "Power Interview",
+        ...savedBounds,
         webPreferences: {
             preload: `${__dirname}/preload.js`
         }
     });
 
-    // Save window size & position when user closes the window
-    win.on('close', () => {
-        store.set('windowBounds', win.getBounds());
+    win.on("close", () => {
+        store.set("windowBounds", win.getBounds());
     });
 
-    win.loadURL('http://localhost:8080');
+    const port = await startEngine();
+    win.loadURL(`http://localhost:${port}`);
 }
 
+// -------------------------------------------------------------
+// APP LIFECYCLE
+// -------------------------------------------------------------
 app.whenReady().then(createWindow);
 
-app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') app.quit();
+app.on("before-quit", async () => {
+    shuttingDown = true;
+    await killEngine();
+});
+
+app.on("will-quit", killEngine);
+app.on("quit", killEngine);
+
+// -------------------------------------------------------------
+// PROCESS-LEVEL FAILSAFE KILL HOOKS
+// -------------------------------------------------------------
+function emergencyExit() {
+    shuttingDown = true;
+    killEngine().then(() => process.exit(0));
+}
+
+process.on("SIGINT", emergencyExit);
+process.on("SIGTERM", emergencyExit);
+process.on("exit", killEngine);
+process.on("uncaughtException", err => {
+    console.error("Uncaught exception:", err);
+    emergencyExit();
 });
