@@ -75,7 +75,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
         // Attach remote stream to visible video element
         if (videoRef.current) {
           videoRef.current.srcObject = remoteStream;
-          videoRef.current.play().catch(() => { });
+          videoRef.current.play().catch(() => {});
         }
 
         // Start sending frames from the remote stream to the backend
@@ -208,7 +208,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       if (wsRef.current) {
         try {
           wsRef.current.close();
-        } catch { }
+        } catch {}
         wsRef.current = null;
       }
 
@@ -216,7 +216,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       if (pcRef.current) {
         try {
           pcRef.current.close();
-        } catch { }
+        } catch {}
         pcRef.current = null;
       }
 
