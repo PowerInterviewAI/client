@@ -14,7 +14,6 @@ def build_engine() -> None:
     nuitka_cmd = (
         f"python -m nuitka {cfg_scripts.ENGINE_MAIN} "
         f"--standalone "
-        f"--onefile "
         "--include-package=websockets.asyncio "
         "--include-package=engine "
         "--include-module=engine.main "
@@ -33,7 +32,7 @@ def build_engine() -> None:
     print(f"  {cfg_scripts.ENGINE_OUTPUT_DIR / cfg_scripts.ENGINE_OUTPUT_NAME}")  # noqa: T201
 
 
-def main() -> None:
+def main() -> Nare:
     build_engine()
 
 
