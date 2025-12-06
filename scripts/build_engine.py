@@ -12,6 +12,7 @@ def build_engine() -> None:
     print("==== Building EXE with Nuitka ====")  # noqa: T201
 
     nuitka_cmd = (
+        "set DEBUG=False&&"  # disable debug mode
         f"python -m nuitka {cfg_scripts.ENGINE_MAIN} "
         f"--standalone "
         "--include-package=websockets.asyncio "
@@ -23,6 +24,7 @@ def build_engine() -> None:
         f"--include-data-dir=engine/public=engine/public "
         f"--assume-yes-for-downloads "
         f"--windows-icon-from-ico={cfg_scripts.ENGINE_ICON_FILE_PATH}"
+        "set DEBUG=True"  # recover debug mode
     )
 
     run(nuitka_cmd, cwd=cfg_scripts.PROJECT_ROOT)

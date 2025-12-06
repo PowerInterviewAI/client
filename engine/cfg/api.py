@@ -1,3 +1,4 @@
+from loguru import logger
 from pydantic_settings import BaseSettings
 
 
@@ -12,3 +13,4 @@ class Config(BaseSettings):
 
 
 config = Config()
+logger.debug(f"Debug mode: {config.DEBUG}")
