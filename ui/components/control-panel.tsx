@@ -107,7 +107,7 @@ export default function ControlPanel({
       label: 'Start',
     },
     [RunningState.STARTING]: {
-      onClick: () => {},
+      onClick: () => { },
       className: 'bg-primary hover:bg-primary/90',
       icon: <Ellipsis className="h-3.5 w-3.5 animate-pulse" />,
       label: 'Starting...',
@@ -119,7 +119,7 @@ export default function ControlPanel({
       label: 'Stop',
     },
     [RunningState.STOPPING]: {
-      onClick: () => {},
+      onClick: () => { },
       className: 'bg-destructive hover:bg-destructive/90',
       icon: <Ellipsis className="h-3.5 w-3.5 animate-pulse" />,
       label: 'Stopping...',
@@ -241,7 +241,7 @@ export default function ControlPanel({
         if (videoPreviewRef.current) {
           videoPreviewRef.current.srcObject = stream;
           // Some browsers need play() after setting srcObject
-          await videoPreviewRef.current.play().catch(() => {});
+          await videoPreviewRef.current.play().catch(() => { });
         }
       } catch (err) {
         toast.error('Unable to access camera');
@@ -286,7 +286,7 @@ export default function ControlPanel({
                     <Button
                       variant="default"
                       size="icon"
-                      className="h-8 w-8 border-none rounded-full"
+                      className="h-8 w-12 border-none rounded-full"
                       disabled={getDisabled(runningState)}
                     >
                       <MessageSquareText className="h-4 w-4" />
