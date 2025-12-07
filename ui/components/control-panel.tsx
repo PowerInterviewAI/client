@@ -218,7 +218,7 @@ export default function ControlPanel({
 
       const now = new Date();
       const pad = (n: number) => String(n).padStart(2, '0');
-      const filename = `transcript-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}.md`;
+      const filename = `power-interview-export-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}.md`;
 
       const res = await axiosClient.get('/app/export-transcript', { responseType: 'blob' });
 
