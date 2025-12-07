@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings
 
 
 class Config(BaseSettings):
-    DEBUG: bool = True
+    DEBUG: bool = False
 
     APP_TITLE: str = "Power Interview Backend"
     APP_NAME: str = "Power Interview"
