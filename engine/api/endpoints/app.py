@@ -52,5 +52,5 @@ async def stop_assistant() -> None:
 
 
 @router.get("/export-transcript")
-async def export_transcript() -> str:
+async def export_transcript() -> Response:
     return Response(content=await the_app.export_transcript(), media_type="text/plain")

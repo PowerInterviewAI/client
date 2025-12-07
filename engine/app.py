@@ -6,14 +6,17 @@ import threading
 from datetime import datetime
 from typing import Any
 
+import aiohttp
 import numpy as np
 import tzlocal
 from loguru import logger
 
+from engine.cfg.client import config as cfg_client
 from engine.cfg.fs import config as cfg_fs
 from engine.cfg.video import config as cfg_video
 from engine.models.config import Config, ConfigUpdate
 from engine.schemas.app_state import AppState
+from engine.schemas.summarize import GenerateSummarizeRequest
 from engine.schemas.transcript import Speaker, Transcript
 from engine.services.audio_service import AudioController, AudioService
 from engine.services.service_monitor import ServiceMonitor
@@ -238,6 +241,28 @@ class PowerInterviewApp:
     # ---- Service methods ----
     async def export_transcript(self) -> str:
         transcripts: list[Transcript] = await self.transcriber.get_transcripts()
+
+        # ---- Build Summarize Content ----
+        summary = ""
+        try:
+            timeout = aiohttp.ClientTimeout(total=cfg_client.HTTP_TIMEOUT)
+            async with (
+                aiohttp.ClientSession(timeout=timeout) as session,
+                session.post(
+                    cfg_client.BACKEND_SUMMARIZE_URL,
+                    json=GenerateSummarizeRequest(
+                        username=self.config.profile.username,
+                        profile_data=self.config.profile.profile_data,
+                        transcripts=transcripts,
+                    ).model_dump(),
+                ) as resp,
+            ):
+                resp.raise_for_status()
+                summary = await resp.text()
+        except Exception as ex:
+            logger.error(f"Failed to generate summary: {ex}")
+
+        # ---- Build Transcrips Content ----
         lines = []
         local_tz = tzlocal.get_localzone()
 
@@ -257,7 +282,7 @@ class PowerInterviewApp:
 
             lines.append(f"{speaker_name}, [{time_str}]\n{t.text}\n")
 
-        return "\n".join(lines)
+        return (summary + "\n\n## Transcript\n" + "\n".join(lines)).strip()
 
 
 the_app = PowerInterviewApp()

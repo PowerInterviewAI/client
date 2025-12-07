@@ -12,6 +12,7 @@ class Config(BaseSettings):
     BACKEND_PING_URL: str = f"{BACKEND_URL}/api/ping"
     BACKEND_PUNCTUATION_URL: str = f"{BACKEND_URL}/api/llm/punctuation"
     BACKEND_SUGGESTIONS_URL: str = f"{BACKEND_URL}/api/llm/suggestion"
+    BACKEND_SUMMARIZE_URL: str = f"{BACKEND_URL}/api/llm/summarize"
     BACKEND_WEBRTC_OFFER_URL: str = f"{BACKEND_URL}/api/webrtc/offer"
 
     BACKEND_ASR_STREAMING_URL: str = (
