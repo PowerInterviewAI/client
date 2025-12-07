@@ -19,6 +19,7 @@ import { UseMutationResult } from '@tanstack/react-query';
 import {
   Download,
   Ellipsis,
+  Loader,
   MessageSquareText,
   Mic,
   MicOff,
@@ -73,6 +74,11 @@ type IndicatorConfig = {
   dotClass: string;
   label: string;
 };
+
+type ExportStateConfig = {
+  className: string;
+  icon: React.ReactNode;
+}
 
 export default function ControlPanel({
   profile,
@@ -162,6 +168,8 @@ export default function ControlPanel({
   };
   const { dotClass: indicatorDotClass, label: indicatorLabel } = indicatorConfig[runningState];
 
+  const [exportState, setExportState] = useState<RunningState>(RunningState.IDLE);
+
   const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
   const previewStreamRef = useRef<MediaStream | null>(null);
@@ -211,6 +219,8 @@ export default function ControlPanel({
 
   const onExportTranscript = async () => {
     try {
+      setExportState(RunningState.RUNNING);
+
       const now = new Date();
       const pad = (n: number) => String(n).padStart(2, '0');
       const filename = `transcript-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}.md`;
@@ -233,9 +243,12 @@ export default function ControlPanel({
       // Clean up
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
+
     } catch (error) {
       console.error(error);
       toast.error('Failed to export transcript');
+    } finally {
+      setExportState(RunningState.IDLE);
     }
   };
 
@@ -640,9 +653,9 @@ export default function ControlPanel({
               size="sm"
               variant="secondary"
               className="h-8 w-8 text-xs rounded-xl cursor-pointer"
-              disabled={getDisabled(runningState, true)}
+              disabled={exportState === RunningState.RUNNING}
             >
-              <Download className="h-4 w-4" />
+              {exportState === RunningState.IDLE ? <Download className="h-4 w-4" /> : <Loader className="h-4 w-4 animate-spin" />}
             </Button>
           </TooltipTrigger>
           <TooltipContent>
