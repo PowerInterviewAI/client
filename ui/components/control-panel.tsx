@@ -17,12 +17,12 @@ import { APIError } from '@/types/error';
 import { DialogTitle } from '@radix-ui/react-dialog';
 import { UseMutationResult } from '@tanstack/react-query';
 import {
+  Download,
   Ellipsis,
   MessageSquareText,
   Mic,
   MicOff,
   Play,
-  Save,
   Square,
   Video,
   VideoOff,
@@ -211,7 +211,9 @@ export default function ControlPanel({
 
   const onExportTranscript = async () => {
     try {
-      const filename = `transcript-${new Date().toISOString()}.json`;
+      const now = new Date();
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const filename = `transcript-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}.txt`;
 
       const res = await axiosClient.get('/app/export-transcript', { responseType: 'blob' });
 
@@ -637,10 +639,10 @@ export default function ControlPanel({
               onClick={onExportTranscript}
               size="sm"
               variant="secondary"
-              className="h-8 w-8 text-xs font-medium rounded-xl cursor-pointer"
+              className="h-8 w-8 text-xs rounded-xl cursor-pointer"
               disabled={getDisabled(runningState, true)}
             >
-              <Save className="h-4 w-4" />
+              <Download className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>

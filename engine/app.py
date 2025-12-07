@@ -3,16 +3,18 @@ import os
 import shutil
 import tempfile
 import threading
+from datetime import datetime
 from typing import Any
 
 import numpy as np
+import tzlocal
 from loguru import logger
 
 from engine.cfg.fs import config as cfg_fs
 from engine.cfg.video import config as cfg_video
 from engine.models.config import Config, ConfigUpdate
 from engine.schemas.app_state import AppState
-from engine.schemas.transcript import Transcript
+from engine.schemas.transcript import Speaker, Transcript
 from engine.services.audio_service import AudioController, AudioService
 from engine.services.service_monitor import ServiceMonitor
 from engine.services.suggestion_service import SuggestionService
@@ -235,11 +237,27 @@ class PowerInterviewApp:
 
     # ---- Service methods ----
     async def export_transcript(self) -> str:
-        transcripts = await self.transcriber.get_transcripts()
-        ret = ""
+        transcripts: list[Transcript] = await self.transcriber.get_transcripts()
+        lines = []
+        local_tz = tzlocal.get_localzone()
+
         for t in transcripts:
-            ret += f"{t.speaker.name}: {t.text}\n"
-        return ret
+            # Convert from milliseconds to seconds if the value is too large
+            ts = t.timestamp / 1000 if t.timestamp > 1e12 else t.timestamp  # noqa: PLR2004
+
+            # Localize timestamp
+            local_time = datetime.fromtimestamp(ts, tz=local_tz)
+            # Platform-specific hour formatting
+            fmt = "%m/%d/%Y %-I:%M %p"
+            if os.name == "nt":  # For Windows compatibility
+                fmt = "%m/%d/%Y %#I:%M %p"
+            time_str = local_time.strftime(fmt)
+
+            speaker_name = self.config.profile.username if t.speaker is Speaker.SELF else "Interviewer"
+
+            lines.append(f"{speaker_name}, [{time_str}]\n{t.text}\n")
+
+        return "\n".join(lines)
 
 
 the_app = PowerInterviewApp()
