@@ -252,7 +252,6 @@ class PowerInterviewApp:
                     cfg_client.BACKEND_SUMMARIZE_URL,
                     json=GenerateSummarizeRequest(
                         username=self.config.profile.username,
-                        profile_data=self.config.profile.profile_data,
                         transcripts=transcripts,
                     ).model_dump(),
                 ) as resp,
