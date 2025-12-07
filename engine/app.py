@@ -258,13 +258,22 @@ class PowerInterviewApp:
                 ) as resp,
             ):
                 resp.raise_for_status()
-                summary = await resp.text()
+                summary = str(await resp.text())
         except Exception as ex:
             logger.error(f"Failed to generate summary: {ex}")
 
+        # Add Date/Time to summary
+        local_tz = tzlocal.get_localzone()
+        date_time = datetime.now(tz=local_tz).strftime("%m/%d/%Y %I:%M %p %Z")
+
+        if summary:
+            lines = summary.split("\n")
+            if lines:
+                lines.insert(1, f"\n**Date/Time:** {date_time}")
+                summary = "\n".join(lines)
+
         # ---- Build Transcrips Content ----
         lines = []
-        local_tz = tzlocal.get_localzone()
 
         for t in transcripts:
             # Convert from milliseconds to seconds if the value is too large
@@ -273,16 +282,16 @@ class PowerInterviewApp:
             # Localize timestamp
             local_time = datetime.fromtimestamp(ts, tz=local_tz)
             # Platform-specific hour formatting
-            fmt = "%m/%d/%Y %-I:%M %p"
+            fmt = "%m/%d/%Y %-I:%M %p %Z"
             if os.name == "nt":  # For Windows compatibility
-                fmt = "%m/%d/%Y %#I:%M %p"
+                fmt = "%m/%d/%Y %#I:%M %p %Z"
             time_str = local_time.strftime(fmt)
 
             speaker_name = self.config.profile.username if t.speaker is Speaker.SELF else "Interviewer"
 
-            lines.append(f"{speaker_name}, [{time_str}]\n{t.text}\n")
+            lines.append(f"#### {speaker_name} | {time_str}\n{t.text}\n")
 
-        return (summary + "\n\n## Transcript\n" + "\n".join(lines)).strip()
+        return (summary + "\n\n## Transcripts\n\n" + "\n".join(lines)).strip()
 
 
 the_app = PowerInterviewApp()

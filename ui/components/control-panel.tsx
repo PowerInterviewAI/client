@@ -109,7 +109,7 @@ export default function ControlPanel({
       label: 'Start',
     },
     [RunningState.STARTING]: {
-      onClick: () => {},
+      onClick: () => { },
       className: 'bg-primary hover:bg-primary/90',
       icon: <Ellipsis className="h-3.5 w-3.5 animate-pulse" />,
       label: 'Starting...',
@@ -121,7 +121,7 @@ export default function ControlPanel({
       label: 'Stop',
     },
     [RunningState.STOPPING]: {
-      onClick: () => {},
+      onClick: () => { },
       className: 'bg-destructive hover:bg-destructive/90',
       icon: <Ellipsis className="h-3.5 w-3.5 animate-pulse" />,
       label: 'Stopping...',
@@ -213,7 +213,7 @@ export default function ControlPanel({
     try {
       const now = new Date();
       const pad = (n: number) => String(n).padStart(2, '0');
-      const filename = `transcript-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}.txt`;
+      const filename = `transcript-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}.md`;
 
       const res = await axiosClient.get('/app/export-transcript', { responseType: 'blob' });
 
@@ -273,7 +273,7 @@ export default function ControlPanel({
         if (videoPreviewRef.current) {
           videoPreviewRef.current.srcObject = stream;
           // Some browsers need play() after setting srcObject
-          await videoPreviewRef.current.play().catch(() => {});
+          await videoPreviewRef.current.play().catch(() => { });
         }
       } catch (err) {
         toast.error('Unable to access camera');
