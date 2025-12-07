@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useVideoDevices } from '@/hooks/useVideoDevices';
+import axiosClient from '@/lib/axiosClient';
 import { RunningState } from '@/types/appState';
 import { PyAudioDevice } from '@/types/audioDevice';
 import { Config, UserProfile } from '@/types/config';
@@ -21,6 +22,7 @@ import {
   Mic,
   MicOff,
   Play,
+  Save,
   Square,
   Video,
   VideoOff,
@@ -205,6 +207,34 @@ export default function ControlPanel({
   const getDisabled = (state: RunningState, disableOnRunning: boolean = true): boolean => {
     if (disableOnRunning && state === RunningState.RUNNING) return true;
     return state === RunningState.STARTING || state === RunningState.STOPPING;
+  };
+
+  const onExportTranscript = async () => {
+    try {
+      const filename = `transcript-${new Date().toISOString()}.json`;
+
+      const res = await axiosClient.get('/app/export-transcript', { responseType: 'blob' });
+
+      if (res.status !== 200) {
+        toast.error('Failed to export transcript');
+        return;
+      }
+
+      // Create blob + prompt download dialog
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+
+      // Clean up
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to export transcript');
+    }
   };
 
   useEffect(() => {
@@ -594,6 +624,27 @@ export default function ControlPanel({
           </TooltipTrigger>
           <TooltipContent>
             <p>Start/Stop Assistant</p>
+          </TooltipContent>
+        </Tooltip>
+
+        {/* Divider */}
+        <div className="h-4 w-px bg-border" />
+
+        {/* Export transcription button */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              onClick={onExportTranscript}
+              size="sm"
+              variant="secondary"
+              className="h-8 w-8 text-xs font-medium rounded-xl cursor-pointer"
+              disabled={getDisabled(runningState, true)}
+            >
+              <Save className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Export Transcription</p>
           </TooltipContent>
         </Tooltip>
       </div>

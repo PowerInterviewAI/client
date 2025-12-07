@@ -233,5 +233,13 @@ class PowerInterviewApp:
     async def start_background_tasks(self) -> None:
         await self.service_status_monitor.start_backend_monitor()
 
+    # ---- Service methods ----
+    async def export_transcript(self) -> str:
+        transcripts = await self.transcriber.get_transcripts()
+        ret = ""
+        for t in transcripts:
+            ret += f"{t.speaker.name}: {t.text}\n"
+        return ret
+
 
 the_app = PowerInterviewApp()

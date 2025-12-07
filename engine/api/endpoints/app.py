@@ -49,3 +49,8 @@ async def start_assistant() -> None:
 @router.get("/stop-assistant")
 async def stop_assistant() -> None:
     await the_app.stop_assistant()
+
+
+@router.get("/export-transcript")
+async def export_transcript() -> str:
+    return await the_app.export_transcript()
