@@ -24,7 +24,7 @@ def build_engine() -> None:
         f"--include-data-dir=engine/public=engine/public "
         f"--assume-yes-for-downloads "
         f"--windows-icon-from-ico={cfg_scripts.ENGINE_ICON_FILE_PATH}"
-        "set DEBUG=True"  # recover debug mode
+        "&&set DEBUG=True"  # recover debug mode
     )
 
     run(nuitka_cmd, cwd=cfg_scripts.PROJECT_ROOT)
