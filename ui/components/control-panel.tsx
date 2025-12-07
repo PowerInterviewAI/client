@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useVideoDevices } from '@/hooks/useVideoDevices';
+import axiosClient from '@/lib/axiosClient';
 import { RunningState } from '@/types/appState';
 import { PyAudioDevice } from '@/types/audioDevice';
 import { Config, UserProfile } from '@/types/config';
@@ -16,7 +17,9 @@ import { APIError } from '@/types/error';
 import { DialogTitle } from '@radix-ui/react-dialog';
 import { UseMutationResult } from '@tanstack/react-query';
 import {
+  Download,
   Ellipsis,
+  Loader,
   MessageSquareText,
   Mic,
   MicOff,
@@ -160,6 +163,8 @@ export default function ControlPanel({
   };
   const { dotClass: indicatorDotClass, label: indicatorLabel } = indicatorConfig[runningState];
 
+  const [exportState, setExportState] = useState<RunningState>(RunningState.IDLE);
+
   const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
   const previewStreamRef = useRef<MediaStream | null>(null);
@@ -205,6 +210,40 @@ export default function ControlPanel({
   const getDisabled = (state: RunningState, disableOnRunning: boolean = true): boolean => {
     if (disableOnRunning && state === RunningState.RUNNING) return true;
     return state === RunningState.STARTING || state === RunningState.STOPPING;
+  };
+
+  const onExportTranscript = async () => {
+    try {
+      setExportState(RunningState.RUNNING);
+
+      const now = new Date();
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const filename = `power-interview-export-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}.md`;
+
+      const res = await axiosClient.get('/app/export-transcript', { responseType: 'blob' });
+
+      if (res.status !== 200) {
+        toast.error('Failed to export transcript');
+        return;
+      }
+
+      // Create blob + prompt download dialog
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+
+      // Clean up
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to export transcript');
+    } finally {
+      setExportState(RunningState.IDLE);
+    }
   };
 
   useEffect(() => {
@@ -286,7 +325,7 @@ export default function ControlPanel({
                     <Button
                       variant="default"
                       size="icon"
-                      className="h-8 w-8 border-none rounded-full"
+                      className="h-8 w-12 border-none rounded-full"
                       disabled={getDisabled(runningState)}
                     >
                       <MessageSquareText className="h-4 w-4" />
@@ -594,6 +633,31 @@ export default function ControlPanel({
           </TooltipTrigger>
           <TooltipContent>
             <p>Start/Stop Assistant</p>
+          </TooltipContent>
+        </Tooltip>
+
+        {/* Divider */}
+        <div className="h-4 w-px bg-border" />
+
+        {/* Export transcription button */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              onClick={onExportTranscript}
+              size="sm"
+              variant="secondary"
+              className="h-8 w-8 text-xs rounded-xl cursor-pointer"
+              disabled={exportState === RunningState.RUNNING}
+            >
+              {exportState === RunningState.IDLE ? (
+                <Download className="h-4 w-4" />
+              ) : (
+                <Loader className="h-4 w-4 animate-spin" />
+              )}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Export Transcription</p>
           </TooltipContent>
         </Tooltip>
       </div>

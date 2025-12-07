@@ -16,7 +16,6 @@ export default function SuggestionsPanel({ suggestions = [] }: SuggestionsPanelP
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const lastItemRef = useRef<HTMLDivElement | null>(null);
-  const spacerRef = useRef<HTMLDivElement | null>(null);
 
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
@@ -35,34 +34,6 @@ export default function SuggestionsPanel({ suggestions = [] }: SuggestionsPanelP
     container.addEventListener('scroll', handleScroll, { passive: true });
     return () => container.removeEventListener('scroll', handleScroll);
   }, []);
-
-  // update spacer height to equal container height so last element can be scrolled to top
-  useEffect(() => {
-    const container = containerRef.current;
-    const spacer = spacerRef.current;
-    const lastItem = lastItemRef.current;
-    if (!container || !spacer) return;
-
-    // function to sync spacer height
-    const sync = () => {
-      // set height equal to container inner height (clientHeight)
-      spacer.style.height = `${container.clientHeight - (lastItem?.clientHeight ?? 0)}px`;
-    };
-
-    // initial sync
-    sync();
-
-    // watch for container resizes
-    let ro: ResizeObserver | undefined;
-    if (typeof ResizeObserver !== 'undefined') {
-      ro = new ResizeObserver(sync);
-      ro.observe(container);
-    }
-
-    // also sync whenever suggestions change (content size may change)
-    // done implicitly because this effect runs on suggestions (see deps)
-    return () => ro?.disconnect();
-  }, [suggestions.length]); // re-run when number of suggestions changes
 
   // helper: scroll last item to top of container
   const scrollToLatest = (behavior: ScrollBehavior = 'smooth') => {
@@ -169,9 +140,6 @@ export default function SuggestionsPanel({ suggestions = [] }: SuggestionsPanelP
                 </div>
               </div>
             ))}
-
-            {/* Spacer: ensures the last suggestion can be scrolled up to the top */}
-            <div ref={spacerRef} aria-hidden />
           </div>
         )}
       </div>

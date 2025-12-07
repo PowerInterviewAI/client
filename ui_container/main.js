@@ -3,7 +3,6 @@ const { app, BrowserWindow } = require("electron");
 const { spawn } = require("child_process");
 const net = require("net");
 const Store = require("electron-store").default;
-
 const store = new Store();
 
 let win = null;
@@ -147,9 +146,13 @@ async function createWindow() {
         store.set("windowBounds", win.getBounds());
     });
 
-    const port = await startEngine();
-    win.webContents.session.clearCache().then(() => {
-        win.loadURL(`http://localhost:${port}`);
+    win.webContents.session.clearCache().then(async () => {
+        if (app.isPackaged) {
+            const port = await startEngine();
+            win.loadURL(`http://localhost:${port}`);
+        } else {
+            win.loadURL("http://localhost:3000");
+        }
     });
 }
 

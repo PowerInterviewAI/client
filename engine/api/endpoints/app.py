@@ -1,6 +1,6 @@
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Response
 
 from engine.api.error_handler import RouteErrorHandler
 from engine.app import the_app
@@ -49,3 +49,8 @@ async def start_assistant() -> None:
 @router.get("/stop-assistant")
 async def stop_assistant() -> None:
     await the_app.stop_assistant()
+
+
+@router.get("/export-transcript")
+async def export_transcript() -> Response:
+    return Response(content=await the_app.export_transcript(), media_type="text/plain")

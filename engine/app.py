@@ -3,16 +3,21 @@ import os
 import shutil
 import tempfile
 import threading
+from datetime import datetime
 from typing import Any
 
+import aiohttp
 import numpy as np
+import tzlocal
 from loguru import logger
 
+from engine.cfg.client import config as cfg_client
 from engine.cfg.fs import config as cfg_fs
 from engine.cfg.video import config as cfg_video
 from engine.models.config import Config, ConfigUpdate
 from engine.schemas.app_state import AppState
-from engine.schemas.transcript import Transcript
+from engine.schemas.summarize import GenerateSummarizeRequest
+from engine.schemas.transcript import Speaker, Transcript
 from engine.services.audio_service import AudioController, AudioService
 from engine.services.service_monitor import ServiceMonitor
 from engine.services.suggestion_service import SuggestionService
@@ -232,6 +237,60 @@ class PowerInterviewApp:
     # ---- Background Tasks ----
     async def start_background_tasks(self) -> None:
         await self.service_status_monitor.start_backend_monitor()
+
+    # ---- Service methods ----
+    async def export_transcript(self) -> str:
+        transcripts: list[Transcript] = await self.transcriber.get_transcripts()
+
+        # ---- Build Summarize Content ----
+        summary = ""
+        try:
+            timeout = aiohttp.ClientTimeout(total=cfg_client.HTTP_TIMEOUT)
+            async with (
+                aiohttp.ClientSession(timeout=timeout) as session,
+                session.post(
+                    cfg_client.BACKEND_SUMMARIZE_URL,
+                    json=GenerateSummarizeRequest(
+                        username=self.config.profile.username,
+                        transcripts=transcripts,
+                    ).model_dump(),
+                ) as resp,
+            ):
+                resp.raise_for_status()
+                summary = str(await resp.text())
+        except Exception as ex:
+            logger.error(f"Failed to generate summary: {ex}")
+
+        # Add Date/Time to summary
+        local_tz = tzlocal.get_localzone()
+        date_time = datetime.now(tz=local_tz).strftime("%m/%d/%Y %I:%M %p %Z")
+
+        if summary:
+            lines = summary.split("\n")
+            if lines:
+                lines.insert(1, f"\n**Date/Time:** {date_time}")
+                summary = "\n".join(lines)
+
+        # ---- Build Transcrips Content ----
+        lines = []
+
+        for t in transcripts:
+            # Convert from milliseconds to seconds if the value is too large
+            ts = t.timestamp / 1000 if t.timestamp > 1e12 else t.timestamp  # noqa: PLR2004
+
+            # Localize timestamp
+            local_time = datetime.fromtimestamp(ts, tz=local_tz)
+            # Platform-specific hour formatting
+            fmt = "%m/%d/%Y %-I:%M %p %Z"
+            if os.name == "nt":  # For Windows compatibility
+                fmt = "%m/%d/%Y %#I:%M %p %Z"
+            time_str = local_time.strftime(fmt)
+
+            speaker_name = self.config.profile.username if t.speaker is Speaker.SELF else "Interviewer"
+
+            lines.append(f"#### {speaker_name} | {time_str}\n{t.text}\n")
+
+        return (summary + "\n\n## Transcripts\n\n" + "\n".join(lines)).strip()
 
 
 the_app = PowerInterviewApp()

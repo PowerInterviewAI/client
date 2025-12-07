@@ -135,7 +135,7 @@ export default function Home() {
         style={{ height: 'calc(100vh - 120px)' }}
       >
         {/* Left Column: Video + Transcription */}
-        <div className="flex flex-col gap-2 w-96 shrink-0 min-h-0">
+        <div className="flex flex-col gap-2 w-1/2 md:w-96 shrink-0 min-h-0">
           {/* Video Panel - Small and compact */}
           <div className="h-48 shrink-0">
             <VideoPanel
@@ -163,8 +163,8 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Center Column: Main Suggestions Panel */}
-        <div className="flex-1 min-w-0 min-h-0 rounded-lg">
+        {/* Right Column: Main Suggestions Panel */}
+        <div className="w-1/2 md:flex-1 min-w-60 min-h-0 rounded-lg">
           <SuggestionsPanel suggestions={appState?.suggestions} />
         </div>
       </div>
