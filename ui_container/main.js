@@ -3,7 +3,6 @@ const { app, BrowserWindow } = require("electron");
 const { spawn } = require("child_process");
 const net = require("net");
 const Store = require("electron-store").default;
-const isDev = require("electron-is-dev");
 const store = new Store();
 
 let win = null;
@@ -148,11 +147,11 @@ async function createWindow() {
     });
 
     win.webContents.session.clearCache().then(async () => {
-        if (isDev) {
-            win.loadURL("http://localhost:3000");
-        } else {
+        if (app.isPackaged) {
             const port = await startEngine();
             win.loadURL(`http://localhost:${port}`);
+        } else {
+            win.loadURL("http://localhost:3000");
         }
     });
 }
