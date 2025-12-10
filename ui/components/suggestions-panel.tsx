@@ -145,7 +145,7 @@ export default function SuggestionsPanel({ suggestions = [] }: SuggestionsPanelP
           <TooltipTrigger asChild>
             <button
               onClick={() => scrollToLatest('smooth')}
-              className="absolute bottom-4 right-4 z-10 flex items-center gap-2 px-3 py-2 rounded-full bg-primary text-white shadow-lg hover:bg-primary/90 transition-all"
+              className="absolute bottom-4 right-4 z-10 flex items-center gap-2 px-3 py-2 rounded-full bg-primary text-white hover:bg-primary/90 transition-all"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"

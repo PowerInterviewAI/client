@@ -294,7 +294,7 @@ export default function ControlPanel({
 
   return (
     <div className="flex items-center justify-between gap-2 px-4 py-2">
-      {/* Invisible placeholder */}
+      {/* Profile */}
       <div className="flex items-center gap-2">
         <Tooltip>
           <TooltipTrigger asChild>
@@ -309,12 +309,12 @@ export default function ControlPanel({
                   <Image
                     src={config?.profile?.photo}
                     alt="Profile preview"
-                    className="w-8 h-8 rounded-full object-cover border shadow-sm"
+                    className="w-8 h-8 rounded-full object-cover border"
                     width={32}
                     height={32}
                   />
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-lg font-semibold text-muted-foreground border shadow-sm">
+                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-lg font-semibold text-muted-foreground border">
                     {config?.profile?.username
                       ? config?.profile?.username.charAt(0).toUpperCase()
                       : '?'}
