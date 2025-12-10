@@ -3,12 +3,10 @@ import os
 import shutil
 import tempfile
 import threading
-from datetime import datetime
 from typing import Any
 
 import aiohttp
 import numpy as np
-import tzlocal
 from loguru import logger
 
 from engine.cfg.client import config as cfg_client
@@ -23,6 +21,7 @@ from engine.services.service_monitor import ServiceMonitor
 from engine.services.suggestion_service import SuggestionService
 from engine.services.transcript_service import Transcriber
 from engine.services.virtual_camera import VirtualCameraService
+from engine.utils.datetime import DatetimeUtil
 
 
 class PowerInterviewApp:
@@ -243,7 +242,7 @@ class PowerInterviewApp:
         transcripts: list[Transcript] = await self.transcriber.get_transcripts()
 
         # ---- Build Summarize Content ----
-        summary = ""
+        summary_part = ""
         try:
             timeout = aiohttp.ClientTimeout(total=cfg_client.HTTP_TIMEOUT)
             async with (
@@ -257,40 +256,39 @@ class PowerInterviewApp:
                 ) as resp,
             ):
                 resp.raise_for_status()
-                summary = str(await resp.text())
+                summary_part = str(await resp.text())
         except Exception as ex:
             logger.error(f"Failed to generate summary: {ex}")
 
         # Add Date/Time to summary
-        local_tz = tzlocal.get_localzone()
-        date_time = datetime.now(tz=local_tz).strftime("%m/%d/%Y %I:%M %p %Z")
-
-        if summary:
-            lines = summary.split("\n")
+        lines: list[str] = []
+        if summary_part:
+            lines = summary_part.split("\n")
             if lines:
-                lines.insert(1, f"\n**Date/Time:** {date_time}")
-                summary = "\n".join(lines)
+                tstamp_now = DatetimeUtil.get_current_timestamp()
+                datetime_now = DatetimeUtil.format_timestamp_local(tstamp_now)
+                lines.insert(1, f"\n**Date/Time:** {datetime_now}")
+                summary_part = "\n".join(lines)
 
         # ---- Build Transcrips Content ----
         lines = []
-
         for t in transcripts:
-            # Convert from milliseconds to seconds if the value is too large
-            ts = t.timestamp / 1000 if t.timestamp > 1e12 else t.timestamp  # noqa: PLR2004
-
-            # Localize timestamp
-            local_time = datetime.fromtimestamp(ts, tz=local_tz)
-            # Platform-specific hour formatting
-            fmt = "%m/%d/%Y %-I:%M %p %Z"
-            if os.name == "nt":  # For Windows compatibility
-                fmt = "%m/%d/%Y %#I:%M %p %Z"
-            time_str = local_time.strftime(fmt)
-
+            time_str = DatetimeUtil.format_timestamp_local(t.timestamp)
             speaker_name = self.config.profile.username if t.speaker is Speaker.SELF else "Interviewer"
-
             lines.append(f"#### {speaker_name} | {time_str}\n{t.text}\n")
 
-        return (summary + "\n\n## Transcripts\n\n" + "\n".join(lines)).strip()
+        transcripts_part = "## Transcripts\n\n" + "\n".join(lines)
+
+        # ---- Build Suggestions Content ----
+        lines = []
+        suggestions = await self.suggestion_service.get_suggestions()
+        for s in suggestions:
+            time_str = DatetimeUtil.format_timestamp_local(s.timestamp)
+            lines.append(f"#### Interviewer | {time_str}\n{s.last_question}\n\n##### Suggestion\n{s.answer}\n")
+
+        suggestions_part = "## Suggestions\n\n" + "\n".join(lines)
+
+        return f"{summary_part}\n\n{transcripts_part}\n\n{suggestions_part}".strip()
 
 
 the_app = PowerInterviewApp()
