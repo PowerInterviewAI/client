@@ -293,7 +293,7 @@ export default function ControlPanel({
   ]);
 
   return (
-    <div className="flex items-center justify-between gap-2 px-4 py-2">
+    <div className="flex items-center justify-between gap-2 p-1">
       {/* Profile */}
       <div className="flex items-center gap-2">
         <Tooltip>

@@ -120,8 +120,8 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="h-screen w-full mx-auto bg-background p-2 space-y-2">
-      <div className="flex flex-1 overflow-y-hidden gap-2" style={{ height: 'calc(100vh - 84px)' }}>
+    <div className="h-screen w-full mx-auto bg-background p-1 space-y-1">
+      <div className="flex flex-1 overflow-y-hidden gap-1" style={{ height: 'calc(100vh - 64px)' }}>
         {/* Left Column: Video + Transcription */}
         <div className="flex flex-col gap-2 w-1/2 md:w-96 shrink-0 min-h-0">
           {/* Video Panel - Small and compact */}
