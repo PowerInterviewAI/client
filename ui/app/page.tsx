@@ -137,7 +137,7 @@ export default function Home() {
         {/* Left Column: Video + Transcription */}
         <div className="flex flex-col gap-2 w-1/2 md:w-96 shrink-0 min-h-0">
           {/* Video Panel - Small and compact */}
-          <div className="h-48 shrink-0">
+          <div className="h-48 shrink-0" hidden={!config?.enable_video_control}>
             <VideoPanel
               ref={videoPanelRef}
               runningState={
