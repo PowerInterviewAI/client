@@ -290,7 +290,17 @@ class PowerInterviewApp:
 
             lines.append(f"#### {speaker_name} | {time_str}\n{t.text}\n")
 
-        return (summary + "\n\n## Transcripts\n\n" + "\n".join(lines)).strip()
+        transcripts = "## Transcripts\n\n" + "\n".join(lines)
+
+        # ---- Build Suggestions Content ----
+        lines = []
+        suggestions = await self.suggestion_service.get_suggestions()
+        for s in suggestions:
+            lines.append(f"#### {s.last_question}\n{s.answer}\n")
+
+        suggestions = "## Suggestions\n\n" + "\n".join(lines)
+
+        return f"{summary}\n\n{transcripts}\n\n{suggestions}".strip()
 
 
 the_app = PowerInterviewApp()
