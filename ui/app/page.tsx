@@ -3,7 +3,6 @@
 import ControlPanel from '@/components/control-panel';
 import ProfileDialog from '@/components/profile-dialog';
 import SuggestionsPanel from '@/components/suggestions-panel';
-import TopBar from '@/components/top-bar';
 import TranscriptPanel from '@/components/transcript-panel';
 import { VideoPanel, VideoPanelHandle } from '@/components/video-panel';
 import axiosClient from '@/lib/axiosClient';
@@ -121,19 +120,8 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex flex-col h-screen w-full mx-auto bg-background p-2">
-      <TopBar
-        photo={config?.profile?.photo ?? ''}
-        userName={config?.profile?.username ?? ''}
-        onProfileClick={() => setIsProfileOpen(true)}
-        onThemeToggle={handleThemeToggle}
-        isDark={isDark}
-      />
-
-      <div
-        className="flex flex-1 overflow-y-hidden gap-2 py-2"
-        style={{ height: 'calc(100vh - 120px)' }}
-      >
+    <div className="h-screen w-full mx-auto bg-background p-2 space-y-2">
+      <div className="flex flex-1 overflow-y-hidden gap-2" style={{ height: 'calc(100vh - 84px)' }}>
         {/* Left Column: Video + Transcription */}
         <div className="flex flex-col gap-2 w-1/2 md:w-96 shrink-0 min-h-0">
           {/* Video Panel - Small and compact */}
@@ -171,26 +159,16 @@ export default function Home() {
 
       <div className="border border-border rounded-lg bg-card">
         <ControlPanel
-          profile={config?.profile}
           runningState={appState?.assistant_state ?? RunningState.IDLE}
           startMutation={startMutation}
           stopMutation={stopMutation}
           audioInputDevices={audioInputDevices ?? []}
           audioOutputDevices={audioOutputDevices ?? []}
+          onProfileClick={() => setIsProfileOpen(true)}
+          onThemeToggle={handleThemeToggle}
+          isDark={isDark}
+          config={config}
           updateConfig={updateConfig}
-          // Transcription options
-          audioInputDeviceName={`${config?.audio_input_device_name ?? 0}`}
-          // Audio control options
-          enableAudioControl={config?.enable_audio_control ?? false}
-          audioControlDeviceName={`${config?.audio_control_device_name ?? 0}`}
-          audioDelay={config?.audio_delay_ms ?? 0}
-          // Video control options
-          enableVideoControl={config?.enable_video_control ?? false}
-          cameraDeviceName={config?.camera_device_name ?? ''}
-          videoWidth={config?.video_width ?? 1280}
-          videoHeight={config?.video_height ?? 720}
-          enableFaceSwap={config?.enable_face_swap ?? false}
-          enableFaceEnhance={config?.enable_face_enhance ?? false}
         />
       </div>
 
