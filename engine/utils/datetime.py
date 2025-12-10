@@ -1,4 +1,7 @@
+import os
 from datetime import UTC, datetime, timedelta
+
+import tzlocal
 
 
 class DatetimeUtil:
@@ -27,6 +30,20 @@ class DatetimeUtil:
             datetime: Datetime from timestamp
         """
         return datetime.fromtimestamp(timestamp / 1000, tz=UTC)
+
+    @classmethod
+    def format_timestamp_local(cls, timestamp: int) -> str:
+        ts = timestamp / 1000 if timestamp > 1e12 else timestamp  # noqa: PLR2004
+
+        # Localize timestamp
+        local_tz = tzlocal.get_localzone()
+        local_time = datetime.fromtimestamp(ts, tz=local_tz)
+        # Platform-specific hour formatting
+        fmt = "%m/%d/%Y %-I:%M %p %Z"
+        if os.name == "nt":  # For Windows compatibility
+            fmt = "%m/%d/%Y %#I:%M %p %Z"
+
+        return local_time.strftime(fmt)
 
     @classmethod
     def get_timestamp_from_datetime(cls, dt: datetime) -> int:
