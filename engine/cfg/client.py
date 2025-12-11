@@ -9,10 +9,12 @@ class Config(BaseSettings):
     BACKEND_URL_LOCAL: str = "http://localhost:8080"
     BACKEND_URL: str = BACKEND_URL_LOCAL if cfg_api.DEBUG else BACKEND_URL_ONLINE
 
-    BACKEND_PING_URL: str = f"{BACKEND_URL}/api/ping"
-    BACKEND_PUNCTUATION_URL: str = f"{BACKEND_URL}/api/llm/punctuation"
+    BACKEND_PING_SERVER_URL: str = f"{BACKEND_URL}/api/health-check/ping"
+    BACKEND_PING_GPU_SERVER_URL: str = f"{BACKEND_URL}/api/health-check/ping-gpu-server"
+
     BACKEND_SUGGESTIONS_URL: str = f"{BACKEND_URL}/api/llm/suggestion"
     BACKEND_SUMMARIZE_URL: str = f"{BACKEND_URL}/api/llm/summarize"
+
     BACKEND_WEBRTC_OFFER_URL: str = f"{BACKEND_URL}/api/webrtc/offer"
 
     BACKEND_ASR_STREAMING_URL: str = (

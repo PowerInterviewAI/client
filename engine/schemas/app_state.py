@@ -34,3 +34,7 @@ class AppState(BaseModel):
         bool,
         Field(description="Whether the backend is live"),
     ]
+    is_gpu_server_live: Annotated[
+        bool,
+        Field(description="Whether the GPU server is live"),
+    ]

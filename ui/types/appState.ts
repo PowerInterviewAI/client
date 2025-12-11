@@ -14,4 +14,5 @@ export interface AppState {
   transcripts: Transcript[];
   suggestions: Suggestion[];
   is_backend_live: boolean;
+  is_gpu_server_live: boolean;
 }

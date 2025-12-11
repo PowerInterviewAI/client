@@ -221,6 +221,7 @@ class PowerInterviewApp:
             transcripts=await self.transcriber.get_transcripts(),
             suggestions=await self.suggestion_service.get_suggestions(),
             is_backend_live=await self.service_status_monitor.is_backend_live(),
+            is_gpu_server_live=await self.service_status_monitor.is_gpu_server_live(),
         )
 
     # ---- Callbacks ----
