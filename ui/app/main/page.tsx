@@ -5,13 +5,13 @@ import ProfileDialog from '@/components/profile-dialog';
 import SuggestionsPanel from '@/components/suggestions-panel';
 import TranscriptPanel from '@/components/transcript-panel';
 import { VideoPanel, VideoPanelHandle } from '@/components/video-panel';
-import axiosClient from '@/lib/axiosClient';
-import { AppState, RunningState } from '@/types/appState';
-import { PyAudioDevice } from '@/types/audioDevice';
+import { useAppState } from '@/hooks/app-state';
+import { useStartAssistant, useStopAssistant } from '@/hooks/assistant';
+import { useAudioInputDevices, useAudioOutputDevices } from '@/hooks/audio-devices';
+import { useConfigQuery, useUpdateConfig } from '@/hooks/config';
+import { RunningState } from '@/types/appState';
 import { Config } from '@/types/config';
-import { APIError } from '@/types/error';
 import { Transcript } from '@/types/transcript';
-import { useMutation, useQuery } from '@tanstack/react-query';
 import { Loader } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -22,61 +22,18 @@ export default function Home() {
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const videoPanelRef = useRef<VideoPanelHandle>(null);
 
-  const { data: configFetched } = useQuery<Config, APIError>({
-    queryKey: ['config'],
-    queryFn: async () => {
-      const response = await axiosClient.get<Config>('/app/get-config');
-      return response.data;
-    },
-  });
-  const updateConfigMutation = useMutation<Config, APIError, Partial<Config>>({
-    mutationFn: async (config) => {
-      const response = await axiosClient.put('/app/update-config', config);
-      return response.data;
-    },
-  });
+  // Queries
+  const { data: configFetched } = useConfigQuery();
+  const { data: audioInputDevices } = useAudioInputDevices();
+  const { data: audioOutputDevices } = useAudioOutputDevices();
+  const { data: appState, error: appStateError } = useAppState();
 
-  const { data: audioInputDevices } = useQuery<PyAudioDevice[], APIError>({
-    queryKey: ['audioInputDevices'],
-    queryFn: async () => {
-      const response = await axiosClient.get<PyAudioDevice[]>('/app/audio-input-devices');
-      return response.data;
-    },
-    refetchInterval: 1000,
-  });
+  // Mutations
+  const updateConfigMutation = useUpdateConfig();
+  const startMutation = useStartAssistant(videoPanelRef, config);
+  const stopMutation = useStopAssistant(videoPanelRef);
 
-  const { data: audioOutputDevices } = useQuery<PyAudioDevice[], APIError>({
-    queryKey: ['audioOutputDevices'],
-    queryFn: async () => {
-      const response = await axiosClient.get<PyAudioDevice[]>('/app/audio-output-devices');
-      return response.data;
-    },
-    refetchInterval: 1000,
-  });
-
-  const { data: appState, error: appStateError } = useQuery<AppState, APIError>({
-    queryKey: ['appState'],
-    queryFn: async () => {
-      const response = await axiosClient.get<AppState>('/app/get-state');
-      return response.data;
-    },
-    refetchInterval: 50,
-  });
-  const startMutation = useMutation<void, APIError, void>({
-    mutationFn: async () => {
-      axiosClient.get('/app/start-assistant');
-      if (config?.enable_video_control) {
-        await videoPanelRef.current?.startWebRTC();
-      }
-    },
-  });
-  const stopMutation = useMutation<void, APIError, void>({
-    mutationFn: async () => {
-      await axiosClient.get('/app/stop-assistant');
-      videoPanelRef.current?.stopWebRTC();
-    },
-  });
-
+  // Theme handling
   const handleThemeToggle = () => {
     const newIsDark = !isDark;
     setIsDark(newIsDark);
@@ -106,6 +63,8 @@ export default function Home() {
       setTranscripts(appState?.transcripts);
     }
   }, [appState?.transcripts, transcripts]);
+
+  // Load theme
   useEffect(() => {
     // Check localStorage or system preference
     const storedTheme = localStorage.getItem('theme');

@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useVideoDevices } from '@/hooks/useVideoDevices';
+import { useVideoDevices } from '@/hooks/video-devices';
 import axiosClient from '@/lib/axiosClient';
 import { RunningState } from '@/types/appState';
 import { PyAudioDevice } from '@/types/audioDevice';
