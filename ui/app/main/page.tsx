@@ -12,6 +12,7 @@ import { Config } from '@/types/config';
 import { APIError } from '@/types/error';
 import { Transcript } from '@/types/transcript';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { Loader } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 export default function Home() {
@@ -121,6 +122,10 @@ export default function Home() {
 
   return (
     <div className="h-screen w-full bg-background p-1 space-y-1">
+      <div className="space-y-1">
+        <Loader className="mx-auto animate-spin" />
+        <p className="w-fit mx-auto animate-pulse">Allocating Cloud Resources ...</p>
+      </div>
       <div className="flex flex-1 overflow-y-hidden gap-1" style={{ height: 'calc(100vh - 64px)' }}>
         {/* Left Column: Video + Transcription */}
         <div className="flex flex-col gap-2 w-1/2 md:w-96 shrink-0 min-h-0">
