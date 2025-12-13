@@ -237,6 +237,8 @@ class PowerInterviewApp:
     # ---- Background Tasks ----
     async def start_background_tasks(self) -> None:
         await self.service_status_monitor.start_backend_monitor()
+        await self.service_status_monitor.start_gpu_server_monitor()
+        await self.service_status_monitor.start_wakeup_gpu_server_loop()
 
     # ---- Service methods ----
     async def export_transcript(self) -> str:
