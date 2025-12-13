@@ -13,6 +13,7 @@ import { RunningState } from '@/types/appState';
 import { Config } from '@/types/config';
 import { Transcript } from '@/types/transcript';
 import { Loader } from 'lucide-react';
+import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 
 export default function Home() {
@@ -79,12 +80,8 @@ export default function Home() {
     }
   }, []);
 
-  return (
+  return appState?.is_backend_live && appState?.is_gpu_server_live ? (
     <div className="h-screen w-full bg-background p-1 space-y-1">
-      <div className="space-y-1">
-        <Loader className="mx-auto animate-spin" />
-        <p className="w-fit mx-auto animate-pulse">Allocating Cloud Resources ...</p>
-      </div>
       <div className="flex flex-1 overflow-y-hidden gap-1" style={{ height: 'calc(100vh - 64px)' }}>
         {/* Left Column: Video + Transcription */}
         <div className="flex flex-col gap-2 w-1/2 md:w-96 shrink-0 min-h-0">
@@ -144,6 +141,19 @@ export default function Home() {
         initialProfileData={config?.profile?.profile_data ?? ''}
         updateConfig={updateConfig}
       />
+    </div>
+  ) : (
+    <div className="flex justify-center items-center h-screen w-full bg-background ">
+      <div className="flex flex-col gep-2 justify-center items-center">
+        <div className='flex gap-2 items-center'>
+          <Image src="/logo.svg" alt="Logo" width={32} height={32} className="mx-auto" />
+          <p className='text-2xl'>Power Interview</p>
+        </div>
+        <p className="animate-pulse text-sm mt-4">
+          Waiting for Cloud Resources to be allocated ...
+        </p>
+        <Loader className="w-4 h-4 animate-spin" />
+      </div>
     </div>
   );
 }
