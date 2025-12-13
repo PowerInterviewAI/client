@@ -24,9 +24,9 @@ export default function Home() {
 
   // Queries
   const { data: configFetched } = useConfigQuery();
-  const { data: audioInputDevices } = useAudioInputDevices();
-  const { data: audioOutputDevices } = useAudioOutputDevices();
-  const { data: appState, error: appStateError } = useAppState();
+  const { data: audioInputDevices } = useAudioInputDevices(1000);
+  const { data: audioOutputDevices } = useAudioOutputDevices(1000);
+  const { data: appState, error: appStateError } = useAppState(50);
 
   // Mutations
   const updateConfigMutation = useUpdateConfig();
