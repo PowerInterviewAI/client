@@ -11,6 +11,7 @@ class Config(BaseSettings):
 
     BACKEND_PING_SERVER_URL: str = f"{BACKEND_URL}/api/health-check/ping"
     BACKEND_PING_GPU_SERVER_URL: str = f"{BACKEND_URL}/api/health-check/ping-gpu-server"
+    BACKEND_WAKEUP_GPU_SERVER_URL: str = f"{BACKEND_URL}/api/health-check/wakeup-gpu-server"
 
     BACKEND_SUGGESTIONS_URL: str = f"{BACKEND_URL}/api/llm/suggestion"
     BACKEND_SUMMARIZE_URL: str = f"{BACKEND_URL}/api/llm/summarize"
