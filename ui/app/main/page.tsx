@@ -144,14 +144,12 @@ export default function Home() {
     </div>
   ) : (
     <div className="flex justify-center items-center h-screen w-full bg-background ">
-      <div className="flex flex-col gep-2 justify-center items-center">
-        <div className='flex gap-2 items-center'>
+      <div className="flex flex-col items-center">
+        <div className="flex gap-2 items-center">
           <Image src="/logo.svg" alt="Logo" width={32} height={32} className="mx-auto" />
-          <p className='text-2xl'>Power Interview</p>
+          <p className="text-2xl font-bold">Power Interview</p>
         </div>
-        <p className="animate-pulse text-sm mt-4">
-          Waiting for Cloud Resources to be allocated ...
-        </p>
+        <p className="animate-pulse text-sm mt-4">Allocating cloud resources…</p>
         <Loader className="w-4 h-4 animate-spin" />
       </div>
     </div>
