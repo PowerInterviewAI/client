@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 from typing import Any
 
 import aiohttp
@@ -69,5 +70,20 @@ class ServiceMonitor:
 
                 finally:
                     await asyncio.sleep(1)
+
+        self._gpu_server_monitor_task = asyncio.create_task(worker())
+
+    async def start_wakeup_gpu_server_loop(self) -> None:
+        async def worker() -> None:
+            while True:
+                with contextlib.suppress(Exception):
+                    timeout = aiohttp.ClientTimeout(total=cfg_client.HTTP_TIMEOUT)
+                    async with (
+                        aiohttp.ClientSession(timeout=timeout) as session,
+                        session.get(cfg_client.BACKEND_WAKEUP_GPU_SERVER_URL) as resp,
+                    ):
+                        resp.raise_for_status()
+
+                await asyncio.sleep(1)
 
         self._gpu_server_monitor_task = asyncio.create_task(worker())
