@@ -1,10 +1,35 @@
+import os
+import shutil
 import sys
 
 from scripts.cfg import config as cfg_scripts
 from scripts.proc import run
 
 
+def assert_msvc_env() -> None:
+    missing = []
+
+    if "VSCMD_VER" not in os.environ:
+        missing.append("VSCMD_VER")
+
+    if not shutil.which("cl.exe"):
+        missing.append("cl.exe")
+
+    if missing:
+        print(  # noqa: T201
+            "❌ MSVC environment not initialized.\n"
+            "Missing: " + ", ".join(missing) + "\n\n"
+            "Fix:\n"
+            "  Run this from 'Developer Command Prompt for VS'\n"
+        )
+        sys.exit(1)
+
+
 def build_engine() -> None:
+    # Ensure MSVC environment is set up
+    assert_msvc_env()
+
+    # Ensure main.py exists
     if not cfg_scripts.ENGINE_MAIN.exists():
         print("Error: engine/main.py not found.")  # noqa: T201
         sys.exit(1)
