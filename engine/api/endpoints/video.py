@@ -11,7 +11,7 @@ from engine.services.webrtc_service import WebRTCService
 
 router = APIRouter(
     route_class=RouteErrorHandler,
-    tags=["WebRTC Endpoints"],
+    tags=["Video Control Endpoints"],
 )
 
 
