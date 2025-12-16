@@ -32,7 +32,7 @@ class PowerInterviewApp:
         self._file_lock = threading.Lock()
         self.config = Config()
 
-        self.service_status_monitor = ServiceMonitor()
+        self.service_monitor = ServiceMonitor()
 
         self.transcriber = Transcriber(
             callback_on_self_final=self.on_transcriber_self_final,
@@ -185,6 +185,7 @@ class PowerInterviewApp:
         self.save_config()
         return self.config
 
+    # ---- HTTP Client Session Management ----
     async def get_session(self) -> ClientSession:
         if self.client_session is None:
             self.client_session = ClientSession(timeout=ClientTimeout(total=cfg_client.HTTP_TIMEOUT))
@@ -233,12 +234,12 @@ class PowerInterviewApp:
     # ---- State Management ----
     async def get_app_state(self) -> AppState:
         return AppState(
-            is_logged_in=await self.service_status_monitor.is_logged_in(),
+            is_logged_in=await self.service_monitor.is_logged_in(),
             assistant_state=await self.transcriber.get_state(),
             transcripts=await self.transcriber.get_transcripts(),
             suggestions=await self.suggestion_service.get_suggestions(),
-            is_backend_live=await self.service_status_monitor.is_backend_live(),
-            is_gpu_server_live=await self.service_status_monitor.is_gpu_server_live(),
+            is_backend_live=await self.service_monitor.is_backend_live(),
+            is_gpu_server_live=await self.service_monitor.is_gpu_server_live(),
         )
 
     # ---- Callbacks ----
@@ -257,10 +258,10 @@ class PowerInterviewApp:
 
     # ---- Background Tasks ----
     async def start_background_tasks(self) -> None:
-        await self.service_status_monitor.start_backend_monitor(await self.get_session())
-        await self.service_status_monitor.start_auth_monitor(await self.get_session())
-        await self.service_status_monitor.start_gpu_server_monitor(await self.get_session())
-        await self.service_status_monitor.start_wakeup_gpu_server_loop(await self.get_session())
+        await self.service_monitor.start_backend_monitor(await self.get_session())
+        await self.service_monitor.start_auth_monitor(await self.get_session())
+        await self.service_monitor.start_gpu_server_monitor(await self.get_session())
+        await self.service_monitor.start_wakeup_gpu_server_loop(await self.get_session())
 
     # ---- Service methods ----
     async def export_transcript(self) -> str:
