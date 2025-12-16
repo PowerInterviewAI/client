@@ -8,7 +8,6 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div className="flex flex-col items-center mb-6">
           <Image src="/logo.svg" alt="Logo" width={48} height={48} />
           <h1 className="mt-4 text-2xl font-bold">Power Interview</h1>
-          <p className="text-sm text-muted-foreground mt-2">Sign in to continue to the app</p>
         </div>
 
         {children}
