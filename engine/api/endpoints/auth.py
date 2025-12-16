@@ -1,4 +1,3 @@
-import aiohttp
 from fastapi import APIRouter
 
 from engine.api.error_handler import RouteErrorHandler
@@ -23,18 +22,14 @@ async def login(req: AuthRequest) -> None:
         )
 
     # Authenticate user to backend
-    timeout = aiohttp.ClientTimeout(total=cfg_client.HTTP_TIMEOUT)
-    async with (
-        aiohttp.ClientSession(timeout=timeout) as session,
-        session.post(
-            cfg_client.BACKEND_AUTH_LOGIN_URL,
-            json=LoginRequestBackend(
-                email=req.email,
-                password=req.password,
-                device_info=DeviceService.get_device_info(),
-            ).model_dump(),
-        ) as resp,
-    ):
+    async with (await the_app.get_session()).post(
+        cfg_client.BACKEND_AUTH_LOGIN_URL,
+        json=LoginRequestBackend(
+            email=req.email,
+            password=req.password,
+            device_info=DeviceService.get_device_info(),
+        ).model_dump(),
+    ) as resp:
         resp.raise_for_status()
 
         # Get session token from set cookie
@@ -64,17 +59,13 @@ async def signup(req: AuthRequest) -> None:
         )
 
     # Register user to backend
-    timeout = aiohttp.ClientTimeout(total=cfg_client.HTTP_TIMEOUT)
-    async with (
-        aiohttp.ClientSession(timeout=timeout) as session,
-        session.post(
-            cfg_client.BACKEND_AUTH_SIGNUP_URL,
-            json=AuthRequest(
-                email=req.email,
-                password=req.password,
-            ).model_dump(),
-        ) as resp,
-    ):
+    async with (await the_app.get_session()).post(
+        cfg_client.BACKEND_AUTH_SIGNUP_URL,
+        json=AuthRequest(
+            email=req.email,
+            password=req.password,
+        ).model_dump(),
+    ) as resp:
         resp.raise_for_status()
 
 
@@ -88,9 +79,5 @@ async def logout() -> None:
     )
 
     # Notify backend about logout
-    timeout = aiohttp.ClientTimeout(total=cfg_client.HTTP_TIMEOUT)
-    async with (
-        aiohttp.ClientSession(timeout=timeout) as session,
-        session.get(cfg_client.BACKEND_AUTH_LOGOUT_URL) as resp,
-    ):
+    async with (await the_app.get_session()).get(cfg_client.BACKEND_AUTH_LOGOUT_URL) as resp:
         resp.raise_for_status()

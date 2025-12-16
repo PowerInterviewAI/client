@@ -5,10 +5,11 @@ import tempfile
 import threading
 from typing import Any
 
-import aiohttp
 import numpy as np
+from aiohttp import ClientSession, ClientTimeout
 from loguru import logger
 
+from engine.cfg.auth import config as cfg_auth
 from engine.cfg.client import config as cfg_client
 from engine.cfg.fs import config as cfg_fs
 from engine.cfg.video import config as cfg_video
@@ -26,6 +27,8 @@ from engine.utils.datetime import DatetimeUtil
 
 class PowerInterviewApp:
     def __init__(self) -> None:
+        self.client_session: ClientSession | None = None
+
         self._file_lock = threading.Lock()
         self.config = Config()
 
@@ -182,6 +185,19 @@ class PowerInterviewApp:
         self.save_config()
         return self.config
 
+    async def get_session(self) -> ClientSession:
+        if self.client_session is None:
+            self.client_session = ClientSession(timeout=ClientTimeout(total=cfg_client.HTTP_TIMEOUT))
+        return self.client_session
+
+    def update_session_token(self, session_token: str) -> None:
+        if self.client_session is None:
+            msg = "Client session not initialized; cannot update session token."
+            raise RuntimeError(msg)
+
+        cookies = {cfg_auth.SESSION_TOKEN_COOKIE_NAME: session_token}
+        self.client_session.cookie_jar.update_cookies(cookies)
+
     # ---- Assistant Control ----
     async def start_assistant(self) -> None:
         await self.transcriber.clear_transcripts()
@@ -230,17 +246,21 @@ class PowerInterviewApp:
         pass
 
     async def on_transcriber_other_final(self, transcripts: list[Transcript]) -> None:
-        await self.suggestion_service.generate_suggestion_async(transcripts, self.config.profile)
+        await self.suggestion_service.generate_suggestion_async(
+            await self.get_session(),
+            transcripts,
+            self.config.profile,
+        )
 
     def on_virtual_camera_frame(self, frame_bgr: np.ndarray[Any, Any]) -> None:
         self.virtual_camera_service.set_frame(frame_bgr)
 
     # ---- Background Tasks ----
     async def start_background_tasks(self) -> None:
-        await self.service_status_monitor.start_backend_monitor()
-        await self.service_status_monitor.start_auth_monitor()
-        await self.service_status_monitor.start_gpu_server_monitor()
-        await self.service_status_monitor.start_wakeup_gpu_server_loop()
+        await self.service_status_monitor.start_backend_monitor(await self.get_session())
+        await self.service_status_monitor.start_auth_monitor(await self.get_session())
+        await self.service_status_monitor.start_gpu_server_monitor(await self.get_session())
+        await self.service_status_monitor.start_wakeup_gpu_server_loop(await self.get_session())
 
     # ---- Service methods ----
     async def export_transcript(self) -> str:
@@ -249,17 +269,13 @@ class PowerInterviewApp:
         # ---- Build Summarize Content ----
         summary_part = ""
         try:
-            timeout = aiohttp.ClientTimeout(total=cfg_client.HTTP_TIMEOUT)
-            async with (
-                aiohttp.ClientSession(timeout=timeout) as session,
-                session.post(
-                    cfg_client.BACKEND_SUMMARIZE_URL,
-                    json=GenerateSummarizeRequest(
-                        username=self.config.profile.username,
-                        transcripts=transcripts,
-                    ).model_dump(),
-                ) as resp,
-            ):
+            async with (await self.get_session()).post(
+                cfg_client.BACKEND_SUMMARIZE_URL,
+                json=GenerateSummarizeRequest(
+                    username=self.config.profile.username,
+                    transcripts=transcripts,
+                ).model_dump(),
+            ) as resp:
                 resp.raise_for_status()
                 summary_part = str(await resp.text())
         except Exception as ex:

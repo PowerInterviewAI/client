@@ -2,7 +2,7 @@ import asyncio
 import contextlib
 from typing import Any
 
-import aiohttp
+from aiohttp import ClientSession
 
 from engine.cfg.client import config as cfg_client
 
@@ -43,15 +43,11 @@ class ServiceMonitor:
         async with self._lock:
             return self._is_gpu_server_live
 
-    async def start_backend_monitor(self) -> None:
+    async def start_backend_monitor(self, client_session: ClientSession) -> None:
         async def worker() -> None:
             while True:
                 try:
-                    timeout = aiohttp.ClientTimeout(total=cfg_client.HTTP_TIMEOUT)
-                    async with (
-                        aiohttp.ClientSession(timeout=timeout) as session,
-                        session.get(cfg_client.BACKEND_PING_URL) as resp,
-                    ):
+                    async with client_session.get(cfg_client.BACKEND_PING_URL) as resp:
                         resp.raise_for_status()
 
                         await self.set_backend_live(True)
@@ -63,15 +59,11 @@ class ServiceMonitor:
 
         self._backend_monitor_task = asyncio.create_task(worker())
 
-    async def start_auth_monitor(self) -> None:
+    async def start_auth_monitor(self, client_session: ClientSession) -> None:
         async def worker() -> None:
             while True:
                 try:
-                    timeout = aiohttp.ClientTimeout(total=cfg_client.HTTP_TIMEOUT)
-                    async with (
-                        aiohttp.ClientSession(timeout=timeout) as session,
-                        session.get(cfg_client.BACKEND_PING_CLIENT_URL) as resp,
-                    ):
+                    async with client_session.get(cfg_client.BACKEND_PING_CLIENT_URL) as resp:
                         resp.raise_for_status()
 
                         await self.set_logged_in(True)
@@ -83,15 +75,11 @@ class ServiceMonitor:
 
         self._auth_monitor_task = asyncio.create_task(worker())
 
-    async def start_gpu_server_monitor(self) -> None:
+    async def start_gpu_server_monitor(self, client_session: ClientSession) -> None:
         async def worker() -> None:
             while True:
                 try:
-                    timeout = aiohttp.ClientTimeout(total=cfg_client.HTTP_TIMEOUT)
-                    async with (
-                        aiohttp.ClientSession(timeout=timeout) as session,
-                        session.get(cfg_client.BACKEND_PING_GPU_SERVER_URL) as resp,
-                    ):
+                    async with client_session.get(cfg_client.BACKEND_PING_GPU_SERVER_URL) as resp:
                         resp.raise_for_status()
 
                         await self.set_gpu_server_live(True)
@@ -103,15 +91,11 @@ class ServiceMonitor:
 
         self._gpu_server_monitor_task = asyncio.create_task(worker())
 
-    async def start_wakeup_gpu_server_loop(self) -> None:
+    async def start_wakeup_gpu_server_loop(self, client_session: ClientSession) -> None:
         async def worker() -> None:
             while True:
                 with contextlib.suppress(Exception):
-                    timeout = aiohttp.ClientTimeout(total=cfg_client.HTTP_TIMEOUT)
-                    async with (
-                        aiohttp.ClientSession(timeout=timeout) as session,
-                        session.get(cfg_client.BACKEND_WAKEUP_GPU_SERVER_URL) as resp,
-                    ):
+                    async with client_session.get(cfg_client.BACKEND_WAKEUP_GPU_SERVER_URL) as resp:
                         resp.raise_for_status()
 
                 await asyncio.sleep(1)
