@@ -1,7 +1,26 @@
+'use client';
+
+import Loading from '@/components/loading';
+import { useAppState } from '@/hooks/app-state';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useEffect } from 'react';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
+  const { data: appState } = useAppState(50);
+
+  useEffect(() => {
+    // Redirect to main page if already logged in
+    if (appState?.is_logged_in) {
+      window.location.href = '/main';
+    }
+  }, [appState, appState?.is_logged_in]);
+
+  // Show loading state while checking backend status
+  if (!appState || !appState.is_backend_live) {
+    return <Loading disclaimer="Starting context for your device…" />;
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-md mx-auto p-6">
