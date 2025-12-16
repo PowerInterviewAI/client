@@ -18,7 +18,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
   // Show loading state while checking backend status
   if (!appState || !appState.is_backend_live) {
-    return <Loading disclaimer="Starting context for your device…" />;
+    return <Loading disclaimer="Initializing context for your device…" />;
   }
 
   return (

@@ -29,5 +29,5 @@ export default function LogoutPage() {
   }, [appState, appState?.is_backend_live, appState?.is_logged_in, router]);
 
   // Optionally, render a loading state while checking
-  return <Loading disclaimer="Starting context for your device…" />;
+  return <Loading disclaimer="Initializing context for your device…" />;
 }

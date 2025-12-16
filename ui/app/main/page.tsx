@@ -84,7 +84,7 @@ export default function Home() {
 
   // Show loading if backend is not live
   if (appState && !appState.is_backend_live) {
-    return <Loading disclaimer="Starting user specific context…" />;
+    return <Loading disclaimer="Initializing user specific context…" />;
   }
 
   // Redirect to login if not logged in
