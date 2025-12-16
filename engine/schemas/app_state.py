@@ -18,6 +18,10 @@ class RunningState(StrEnum):
 class AppState(BaseModel):
     """The app state."""
 
+    is_logged_in: Annotated[
+        bool,
+        Field(description="Whether the user is logged in"),
+    ]
     assistant_state: Annotated[
         RunningState,
         Field(description="The running state of the assistant"),

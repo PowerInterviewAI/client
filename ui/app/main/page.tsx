@@ -1,6 +1,7 @@
 'use client';
 
 import ControlPanel from '@/components/control-panel';
+import Loading from '@/components/loading';
 import ProfileDialog from '@/components/profile-dialog';
 import SuggestionsPanel from '@/components/suggestions-panel';
 import TranscriptPanel from '@/components/transcript-panel';
@@ -12,11 +13,12 @@ import { useConfigQuery, useUpdateConfig } from '@/hooks/config';
 import { RunningState } from '@/types/appState';
 import { Config } from '@/types/config';
 import { Transcript } from '@/types/transcript';
-import { Loader } from 'lucide-react';
-import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 export default function Home() {
+  const router = useRouter();
+
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [config, setConfig] = useState<Config>();
@@ -80,7 +82,23 @@ export default function Home() {
     }
   }, []);
 
-  return appState?.is_backend_live && appState?.is_gpu_server_live ? (
+  // Show loading if backend is not live
+  if (appState && !appState.is_backend_live) {
+    return <Loading disclaimer="Starting user specific context…" />;
+  }
+
+  // Redirect to login if not logged in
+  if (appState && !appState.is_logged_in) {
+    router.push('/auth/login');
+    return null;
+  }
+
+  // Show loading if GPU server is not live
+  if (appState && !appState.is_gpu_server_live) {
+    return <Loading disclaimer="Allocating AI processing resources…" />;
+  }
+
+  return (
     <div className="h-screen w-full bg-background p-1 space-y-1">
       <div className="flex flex-1 overflow-y-hidden gap-1" style={{ height: 'calc(100vh - 64px)' }}>
         {/* Left Column: Video + Transcription */}
@@ -141,17 +159,6 @@ export default function Home() {
         initialProfileData={config?.profile?.profile_data ?? ''}
         updateConfig={updateConfig}
       />
-    </div>
-  ) : (
-    <div className="flex justify-center items-center h-screen w-full bg-background ">
-      <div className="flex flex-col items-center">
-        <div className="flex gap-2 items-center">
-          <Image src="/logo.svg" alt="Logo" width={32} height={32} className="mx-auto" />
-          <p className="text-2xl font-bold">Power Interview</p>
-        </div>
-        <p className="animate-pulse text-sm mt-4">Allocating cloud resources…</p>
-        <Loader className="w-4 h-4 animate-spin" />
-      </div>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 'use client';
 
-export default function HeroPage() {
+export default function AuthenticationPage() {
   return <div>Authentication</div>;
 }

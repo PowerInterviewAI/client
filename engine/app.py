@@ -217,6 +217,7 @@ class PowerInterviewApp:
     # ---- State Management ----
     async def get_app_state(self) -> AppState:
         return AppState(
+            is_logged_in=await self.service_status_monitor.is_logged_in(),
             assistant_state=await self.transcriber.get_state(),
             transcripts=await self.transcriber.get_transcripts(),
             suggestions=await self.suggestion_service.get_suggestions(),
@@ -237,6 +238,7 @@ class PowerInterviewApp:
     # ---- Background Tasks ----
     async def start_background_tasks(self) -> None:
         await self.service_status_monitor.start_backend_monitor()
+        await self.service_status_monitor.start_auth_monitor()
         await self.service_status_monitor.start_gpu_server_monitor()
         await self.service_status_monitor.start_wakeup_gpu_server_loop()
 
