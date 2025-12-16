@@ -11,6 +11,12 @@ class Language(StrEnum):
 
 
 class Config(BaseModel):
+    session_token: Annotated[
+        str,
+        Field(description="The session token"),
+    ] = ""
+
+    # General options
     profile: Annotated[
         UserProfile,
         Field(description="The user profile"),
@@ -68,6 +74,9 @@ class Config(BaseModel):
 
 
 class ConfigUpdate(BaseModel):
+    session_token: str | None = None
+
+    # General options
     profile: UserProfile | None = None
     language: Language | None = None
 

@@ -24,6 +24,10 @@ class ErrorCode409(StrEnum):
     CONFLICT = "CONFLICT"
 
 
+class ErrorCode422(StrEnum):
+    VALIDATION_ERROR = "VALIDATION_ERROR"
+
+
 class ErrorCode429(StrEnum):
     TOO_MANY_REQUESTS = "TOO_MANY_REQUESTS"
 
@@ -103,6 +107,13 @@ class ConflictException(GenericException[ErrorCode409]):
     status_code = status.HTTP_409_CONFLICT
     default_error_code = ErrorCode409.CONFLICT
     default_message = "Item already exists"
+
+
+class ValidationErrorException(GenericException[ErrorCode422]):
+    error_code_type = ErrorCode422
+    status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
+    default_error_code = ErrorCode422.VALIDATION_ERROR
+    default_message = "Validation error"
 
 
 class TooManyRequestException(GenericException[ErrorCode429]):

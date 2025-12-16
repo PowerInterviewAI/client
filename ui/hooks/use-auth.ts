@@ -44,7 +44,7 @@ export default function useAuth() {
     setLoading(true);
     setError(null);
     try {
-      await axiosClient.post('/auth/logout');
+      await axiosClient.get('/auth/logout');
       router.push('/auth/login');
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

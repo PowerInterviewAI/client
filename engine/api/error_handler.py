@@ -7,7 +7,7 @@ from fastapi.routing import APIRoute
 from loguru import logger
 
 from engine.cfg.api import config as cfg_api
-from engine.schemas.error import ErrorCode500, InternalServerException
+from engine.schemas.error import ErrorCode422, ErrorCode500, InternalServerException, ValidationErrorException
 
 
 class RouteErrorHandler(APIRoute):
@@ -30,20 +30,15 @@ class RouteErrorHandler(APIRoute):
             except (ValueError, TypeError) as ex:
                 if cfg_api.DEBUG:
                     logger.exception(f"ValidationError due to: {ex}")
-                raise RequestValidationError(
-                    errors=[
-                        {
-                            "loc": ("body",),
-                            "msg": f"Validation error: {ex}",
-                            "type": "value_error",
-                        }
-                    ]
+                raise ValidationErrorException(
+                    error_code=ErrorCode422.VALIDATION_ERROR,
+                    message=f"{ex}",
                 ) from ex
             except Exception as ex:
                 logger.exception("Unhandled exception:")
                 raise InternalServerException(
                     error_code=ErrorCode500.INTERNAL_SERVER_ERROR,
-                    message="Internal server error",
+                    message=f"{ex}",
                 ) from ex
 
         return custom_route_handler

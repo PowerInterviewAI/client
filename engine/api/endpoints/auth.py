@@ -1,46 +1,96 @@
-from typing import Any
-
-from fastapi import APIRouter, HTTPException
+import aiohttp
+from fastapi import APIRouter
 
 from engine.api.error_handler import RouteErrorHandler
 from engine.app import the_app
-from engine.schemas.auth import AuthRequest
+from engine.cfg.auth import config as cfg_auth
+from engine.cfg.client import config as cfg_client
+from engine.models.config import ConfigUpdate
+from engine.schemas.auth import AuthRequest, LoginRequestBackend
+from engine.schemas.error import ErrorCode401, UnauthorizedException
+from engine.services.device_service import DeviceService
 
 router = APIRouter(route_class=RouteErrorHandler, tags=["Authentication"])
 
 
 @router.post("/login")
-async def login(req: AuthRequest) -> dict[str, Any]:
-    # NOTE: This is a minimal placeholder implementation.
-    # In a real app you should verify credentials against a user store,
-    # hash passwords, and issue secure session tokens/HTTPOnly cookies.
+async def login(req: AuthRequest) -> None:
+    # Check credentials
     if not req.email or not req.password:
-        raise HTTPException(status_code=400, detail="Missing credentials")
+        raise UnauthorizedException(
+            error_code=ErrorCode401.INVALID_CREDENTIALS,
+            message="Invalid credentials",
+        )
 
-    # For demo: accept any non-empty password as valid
-    await the_app.service_status_monitor.set_logged_in(True)
+    # Authenticate user to backend
+    timeout = aiohttp.ClientTimeout(total=cfg_client.HTTP_TIMEOUT)
+    async with (
+        aiohttp.ClientSession(timeout=timeout) as session,
+        session.post(
+            cfg_client.BACKEND_AUTH_LOGIN_URL,
+            json=LoginRequestBackend(
+                email=req.email,
+                password=req.password,
+                device_info=DeviceService.get_device_info(),
+            ).model_dump(),
+        ) as resp,
+    ):
+        resp.raise_for_status()
 
-    # Optionally store the user email in config/profile for display
-    the_app.config.profile.username = req.email
-    the_app.save_config()
+        # Get session token from set cookie
+        cookies = resp.cookies
+        if cfg_auth.SESSION_TOKEN_COOKIE_NAME not in cookies:
+            raise UnauthorizedException(
+                error_code=ErrorCode401.INVALID_CREDENTIALS,
+                message="Invalid credentials",
+            )
+        session_token = cookies[cfg_auth.SESSION_TOKEN_COOKIE_NAME].value
 
-    return {"status": "ok"}
+        # Update app config with session token
+        the_app.update_config(
+            cfg=ConfigUpdate(
+                session_token=session_token,
+            )
+        )
 
 
 @router.post("/signup")
-async def signup(req: AuthRequest) -> dict[str, Any]:
-    # NOTE: Minimal placeholder - does not persist credentials securely.
+async def signup(req: AuthRequest) -> None:
+    # Check credentials
     if not req.email or not req.password:
-        raise HTTPException(status_code=400, detail="Missing credentials")
+        raise UnauthorizedException(
+            error_code=ErrorCode401.INVALID_CREDENTIALS,
+            message="Invalid credentials",
+        )
 
-    # Store user email into profile (no password management here)
-    the_app.config.profile.username = req.email
-    the_app.save_config()
+    # Register user to backend
+    timeout = aiohttp.ClientTimeout(total=cfg_client.HTTP_TIMEOUT)
+    async with (
+        aiohttp.ClientSession(timeout=timeout) as session,
+        session.post(
+            cfg_client.BACKEND_AUTH_SIGNUP_URL,
+            json=AuthRequest(
+                email=req.email,
+                password=req.password,
+            ).model_dump(),
+        ) as resp,
+    ):
+        resp.raise_for_status()
 
-    return {"status": "created"}
 
+@router.get("/logout")
+async def logout() -> None:
+    # Clear session token in app config
+    the_app.update_config(
+        cfg=ConfigUpdate(
+            session_token="",
+        )
+    )
 
-@router.post("/logout")
-async def logout() -> dict[str, Any]:
-    await the_app.service_status_monitor.set_logged_in(False)
-    return {"status": "ok"}
+    # Notify backend about logout
+    timeout = aiohttp.ClientTimeout(total=cfg_client.HTTP_TIMEOUT)
+    async with (
+        aiohttp.ClientSession(timeout=timeout) as session,
+        session.get(cfg_client.BACKEND_AUTH_LOGOUT_URL) as resp,
+    ):
+        resp.raise_for_status()
