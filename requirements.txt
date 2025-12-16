@@ -1,5 +1,6 @@
 aiohttp==3.13.2
 asyncio==4.0.0
+email-validator==2.3.0
 fastapi==0.121.2
 loguru==0.7.3
 mypy==1.18.2
