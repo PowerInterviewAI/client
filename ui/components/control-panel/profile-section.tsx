@@ -1,9 +1,14 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Config } from '@/types/config';
-import { Moon, Sun } from 'lucide-react';
+import { ChevronUp, Moon, Sun, User } from 'lucide-react';
 import Image from 'next/image';
 
 interface ProfileSectionProps {
@@ -21,14 +26,9 @@ export function ProfileSection({
 }: ProfileSectionProps) {
   return (
     <div className="flex items-center gap-2">
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onProfileClick}
-            className="rounded-md hover:bg-muted h-10"
-          >
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="sm" className="rounded-md hover:bg-muted h-10">
             <div className="flex items-center gap-2 text-foreground">
               {config?.profile?.photo ? (
                 <Image
@@ -46,28 +46,21 @@ export function ProfileSection({
                 </div>
               )}
               <p className="text-sm font-medium">{config?.profile?.username}</p>
+              <ChevronUp className="h-4 w-4" />
             </div>
           </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>Edit profile</p>
-        </TooltipContent>
-      </Tooltip>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onThemeToggle}
-            className="h-9 w-9 p-0 hover:bg-muted"
-          >
-            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{isDark ? 'Switch to light mode' : 'Switch to dark mode'}</p>
-        </TooltipContent>
-      </Tooltip>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" side="top">
+          <DropdownMenuItem onClick={onProfileClick}>
+            <User className="mr-2 h-4 w-4" />
+            Edit profile
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={onThemeToggle}>
+            {isDark ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+            {isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
