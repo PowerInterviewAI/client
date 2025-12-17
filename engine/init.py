@@ -33,7 +33,7 @@ def init_watch_parent() -> None:
 
 
 async def init_app() -> None:
-    the_app.client_session = ClientSession(timeout=ClientTimeout(total=cfg_client.HTTP_TIMEOUT))
+    the_app.client_session = ClientSession(timeout=ClientTimeout(total=cfg_client.HTTP_TIMEOUT_SECS))
 
     cfg = the_app.load_config()
     the_app.update_session_token(cfg.session_token)

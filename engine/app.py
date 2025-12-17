@@ -188,7 +188,7 @@ class PowerInterviewApp:
     # ---- HTTP Client Session Management ----
     async def get_session(self) -> ClientSession:
         if self.client_session is None:
-            self.client_session = ClientSession(timeout=ClientTimeout(total=cfg_client.HTTP_TIMEOUT))
+            self.client_session = ClientSession(timeout=ClientTimeout(total=cfg_client.HTTP_TIMEOUT_SECS))
         return self.client_session
 
     def update_session_token(self, session_token: str) -> None:

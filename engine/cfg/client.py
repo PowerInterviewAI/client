@@ -27,7 +27,7 @@ class Config(BaseSettings):
         f"{BACKEND_URL.replace('http://', 'ws://').replace('https://', 'wss://')}/api/asr/streaming"
     )
 
-    HTTP_TIMEOUT: int = 10
+    HTTP_TIMEOUT_SECS: int = 15
 
 
 config = Config()
