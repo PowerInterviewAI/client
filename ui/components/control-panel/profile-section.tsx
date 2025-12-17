@@ -5,15 +5,17 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Config } from '@/types/config';
-import { ChevronUp, Moon, Sun, User } from 'lucide-react';
+import { ChevronUp, LogOut, Moon, Sun, User } from 'lucide-react';
 import Image from 'next/image';
 
 interface ProfileSectionProps {
   config?: Config;
   onProfileClick: () => void;
+  onSignOut: () => void;
   onThemeToggle: () => void;
   isDark: boolean;
 }
@@ -21,6 +23,7 @@ interface ProfileSectionProps {
 export function ProfileSection({
   config,
   onProfileClick,
+  onSignOut,
   onThemeToggle,
   isDark,
 }: ProfileSectionProps) {
@@ -58,6 +61,11 @@ export function ProfileSection({
           <DropdownMenuItem onClick={onThemeToggle}>
             {isDark ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
             {isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={onSignOut}>
+            <LogOut className="mr-2 h-4 w-4" />
+            Sign out
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

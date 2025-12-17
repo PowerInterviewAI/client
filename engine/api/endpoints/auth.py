@@ -48,6 +48,9 @@ async def login(req: AuthRequest) -> None:
             )
         )
 
+        # Update login status
+        await the_app.service_monitor.set_logged_in(logged_in=True)
+
 
 @router.post("/signup")
 async def signup(req: AuthRequest) -> None:
@@ -71,6 +74,9 @@ async def signup(req: AuthRequest) -> None:
 
 @router.get("/logout")
 async def logout() -> None:
+    # Update login status
+    await the_app.service_monitor.set_logged_in(logged_in=False)
+
     # Clear session token in app config
     the_app.update_config(
         cfg=ConfigUpdate(

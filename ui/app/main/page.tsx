@@ -10,6 +10,7 @@ import { useAppState } from '@/hooks/app-state';
 import { useStartAssistant, useStopAssistant } from '@/hooks/assistant';
 import { useAudioInputDevices, useAudioOutputDevices } from '@/hooks/audio-devices';
 import { useConfigQuery, useUpdateConfig } from '@/hooks/config';
+import useAuth from '@/hooks/use-auth';
 import { RunningState } from '@/types/appState';
 import { Config } from '@/types/config';
 import { Transcript } from '@/types/transcript';
@@ -18,6 +19,7 @@ import { useEffect, useRef, useState } from 'react';
 
 export default function Home() {
   const router = useRouter();
+  const { logout } = useAuth();
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
@@ -48,6 +50,11 @@ export default function Home() {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     }
+  };
+
+  // Sign out handling
+  const handleSignOut = async () => {
+    await logout();
   };
 
   const updateConfig = (cfg: Partial<Config>) => {
@@ -82,15 +89,21 @@ export default function Home() {
     }
   }, []);
 
+  // Redirect to login if not logged in
+  useEffect(() => {
+    if (appState && !appState.is_logged_in) {
+      router.push('/auth/login');
+    }
+  }, [appState, router]);
+
   // Show loading if backend is not live
   if (appState && !appState.is_backend_live) {
     return <Loading disclaimer="Initializing context for your device…" />;
   }
 
-  // Redirect to login if not logged in
+  // Show loading if not logged in (fallback)
   if (appState && !appState.is_logged_in) {
-    router.push('/auth/login');
-    return null;
+    return <Loading disclaimer="Redirecting to login…" />;
   }
 
   // Show loading if GPU server is not live
@@ -144,6 +157,7 @@ export default function Home() {
           audioInputDevices={audioInputDevices ?? []}
           audioOutputDevices={audioOutputDevices ?? []}
           onProfileClick={() => setIsProfileOpen(true)}
+          onSignOut={handleSignOut}
           onThemeToggle={handleThemeToggle}
           isDark={isDark}
           config={config}
