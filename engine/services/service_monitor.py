@@ -5,6 +5,7 @@ from typing import Any
 from aiohttp import ClientSession
 
 from engine.cfg.client import config as cfg_client
+from engine.services.device_service import DeviceService
 
 
 class ServiceMonitor:
@@ -51,10 +52,10 @@ class ServiceMonitor:
                         resp.raise_for_status()
 
                         await self.set_backend_live(True)
+                        await asyncio.sleep(60)
+
                 except Exception:
                     await self.set_backend_live(False)
-
-                finally:
                     await asyncio.sleep(1)
 
         self._backend_monitor_task = asyncio.create_task(worker())
@@ -62,15 +63,27 @@ class ServiceMonitor:
     async def start_auth_monitor(self, client_session: ClientSession) -> None:
         async def worker() -> None:
             while True:
+                # If backend is not live, mark as not logged in
+                if not await self.is_backend_live():
+                    await self.set_logged_in(False)
+
+                    await asyncio.sleep(1)
+                    continue
+
+                # Ping backend with device info to check login status
                 try:
-                    async with client_session.get(cfg_client.BACKEND_PING_CLIENT_URL) as resp:
+                    device_info = DeviceService.get_device_info()
+                    async with client_session.post(
+                        cfg_client.BACKEND_PING_CLIENT_URL,
+                        json=device_info.model_dump(mode="json"),
+                    ) as resp:
                         resp.raise_for_status()
 
                         await self.set_logged_in(True)
+                        await asyncio.sleep(60)
+
                 except Exception:
                     await self.set_logged_in(False)
-
-                finally:
                     await asyncio.sleep(1)
 
         self._auth_monitor_task = asyncio.create_task(worker())
@@ -78,15 +91,23 @@ class ServiceMonitor:
     async def start_gpu_server_monitor(self, client_session: ClientSession) -> None:
         async def worker() -> None:
             while True:
+                # If not logged in, mark GPU server as not live
+                if not await self.is_logged_in():
+                    await self.set_gpu_server_live(False)
+
+                    await asyncio.sleep(1)
+                    continue
+
+                # Ping GPU server
                 try:
                     async with client_session.get(cfg_client.BACKEND_PING_GPU_SERVER_URL) as resp:
                         resp.raise_for_status()
 
                         await self.set_gpu_server_live(True)
+                        await asyncio.sleep(60)
+
                 except Exception:
                     await self.set_gpu_server_live(False)
-
-                finally:
                     await asyncio.sleep(1)
 
         self._gpu_server_monitor_task = asyncio.create_task(worker())
@@ -94,6 +115,12 @@ class ServiceMonitor:
     async def start_wakeup_gpu_server_loop(self, client_session: ClientSession) -> None:
         async def worker() -> None:
             while True:
+                # If not logged in, skip wakeup
+                if not await self.is_logged_in():
+                    await asyncio.sleep(1)
+                    continue
+
+                # Wakeup GPU server
                 with contextlib.suppress(Exception):
                     async with client_session.get(cfg_client.BACKEND_WAKEUP_GPU_SERVER_URL) as resp:
                         resp.raise_for_status()
