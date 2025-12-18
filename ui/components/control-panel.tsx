@@ -70,7 +70,7 @@ export default function ControlPanel({
       label: 'Start',
     },
     [RunningState.STARTING]: {
-      onClick: () => { },
+      onClick: () => {},
       className: 'bg-primary hover:bg-primary/90',
       icon: <Ellipsis className="h-3.5 w-3.5 animate-pulse" />,
       label: 'Starting...',
@@ -82,7 +82,7 @@ export default function ControlPanel({
       label: 'Stop',
     },
     [RunningState.STOPPING]: {
-      onClick: () => { },
+      onClick: () => {},
       className: 'bg-destructive hover:bg-destructive/90',
       icon: <Ellipsis className="h-3.5 w-3.5 animate-pulse" />,
       label: 'Stopping...',

@@ -96,6 +96,11 @@ export default function Home() {
     }
   }, [appState, router]);
 
+  // Show loading if app state is not loaded yet
+  if (!appState && !appStateError) {
+    return <Loading disclaimer="Loading your configuration…" />;
+  }
+
   // Show loading if backend is not live
   if (appState && !appState.is_backend_live) {
     return <Loading disclaimer="Initializing context for your device…" />;
