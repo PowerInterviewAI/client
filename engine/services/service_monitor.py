@@ -1,5 +1,6 @@
 import asyncio
 import contextlib
+from collections.abc import Awaitable, Callable
 from typing import Any
 
 from aiohttp import ClientSession
@@ -9,7 +10,10 @@ from engine.services.device_service import DeviceService
 
 
 class ServiceMonitor:
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        on_logged_out: Callable[[], Awaitable[None]] | None = None,
+    ) -> None:
         self._is_logged_in = False
         self._is_backend_live = False
         self._is_gpu_server_live = False
@@ -19,6 +23,7 @@ class ServiceMonitor:
         self._auth_monitor_task: asyncio.Task[Any] | None = None
 
         self._lock = asyncio.Lock()
+        self._on_logged_out = on_logged_out
 
     async def set_backend_live(self, is_running: bool) -> None:  # noqa: FBT001
         async with self._lock:
@@ -65,6 +70,12 @@ class ServiceMonitor:
             while True:
                 # If backend is not live, mark as not logged in
                 if not await self.is_backend_live():
+                    # If just logged out
+                    if await self.is_logged_in():  # noqa: SIM102
+                        # Trigger logged out callback
+                        if self._on_logged_out:
+                            await self._on_logged_out()
+
                     await self.set_logged_in(False)
 
                     await asyncio.sleep(1)
@@ -83,6 +94,12 @@ class ServiceMonitor:
                         await asyncio.sleep(60)
 
                 except Exception:
+                    # If just logged out
+                    if await self.is_logged_in():  # noqa: SIM102
+                        # Trigger logged out callback
+                        if self._on_logged_out:
+                            await self._on_logged_out()
+
                     await self.set_logged_in(False)
                     await asyncio.sleep(1)
 

@@ -32,7 +32,7 @@ class PowerInterviewApp:
         self._file_lock = threading.Lock()
         self.config = Config()
 
-        self.service_monitor = ServiceMonitor()
+        self.service_monitor = ServiceMonitor(on_logged_out=self.on_logged_out)
 
         self.transcriber = Transcriber(
             callback_on_self_final=self.on_transcriber_self_final,
@@ -244,6 +244,17 @@ class PowerInterviewApp:
         )
 
     # ---- Callbacks ----
+    async def on_logged_out(self) -> None:
+        # Stop the assistant when logout is detected
+        await self.stop_assistant()
+
+        # Clear session token in app config when logout is detected
+        self.update_config(
+            cfg=ConfigUpdate(
+                session_token="",
+            )
+        )
+
     async def on_transcriber_self_final(self, transcripts: list[Transcript]) -> None:
         pass
 
