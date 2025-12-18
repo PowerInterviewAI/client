@@ -61,8 +61,8 @@ export default function useAuth() {
     setError(null);
     try {
       await axiosClient.post('/auth/change-password', {
-        currentPassword,
-        newPassword,
+        current_password: currentPassword,
+        new_password: newPassword,
       });
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
