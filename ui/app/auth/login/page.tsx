@@ -49,7 +49,7 @@ export default function LoginPage() {
 
           <div className="text-center">
             <Link href="/auth/signup" className="text-sm underline">
-              Don't have account? Create a new one.
+              Don&apos;t have account? Create a new one.
             </Link>
           </div>
         </form>
