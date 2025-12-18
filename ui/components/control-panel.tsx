@@ -212,10 +212,7 @@ export default function ControlPanel({
         />
       </div>
 
-      <StatusIndicator
-        runningState={runningState}
-        indicatorConfig={{ dotClass: indicatorDotClass, label: indicatorLabel }}
-      />
+      <StatusIndicator indicatorConfig={{ dotClass: indicatorDotClass, label: indicatorLabel }} />
     </div>
   );
 }

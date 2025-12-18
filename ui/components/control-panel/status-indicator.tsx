@@ -1,16 +1,13 @@
 'use client';
 
-import { RunningState } from '@/types/appState';
-
 interface StatusIndicatorProps {
-  runningState: RunningState;
   indicatorConfig: {
     dotClass: string;
     label: string;
   };
 }
 
-export function StatusIndicator({ runningState, indicatorConfig }: StatusIndicatorProps) {
+export function StatusIndicator({ indicatorConfig }: StatusIndicatorProps) {
   const { dotClass, label } = indicatorConfig;
 
   return (

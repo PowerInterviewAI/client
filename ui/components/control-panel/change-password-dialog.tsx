@@ -40,6 +40,7 @@ export function ChangePasswordDialog({
       setConfirmPassword('');
     } catch (err) {
       // Error is handled by parent component
+      console.error('Password change failed:', err);
     }
   };
 
