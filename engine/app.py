@@ -204,6 +204,7 @@ class PowerInterviewApp:
         await self.transcriber.clear_transcripts()
         await self.transcriber.start(
             input_device_index=AudioService.get_device_index_by_name(self.config.audio_input_device_name),
+            session_token=self.config.session_token if self.config.session_token else None,
         )
 
         await self.suggestion_service.clear_suggestions()

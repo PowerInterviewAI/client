@@ -35,7 +35,7 @@ class Transcriber:
         self._lock = asyncio.Lock()
         self._state = RunningState.IDLE
 
-    async def start(self, input_device_index: int) -> None:
+    async def start(self, input_device_index: int, session_token: str | None = None) -> None:
         """
         Async start: stops any running services, (re)creates ASRService instances if needed,
         and starts them. This method is async because ASRService.start is async.
@@ -80,9 +80,9 @@ class Transcriber:
         # Start both ASR services (await because start is async)
         try:
             if self.self_asr is not None:
-                await self.self_asr.start(device_index=input_device_index)
+                await self.self_asr.start(device_index=input_device_index, session_token=session_token)
             if self.other_asr is not None:
-                await self.other_asr.start()
+                await self.other_asr.start(session_token=session_token)
         except Exception:
             logger.exception("Failed to start ASR services")
             # If start failed, ensure we set state appropriately and re-raise
@@ -274,3 +274,10 @@ class Transcriber:
             logger.warning(f"Filtered: {text}")
             return None
         return text
+
+    def update_session_token(self, session_token: str | None) -> None:
+        """Update the session token for ASR services.
+
+        Note: This method is deprecated. Session tokens should be passed to start() method.
+        For running services, they will use the updated token on next restart.
+        """
