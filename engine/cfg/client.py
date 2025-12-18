@@ -17,6 +17,7 @@ class Config(BaseSettings):
     BACKEND_AUTH_SIGNUP_URL: str = f"{BACKEND_URL}/api/auth/signup"
     BACKEND_AUTH_LOGIN_URL: str = f"{BACKEND_URL}/api/auth/login"
     BACKEND_AUTH_LOGOUT_URL: str = f"{BACKEND_URL}/api/auth/logout"
+    BACKEND_AUTH_CHANGE_PASSWORD_URL: str = f"{BACKEND_URL}/api/auth/change-password"
 
     BACKEND_SUGGESTIONS_URL: str = f"{BACKEND_URL}/api/llm/suggestion"
     BACKEND_SUMMARIZE_URL: str = f"{BACKEND_URL}/api/llm/summarize"

@@ -29,3 +29,14 @@ class LoginRequestBackend(BaseModel):
         DeviceInfo,
         Field(description="Device information"),
     ]
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: Annotated[
+        str,
+        Field(description="Current password"),
+    ]
+    new_password: Annotated[
+        str,
+        Field(description="New password"),
+    ]

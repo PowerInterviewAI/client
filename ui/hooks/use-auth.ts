@@ -56,10 +56,28 @@ export default function useAuth() {
     }
   };
 
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await axiosClient.post('/auth/change-password', {
+        currentPassword,
+        newPassword,
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      setError(err?.response?.data?.message ?? err?.message ?? 'Password change failed');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     login,
     signup,
     logout,
+    changePassword,
     loading,
     error,
     setError,

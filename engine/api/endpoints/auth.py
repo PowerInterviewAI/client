@@ -5,7 +5,7 @@ from engine.app import the_app
 from engine.cfg.auth import config as cfg_auth
 from engine.cfg.client import config as cfg_client
 from engine.models.config import ConfigUpdate
-from engine.schemas.auth import AuthRequest, LoginRequestBackend
+from engine.schemas.auth import AuthRequest, ChangePasswordRequest, LoginRequestBackend
 from engine.schemas.error import ErrorCode401, UnauthorizedException
 from engine.services.device_service import DeviceService
 
@@ -86,4 +86,21 @@ async def logout() -> None:
 
     # Notify backend about logout
     async with (await the_app.get_session()).get(cfg_client.BACKEND_AUTH_LOGOUT_URL) as resp:
+        resp.raise_for_status()
+
+
+@router.post("/change-password")
+async def change_password(req: ChangePasswordRequest) -> None:
+    # Validate request
+    if not req.current_password or not req.new_password:
+        raise UnauthorizedException(
+            error_code=ErrorCode401.INVALID_CREDENTIALS,
+            message="Current password and new password are required",
+        )
+
+    # Change password via backend
+    async with (await the_app.get_session()).post(
+        cfg_client.BACKEND_AUTH_CHANGE_PASSWORD_URL,
+        json=req.model_dump(),
+    ) as resp:
         resp.raise_for_status()
