@@ -19,7 +19,7 @@ import {
 import { Input } from '@/components/ui/input';
 import useAuth from '@/hooks/use-auth';
 import { Config } from '@/types/config';
-import { ChevronUp, Key, LogOut, Moon, Sun, User } from 'lucide-react';
+import { ChevronUp, Eye, EyeOff, Key, LogOut, Moon, Sun, User } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 
@@ -38,11 +38,14 @@ export function ProfileSection({
   onThemeToggle,
   isDark,
 }: ProfileSectionProps) {
-  const { changePassword, loading, error } = useAuth();
+  const { changePassword, loading, error, setError } = useAuth();
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChangePassword = async () => {
     try {
@@ -91,7 +94,18 @@ export function ProfileSection({
             {isDark ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
             {isDark ? 'Switch to light mode' : 'Switch to dark mode'}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setIsChangePasswordOpen(true)}>
+          <DropdownMenuItem
+            onClick={() => {
+              setCurrentPassword('');
+              setNewPassword('');
+              setConfirmPassword('');
+              setShowCurrentPassword(false);
+              setShowNewPassword(false);
+              setShowConfirmPassword(false);
+              setError(null);
+              setIsChangePasswordOpen(true);
+            }}
+          >
             <Key className="mr-2 h-4 w-4" />
             Change password
           </DropdownMenuItem>
@@ -114,37 +128,81 @@ export function ProfileSection({
               <label htmlFor="current-password" className="text-sm font-medium">
                 Current Password
               </label>
-              <Input
-                id="current-password"
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="Enter current password"
-              />
+              <div className="relative">
+                <Input
+                  id="current-password"
+                  type={showCurrentPassword ? 'text' : 'password'}
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="Enter current password"
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                >
+                  {showCurrentPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
             </div>
             <div className="grid gap-2">
               <label htmlFor="new-password" className="text-sm font-medium">
                 New Password
               </label>
-              <Input
-                id="new-password"
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Enter new password"
-              />
+              <div className="relative">
+                <Input
+                  id="new-password"
+                  type={showNewPassword ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Enter new password"
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                >
+                  {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
             </div>
             <div className="grid gap-2">
               <label htmlFor="confirm-password" className="text-sm font-medium">
                 Confirm New Password
               </label>
-              <Input
-                id="confirm-password"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm new password"
-              />
+              <div className="relative">
+                <Input
+                  id="confirm-password"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm new password"
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
           <DialogFooter>
