@@ -1,5 +1,6 @@
 'use client';
 
+import { InputPassword } from '@/components/input-password';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -33,8 +34,7 @@ export default function LoginPage() {
 
           <div>
             <label className="text-sm block mb-1">Password</label>
-            <Input
-              type="password"
+            <InputPassword
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required

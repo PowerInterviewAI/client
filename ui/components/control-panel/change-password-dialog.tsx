@@ -1,5 +1,6 @@
 'use client';
 
+import { InputPassword } from '@/components/input-password';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -9,8 +10,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 
 interface ChangePasswordDialogProps {
@@ -31,9 +30,6 @@ export function ChangePasswordDialog({
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSubmit = async () => {
     try {
@@ -42,9 +38,6 @@ export function ChangePasswordDialog({
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      setShowCurrentPassword(false);
-      setShowNewPassword(false);
-      setShowConfirmPassword(false);
     } catch (err) {
       // Error is handled by parent component
     }
@@ -56,9 +49,6 @@ export function ChangePasswordDialog({
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      setShowCurrentPassword(false);
-      setShowNewPassword(false);
-      setShowConfirmPassword(false);
     }
     onOpenChange(newOpen);
   };
@@ -76,23 +66,12 @@ export function ChangePasswordDialog({
               Current Password
             </label>
             <div className="relative">
-              <Input
+              <InputPassword
                 id="current-password"
-                type={showCurrentPassword ? 'text' : 'password'}
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 placeholder="Enter current password"
-                className="pr-10"
               />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="absolute right-0 top-0 h-full px-3 py-2"
-                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-              >
-                {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </Button>
             </div>
           </div>
           <div className="grid gap-2">
@@ -100,23 +79,12 @@ export function ChangePasswordDialog({
               New Password
             </label>
             <div className="relative">
-              <Input
+              <InputPassword
                 id="new-password"
-                type={showNewPassword ? 'text' : 'password'}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Enter new password"
-                className="pr-10"
               />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="absolute right-0 top-0 h-full px-3 py-2"
-                onClick={() => setShowNewPassword(!showNewPassword)}
-              >
-                {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </Button>
             </div>
           </div>
           <div className="grid gap-2">
@@ -124,23 +92,12 @@ export function ChangePasswordDialog({
               Confirm New Password
             </label>
             <div className="relative">
-              <Input
+              <InputPassword
                 id="confirm-password"
-                type={showConfirmPassword ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm new password"
-                className="pr-10"
               />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="absolute right-0 top-0 h-full px-3 py-2"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              >
-                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </Button>
             </div>
           </div>
         </div>
