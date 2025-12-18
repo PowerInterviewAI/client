@@ -58,12 +58,13 @@ export default function SignupPage() {
 
           {error && <div className="text-sm text-red-600">{error}</div>}
 
-          <div className="flex items-center justify-between">
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Creating…' : 'Create account'}
-            </Button>
+          <Button type="submit" disabled={loading} className="w-full">
+            {loading ? 'Creating…' : 'Create account'}
+          </Button>
+
+          <div className="text-center">
             <Link href="/auth/login" className="text-sm underline">
-              Back to sign in
+              Already have account? Just login
             </Link>
           </div>
         </form>
