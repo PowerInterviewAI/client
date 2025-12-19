@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useEffect } from 'react';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
-  const { data: appState } = useAppState(50);
+  const { data: appState } = useAppState(100);
 
   useEffect(() => {
     // Redirect to main page if already logged in

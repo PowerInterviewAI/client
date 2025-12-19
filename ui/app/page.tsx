@@ -7,7 +7,7 @@ import { useEffect } from 'react';
 
 export default function LogoutPage() {
   const router = useRouter();
-  const { data: appState } = useAppState(50);
+  const { data: appState } = useAppState(100);
 
   useEffect(() => {
     // Skip if AppState is not loaded yet
