@@ -51,7 +51,7 @@ class VirtualCameraService:
             except Exception as ex:
                 logger.warning(f"Failed to start virtual camera: {ex}")
                 # Wait a bit before retrying to avoid tight loop
-                if self._stop_event.wait(timeout=1.0):
+                if self._stop_event.wait(timeout=5.0):
                     break
                 # refresh config under lock
                 with self._lock:
