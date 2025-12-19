@@ -93,12 +93,12 @@ async function startEngine() {
         await startEngine();
 
         if (win && !win.isDestroyed()) {
-            win.loadURL(`http://localhost:${currentPort}`);
+            win.loadURL(`http://localhost:${currentPort}/main`);
         }
     });
 
     // Wait for engine to fully boot
-    await waitForServer(`http://localhost:${currentPort}`);
+    await waitForServer(`http://localhost:${currentPort}/main`);
 
     isRestarting = false;
     return currentPort;
@@ -152,9 +152,9 @@ async function createWindow() {
     win.webContents.session.clearCache().then(async () => {
         if (app.isPackaged) {
             const port = await startEngine();
-            win.loadURL(`http://localhost:${port}`);
+            win.loadURL(`http://localhost:${port}/main`);
         } else {
-            win.loadURL("http://localhost:3000");
+            win.loadURL("http://localhost:3000/main");
         }
     });
 }
