@@ -113,7 +113,9 @@ export default function Home() {
 
   // Show loading if GPU server is not live
   if (appState && !appState.is_gpu_server_live) {
-    return <Loading disclaimer="Allocating AI processing resources…" />;
+    return (
+      <Loading disclaimer="Initializing AI processing resources… Please allow up to 5 minutes for completion." />
+    );
   }
 
   return (

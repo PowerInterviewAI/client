@@ -47,9 +47,6 @@ class PowerInterviewApp:
             fps=cfg_video.DEFAULT_FPS,
         )
 
-        # start virtual camera
-        self.virtual_camera_service.start()
-
     # ---- Configuration Management ----
     def load_config(self) -> Config:
         """
@@ -234,7 +231,6 @@ class PowerInterviewApp:
         await self.suggestion_service.stop_current_task()
 
         self.audio_controller.stop()
-        self.virtual_camera_service.stop()
 
     # ---- State Management ----
     async def get_app_state(self) -> AppState:
