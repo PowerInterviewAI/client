@@ -7,6 +7,7 @@ from engine.app import the_app
 from engine.models.config import Config, ConfigUpdate
 from engine.schemas.app_state import AppState
 from engine.services.audio_service import AudioService
+from engine.services.config_service import ConfigService
 
 router = APIRouter(
     route_class=RouteErrorHandler,
@@ -16,14 +17,14 @@ router = APIRouter(
 
 @router.get("/get-config")
 def get_configuration() -> Config:
-    return the_app.load_config()
+    return ConfigService.load_config()
 
 
 @router.put("/update-config")
 def update_configuration(
     cfg: ConfigUpdate,
 ) -> Config:
-    return the_app.update_config(cfg=cfg)
+    return ConfigService.update_config(cfg=cfg)
 
 
 @router.get("/audio-input-devices")

@@ -3,9 +3,9 @@ from typing import Any
 import requests
 from requests import Response
 
-from engine.app import the_app
 from engine.cfg.auth import config as cfg_auth
 from engine.cfg.client import config as cfg_client
+from engine.services.config_service import ConfigService
 from engine.services.device_service import DeviceService
 
 
@@ -18,7 +18,7 @@ class WebClient:
 
     @classmethod
     def get(cls, url: str) -> Response:
-        session_token = the_app.config.session_token
+        session_token = ConfigService.config.session_token
         cookies = {cfg_auth.SESSION_TOKEN_COOKIE_NAME: session_token} if session_token else {}
         return requests.get(
             url,
@@ -29,7 +29,7 @@ class WebClient:
 
     @classmethod
     def post(cls, url: str, json: Any) -> Response:  # noqa: ANN401
-        session_token = the_app.config.session_token
+        session_token = ConfigService.config.session_token
         cookies = {cfg_auth.SESSION_TOKEN_COOKIE_NAME: session_token} if session_token else {}
         return requests.post(
             url,

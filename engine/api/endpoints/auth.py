@@ -7,6 +7,7 @@ from engine.cfg.client import config as cfg_client
 from engine.models.config import ConfigUpdate
 from engine.schemas.auth import AuthRequest, ChangePasswordRequest, LoginRequestBackend
 from engine.schemas.error import ErrorCode401, UnauthorizedException
+from engine.services.config_service import ConfigService
 from engine.services.device_service import DeviceService
 from engine.services.web_client import WebClient
 
@@ -43,7 +44,7 @@ def login(req: AuthRequest) -> None:
     session_token = cookies[cfg_auth.SESSION_TOKEN_COOKIE_NAME]
 
     # Update app config with session token
-    the_app.update_config(
+    ConfigService.update_config(
         cfg=ConfigUpdate(
             session_token=session_token,
         )
@@ -79,11 +80,7 @@ def logout() -> None:
     the_app.service_monitor.set_logged_in(False)
 
     # Clear session token in app config
-    the_app.update_config(
-        cfg=ConfigUpdate(
-            session_token="",
-        )
-    )
+    ConfigService.update_config(ConfigUpdate(session_token=""))
 
     # Notify backend about logout
     resp = WebClient.get(cfg_client.BACKEND_AUTH_LOGOUT_URL)

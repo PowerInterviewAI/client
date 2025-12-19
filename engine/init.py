@@ -7,6 +7,7 @@ import psutil
 from loguru import logger
 
 from engine.app import the_app
+from engine.services.config_service import ConfigService
 
 
 def init_watch_parent() -> None:
@@ -31,5 +32,5 @@ def init_watch_parent() -> None:
 
 
 def init_app() -> None:
-    the_app.load_config()
+    ConfigService.load_config()
     the_app.start_background_tasks()
