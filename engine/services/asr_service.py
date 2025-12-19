@@ -58,6 +58,7 @@ class ASRService:
         # Websocket / connection
         self.ws_uri = ws_uri
         self._ws: ClientConnection | None = None
+        self._ws_thread: threading.Thread | None = None
 
         # Internal control
         self._stop_event = threading.Event()
@@ -300,15 +301,21 @@ class ASRService:
     # -------------------------
     def start(self, device_index: int | None = None, session_token: str | None = None) -> None:
         """
-        Start capture (sync) and start the asyncio connect/stream task.
+        Start capture (sync) and start the asyncio connect/stream task in background.
         """
         if device_index is not None:
             self.device_index = device_index
 
         self.start_capture()
 
-        # Start connect task (single connect, no reconnect)
-        asyncio.run(self._connect_and_stream(session_token))
+        # Start connect task in background thread
+        if self._ws_thread is None or not self._ws_thread.is_alive():
+            self._ws_thread = threading.Thread(
+                target=lambda: asyncio.run(self._connect_and_stream(session_token)),
+                daemon=True,
+                name="asr-websocket",
+            )
+            self._ws_thread.start()
 
     def stop(self) -> None:
         """
@@ -321,6 +328,12 @@ class ASRService:
 
         # Stop capture (threaded)
         self.stop_capture()
+
+        # Wait for websocket thread to finish
+        if self._ws_thread and self._ws_thread.is_alive():
+            self._ws_thread.join(timeout=5.0)
+            if self._ws_thread.is_alive():
+                logger.warning("Websocket thread did not stop within timeout")
 
         logger.info("ASRClient stopped.")
 
