@@ -1,8 +1,19 @@
 'use client';
 
 import axiosClient from '@/lib/axiosClient';
+import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+
+function parseErrorMessage(err: unknown, defaultMessage: string): string {
+  if (axios.isAxiosError(err)) {
+    return err.response?.data?.detail?.message || err.response?.data?.message || err.message;
+  }
+  if (err instanceof Error) {
+    return err.message;
+  }
+  return defaultMessage;
+}
 
 export default function useAuth() {
   const router = useRouter();
@@ -17,7 +28,7 @@ export default function useAuth() {
       router.push('/main');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      setError(err?.response?.data?.message ?? err?.message ?? 'Login failed');
+      setError(parseErrorMessage(err, 'Login failed'));
       throw err;
     } finally {
       setLoading(false);
@@ -33,7 +44,7 @@ export default function useAuth() {
       router.push('/auth/login');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      setError(err?.response?.data?.message ?? err?.message ?? 'Signup failed');
+      setError(parseErrorMessage(err, 'Signup failed'));
       throw err;
     } finally {
       setLoading(false);
@@ -49,7 +60,7 @@ export default function useAuth() {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      setError(err?.response?.data?.message ?? err?.message ?? 'Logout failed');
+      setError(parseErrorMessage(err, 'Logout failed'));
       throw err;
     } finally {
       setLoading(false);
@@ -66,7 +77,7 @@ export default function useAuth() {
       });
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      setError(err?.response?.data?.message ?? err?.message ?? 'Password change failed');
+      setError(parseErrorMessage(err, 'Password change failed'));
       throw err;
     } finally {
       setLoading(false);

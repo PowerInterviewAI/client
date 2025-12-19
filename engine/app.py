@@ -9,6 +9,7 @@ import numpy as np
 from aiohttp import ClientSession, ClientTimeout
 from loguru import logger
 
+from engine.api.error_handler import raise_for_status
 from engine.cfg.auth import config as cfg_auth
 from engine.cfg.client import config as cfg_client
 from engine.cfg.fs import config as cfg_fs
@@ -289,7 +290,7 @@ class PowerInterviewApp:
                     transcripts=transcripts,
                 ).model_dump(),
             ) as resp:
-                resp.raise_for_status()
+                await raise_for_status(resp)
                 summary_part = str(await resp.text())
         except Exception as ex:
             logger.error(f"Failed to generate summary: {ex}")

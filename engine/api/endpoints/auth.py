@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from engine.api.error_handler import RouteErrorHandler
+from engine.api.error_handler import RouteErrorHandler, raise_for_status
 from engine.app import the_app
 from engine.cfg.auth import config as cfg_auth
 from engine.cfg.client import config as cfg_client
@@ -30,7 +30,7 @@ async def login(req: AuthRequest) -> None:
             device_info=DeviceService.get_device_info(),
         ).model_dump(),
     ) as resp:
-        resp.raise_for_status()
+        await raise_for_status(resp)
 
         # Get session token from set cookie
         cookies = resp.cookies
@@ -69,7 +69,7 @@ async def signup(req: AuthRequest) -> None:
             password=req.password,
         ).model_dump(),
     ) as resp:
-        resp.raise_for_status()
+        await raise_for_status(resp)
 
 
 @router.get("/logout")
@@ -86,7 +86,7 @@ async def logout() -> None:
 
     # Notify backend about logout
     async with (await the_app.get_session()).get(cfg_client.BACKEND_AUTH_LOGOUT_URL) as resp:
-        resp.raise_for_status()
+        await raise_for_status(resp)
 
 
 @router.post("/change-password")
@@ -103,4 +103,4 @@ async def change_password(req: ChangePasswordRequest) -> None:
         cfg_client.BACKEND_AUTH_CHANGE_PASSWORD_URL,
         json=req.model_dump(),
     ) as resp:
-        resp.raise_for_status()
+        await raise_for_status(resp)

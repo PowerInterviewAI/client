@@ -5,6 +5,7 @@ from typing import Any
 
 from aiohttp import ClientSession
 
+from engine.api.error_handler import raise_for_status
 from engine.cfg.client import config as cfg_client
 from engine.services.device_service import DeviceService
 
@@ -54,7 +55,7 @@ class ServiceMonitor:
             while True:
                 try:
                     async with client_session.get(cfg_client.BACKEND_PING_URL) as resp:
-                        resp.raise_for_status()
+                        await raise_for_status(resp)
 
                         await self.set_backend_live(True)
                         await asyncio.sleep(60)
@@ -88,7 +89,7 @@ class ServiceMonitor:
                         cfg_client.BACKEND_PING_CLIENT_URL,
                         json=device_info.model_dump(mode="json"),
                     ) as resp:
-                        resp.raise_for_status()
+                        await raise_for_status(resp)
 
                         await self.set_logged_in(True)
                         await asyncio.sleep(60)
@@ -118,7 +119,7 @@ class ServiceMonitor:
                 # Ping GPU server
                 try:
                     async with client_session.get(cfg_client.BACKEND_PING_GPU_SERVER_URL) as resp:
-                        resp.raise_for_status()
+                        await raise_for_status(resp)
 
                         await self.set_gpu_server_live(True)
                         await asyncio.sleep(60)
@@ -140,7 +141,7 @@ class ServiceMonitor:
                 # Wakeup GPU server
                 with contextlib.suppress(Exception):
                     async with client_session.get(cfg_client.BACKEND_WAKEUP_GPU_SERVER_URL) as resp:
-                        resp.raise_for_status()
+                        await raise_for_status(resp)
 
                 await asyncio.sleep(1)
 
