@@ -47,6 +47,9 @@ class PowerInterviewApp:
             fps=cfg_video.DEFAULT_FPS,
         )
 
+        # start virtual camera
+        self.virtual_camera_service.start()
+
     # ---- Configuration Management ----
     def load_config(self) -> Config:
         """
