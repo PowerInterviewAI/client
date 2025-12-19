@@ -2,7 +2,6 @@ from collections.abc import Callable, Coroutine
 from typing import Any
 
 import requests
-from aiohttp import ClientResponse
 from fastapi import HTTPException, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.routing import APIRoute
@@ -44,25 +43,6 @@ class RouteErrorHandler(APIRoute):
                 ) from ex
 
         return custom_route_handler
-
-
-async def raise_for_status_async(resp: ClientResponse) -> None:
-    """Raise HTTPException for non-2xx responses"""
-    try:
-        resp.raise_for_status()
-    except Exception as ex:
-        resp_json = await resp.json()
-        error_detail = resp_json.get("detail", {})
-        if "error_code" in error_detail and "message" in error_detail:
-            raise HTTPException(
-                status_code=resp.status,
-                detail=error_detail,
-            ) from ex
-
-        raise HTTPException(
-            status_code=resp.status,
-            detail={"error_code": "HTTP_ERROR", "message": f"HTTP error {resp.status}"},
-        ) from ex
 
 
 def raise_for_status(resp: requests.Response) -> None:

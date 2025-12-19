@@ -6,11 +6,9 @@ import threading
 from typing import Any
 
 import numpy as np
-from aiohttp import ClientSession, ClientTimeout
 from loguru import logger
 
-from engine.api.error_handler import raise_for_status_async
-from engine.cfg.auth import config as cfg_auth
+from engine.api.error_handler import raise_for_status
 from engine.cfg.client import config as cfg_client
 from engine.cfg.fs import config as cfg_fs
 from engine.cfg.video import config as cfg_video
@@ -23,13 +21,12 @@ from engine.services.service_monitor import ServiceMonitor
 from engine.services.suggestion_service import SuggestionService
 from engine.services.transcript_service import Transcriber
 from engine.services.virtual_camera import VirtualCameraService
+from engine.services.web_client import WebClient
 from engine.utils.datetime import DatetimeUtil
 
 
 class PowerInterviewApp:
     def __init__(self) -> None:
-        self.client_session: ClientSession | None = None
-
         self._file_lock = threading.Lock()
         self.config = Config()
 
@@ -186,29 +183,15 @@ class PowerInterviewApp:
         self.save_config()
         return self.config
 
-    # ---- HTTP Client Session Management ----
-    async def get_session(self) -> ClientSession:
-        if self.client_session is None:
-            self.client_session = ClientSession(timeout=ClientTimeout(total=cfg_client.HTTP_TIMEOUT_SECS))
-        return self.client_session
-
-    def update_session_token(self, session_token: str) -> None:
-        if self.client_session is None:
-            msg = "Client session not initialized; cannot update session token."
-            raise RuntimeError(msg)
-
-        cookies = {cfg_auth.SESSION_TOKEN_COOKIE_NAME: session_token}
-        self.client_session.cookie_jar.update_cookies(cookies)
-
     # ---- Assistant Control ----
-    async def start_assistant(self) -> None:
-        await self.transcriber.clear_transcripts()
-        await self.transcriber.start(
+    def start_assistant(self) -> None:
+        self.transcriber.clear_transcripts()
+        self.transcriber.start(
             input_device_index=AudioService.get_device_index_by_name(self.config.audio_input_device_name),
             session_token=self.config.session_token if self.config.session_token else None,
         )
 
-        await self.suggestion_service.clear_suggestions()
+        self.suggestion_service.clear_suggestions()
 
         if self.config.enable_audio_control:
             self.audio_controller.update_parameters(
@@ -226,27 +209,27 @@ class PowerInterviewApp:
             )
             self.virtual_camera_service.start()
 
-    async def stop_assistant(self) -> None:
-        await self.transcriber.stop()
-        await self.suggestion_service.stop_current_task()
+    def stop_assistant(self) -> None:
+        self.transcriber.stop()
+        self.suggestion_service.stop_current_task()
 
         self.audio_controller.stop()
 
     # ---- State Management ----
-    async def get_app_state(self) -> AppState:
+    def get_app_state(self) -> AppState:
         return AppState(
-            is_logged_in=await self.service_monitor.is_logged_in(),
-            assistant_state=await self.transcriber.get_state(),
-            transcripts=await self.transcriber.get_transcripts(),
-            suggestions=await self.suggestion_service.get_suggestions(),
-            is_backend_live=await self.service_monitor.is_backend_live(),
-            is_gpu_server_live=await self.service_monitor.is_gpu_server_live(),
+            is_logged_in=self.service_monitor.is_logged_in(),
+            assistant_state=self.transcriber.get_state(),
+            transcripts=self.transcriber.get_transcripts(),
+            suggestions=self.suggestion_service.get_suggestions(),
+            is_backend_live=self.service_monitor.is_backend_live(),
+            is_gpu_server_live=self.service_monitor.is_gpu_server_live(),
         )
 
     # ---- Callbacks ----
-    async def on_logged_out(self) -> None:
+    def on_logged_out(self) -> None:
         # Stop the assistant when logout is detected
-        await self.stop_assistant()
+        self.stop_assistant()
 
         # Clear session token in app config when logout is detected
         self.update_config(
@@ -255,12 +238,11 @@ class PowerInterviewApp:
             )
         )
 
-    async def on_transcriber_self_final(self, transcripts: list[Transcript]) -> None:
+    def on_transcriber_self_final(self, transcripts: list[Transcript]) -> None:
         pass
 
-    async def on_transcriber_other_final(self, transcripts: list[Transcript]) -> None:
-        await self.suggestion_service.generate_suggestion_async(
-            await self.get_session(),
+    def on_transcriber_other_final(self, transcripts: list[Transcript]) -> None:
+        self.suggestion_service.generate_suggestion_async(
             transcripts,
             self.config.profile,
         )
@@ -269,28 +251,28 @@ class PowerInterviewApp:
         self.virtual_camera_service.set_frame(frame_bgr)
 
     # ---- Background Tasks ----
-    async def start_background_tasks(self) -> None:
-        await self.service_monitor.start_backend_monitor(await self.get_session())
-        await self.service_monitor.start_auth_monitor(await self.get_session())
-        await self.service_monitor.start_gpu_server_monitor(await self.get_session())
-        await self.service_monitor.start_wakeup_gpu_server_loop(await self.get_session())
+    def start_background_tasks(self) -> None:
+        self.service_monitor.start_backend_monitor()
+        self.service_monitor.start_auth_monitor()
+        self.service_monitor.start_gpu_server_monitor()
+        self.service_monitor.start_wakeup_gpu_server_loop()
 
     # ---- Service methods ----
-    async def export_transcript(self) -> str:
-        transcripts: list[Transcript] = await self.transcriber.get_transcripts()
+    def export_transcript(self) -> str:
+        transcripts: list[Transcript] = self.transcriber.get_transcripts()
 
         # ---- Build Summarize Content ----
         summary_part = ""
         try:
-            async with (await self.get_session()).post(
+            resp = WebClient.post(
                 cfg_client.BACKEND_SUMMARIZE_URL,
                 json=GenerateSummarizeRequest(
                     username=self.config.profile.username,
                     transcripts=transcripts,
                 ).model_dump(),
-            ) as resp:
-                await raise_for_status_async(resp)
-                summary_part = str(await resp.text())
+            )
+            raise_for_status(resp)
+            summary_part = resp.text
         except Exception as ex:
             logger.error(f"Failed to generate summary: {ex}")
 
@@ -315,7 +297,7 @@ class PowerInterviewApp:
 
         # ---- Build Suggestions Content ----
         lines = []
-        suggestions = await self.suggestion_service.get_suggestions()
+        suggestions = self.suggestion_service.get_suggestions()
         for s in suggestions:
             time_str = DatetimeUtil.format_timestamp_local(s.timestamp)
             lines.append(f"#### Interviewer | {time_str}\n{s.last_question}\n\n##### Suggestion\n{s.answer}\n")

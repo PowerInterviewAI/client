@@ -1,24 +1,22 @@
-import asyncio
+import time
 
 import pyaudiowpatch as pyaudio
-import pytest
 from loguru import logger
 
 from engine.services.asr_service import ASRService
 
 
-@pytest.mark.asyncio
-async def test_asr_service() -> None:
+def test_asr_service() -> None:
     last_text = ""
     last_partial = ""
 
-    async def on_final(final: str) -> None:
+    def on_final(final: str) -> None:
         nonlocal last_text
         if final != last_text:
             logger.debug(f"FINAL: {final}")
             last_text = final
 
-    async def on_partial(partial: str) -> None:
+    def on_partial(partial: str) -> None:
         nonlocal last_partial
         if partial != last_partial:
             logger.debug(f"PARTIAL: {partial}")
@@ -36,9 +34,9 @@ async def test_asr_service() -> None:
     )
 
     # Run until interrupted
-    await service.start()
+    service.start()
     while True:
         try:
-            await asyncio.sleep(1)
+            time.sleep(1)
         except KeyboardInterrupt:
             break

@@ -37,20 +37,23 @@ def get_audio_output_devices() -> list[dict[str, Any]]:
 
 
 @router.get("/get-state")
-async def get_app_state() -> AppState:
-    return await the_app.get_app_state()
+def get_app_state() -> AppState:
+    return the_app.get_app_state()
 
 
 @router.get("/start-assistant")
-async def start_assistant() -> None:
-    await the_app.start_assistant()
+def start_assistant() -> None:
+    the_app.start_assistant()
 
 
 @router.get("/stop-assistant")
-async def stop_assistant() -> None:
-    await the_app.stop_assistant()
+def stop_assistant() -> None:
+    the_app.stop_assistant()
 
 
 @router.get("/export-transcript")
-async def export_transcript() -> Response:
-    return Response(content=await the_app.export_transcript(), media_type="text/plain")
+def export_transcript() -> Response:
+    return Response(
+        content=the_app.export_transcript(),
+        media_type="text/plain",
+    )
