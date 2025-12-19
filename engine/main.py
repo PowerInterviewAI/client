@@ -1,10 +1,11 @@
 import argparse
 import logging
+from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from loguru import logger
 
 from engine.api.endpint_filter import EndpointFilter
@@ -39,8 +40,20 @@ api.add_middleware(
 # Include routers
 api.include_router(api_router, prefix="/api")
 
-# Mound static files
-api.mount("/", StaticFiles(directory=cfg_fs.PUBLIC_DIR, html=True), name="public")
+
+# Serve SPA with fallback to index.html
+@api.get("/{path:path}", response_model=None)
+async def serve_spa(path: str) -> FileResponse | JSONResponse:
+    file_path = Path(cfg_fs.PUBLIC_DIR) / path
+    if file_path.exists():
+        if file_path.is_file():
+            return FileResponse(file_path)
+        if file_path.is_dir():
+            # Fallback - Redirect to index.html for client-side routing
+            return RedirectResponse(url=f"/{path.strip('/')}/index.html")
+    # If no index.html, return 404 (shouldn't happen)
+    return JSONResponse(content={"error": "File not found"}, status_code=404)
+
 
 # Configure logging
 logging.getLogger("uvicorn.access").addFilter(
