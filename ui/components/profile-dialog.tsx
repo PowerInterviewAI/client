@@ -81,7 +81,7 @@ export default function ProfileDialog({
         <div className="flex-1 overflow-y-auto">
           <div className="p-6 space-y-5">
             {/* Profile Photo */}
-            <div>
+            <div className="flex flex-col justify-center">
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
                 Profile Photo
               </label>
@@ -136,6 +136,9 @@ export default function ProfileDialog({
                 className="hidden"
                 onChange={handlePhotoUpload}
               />
+              <p className="text-xs mx-auto pt-2 text-muted-foreground">
+                Your face will be replaced into this photo under video control.
+              </p>
             </div>
 
             {/* Username */}

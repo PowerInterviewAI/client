@@ -9,17 +9,26 @@ class Config(BaseSettings):
     BACKEND_URL_LOCAL: str = "http://localhost:8080"
     BACKEND_URL: str = BACKEND_URL_LOCAL if cfg_api.DEBUG else BACKEND_URL_ONLINE
 
-    BACKEND_PING_URL: str = f"{BACKEND_URL}/api/ping"
-    BACKEND_PUNCTUATION_URL: str = f"{BACKEND_URL}/api/llm/punctuation"
+    BACKEND_PING_URL: str = f"{BACKEND_URL}/api/health-check/ping"
+    BACKEND_PING_CLIENT_URL: str = f"{BACKEND_URL}/api/health-check/ping-client"
+    BACKEND_PING_GPU_SERVER_URL: str = f"{BACKEND_URL}/api/health-check/ping-gpu-server"
+    BACKEND_WAKEUP_GPU_SERVER_URL: str = f"{BACKEND_URL}/api/health-check/wakeup-gpu-server"
+
+    BACKEND_AUTH_SIGNUP_URL: str = f"{BACKEND_URL}/api/auth/signup"
+    BACKEND_AUTH_LOGIN_URL: str = f"{BACKEND_URL}/api/auth/login"
+    BACKEND_AUTH_LOGOUT_URL: str = f"{BACKEND_URL}/api/auth/logout"
+    BACKEND_AUTH_CHANGE_PASSWORD_URL: str = f"{BACKEND_URL}/api/auth/change-password"
+
     BACKEND_SUGGESTIONS_URL: str = f"{BACKEND_URL}/api/llm/suggestion"
     BACKEND_SUMMARIZE_URL: str = f"{BACKEND_URL}/api/llm/summarize"
+
     BACKEND_WEBRTC_OFFER_URL: str = f"{BACKEND_URL}/api/webrtc/offer"
 
     BACKEND_ASR_STREAMING_URL: str = (
         f"{BACKEND_URL.replace('http://', 'ws://').replace('https://', 'wss://')}/api/asr/streaming"
     )
 
-    HTTP_TIMEOUT: int = 10
+    HTTP_TIMEOUT_SECS: int = 15
 
 
 config = Config()

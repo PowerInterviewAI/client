@@ -265,14 +265,19 @@ class ASRService:
         finally:
             logger.info("Receive loop stopped.")
 
-    async def _connect_and_stream(self) -> None:
+    async def _connect_and_stream(self, session_token: str | None = None) -> None:
         """
         Connect to websocket server and run send+recv loops concurrently.
         This connects once; on any error the task exits and must be restarted by calling start().
         """
         logger.info(f"Attempting websocket connect to {self.ws_uri}")
         try:
-            async with websockets.connect(self.ws_uri, ping_timeout=None) as ws:
+            # Prepare headers with session token if available
+            additional_headers = {}
+            if session_token:
+                additional_headers["Cookie"] = f"session_token={session_token}"
+
+            async with websockets.connect(self.ws_uri, ping_timeout=None, additional_headers=additional_headers) as ws:
                 logger.info(f"Connected to server {self.ws_uri}")
                 self._ws = ws
 
@@ -325,7 +330,7 @@ class ASRService:
     # -------------------------
     # Public async control
     # -------------------------
-    async def start(self, device_index: int | None = None) -> None:
+    async def start(self, device_index: int | None = None, session_token: str | None = None) -> None:
         """
         Start capture (sync) and start the asyncio connect/stream task.
         Must be called from an asyncio event loop.
@@ -341,7 +346,7 @@ class ASRService:
 
         # Start connect task (single connect, no reconnect)
         if self._connect_task is None or self._connect_task.done():
-            self._connect_task = asyncio.create_task(self._connect_and_stream(), name="asrclient-connect")
+            self._connect_task = asyncio.create_task(self._connect_and_stream(session_token), name="asrclient-connect")
             logger.info("ASRClient connect task started.")
 
     async def stop(self) -> None:

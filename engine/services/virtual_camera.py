@@ -46,12 +46,12 @@ class VirtualCameraService:
 
         while not self._stop_event.is_set():
             try:
-                logger.debug("Starting virtual camera: {}x{} @ {}fps", current_width, current_height, current_fps)
+                logger.debug(f"Starting virtual camera: {current_width}x{current_height} @ {current_fps}fps")
                 vcam = pyvirtualcam.Camera(width=current_width, height=current_height, fps=current_fps)
             except Exception as ex:
-                logger.warning("Failed to start virtual camera: {}", ex)
+                logger.warning(f"Failed to start virtual camera: {ex}")
                 # Wait a bit before retrying to avoid tight loop
-                if self._stop_event.wait(timeout=1.0):
+                if self._stop_event.wait(timeout=5.0):
                     break
                 # refresh config under lock
                 with self._lock:
@@ -102,7 +102,7 @@ class VirtualCameraService:
                         vcam.send(rgb)
                         vcam.sleep_until_next_frame()
                     except Exception as ex:
-                        logger.warning("Failed to send frame: {}", ex)
+                        logger.warning(f"Failed to send frame: {ex}")
                         # small backoff to avoid tight error loop
                         if self._stop_event.wait(timeout=0.1):
                             break
@@ -117,7 +117,7 @@ class VirtualCameraService:
                     current_fps = self.fps
 
             except Exception as ex:
-                logger.exception("Unexpected error in virtual camera loop: {}", ex)
+                logger.exception(f"Unexpected error in virtual camera loop: {ex}")
                 # ensure camera closed on unexpected error
                 with contextlib.suppress(Exception):
                     vcam.close()
@@ -158,7 +158,7 @@ class VirtualCameraService:
             self.height = int(height)
             self.fps = int(fps)
             self._cond.notify_all()
-        logger.debug("VirtualCameraService config updated: {}x{} @ {}fps", self.width, self.height, self.fps)
+        logger.debug(f"VirtualCameraService config updated: {self.width}x{self.height} @ {self.fps}fps")
 
     def set_frame(self, frame: np.ndarray[Any, Any]) -> None:
         """

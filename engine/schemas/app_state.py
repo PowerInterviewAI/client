@@ -18,6 +18,10 @@ class RunningState(StrEnum):
 class AppState(BaseModel):
     """The app state."""
 
+    is_logged_in: Annotated[
+        bool,
+        Field(description="Whether the user is logged in"),
+    ]
     assistant_state: Annotated[
         RunningState,
         Field(description="The running state of the assistant"),
@@ -33,4 +37,8 @@ class AppState(BaseModel):
     is_backend_live: Annotated[
         bool,
         Field(description="Whether the backend is live"),
+    ]
+    is_gpu_server_live: Annotated[
+        bool,
+        Field(description="Whether the GPU server is live"),
     ]

@@ -5,10 +5,22 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Engine",
+            "name": "Engine Local",
             "type": "debugpy",
             "request": "launch",
-            "module": "engine.main"
+            "module": "engine.main",
+            "env": {
+                "DEBUG": "true"
+            }
+        },
+        {
+            "name": "Engine Remote",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "engine.main",
+            "env": {
+                "DEBUG": "false"
+            }
         }
     ]
 }

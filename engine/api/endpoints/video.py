@@ -11,13 +11,16 @@ from engine.services.webrtc_service import WebRTCService
 
 router = APIRouter(
     route_class=RouteErrorHandler,
-    tags=["WebRTC Endpoints"],
+    tags=["Video Control Endpoints"],
 )
 
 
 @router.post("/offer")
 async def offer(request: WebRTCOfferRequest) -> JSONResponse:
-    return await WebRTCService.process_offer(request=request)
+    return await WebRTCService.process_offer(
+        client_session=await the_app.get_session(),
+        request=request,
+    )
 
 
 @router.websocket("/frames")

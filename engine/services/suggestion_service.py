@@ -1,9 +1,10 @@
 import asyncio
 from typing import Any
 
-import aiohttp
+from aiohttp import ClientSession
 from loguru import logger
 
+from engine.api.error_handler import raise_for_status
 from engine.cfg.client import config as cfg_client
 from engine.models.user_profile import UserProfile
 from engine.schemas.suggestion import GenerateSuggestionRequest, Suggestion, SuggestionState
@@ -31,7 +32,12 @@ class SuggestionService:
         async with self._lock:
             self._suggestions.clear()
 
-    async def generate_suggestion(self, transcripts: list[Transcript], profile: UserProfile) -> None:
+    async def generate_suggestion(
+        self,
+        client_session: ClientSession,
+        transcripts: list[Transcript],
+        profile: UserProfile,
+    ) -> None:
         """The main async worker to call backend and stream response."""
         if not transcripts:
             return
@@ -46,19 +52,15 @@ class SuggestionService:
             )
 
         try:
-            timeout = aiohttp.ClientTimeout(total=cfg_client.HTTP_TIMEOUT)
-            async with (
-                aiohttp.ClientSession(timeout=timeout) as session,
-                session.post(
-                    cfg_client.BACKEND_SUGGESTIONS_URL,
-                    json=GenerateSuggestionRequest(
-                        username=profile.username,
-                        profile_data=profile.profile_data,
-                        transcripts=transcripts,
-                    ).model_dump(),
-                ) as resp,
-            ):
-                resp.raise_for_status()
+            async with client_session.post(
+                cfg_client.BACKEND_SUGGESTIONS_URL,
+                json=GenerateSuggestionRequest(
+                    username=profile.username,
+                    profile_data=profile.profile_data,
+                    transcripts=transcripts,
+                ).model_dump(),
+            ) as resp:
+                await raise_for_status(resp)
 
                 async for chunk, _ in resp.content.iter_chunks():
                     # handle stop request
@@ -84,7 +86,12 @@ class SuggestionService:
             async with self._lock:
                 self._suggestions[tstamp].state = SuggestionState.ERROR
 
-    async def generate_suggestion_async(self, transcripts: list[Transcript], profile: UserProfile) -> None:
+    async def generate_suggestion_async(
+        self,
+        client_session: ClientSession,
+        transcripts: list[Transcript],
+        profile: UserProfile,
+    ) -> None:
         """Spawn a background asyncio Task to run generate_suggestion."""
         # Remove trailing SELF transcripts
         while transcripts and transcripts[-1].speaker == Speaker.SELF:
@@ -99,7 +106,7 @@ class SuggestionService:
         self._stop_event.clear()
 
         # start new task
-        self._task = asyncio.create_task(self.generate_suggestion(transcripts, profile))
+        self._task = asyncio.create_task(self.generate_suggestion(client_session, transcripts, profile))
 
     async def stop_current_task(self) -> None:
         """Signal the suggestion task to stop safely."""

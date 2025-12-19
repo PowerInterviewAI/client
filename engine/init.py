@@ -3,10 +3,12 @@ import signal
 import threading
 import time
 
-import psutil  # pip install psutil
+import psutil
+from aiohttp import ClientSession, ClientTimeout
 from loguru import logger
 
 from engine.app import the_app
+from engine.cfg.client import config as cfg_client
 
 
 def init_watch_parent() -> None:
@@ -31,5 +33,9 @@ def init_watch_parent() -> None:
 
 
 async def init_app() -> None:
-    the_app.load_config()
+    the_app.client_session = ClientSession(timeout=ClientTimeout(total=cfg_client.HTTP_TIMEOUT_SECS))
+
+    cfg = the_app.load_config()
+    the_app.update_session_token(cfg.session_token)
+
     await the_app.start_background_tasks()

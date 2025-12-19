@@ -8,6 +8,6 @@ router = APIRouter(
 )
 
 
-@router.get("/")
+@router.get("/ping")
 def healthcheck() -> str:
     return "OK"

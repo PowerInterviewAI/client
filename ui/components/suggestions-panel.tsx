@@ -54,23 +54,18 @@ export default function SuggestionsPanel({ suggestions = [] }: SuggestionsPanelP
   return (
     <Card className="relative flex flex-col h-full bg-card p-0">
       {/* Header */}
-      <div className="border-b border-border p-4 shrink-0">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <h3 className="font-semibold text-foreground text-sm">Interview Suggestions</h3>
-            <p className="text-xs text-muted-foreground mt-1">AI-powered recommendations</p>
-          </div>
+      <div className="border-b border-border px-4 pt-4 pb-2 shrink-0 flex items-center justify-between gap-4">
+        <h3 className="font-semibold text-foreground text-xs">Suggestions</h3>
 
-          <label className="flex items-center gap-2 cursor-pointer select-none">
-            <Checkbox
-              checked={autoScroll}
-              onCheckedChange={(v) => setAutoScroll(v === true)}
-              className="h-4 w-4 rounded border-border bg-background text-primary"
-              aria-label="Enable auto-scroll"
-            />
-            <span className="text-xs text-muted-foreground">Auto-scroll</span>
-          </label>
-        </div>
+        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Checkbox
+            checked={autoScroll}
+            onCheckedChange={(v) => setAutoScroll(v === true)}
+            className="h-4 w-4 rounded border-border bg-background text-primary"
+            aria-label="Enable auto-scroll"
+          />
+          <span className="text-xs text-muted-foreground">Auto-scroll</span>
+        </label>
       </div>
 
       {/* Scrollable list */}
@@ -150,7 +145,7 @@ export default function SuggestionsPanel({ suggestions = [] }: SuggestionsPanelP
           <TooltipTrigger asChild>
             <button
               onClick={() => scrollToLatest('smooth')}
-              className="absolute bottom-4 right-4 z-10 flex items-center gap-2 px-3 py-2 rounded-full bg-primary text-white shadow-lg hover:bg-primary/90 transition-all"
+              className="absolute bottom-4 right-4 z-10 flex items-center gap-2 px-3 py-2 rounded-full bg-primary text-white hover:bg-primary/90 transition-all"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"

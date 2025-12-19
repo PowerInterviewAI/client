@@ -1,0 +1,48 @@
+'use client';
+
+import Loading from '@/components/loading';
+import { useAppState } from '@/hooks/app-state';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useEffect } from 'react';
+
+export default function AuthLayout({ children }: { children: React.ReactNode }) {
+  const { data: appState } = useAppState(100);
+
+  useEffect(() => {
+    // Redirect to main page if already logged in
+    if (appState?.is_logged_in) {
+      window.location.href = '/main';
+    }
+  }, [appState, appState?.is_logged_in]);
+
+  // Show loading state while checking backend status
+  if (!appState || !appState.is_backend_live) {
+    return <Loading disclaimer="Initializing context for your device…" />;
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="w-full max-w-md mx-auto p-6">
+        <div className="flex flex-col items-center mb-6">
+          <Image src="/logo.svg" alt="Logo" width={48} height={48} />
+          <h1 className="mt-4 text-2xl font-bold">Power Interview</h1>
+        </div>
+
+        {children}
+
+        <div className="text-center mt-4 text-xs text-muted-foreground">
+          By signing in you agree to the{' '}
+          <Link href="/terms" className="underline">
+            Terms
+          </Link>{' '}
+          and{' '}
+          <Link href="/privacy" className="underline">
+            Privacy
+          </Link>
+          .
+        </div>
+      </div>
+    </div>
+  );
+}
