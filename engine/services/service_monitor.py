@@ -1,20 +1,27 @@
 import asyncio
 import contextlib
 from collections.abc import Awaitable, Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from aiohttp import ClientSession
 
 from engine.api.error_handler import raise_for_status
 from engine.cfg.client import config as cfg_client
+from engine.schemas.app_state import RunningState
+from engine.schemas.ping_client import PingClientRequest
 from engine.services.device_service import DeviceService
+
+if TYPE_CHECKING:
+    from engine.app import PowerInterviewApp
 
 
 class ServiceMonitor:
     def __init__(
         self,
+        app: "PowerInterviewApp",
         on_logged_out: Callable[[], Awaitable[None]] | None = None,
     ) -> None:
+        self._app = app
         self._is_logged_in = False
         self._is_backend_live = False
         self._is_gpu_server_live = False
@@ -85,9 +92,14 @@ class ServiceMonitor:
                 # Ping backend with device info to check login status
                 try:
                     device_info = DeviceService.get_device_info()
+                    ping_request = PingClientRequest(
+                        device_info=device_info,
+                        is_gpu_alive=await self.is_gpu_server_live(),
+                        is_assistant_running=await self._app.transcriber.get_state() == RunningState.RUNNING,
+                    )
                     async with client_session.post(
                         cfg_client.BACKEND_PING_CLIENT_URL,
-                        json=device_info.model_dump(mode="json"),
+                        json=ping_request.model_dump(mode="json"),
                     ) as resp:
                         await raise_for_status(resp)
 

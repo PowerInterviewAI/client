@@ -33,7 +33,7 @@ class PowerInterviewApp:
         self._file_lock = threading.Lock()
         self.config = Config()
 
-        self.service_monitor = ServiceMonitor(on_logged_out=self.on_logged_out)
+        self.service_monitor = ServiceMonitor(app=self, on_logged_out=self.on_logged_out)
 
         self.transcriber = Transcriber(
             callback_on_self_final=self.on_transcriber_self_final,
