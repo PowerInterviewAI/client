@@ -4,7 +4,7 @@ from typing import Any
 from aiohttp import ClientSession
 from loguru import logger
 
-from engine.api.error_handler import raise_for_status
+from engine.api.error_handler import raise_for_status_async
 from engine.cfg.client import config as cfg_client
 from engine.models.user_profile import UserProfile
 from engine.schemas.suggestion import GenerateSuggestionRequest, Suggestion, SuggestionState
@@ -60,7 +60,7 @@ class SuggestionService:
                     transcripts=transcripts,
                 ).model_dump(),
             ) as resp:
-                await raise_for_status(resp)
+                await raise_for_status_async(resp)
 
                 async for chunk, _ in resp.content.iter_chunks():
                     # handle stop request
