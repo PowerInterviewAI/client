@@ -29,7 +29,7 @@ class ASRService:
         self,
         ws_uri: str,
         device_index: int,
-        block_duration: float = 0.25,
+        block_duration: float = 0.1,
         on_final: Callable[[str], None] | None = None,
         on_partial: Callable[[str], None] | None = None,
         queue_maxsize: int = 40,
@@ -169,8 +169,13 @@ class ASRService:
         This blocks in an executor so the event loop is not blocked.
         """
         loop = asyncio.get_running_loop()
-        # Use blocking queue.get in executor; allow cancellation by checking stop_event after wake
-        data_np = await loop.run_in_executor(None, self.audio_queue.get)
+        while True:
+            if self._stop_event.is_set():
+                msg = "Stop requested"
+                raise asyncio.CancelledError(msg)
+            with contextlib.suppress(Exception):
+                data_np = await loop.run_in_executor(None, lambda: self.audio_queue.get(timeout=0.1))
+                break
         # Convert to PCM16 bytes
         pcm16 = (data_np * 32767).astype(np.int16).tobytes()
         return pcm16  # noqa: RET504
@@ -224,7 +229,9 @@ class ASRService:
                     break
 
                 try:
-                    msg = await ws.recv()
+                    msg = await asyncio.wait_for(ws.recv(), timeout=0.1)
+                except TimeoutError:
+                    continue
                 except asyncio.CancelledError:
                     raise
                 except Exception as ex:
