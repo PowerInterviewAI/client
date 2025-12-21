@@ -12,6 +12,7 @@ from loguru import logger
 from scipy.signal import resample_poly
 from websockets import ClientConnection
 
+from engine.cfg.asr import config as cfg_asr
 from engine.schemas.asr import ASRResult, ASRResultType
 from engine.services.audio_service import AudioService
 
@@ -217,7 +218,19 @@ class ASRService:
                     break
 
                 try:
-                    pcm_bytes = await self._get_next_audio()
+                    pcm_bytes = await asyncio.wait_for(self._get_next_audio(), timeout=cfg_asr.SILENCE_INTERVAL_SECONDS)
+                except TimeoutError:
+                    # Send silence frame to keep connection alive
+                    silence_bytes = cfg_asr.SILENCE_FRAME
+                    try:
+                        await ws.send(silence_bytes)
+                        logger.debug("Sent silence frame.")
+                    except asyncio.CancelledError:
+                        raise
+                    except Exception as ex:
+                        logger.exception(f"Failed to send silence to websocket: {ex}")
+                        raise
+                    continue
                 except asyncio.CancelledError:
                     raise
                 except Exception as ex:
