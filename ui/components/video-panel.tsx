@@ -7,6 +7,7 @@ import { RunningState } from '@/types/appState';
 import { OfferRequest, WebRTCOptions } from '@/types/webrtc';
 import { UserCircle2 } from 'lucide-react';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 interface VideoPanelProps {
   runningState: RunningState;
@@ -55,6 +56,43 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
     const frameTimerRef = useRef<number | null>(null);
 
     const [isStreaming, setIsStreaming] = useState(false);
+
+    const checkActiveVideoCodec = () => {
+      if (!pcRef.current) return;
+
+      try {
+        const videoTransceiver = pcRef.current
+          .getTransceivers()
+          .find((t) => t.receiver.track?.kind === 'video');
+        if (videoTransceiver) {
+          const receiverParams = videoTransceiver.receiver.getParameters();
+          const activeCodec = receiverParams.codecs?.[0];
+
+          if (activeCodec) {
+            console.log('Active video codec:', activeCodec);
+            setVideoMessage(`Active codec: ${activeCodec.mimeType} (${activeCodec.clockRate}Hz)`);
+          } else {
+            console.log('No active video codec found');
+          }
+        }
+      } catch (error) {
+        console.error('Error checking active codec:', error);
+      }
+    };
+
+    const checkSupportedVideoCodecs = () => {
+      try {
+        const videoCapabilities = RTCRtpSender.getCapabilities('video');
+        console.log('Supported video codecs:', videoCapabilities?.codecs);
+      } catch (error) {
+        console.error('Error getting video capabilities:', error);
+      }
+    };
+
+    // Check supported codecs on mount
+    useEffect(() => {
+      checkSupportedVideoCodecs();
+    }, []);
 
     const startWebRTC = async () => {
       if (pcRef.current) return;
@@ -105,7 +143,25 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
         audio: false,
       });
       streamRef.current = localStream;
-      localStream.getTracks().forEach((t) => pc.addTrack(t, localStream));
+
+      // Get capabilities and prefer H264 first
+      const caps = RTCRtpSender.getCapabilities('video');
+      if (!caps) {
+        toast.warning('Unable to get video capabilities');
+        console.warn('No video capabilities available');
+        return;
+      }
+      const h264Codecs = caps.codecs.filter((c) => c.mimeType.toLowerCase() === 'video/h264');
+      const h264Rtx = caps.codecs.filter((c) => c.mimeType.toLowerCase() === 'video/rtx');
+      const preferredCodecs = [...h264Codecs, ...h264Rtx];
+
+      // Create transceiver BEFORE attaching track
+      const videoTransceiver = pc.addTransceiver('video', { direction: 'sendrecv' });
+      videoTransceiver.setCodecPreferences(preferredCodecs);
+
+      // Attach camera track to transceiver
+      const videoTrack = localStream.getVideoTracks()[0];
+      await videoTransceiver.sender.replaceTrack(videoTrack);
 
       // Create offer
       const offer = await pc.createOffer();
@@ -127,6 +183,9 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       await pc.setRemoteDescription(new RTCSessionDescription(answer));
 
       setIsStreaming(true);
+
+      // Check the active video codec
+      checkActiveVideoCodec();
     };
 
     const startWebSocketFrameStreamingFromStream = async (
