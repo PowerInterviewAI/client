@@ -7,6 +7,7 @@ import { RunningState } from '@/types/appState';
 import { OfferRequest, WebRTCOptions } from '@/types/webrtc';
 import { UserCircle2 } from 'lucide-react';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 interface VideoPanelProps {
   runningState: RunningState;
@@ -142,7 +143,25 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
         audio: false,
       });
       streamRef.current = localStream;
-      localStream.getTracks().forEach((t) => pc.addTrack(t, localStream));
+
+      // Get capabilities and prefer H264 first
+      const caps = RTCRtpSender.getCapabilities('video');
+      if (!caps) {
+        toast.warning('Unable to get video capabilities');
+        console.warn('No video capabilities available');
+        return;
+      }
+      const h264Codecs = caps.codecs.filter((c) => c.mimeType.toLowerCase() === 'video/h264');
+      const h264Rtx = caps.codecs.filter((c) => c.mimeType.toLowerCase() === 'video/rtx');
+      const preferredCodecs = [...h264Codecs, ...h264Rtx];
+
+      // Create transceiver BEFORE attaching track
+      const videoTransceiver = pc.addTransceiver('video', { direction: 'sendrecv' });
+      videoTransceiver.setCodecPreferences(preferredCodecs);
+
+      // Attach camera track to transceiver
+      const videoTrack = localStream.getVideoTracks()[0];
+      await videoTransceiver.sender.replaceTrack(videoTrack);
 
       // Create offer
       const offer = await pc.createOffer();
