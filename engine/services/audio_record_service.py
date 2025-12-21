@@ -205,18 +205,19 @@ class AudioLoopbackRecordService(BaseAudioRecordService):
     """
     Record system audio (loopback) using pyaudiowpatch WASAPI.
     Provides resampled mono float32 frames via a queue.
+    Automatically discovers the default WASAPI loopback device.
     """
 
     def __init__(
         self,
-        device_index: int,
         block_duration: float = 0.1,
         queue_maxsize: int = 40,
     ) -> None:
-        # Get device info using pyaudiowpatch
-        dev_info = AudioService.get_device_info_by_index(device_index)
-        sample_rate = int(dev_info["defaultSampleRate"])
-        channels = int(dev_info["maxInputChannels"])
+        # Get default loopback device using pyaudiowpatch
+        loopback_dev = AudioService.get_loopback_device()
+        device_index = int(loopback_dev.get("index", 0))
+        sample_rate = int(loopback_dev.get("defaultSampleRate", 48000))
+        channels = int(loopback_dev.get("maxInputChannels", 2))
 
         super().__init__(
             device_index=device_index,

@@ -8,7 +8,6 @@ from engine.cfg.client import config as cfg_client
 from engine.schemas.app_state import RunningState
 from engine.schemas.transcript import Speaker, Transcript
 from engine.services.asr_service import ASRService
-from engine.services.audio_service import AudioService
 from engine.utils.datetime import DatetimeUtil
 
 
@@ -68,10 +67,9 @@ class Transcriber:
             )
 
         if self.other_asr is None:
-            loopback_index = AudioService.get_loopback_device().get("index", 0)
             self.other_asr = ASRService(
                 ws_uri=cfg_client.BACKEND_ASR_STREAMING_URL,
-                device_index=loopback_index,
+                device_index=0,  # ignored when use_loopback=True
                 on_final=self.on_other_final,
                 on_partial=self.on_other_partial,
                 use_loopback=True,

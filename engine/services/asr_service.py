@@ -44,7 +44,6 @@ class ASRService:
         self.audio_recorder: BaseAudioRecordService
         if use_loopback:
             self.audio_recorder = AudioLoopbackRecordService(
-                device_index=device_index,
                 block_duration=block_duration,
                 queue_maxsize=queue_maxsize,
             )
