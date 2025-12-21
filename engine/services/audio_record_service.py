@@ -93,6 +93,15 @@ class BaseAudioRecordService(ABC):
         except Exception:
             return None
 
+    def clear_queue(self) -> None:
+        """Clear all audio frames from the queue."""
+        try:
+            while not self.audio_queue.empty():
+                with contextlib.suppress(Exception):
+                    self.audio_queue.get_nowait()
+        except Exception:
+            logger.debug("Error clearing audio queue.")
+
 
 class AudioRecordService(BaseAudioRecordService):
     """
@@ -108,8 +117,8 @@ class AudioRecordService(BaseAudioRecordService):
     ) -> None:
         # Get device info using sounddevice
         dev_info = sd.query_devices(device_index)
-        sample_rate = int(dev_info["default_samplerate"])  # type: ignore[index]
-        channels = int(dev_info["max_input_channels"])  # type: ignore[index]
+        sample_rate = int(dev_info["default_samplerate"])
+        channels = int(dev_info["max_input_channels"])
 
         super().__init__(
             device_index=device_index,
@@ -147,8 +156,8 @@ class AudioRecordService(BaseAudioRecordService):
             self.device_index = device_index
             # Re-fetch device info for new device
             dev_info = sd.query_devices(device_index)
-            self.sample_rate = int(dev_info["default_samplerate"])  # type: ignore[index]
-            self.channels = int(dev_info["max_input_channels"])  # type: ignore[index]
+            self.sample_rate = int(dev_info["default_samplerate"])
+            self.channels = int(dev_info["max_input_channels"])
             self.blocksize = int(self.sample_rate * self.block_duration)
 
         logger.info(f"Starting audio capture on device {self.device_index}...")
