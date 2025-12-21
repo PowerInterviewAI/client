@@ -74,6 +74,7 @@ class Transcriber:
                 device_index=loopback_index,
                 on_final=self.on_other_final,
                 on_partial=self.on_other_partial,
+                use_loopback=True,
             )
 
         # Start both ASR services
