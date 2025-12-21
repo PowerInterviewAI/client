@@ -9,7 +9,7 @@ from engine.schemas.app_state import RunningState
 from engine.schemas.transcript import Speaker, Transcript
 from engine.services.asr_service import ASRService
 from engine.services.audio_record_service import AudioLoopbackRecordService, AudioRecordService
-from engine.services.audio_service import AudioService
+from engine.services.audio_service import AudioDeviceService
 from engine.services.config_service import ConfigService
 from engine.utils.datetime import DatetimeUtil
 
@@ -83,7 +83,7 @@ class Transcriber:
 
         # Create audio recorders
         # self_asr uses microphone input, other_asr uses system loopback (already started in constructor)
-        input_device_index = AudioService.get_device_index_by_name(ConfigService.config.audio_input_device_name)
+        input_device_index = AudioDeviceService.get_device_index_by_name(ConfigService.config.audio_input_device_name)
         self.self_audio_recorder = AudioRecordService(device_index=input_device_index)
 
         # Start self audio recorder and clear other audio recorder queue

@@ -4,79 +4,90 @@ import time
 from typing import Any
 
 import numpy as np
-import pyaudiowpatch as pyaudio
+import sounddevice as sd
 from loguru import logger
 
 
-class AudioService:
-    _lock = threading.Lock()
+class AudioDeviceService:
+    """
+    Service for managing audio device enumeration and information.
+
+    Note: Due to limitations in PortAudio (sounddevice's backend), dynamic device
+    plug/unplug events are not automatically detected. The service includes
+    refresh functionality to force re-enumeration of devices when needed.
+
+    For dynamic device detection:
+    - Call refresh_devices() manually when devices may have changed
+    - Or set refresh=True (default) when calling device listing methods
+    - This reinitializes the PortAudio context to detect new/removed devices
+    """
 
     @classmethod
-    def get_audio_devices(cls) -> list[dict[str, Any]]:
-        with cls._lock:
-            pa = pyaudio.PyAudio()
-            mme_host_apis = [
-                host_api["index"] for host_api in pa.get_host_api_info_generator() if host_api["name"] == "MME"
-            ]
-            ret = [
-                device
-                for device in pa.get_device_info_generator()
-                if (device["maxInputChannels"] > 0 or device["maxOutputChannels"] > 0)
-                and device["hostApi"] in mme_host_apis
-            ]
-            pa.terminate()
-            return ret
+    def refresh_devices(cls) -> None:
+        """
+        Manually refresh the audio device enumeration.
+        Call this when you suspect devices have been plugged/unplugged
+        to ensure the device list is up to date.
+        """
+        cls._refresh_devices()
 
     @classmethod
-    def get_input_devices(cls) -> list[dict[str, Any]]:
-        with cls._lock:
-            pa = pyaudio.PyAudio()
-            mme_host_apis = [
-                host_api["index"] for host_api in pa.get_host_api_info_generator() if host_api["name"] == "MME"
-            ]
-            ret = [
-                device
-                for device in pa.get_device_info_generator()
-                if device["maxInputChannels"] > 0 and device["hostApi"] in mme_host_apis
-            ]
-            pa.terminate()
-            return ret
+    def _refresh_devices(cls) -> None:
+        """Force refresh of audio device enumeration by reinitializing PortAudio."""
+        try:
+            # Terminate and reinitialize PortAudio to detect device changes
+            sd._terminate()  # noqa: SLF001
+            sd._initialize()  # noqa: SLF001
+        except Exception as e:
+            logger.warning(f"Failed to refresh audio devices: {e}")
 
     @classmethod
-    def get_output_devices(cls) -> list[dict[str, Any]]:
-        with cls._lock:
-            pa = pyaudio.PyAudio()
-            mme_host_apis = [
-                host_api["index"] for host_api in pa.get_host_api_info_generator() if host_api["name"] == "MME"
-            ]
-            ret = [
-                device
-                for device in pa.get_device_info_generator()
-                if device["maxOutputChannels"] > 0 and device["hostApi"] in mme_host_apis
-            ]
-            pa.terminate()
-            return ret
+    def _is_mme_device(cls, device: dict[str, Any]) -> bool:
+        """Check if a device uses the MME (Microsoft Multimedia Environment) API."""
+        try:
+            hostapis = sd.query_hostapis()
+            hostapi_name = hostapis[device["hostapi"]]["name"]
+            return "MME" in hostapi_name  # noqa: TRY300
+        except (IndexError, KeyError):
+            return False
 
     @classmethod
-    def get_loopback_device(cls) -> dict[str, Any]:
-        with cls._lock:
-            pa = pyaudio.PyAudio()
-            ret = pa.get_default_wasapi_loopback()
-            pa.terminate()
-            return ret  # type: ignore  # noqa: PGH003
+    def get_audio_devices(cls, refresh: bool = True) -> list[dict[str, Any]]:  # noqa: FBT001, FBT002
+        if refresh:
+            cls._refresh_devices()
+        devices = sd.query_devices()
+        # Convert to list of dicts and filter for MME devices with input or output channels
+        return [
+            dict(device)
+            for device in devices
+            if cls._is_mme_device(device) and (device["max_input_channels"] > 0 or device["max_output_channels"] > 0)
+        ]
+
+    @classmethod
+    def get_input_devices(cls, refresh: bool = True) -> list[dict[str, Any]]:  # noqa: FBT001, FBT002
+        if refresh:
+            cls._refresh_devices()
+        devices = sd.query_devices()
+        # Convert to list of dicts and filter for MME devices with input channels
+        return [dict(device) for device in devices if cls._is_mme_device(device) and device["max_input_channels"] > 0]
+
+    @classmethod
+    def get_output_devices(cls, refresh: bool = True) -> list[dict[str, Any]]:  # noqa: FBT001, FBT002
+        if refresh:
+            cls._refresh_devices()
+        devices = sd.query_devices()
+        # Convert to list of dicts and filter for MME devices with output channels
+        return [dict(device) for device in devices if cls._is_mme_device(device) and device["max_output_channels"] > 0]
 
     @classmethod
     def get_device_info_by_index(cls, index: int) -> dict[str, Any]:
-        with cls._lock:
-            pa = pyaudio.PyAudio()
-            ret = pa.get_device_info_by_index(index)
-            pa.terminate()
-            return ret  # type: ignore  # noqa: PGH003
+        device = sd.query_devices(index)
+        return dict(device)
 
     @classmethod
-    def get_device_index_by_name(cls, name: str) -> int:
+    def get_device_index_by_name(cls, name: str, refresh: bool = True) -> int:  # noqa: FBT001, FBT002
         try:
-            audio_devices = cls.get_audio_devices()
+            audio_devices = cls.get_audio_devices(refresh=refresh)
             for device in audio_devices:
                 if device["name"] == name:
                     return int(device["index"])
@@ -112,9 +123,8 @@ class AudioController:
         self.control_thread: threading.Thread | None = None
         self._stop_event = threading.Event()
 
-        # PyAudio objects
-        self._pa: pyaudio.PyAudio | None = None
-        self._stream: Any = None  # pyaudio.Stream
+        # sounddevice stream
+        self._stream: sd.Stream | None = None
 
     def update_parameters(
         self,
@@ -132,54 +142,49 @@ class AudioController:
         self.channels = channels
         self.frames_per_buffer = frames_per_buffer
 
-    def _pa_callback(
+    def _sd_callback(
         self,
-        in_data: bytes,
-        frame_count: int,
-        _time_info: dict[str, Any],
-        status_flags: int,
-    ) -> tuple[bytes, int]:
+        indata: np.ndarray[Any, Any],
+        outdata: np.ndarray[Any, Any],
+        frames: int,
+        _time_info: sd.CallbackFlags,
+        status: sd.CallbackFlags,
+    ) -> None:
         """
-        PyAudio callback signature:
-        in_data: bytes of interleaved float32 samples from input
-        Return: (out_data_bytes, flag)
+        sounddevice callback signature:
+        indata: numpy array of input samples (float32 in [-1, 1])
+        outdata: numpy array to fill with output samples
+        frames: number of frames
         """
         try:
-            if status_flags:
-                logger.debug(f"PyAudio status flags: {status_flags}")
+            if status:
+                logger.debug(f"sounddevice status: {status}")
 
-            # Convert incoming bytes to numpy float32 array
-            # in_data length = frame_count * channels * 4 (float32)
-            if in_data:
-                input_audio = np.frombuffer(in_data, dtype=np.float32)
-            else:
-                # If input is None or empty, use zeros
-                input_audio = np.zeros(frame_count * self.channels, dtype=np.float32)
+            # indata is already float32 in [-1, 1]
+            input_audio = indata.flatten()
 
             # Prepare output buffer
-            delayed_audio = np.zeros(frame_count * self.channels, dtype=np.float32)
+            delayed_audio = np.zeros(frames * self.channels, dtype=np.float32)
 
             # Circular buffer read/write with lock
             with self._buf_lock:
-                for i in range(frame_count * self.channels):
+                for i in range(frames * self.channels):
                     delayed_audio[i] = self.delay_buffer[self.buffer_index]
                     # write new sample into buffer
                     self.delay_buffer[self.buffer_index] = input_audio[i]
                     self.buffer_index = (self.buffer_index + 1) % self.buffer_size
 
-            # Convert to bytes and return
-            out_bytes = delayed_audio.tobytes()
-            return (out_bytes, pyaudio.paContinue)  # noqa: TRY300
+            # Fill output buffer
+            outdata[:] = delayed_audio.reshape(-1, self.channels)
 
         except Exception as e:
-            logger.exception(f"Error in PyAudio callback: {e}")
-            # On error, output silence for this callback
-            out_silence = (np.zeros(frame_count * self.channels, dtype=np.float32)).tobytes()
-            return (out_silence, pyaudio.paContinue)
+            logger.exception(f"Error in sounddevice callback: {e}")
+            # On error, output silence
+            outdata.fill(0)
 
     def start(self) -> None:
         """
-        Start the background thread that opens a PyAudio full-duplex stream and keeps it running.
+        Start the background thread that opens a sounddevice full-duplex stream and keeps it running.
         """
         # Stop existing thread
         self.stop()
@@ -198,7 +203,7 @@ class AudioController:
 
     def stop(self, join_timeout: float = 5.0) -> None:
         """
-        Stop the background thread and close the PyAudio stream and instance.
+        Stop the background thread and close the sounddevice stream.
         """
         if self.control_thread is not None:
             if not self._stop_event.is_set():
@@ -206,75 +211,52 @@ class AudioController:
             self.control_thread.join(timeout=join_timeout)
             self.control_thread = None
 
-        # Ensure stream and pa are closed
-        try:
-            if self._stream is not None:
-                with contextlib.suppress(Exception):
-                    if self._stream.is_active():
-                        self._stream.stop_stream()
-                with contextlib.suppress(Exception):
-                    self._stream.close()
-                self._stream = None
-        finally:
-            if self._pa is not None:
-                with contextlib.suppress(Exception):
-                    self._pa.terminate()
-                self._pa = None
+        # Ensure stream is closed
+        if self._stream is not None:
+            with contextlib.suppress(Exception):
+                self._stream.stop()
+            with contextlib.suppress(Exception):
+                self._stream.close()
+            self._stream = None
 
     def _delay_loop(self) -> None:
         """
-        Open a PyAudio full-duplex stream and keep it running until stop event is set.
+        Open a sounddevice full-duplex stream and keep it running until stop event is set.
         If the stream fails, log and retry after a short delay.
         """
         while not self._stop_event.is_set():
             try:
-                # Create PyAudio instance
-                self._pa = pyaudio.PyAudio()
-
                 # Open full-duplex stream with float32 format
-                self._stream = self._pa.open(
-                    format=pyaudio.paFloat32,
+                self._stream = sd.Stream(
+                    device=(self.input_device_id, self.output_device_id),
+                    samplerate=self.sample_rate,
                     channels=self.channels,
-                    rate=self.sample_rate,
-                    input=True,
-                    output=True,
-                    input_device_index=self.input_device_id,
-                    output_device_index=self.output_device_id,
-                    frames_per_buffer=self.frames_per_buffer,
-                    stream_callback=self._pa_callback,
+                    blocksize=self.frames_per_buffer,
+                    dtype=np.float32,
+                    callback=self._sd_callback,
                 )
 
-                # Start the stream (callback-based)
-                self._stream.start_stream()
+                # Start the stream
+                self._stream.start()
 
                 # Keep thread alive while stream is active and not requested to stop
-                while self._stream.is_active() and not self._stop_event.is_set():
+                while self._stream.active and not self._stop_event.is_set():
                     time.sleep(0.1)
 
                 # Stop and close stream if loop exits
                 with contextlib.suppress(Exception):
-                    if self._stream.is_active():
-                        self._stream.stop_stream()
+                    self._stream.stop()
                 with contextlib.suppress(Exception):
                     self._stream.close()
                 self._stream = None
 
-                # Terminate PyAudio instance
-                with contextlib.suppress(Exception):
-                    self._pa.terminate()
-                self._pa = None
-
             except Exception as e:
-                logger.error(f"Error streaming audio with PyAudio: {e}")
+                logger.error(f"Error streaming audio with sounddevice: {e}")
                 # Clean up partial resources
                 with contextlib.suppress(Exception):
                     if self._stream is not None:
                         self._stream.close()
                 self._stream = None
-                with contextlib.suppress(Exception):
-                    if self._pa is not None:
-                        self._pa.terminate()
-                self._pa = None
 
             # Backoff before retrying
             time.sleep(0.5)

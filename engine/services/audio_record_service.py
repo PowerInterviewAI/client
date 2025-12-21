@@ -10,7 +10,7 @@ import sounddevice as sd
 from loguru import logger
 from scipy.signal import resample_poly
 
-from engine.services.audio_service import AudioService
+from engine.services.audio_service import AudioDeviceService
 
 
 class BaseAudioRecordService(ABC):
@@ -222,8 +222,12 @@ class AudioLoopbackRecordService(BaseAudioRecordService):
         block_duration: float = 0.1,
         queue_maxsize: int = 40,
     ) -> None:
+        # PyAudio objects
+        self.pa = pyaudio.PyAudio()
+        self.stream: pyaudio.Stream | None = None
+
         # Get default loopback device using pyaudiowpatch
-        loopback_dev = AudioService.get_loopback_device()
+        loopback_dev = self.pa.get_default_wasapi_loopback()
         device_index = int(loopback_dev.get("index", 0))
         sample_rate = int(loopback_dev.get("defaultSampleRate", 48000))
         channels = int(loopback_dev.get("maxInputChannels", 2))
@@ -235,10 +239,6 @@ class AudioLoopbackRecordService(BaseAudioRecordService):
             block_duration=block_duration,
             queue_maxsize=queue_maxsize,
         )
-
-        # PyAudio objects
-        self.pa: pyaudio.PyAudio | None = None
-        self.stream: pyaudio.Stream | None = None
 
     def _audio_callback(
         self,
@@ -266,7 +266,7 @@ class AudioLoopbackRecordService(BaseAudioRecordService):
         if device_index is not None:
             self.device_index = device_index
             # Re-fetch device info for new device
-            dev_info = AudioService.get_device_info_by_index(device_index)
+            dev_info = AudioDeviceService.get_device_info_by_index(device_index)
             self.sample_rate = int(dev_info["defaultSampleRate"])
             self.channels = int(dev_info["maxInputChannels"])
             self.blocksize = int(self.sample_rate * self.block_duration)
@@ -275,7 +275,6 @@ class AudioLoopbackRecordService(BaseAudioRecordService):
         self._stop_event.clear()
 
         try:
-            self.pa = pyaudio.PyAudio()
             self.stream = self.pa.open(
                 format=pyaudio.paInt16,
                 channels=self.channels,

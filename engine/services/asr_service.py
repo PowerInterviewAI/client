@@ -63,7 +63,7 @@ class ASRService:
 
             data_np = await loop.run_in_executor(
                 None,
-                lambda: self.audio_recorder.get_audio_frame(timeout=0.1),
+                lambda: self.audio_recorder.get_audio_frame(timeout=0.1),  # type: ignore  # noqa: PGH003
             )
             if data_np is not None:
                 break

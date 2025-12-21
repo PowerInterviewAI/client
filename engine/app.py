@@ -10,7 +10,7 @@ from engine.models.config import ConfigUpdate
 from engine.schemas.app_state import AppState
 from engine.schemas.summarize import GenerateSummarizeRequest
 from engine.schemas.transcript import Speaker, Transcript
-from engine.services.audio_service import AudioController, AudioService
+from engine.services.audio_service import AudioController, AudioDeviceService
 from engine.services.config_service import ConfigService
 from engine.services.service_monitor import ServiceMonitor
 from engine.services.suggestion_service import SuggestionService
@@ -50,8 +50,12 @@ class PowerInterviewApp:
 
         if ConfigService.config.enable_audio_control:
             self.audio_controller.update_parameters(
-                input_device_id=AudioService.get_device_index_by_name(ConfigService.config.audio_input_device_name),
-                output_device_id=AudioService.get_device_index_by_name(ConfigService.config.audio_control_device_name),
+                input_device_id=AudioDeviceService.get_device_index_by_name(
+                    ConfigService.config.audio_input_device_name
+                ),
+                output_device_id=AudioDeviceService.get_device_index_by_name(
+                    ConfigService.config.audio_control_device_name
+                ),
                 delay_secs=ConfigService.config.audio_delay_ms / 1000,
             )
             self.audio_controller.start()
