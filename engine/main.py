@@ -43,7 +43,7 @@ api.include_router(api_router, prefix="/api")
 
 # Serve SPA with fallback to index.html
 @api.get("/{path:path}", response_model=None)
-async def serve_spa(path: str) -> FileResponse | JSONResponse:
+def serve_spa(path: str) -> FileResponse | RedirectResponse | JSONResponse:
     file_path = Path(cfg_fs.PUBLIC_DIR) / path
     if file_path.exists():
         if file_path.is_file():

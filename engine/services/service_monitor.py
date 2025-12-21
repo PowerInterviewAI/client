@@ -1,15 +1,15 @@
-import asyncio
 import contextlib
-from collections.abc import Awaitable, Callable
-from typing import TYPE_CHECKING, Any
-
-from aiohttp import ClientSession
+import threading
+import time
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from engine.api.error_handler import raise_for_status
 from engine.cfg.client import config as cfg_client
 from engine.schemas.app_state import RunningState
 from engine.schemas.ping_client import PingClientRequest
 from engine.services.device_service import DeviceService
+from engine.services.web_client import WebClient
 
 if TYPE_CHECKING:
     from engine.app import PowerInterviewApp
@@ -19,142 +19,161 @@ class ServiceMonitor:
     def __init__(
         self,
         app: "PowerInterviewApp",
-        on_logged_out: Callable[[], Awaitable[None]] | None = None,
+        on_logged_out: Callable[[], None] | None = None,
     ) -> None:
         self._app = app
         self._is_logged_in = False
         self._is_backend_live = False
         self._is_gpu_server_live = False
 
-        self._backend_monitor_task: asyncio.Task[Any] | None = None
-        self._gpu_server_monitor_task: asyncio.Task[Any] | None = None
-        self._auth_monitor_task: asyncio.Task[Any] | None = None
+        self._backend_thread: threading.Thread | None = None
+        self._gpu_server_thread: threading.Thread | None = None
+        self._auth_thread: threading.Thread | None = None
+        self._wakeup_thread: threading.Thread | None = None
 
-        self._lock = asyncio.Lock()
+        self._lock = threading.Lock()
+        self._stop_event = threading.Event()
         self._on_logged_out = on_logged_out
 
-    async def set_backend_live(self, is_running: bool) -> None:  # noqa: FBT001
-        async with self._lock:
+    def set_backend_live(self, is_running: bool) -> None:  # noqa: FBT001
+        with self._lock:
             self._is_backend_live = is_running
 
-    async def set_logged_in(self, is_logged_in: bool) -> None:  # noqa: FBT001
-        async with self._lock:
+    def set_logged_in(self, is_logged_in: bool) -> None:  # noqa: FBT001
+        with self._lock:
             self._is_logged_in = is_logged_in
 
-    async def is_backend_live(self) -> bool:
-        async with self._lock:
+    def is_backend_live(self) -> bool:
+        with self._lock:
             return self._is_backend_live
 
-    async def is_logged_in(self) -> bool:
-        async with self._lock:
+    def is_logged_in(self) -> bool:
+        with self._lock:
             return self._is_logged_in
 
-    async def set_gpu_server_live(self, is_running: bool) -> None:  # noqa: FBT001
-        async with self._lock:
+    def set_gpu_server_live(self, is_running: bool) -> None:  # noqa: FBT001
+        with self._lock:
             self._is_gpu_server_live = is_running
 
-    async def is_gpu_server_live(self) -> bool:
-        async with self._lock:
+    def is_gpu_server_live(self) -> bool:
+        with self._lock:
             return self._is_gpu_server_live
 
-    async def start_backend_monitor(self, client_session: ClientSession) -> None:
-        async def worker() -> None:
-            while True:
-                try:
-                    async with client_session.get(cfg_client.BACKEND_PING_URL) as resp:
-                        await raise_for_status(resp)
+    def _backend_worker(self) -> None:
+        while not self._stop_event.is_set():
+            try:
+                resp = WebClient.get(cfg_client.BACKEND_PING_URL)
+                raise_for_status(resp)
 
-                        await self.set_backend_live(True)
-                        await asyncio.sleep(60)
+                self.set_backend_live(True)
+                time.sleep(60)
 
-                except Exception:
-                    await self.set_backend_live(False)
-                    await asyncio.sleep(1)
+            except Exception:
+                self.set_backend_live(False)
+                time.sleep(1)
 
-        self._backend_monitor_task = asyncio.create_task(worker())
+    def start_backend_monitor(self) -> None:
+        if self._backend_thread and self._backend_thread.is_alive():
+            return
+        self._backend_thread = threading.Thread(target=self._backend_worker, daemon=True)
+        self._backend_thread.start()
 
-    async def start_auth_monitor(self, client_session: ClientSession) -> None:
-        async def worker() -> None:
-            while True:
-                # If backend is not live, mark as not logged in
-                if not await self.is_backend_live():
-                    # If just logged out
-                    if await self.is_logged_in():  # noqa: SIM102
-                        # Trigger logged out callback
-                        if self._on_logged_out:
-                            await self._on_logged_out()
+    def _auth_worker(self) -> None:
+        while not self._stop_event.is_set():
+            # If backend is not live, mark as not logged in
+            if not self.is_backend_live():
+                # If just logged out
+                if self.is_logged_in():  # noqa: SIM102
+                    # Trigger logged out callback
+                    if self._on_logged_out:
+                        self._on_logged_out()
 
-                    await self.set_logged_in(False)
+                self.set_logged_in(False)
 
-                    await asyncio.sleep(1)
-                    continue
+                time.sleep(1)
+                continue
 
-                # Ping backend with device info to check login status
-                try:
-                    device_info = DeviceService.get_device_info()
-                    ping_request = PingClientRequest(
-                        device_info=device_info,
-                        is_gpu_alive=await self.is_gpu_server_live(),
-                        is_assistant_running=await self._app.transcriber.get_state() == RunningState.RUNNING,
-                    )
-                    async with client_session.post(
-                        cfg_client.BACKEND_PING_CLIENT_URL,
-                        json=ping_request.model_dump(mode="json"),
-                    ) as resp:
-                        await raise_for_status(resp)
+            # Ping backend with device info to check login status
+            try:
+                device_info = DeviceService.get_device_info()
+                ping_request = PingClientRequest(
+                    device_info=device_info,
+                    is_gpu_alive=self.is_gpu_server_live(),
+                    is_assistant_running=self._app.transcriber.get_state() == RunningState.RUNNING,
+                )
+                resp = WebClient.post(
+                    cfg_client.BACKEND_PING_CLIENT_URL,
+                    json=ping_request.model_dump(mode="json"),
+                )
+                raise_for_status(resp)
 
-                        await self.set_logged_in(True)
-                        await asyncio.sleep(60)
+                self.set_logged_in(True)
+                time.sleep(60)
 
-                except Exception:
-                    # If just logged out
-                    if await self.is_logged_in():  # noqa: SIM102
-                        # Trigger logged out callback
-                        if self._on_logged_out:
-                            await self._on_logged_out()
+            except Exception:
+                # If just logged out
+                if self.is_logged_in():  # noqa: SIM102
+                    # Trigger logged out callback
+                    if self._on_logged_out:
+                        self._on_logged_out()
 
-                    await self.set_logged_in(False)
-                    await asyncio.sleep(1)
+                self.set_logged_in(False)
+                time.sleep(1)
 
-        self._auth_monitor_task = asyncio.create_task(worker())
+    def start_auth_monitor(self) -> None:
+        if self._auth_thread and self._auth_thread.is_alive():
+            return
+        self._auth_thread = threading.Thread(target=self._auth_worker, daemon=True)
+        self._auth_thread.start()
 
-    async def start_gpu_server_monitor(self, client_session: ClientSession) -> None:
-        async def worker() -> None:
-            while True:
-                # If not logged in, mark GPU server as not live
-                if not await self.is_logged_in():
-                    await self.set_gpu_server_live(False)
+    def _gpu_worker(self) -> None:
+        while not self._stop_event.is_set():
+            # If not logged in, mark GPU server as not live
+            if not self.is_logged_in():
+                self.set_gpu_server_live(False)
 
-                    await asyncio.sleep(1)
-                    continue
+                time.sleep(1)
+                continue
 
-                # Ping GPU server
-                try:
-                    async with client_session.get(cfg_client.BACKEND_PING_GPU_SERVER_URL) as resp:
-                        await raise_for_status(resp)
+            # Ping GPU server
+            try:
+                resp = WebClient.get(cfg_client.BACKEND_PING_GPU_SERVER_URL)
+                raise_for_status(resp)
 
-                        await self.set_gpu_server_live(True)
-                        await asyncio.sleep(60)
+                self.set_gpu_server_live(True)
+                time.sleep(60)
 
-                except Exception:
-                    await self.set_gpu_server_live(False)
-                    await asyncio.sleep(1)
+            except Exception:
+                self.set_gpu_server_live(False)
+                time.sleep(1)
 
-        self._gpu_server_monitor_task = asyncio.create_task(worker())
+    def start_gpu_server_monitor(self) -> None:
+        if self._gpu_server_thread and self._gpu_server_thread.is_alive():
+            return
+        self._gpu_server_thread = threading.Thread(target=self._gpu_worker, daemon=True)
+        self._gpu_server_thread.start()
 
-    async def start_wakeup_gpu_server_loop(self, client_session: ClientSession) -> None:
-        async def worker() -> None:
-            while True:
-                # If not logged in, skip wakeup
-                if not await self.is_logged_in():
-                    await asyncio.sleep(1)
-                    continue
+    def _wakeup_worker(self) -> None:
+        while not self._stop_event.is_set():
+            # If not logged in, skip wakeup
+            if not self.is_logged_in():
+                time.sleep(1)
+                continue
 
-                # Wakeup GPU server
-                with contextlib.suppress(Exception):
-                    async with client_session.get(cfg_client.BACKEND_WAKEUP_GPU_SERVER_URL) as resp:
-                        await raise_for_status(resp)
+            # Wakeup GPU server
+            with contextlib.suppress(Exception):
+                resp = WebClient.get(cfg_client.BACKEND_WAKEUP_GPU_SERVER_URL)
+                raise_for_status(resp)
+            time.sleep(1)
 
-                await asyncio.sleep(1)
+    def start_wakeup_gpu_server_loop(self) -> None:
+        if self._wakeup_thread and self._wakeup_thread.is_alive():
+            return
+        self._wakeup_thread = threading.Thread(target=self._wakeup_worker, daemon=True)
+        self._wakeup_thread.start()
 
-        self._gpu_server_monitor_task = asyncio.create_task(worker())
+    def stop_all(self) -> None:
+        self._stop_event.set()
+        for thread in [self._backend_thread, self._auth_thread, self._gpu_server_thread, self._wakeup_thread]:
+            if thread and thread.is_alive():
+                thread.join(timeout=5)

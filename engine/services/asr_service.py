@@ -1,7 +1,7 @@
 import asyncio
 import contextlib
 import threading
-from collections.abc import Callable, Coroutine
+from collections.abc import Callable
 from queue import Queue
 from typing import Any
 
@@ -12,6 +12,7 @@ from loguru import logger
 from scipy.signal import resample_poly
 from websockets import ClientConnection
 
+from engine.cfg.asr import config as cfg_asr
 from engine.schemas.asr import ASRResult, ASRResultType
 from engine.services.audio_service import AudioService
 
@@ -29,9 +30,9 @@ class ASRService:
         self,
         ws_uri: str,
         device_index: int,
-        block_duration: float = 0.25,
-        on_final: Callable[[str], Coroutine[Any, Any, None]] | None = None,
-        on_partial: Callable[[str], Coroutine[Any, Any, None]] | None = None,
+        block_duration: float = 0.1,
+        on_final: Callable[[str], None] | None = None,
+        on_partial: Callable[[str], None] | None = None,
         queue_maxsize: int = 40,
     ) -> None:
         # Audio config
@@ -58,10 +59,7 @@ class ASRService:
         # Websocket / connection
         self.ws_uri = ws_uri
         self._ws: ClientConnection | None = None
-        self._connect_task: asyncio.Task[Any] | None = None
-        self._send_task: asyncio.Task[Any] | None = None
-        self._recv_task: asyncio.Task[Any] | None = None
-        self._loop: asyncio.AbstractEventLoop | None = None
+        self._ws_thread: threading.Thread | None = None
 
         # Internal control
         self._stop_event = threading.Event()
@@ -115,21 +113,47 @@ class ASRService:
             return
 
         logger.info("Starting audio capture...")
-        self.running.set()
         self._stop_event.clear()
 
-        self.pa = pyaudio.PyAudio()
-        self.stream = self.pa.open(
-            format=pyaudio.paInt16,
-            channels=self.channels,
-            rate=self.sample_rate,
-            input=True,
-            input_device_index=self.device_index,
-            frames_per_buffer=self.blocksize,
-            stream_callback=self._audio_callback,
-        )
-        self.stream.start_stream()
-        logger.info("Audio capture started.")
+        try:
+            self.pa = pyaudio.PyAudio()
+            self.stream = self.pa.open(
+                format=pyaudio.paInt16,
+                channels=self.channels,
+                rate=self.sample_rate,
+                input=True,
+                input_device_index=self.device_index,
+                frames_per_buffer=self.blocksize,
+                stream_callback=self._audio_callback,
+            )
+
+            # Start stream and mark running only after success
+            self.stream.start_stream()
+            self.running.set()
+            logger.info("Audio capture started.")
+
+        except Exception as ex:
+            # Ensure resources are cleaned and state reset on failure
+            logger.exception(f"Failed to start audio capture: {ex}")
+            with contextlib.suppress(Exception):
+                if self.stream is not None:
+                    with contextlib.suppress(Exception):
+                        if hasattr(self.stream, "is_active") and self.stream.is_active():
+                            self.stream.stop_stream()
+                    with contextlib.suppress(Exception):
+                        self.stream.close()
+                self.stream = None
+
+            with contextlib.suppress(Exception):
+                if self.pa is not None:
+                    with contextlib.suppress(Exception):
+                        self.pa.terminate()
+                self.pa = None
+
+            # Indicate we are not running
+            self.running.clear()
+            self._stop_event.set()
+            return
 
     def stop_capture(self, _join_timeout: float = 5.0) -> None:
         """Stop audio capture."""
@@ -172,8 +196,13 @@ class ASRService:
         This blocks in an executor so the event loop is not blocked.
         """
         loop = asyncio.get_running_loop()
-        # Use blocking queue.get in executor; allow cancellation by checking stop_event after wake
-        data_np = await loop.run_in_executor(None, self.audio_queue.get)
+        while True:
+            if self._stop_event.is_set():
+                msg = "Stop requested"
+                raise asyncio.CancelledError(msg)
+            with contextlib.suppress(Exception):
+                data_np = await loop.run_in_executor(None, lambda: self.audio_queue.get(timeout=0.1))
+                break
         # Convert to PCM16 bytes
         pcm16 = (data_np * 32767).astype(np.int16).tobytes()
         return pcm16  # noqa: RET504
@@ -189,7 +218,19 @@ class ASRService:
                     break
 
                 try:
-                    pcm_bytes = await self._get_next_audio()
+                    pcm_bytes = await asyncio.wait_for(self._get_next_audio(), timeout=cfg_asr.SILENCE_INTERVAL_SECONDS)
+                except TimeoutError:
+                    # Send silence frame to keep connection alive
+                    silence_bytes = cfg_asr.SILENCE_FRAME
+                    try:
+                        await ws.send(silence_bytes)
+                        logger.debug("Sent silence frame.")
+                    except asyncio.CancelledError:
+                        raise
+                    except Exception as ex:
+                        logger.exception(f"Failed to send silence to websocket: {ex}")
+                        raise
+                    continue
                 except asyncio.CancelledError:
                     raise
                 except Exception as ex:
@@ -227,7 +268,9 @@ class ASRService:
                     break
 
                 try:
-                    msg = await ws.recv()
+                    msg = await asyncio.wait_for(ws.recv(), timeout=0.1)
+                except TimeoutError:
+                    continue
                 except asyncio.CancelledError:
                     raise
                 except Exception as ex:
@@ -249,13 +292,13 @@ class ASRService:
                 if asr_result.type is ASRResultType.FINAL:
                     if self.on_final:
                         try:
-                            await self.on_final(asr_result.content)
+                            self.on_final(asr_result.content)
                         except Exception:
                             logger.exception("on_final callback failed")
                 elif asr_result.type is ASRResultType.PARTIAL:
                     if self.on_partial:
                         try:
-                            await self.on_partial(asr_result.content)
+                            self.on_partial(asr_result.content)
                         except Exception:
                             logger.exception("on_partial callback failed")
                 elif asr_result.type is ASRResultType.ERROR:
@@ -281,25 +324,8 @@ class ASRService:
                 logger.info(f"Connected to server {self.ws_uri}")
                 self._ws = ws
 
-                # create tasks and keep references so stop() can cancel them
-                self._send_task = asyncio.create_task(self._send_loop(ws), name="asrclient-send")
-                self._recv_task = asyncio.create_task(self._recv_loop(ws), name="asrclient-recv")
-
-                done, pending = await asyncio.wait(
-                    {self._send_task, self._recv_task}, return_when=asyncio.FIRST_EXCEPTION
-                )
-
-                # Cancel pending tasks
-                for p in pending:
-                    p.cancel()
-                    with contextlib.suppress(asyncio.CancelledError):
-                        await p
-
-                # If any task raised, re-raise to propagate error
-                for d in done:
-                    ex = d.exception()
-                    if ex:
-                        raise d.exception() from ex  # type: ignore  # noqa: PGH003, TRY301
+                # Run send and recv loops concurrently
+                await asyncio.gather(self._send_loop(ws), self._recv_loop(ws))
 
         except asyncio.CancelledError:
             logger.info("Connect task cancelled.")
@@ -308,85 +334,52 @@ class ASRService:
             logger.exception(f"Websocket connection or streaming failed: {ex}")
             # Task exits on error; no reconnect logic here.
         finally:
-            # ensure tasks are cleared
-            with contextlib.suppress(Exception):
-                if self._send_task:
-                    self._send_task.cancel()
-            with contextlib.suppress(Exception):
-                if self._recv_task:
-                    self._recv_task.cancel()
-
             # close websocket if still open
             with contextlib.suppress(Exception):
                 if self._ws:
                     await self._ws.close()
             self._ws = None
 
-            # clear task refs
-            self._send_task = None
-            self._recv_task = None
             logger.info("Connect-and-stream task finished.")
 
     # -------------------------
-    # Public async control
+    # Public sync control
     # -------------------------
-    async def start(self, device_index: int | None = None, session_token: str | None = None) -> None:
+    def start(self, device_index: int | None = None, session_token: str | None = None) -> None:
         """
-        Start capture (sync) and start the asyncio connect/stream task.
-        Must be called from an asyncio event loop.
+        Start capture (sync) and start the asyncio connect/stream task in background.
         """
-        if self._loop is None:
-            self._loop = asyncio.get_running_loop()
-
-        # Start capture synchronously
         if device_index is not None:
             self.device_index = device_index
 
         self.start_capture()
 
-        # Start connect task (single connect, no reconnect)
-        if self._connect_task is None or self._connect_task.done():
-            self._connect_task = asyncio.create_task(self._connect_and_stream(session_token), name="asrclient-connect")
-            logger.info("ASRClient connect task started.")
+        # Start connect task in background thread
+        if self._ws_thread is None or not self._ws_thread.is_alive():
+            self._ws_thread = threading.Thread(
+                target=lambda: asyncio.run(self._connect_and_stream(session_token)),
+                daemon=True,
+                name="asr-websocket",
+            )
+            self._ws_thread.start()
 
-    async def stop(self) -> None:
+    def stop(self) -> None:
         """
-        Stop connect task and capture. Safe to call from asyncio.
+        Stop connect task and capture. Safe to call synchronously.
         """
         logger.info("Stopping ASRClient...")
 
         # Signal stop
         self._stop_event.set()
 
-        # Cancel connect task
-        if self._connect_task:
-            self._connect_task.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await self._connect_task
-            self._connect_task = None
+        # Stop capture (threaded)
+        self.stop_capture()
 
-        # Cancel send/recv tasks if still present
-        if self._send_task:
-            self._send_task.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await self._send_task
-            self._send_task = None
-
-        if self._recv_task:
-            self._recv_task.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await self._recv_task
-            self._recv_task = None
-
-        # Close active websocket
-        if self._ws:
-            with contextlib.suppress(Exception):
-                await self._ws.close()
-            self._ws = None
-
-        # Stop capture (threaded) in executor to avoid blocking event loop
-        loop = asyncio.get_running_loop()
-        await loop.run_in_executor(None, self.stop_capture)
+        # Wait for websocket thread to finish
+        if self._ws_thread and self._ws_thread.is_alive():
+            self._ws_thread.join(timeout=5.0)
+            if self._ws_thread.is_alive():
+                logger.warning("Websocket thread did not stop within timeout")
 
         logger.info("ASRClient stopped.")
 
