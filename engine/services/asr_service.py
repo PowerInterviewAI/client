@@ -10,49 +10,29 @@ from websockets import ClientConnection
 
 from engine.cfg.asr import config as cfg_asr
 from engine.schemas.asr import ASRResult, ASRResultType
-from engine.services.audio_record_service import (
-    AudioLoopbackRecordService,
-    AudioRecordService,
-    BaseAudioRecordService,
-)
+from engine.services.audio_record_service import BaseAudioRecordService
 
 
 class ASRService:
     """
     Stream audio to a TranscribeStreaming server via WebSocket.
     Receives JSON transcript messages from the server and calls callbacks.
-    Uses AudioRecordService or AudioLoopbackRecordService for audio capture.
+    Audio recorder service is passed to start() method.
     No automatic reconnect; connect once per start() and stop on error or stop().
     """
 
     def __init__(
         self,
         ws_uri: str,
-        device_index: int,
-        block_duration: float = 0.1,
         on_final: Callable[[str], None] | None = None,
         on_partial: Callable[[str], None] | None = None,
-        queue_maxsize: int = 40,
-        *,
-        use_loopback: bool = False,
     ) -> None:
         # Callbacks for transcript results
         self.on_final = on_final
         self.on_partial = on_partial
 
-        # Audio recorder - use loopback service for system audio capture
-        self.audio_recorder: BaseAudioRecordService
-        if use_loopback:
-            self.audio_recorder = AudioLoopbackRecordService(
-                block_duration=block_duration,
-                queue_maxsize=queue_maxsize,
-            )
-        else:
-            self.audio_recorder = AudioRecordService(
-                device_index=device_index,
-                block_duration=block_duration,
-                queue_maxsize=queue_maxsize,
-            )
+        # Audio recorder - will be set in start()
+        self.audio_recorder: BaseAudioRecordService | None = None
 
         # Websocket config
         self.ws_uri = ws_uri
@@ -76,6 +56,10 @@ class ASRService:
             if self._stop_event.is_set():
                 msg = "Stop requested"
                 raise asyncio.CancelledError(msg)
+
+            if self.audio_recorder is None:
+                logger.warning("Audio recorder not set")
+                continue
 
             data_np = await loop.run_in_executor(
                 None,
@@ -233,14 +217,15 @@ class ASRService:
     # -------------------------
     # Public sync control
     # -------------------------
-    def start(self, device_index: int | None = None, session_token: str | None = None) -> None:
+    def start(self, audio_recorder: BaseAudioRecordService, session_token: str | None = None) -> None:
         """
         Start audio capture and start the asyncio connect/stream task in background.
+        Audio recorder must already be started before calling this method.
         """
+        self.audio_recorder = audio_recorder
         self._stop_event.clear()
 
-        # Start audio recording
-        self.audio_recorder.start(device_index=device_index)
+        # Audio recorder should already be started externally
 
         # Start connect task in background thread
         if self._ws_thread is None or not self._ws_thread.is_alive():
@@ -253,15 +238,15 @@ class ASRService:
 
     def stop(self) -> None:
         """
-        Stop connect task and capture. Safe to call synchronously.
+        Stop connect task. Audio recorder stopping is handled externally.
+        Safe to call synchronously.
         """
         logger.info("Stopping ASRService...")
 
         # Signal stop
         self._stop_event.set()
 
-        # Stop audio recording
-        self.audio_recorder.stop()
+        # Audio recorder stopping is handled externally
 
         # Wait for websocket thread to finish
         if self._ws_thread and self._ws_thread.is_alive():
@@ -276,4 +261,6 @@ class ASRService:
     # -------------------------
     def is_running(self) -> bool:
         """Check if the service is running."""
+        if self.audio_recorder is None:
+            return False
         return self.audio_recorder.is_running() and not self._stop_event.is_set()

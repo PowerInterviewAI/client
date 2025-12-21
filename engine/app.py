@@ -43,7 +43,6 @@ class PowerInterviewApp:
     def start_assistant(self) -> None:
         self.transcriber.clear_transcripts()
         self.transcriber.start(
-            input_device_index=AudioService.get_device_index_by_name(ConfigService.config.audio_input_device_name),
             session_token=ConfigService.config.session_token if ConfigService.config.session_token else None,
         )
 
