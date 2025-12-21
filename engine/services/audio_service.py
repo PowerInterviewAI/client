@@ -1,4 +1,5 @@
 import contextlib
+import ctypes
 import threading
 import time
 from typing import Any
@@ -10,84 +11,213 @@ from loguru import logger
 
 class AudioDeviceService:
     """
-    Service for managing audio device enumeration and information.
+    Service for managing audio device enumeration and information using Windows API.
 
-    Note: Due to limitations in PortAudio (sounddevice's backend), dynamic device
-    plug/unplug events are not automatically detected. The service includes
-    refresh functionality to force re-enumeration of devices when needed.
-
-    For dynamic device detection:
-    - Call refresh_devices() manually when devices may have changed
-    - Or set refresh=True (default) when calling device listing methods
-    - This reinitializes the PortAudio context to detect new/removed devices
+    Uses Windows Multimedia API (MME) directly for device enumeration, avoiding
+    PortAudio limitations and stream interruptions.
     """
 
-    @classmethod
-    def refresh_devices(cls) -> None:
-        """
-        Manually refresh the audio device enumeration.
-        Call this when you suspect devices have been plugged/unplugged
-        to ensure the device list is up to date.
-        """
-        cls._refresh_devices()
+    # Windows API constants and structures
+    WAVE_MAPPER = -1
 
-    @classmethod
-    def _refresh_devices(cls) -> None:
-        """Force refresh of audio device enumeration by reinitializing PortAudio."""
-        try:
-            # Terminate and reinitialize PortAudio to detect device changes
-            sd._terminate()  # noqa: SLF001
-            sd._initialize()  # noqa: SLF001
-        except Exception as e:
-            logger.warning(f"Failed to refresh audio devices: {e}")
-
-    @classmethod
-    def _is_mme_device(cls, device: dict[str, Any]) -> bool:
-        """Check if a device uses the MME (Microsoft Multimedia Environment) API."""
-        try:
-            hostapis = sd.query_hostapis()
-            hostapi_name = hostapis[device["hostapi"]]["name"]
-            return "MME" in hostapi_name  # noqa: TRY300
-        except (IndexError, KeyError):
-            return False
-
-    @classmethod
-    def get_audio_devices(cls, refresh: bool = True) -> list[dict[str, Any]]:  # noqa: FBT001, FBT002
-        if refresh:
-            cls._refresh_devices()
-        devices = sd.query_devices()
-        # Convert to list of dicts and filter for MME devices with input or output channels
-        return [
-            dict(device)
-            for device in devices
-            if cls._is_mme_device(device) and (device["max_input_channels"] > 0 or device["max_output_channels"] > 0)
+    class WAVEINCAPS(ctypes.Structure):
+        _fields_ = [  # noqa: RUF012
+            ("wMid", ctypes.c_ushort),
+            ("wPid", ctypes.c_ushort),
+            ("vDriverVersion", ctypes.c_uint),
+            ("szPname", ctypes.c_char * 32),
+            ("dwFormats", ctypes.c_uint),
+            ("wChannels", ctypes.c_ushort),
+            ("wReserved1", ctypes.c_ushort),
         ]
 
-    @classmethod
-    def get_input_devices(cls, refresh: bool = True) -> list[dict[str, Any]]:  # noqa: FBT001, FBT002
-        if refresh:
-            cls._refresh_devices()
-        devices = sd.query_devices()
-        # Convert to list of dicts and filter for MME devices with input channels
-        return [dict(device) for device in devices if cls._is_mme_device(device) and device["max_input_channels"] > 0]
+    class WAVEOUTCAPS(ctypes.Structure):
+        _fields_ = [  # noqa: RUF012
+            ("wMid", ctypes.c_ushort),
+            ("wPid", ctypes.c_ushort),
+            ("vDriverVersion", ctypes.c_uint),
+            ("szPname", ctypes.c_char * 32),
+            ("dwFormats", ctypes.c_uint),
+            ("wChannels", ctypes.c_ushort),
+            ("wReserved1", ctypes.c_ushort),
+            ("dwSupport", ctypes.c_uint),
+        ]
+
+    # Load Windows API functions
+    try:
+        winmm = ctypes.windll.winmm
+
+        # Input device functions
+        waveInGetNumDevs = winmm.waveInGetNumDevs  # noqa: N815
+        waveInGetNumDevs.restype = ctypes.c_uint
+
+        waveInGetDevCaps = winmm.waveInGetDevCapsA  # noqa: N815
+        waveInGetDevCaps.argtypes = [ctypes.c_uint, ctypes.POINTER(WAVEINCAPS), ctypes.c_uint]
+
+        # Output device functions
+        waveOutGetNumDevs = winmm.waveOutGetNumDevs  # noqa: N815
+        waveOutGetNumDevs.restype = ctypes.c_uint
+
+        waveOutGetDevCaps = winmm.waveOutGetDevCapsA  # noqa: N815
+        waveOutGetDevCaps.argtypes = [ctypes.c_uint, ctypes.POINTER(WAVEOUTCAPS), ctypes.c_uint]
+
+    except AttributeError:
+        logger.warning("Windows Multimedia API not available")
+        winmm = None
 
     @classmethod
-    def get_output_devices(cls, refresh: bool = True) -> list[dict[str, Any]]:  # noqa: FBT001, FBT002
-        if refresh:
-            cls._refresh_devices()
-        devices = sd.query_devices()
-        # Convert to list of dicts and filter for MME devices with output channels
-        return [dict(device) for device in devices if cls._is_mme_device(device) and device["max_output_channels"] > 0]
+    def _query_input_devices(cls) -> list[dict[str, Any]]:
+        """Query input devices using Windows Multimedia API."""
+        if cls.winmm is None:
+            logger.warning("Windows API not available, falling back to sounddevice")
+            return cls._fallback_query_devices(input_only=True)
+
+        devices = []
+        try:
+            num_devices = cls.waveInGetNumDevs()
+            for i in range(num_devices):
+                caps = cls.WAVEINCAPS()
+                result = cls.waveInGetDevCaps(i, ctypes.byref(caps), ctypes.sizeof(caps))
+                if result == 0:  # MMSYSERR_NOERROR
+                    device_name = caps.szPname.decode("ascii", errors="ignore").rstrip("\x00")
+                    # Find corresponding sounddevice index
+                    sd_index = cls._find_sounddevice_index(device_name, is_input=True)
+                    devices.append(
+                        {
+                            "index": sd_index if sd_index >= 0 else i,  # Use SD index if found, otherwise MME index
+                            "name": device_name,
+                            "max_input_channels": caps.wChannels,
+                            "max_output_channels": 0,
+                            "default_samplerate": 44100,  # Default for MME
+                            "hostapi": 0,  # MME host API index
+                        }
+                    )
+        except Exception as e:
+            logger.warning(f"Failed to query input devices via Windows API: {e}")
+            return cls._fallback_query_devices(input_only=True)
+
+        return devices
+
+    @classmethod
+    def _query_output_devices(cls) -> list[dict[str, Any]]:
+        """Query output devices using Windows Multimedia API."""
+        if cls.winmm is None:
+            logger.warning("Windows API not available, falling back to sounddevice")
+            return cls._fallback_query_devices(output_only=True)
+
+        devices = []
+        try:
+            num_devices = cls.waveOutGetNumDevs()
+            for i in range(num_devices):
+                caps = cls.WAVEOUTCAPS()
+                result = cls.waveOutGetDevCaps(i, ctypes.byref(caps), ctypes.sizeof(caps))
+                if result == 0:  # MMSYSERR_NOERROR
+                    device_name = caps.szPname.decode("ascii", errors="ignore").rstrip("\x00")
+                    # Find corresponding sounddevice index
+                    sd_index = cls._find_sounddevice_index(device_name, is_input=False)
+                    devices.append(
+                        {
+                            "index": sd_index if sd_index >= 0 else i,  # Use SD index if found, otherwise MME index
+                            "name": device_name,
+                            "max_input_channels": 0,
+                            "max_output_channels": caps.wChannels,
+                            "default_samplerate": 44100,  # Default for MME
+                            "hostapi": 0,  # MME host API index
+                        }
+                    )
+        except Exception as e:
+            logger.warning(f"Failed to query output devices via Windows API: {e}")
+            return cls._fallback_query_devices(output_only=True)
+
+        return devices
+
+    @classmethod
+    def _find_sounddevice_index(cls, device_name: str, is_input: bool) -> int:  # noqa: FBT001
+        """Find the sounddevice global index for a device name."""
+        try:
+            devices = sd.query_devices()
+            for device in devices:
+                if device["name"] == device_name:  # noqa: SIM102
+                    # Check if it matches the channel type we're looking for
+                    if (is_input and device["max_input_channels"] > 0) or (
+                        not is_input and device["max_output_channels"] > 0
+                    ):
+                        return device["index"]
+            return -1  # Not found  # noqa: TRY300
+        except Exception:
+            return -1
+
+    @classmethod
+    def _fallback_query_devices(cls, input_only: bool = False, output_only: bool = False) -> list[dict[str, Any]]:  # noqa: FBT001, FBT002
+        """Fallback to sounddevice when Windows API is not available."""
+        try:
+            devices = sd.query_devices()
+            result = []
+            for device in devices:
+                if input_only and device["max_input_channels"] == 0:
+                    continue
+                if output_only and device["max_output_channels"] == 0:
+                    continue
+                result.append(dict(device))
+            return result  # noqa: TRY300
+        except Exception as e:
+            logger.error(f"Fallback device query failed: {e}")
+            return []
+
+    @classmethod
+    def get_audio_devices(cls) -> list[dict[str, Any]]:
+        """Get all MME audio devices (input and output) using Windows API."""
+        input_devices = cls._query_input_devices()
+        output_devices = cls._query_output_devices()
+
+        # Combine and deduplicate devices (some may support both input and output)
+        all_devices = {}
+        for device in input_devices + output_devices:
+            index = device["index"]
+            if index not in all_devices:
+                all_devices[index] = device.copy()
+            else:
+                # Merge channels if device supports both
+                existing = all_devices[index]
+                existing["max_input_channels"] = max(existing["max_input_channels"], device["max_input_channels"])
+                existing["max_output_channels"] = max(existing["max_output_channels"], device["max_output_channels"])
+
+        return list(all_devices.values())
+
+    @classmethod
+    def get_input_devices(cls) -> list[dict[str, Any]]:
+        """Get MME input devices using Windows API."""
+        return cls._query_input_devices()
+
+    @classmethod
+    def get_output_devices(cls) -> list[dict[str, Any]]:
+        """Get MME output devices using Windows API."""
+        return cls._query_output_devices()
 
     @classmethod
     def get_device_info_by_index(cls, index: int) -> dict[str, Any]:
-        device = sd.query_devices(index)
-        return dict(device)
+        """Get device info by index using sounddevice (for compatibility)."""
+        try:
+            device = sd.query_devices(index)
+            device_dict = dict(device)
+            # Check if it's an MME device
+            try:
+                hostapis = sd.query_hostapis()
+                hostapi_name = hostapis[device["hostapi"]]["name"]
+                if "MME" not in hostapi_name:
+                    logger.warning(f"Device {index} is not an MME device")
+            except (IndexError, KeyError):
+                logger.warning(f"Could not verify MME status for device {index}")
+            return device_dict  # noqa: TRY300
+        except Exception as e:
+            logger.error(f"Failed to get device info for index {index}: {e}")
+            return {}
 
     @classmethod
-    def get_device_index_by_name(cls, name: str, refresh: bool = True) -> int:  # noqa: FBT001, FBT002
+    def get_device_index_by_name(cls, name: str) -> int:
+        """Get MME device index by name using Windows API."""
         try:
-            audio_devices = cls.get_audio_devices(refresh=refresh)
+            audio_devices = cls.get_audio_devices()
             for device in audio_devices:
                 if device["name"] == name:
                     return int(device["index"])
