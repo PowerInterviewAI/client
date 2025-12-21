@@ -56,6 +56,41 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
 
     const [isStreaming, setIsStreaming] = useState(false);
 
+    const checkActiveVideoCodec = () => {
+      if (!pcRef.current) return;
+
+      try {
+        const videoTransceiver = pcRef.current.getTransceivers().find(t => t.receiver.track?.kind === 'video');
+        if (videoTransceiver) {
+          const receiverParams = videoTransceiver.receiver.getParameters();
+          const activeCodec = receiverParams.codecs?.[0];
+
+          if (activeCodec) {
+            console.log('Active video codec:', activeCodec);
+            setVideoMessage(`Active codec: ${activeCodec.mimeType} (${activeCodec.clockRate}Hz)`);
+          } else {
+            console.log('No active video codec found');
+          }
+        }
+      } catch (error) {
+        console.error('Error checking active codec:', error);
+      }
+    };
+
+    const checkSupportedVideoCodecs = () => {
+      try {
+        const videoCapabilities = RTCRtpSender.getCapabilities('video');
+        console.log('Supported video codecs:', videoCapabilities?.codecs);
+      } catch (error) {
+        console.error('Error getting video capabilities:', error);
+      }
+    };
+
+    // Check supported codecs on mount
+    useEffect(() => {
+      checkSupportedVideoCodecs();
+    }, []);
+
     const startWebRTC = async () => {
       if (pcRef.current) return;
 
@@ -75,7 +110,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
         // Attach remote stream to visible video element
         if (videoRef.current) {
           videoRef.current.srcObject = remoteStream;
-          videoRef.current.play().catch(() => {});
+          videoRef.current.play().catch(() => { });
         }
 
         // Start sending frames from the remote stream to the backend
@@ -127,6 +162,9 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       await pc.setRemoteDescription(new RTCSessionDescription(answer));
 
       setIsStreaming(true);
+
+      // Check the active video codec
+      checkActiveVideoCodec();
     };
 
     const startWebSocketFrameStreamingFromStream = async (
@@ -208,7 +246,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       if (wsRef.current) {
         try {
           wsRef.current.close();
-        } catch {}
+        } catch { }
         wsRef.current = null;
       }
 
@@ -216,7 +254,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       if (pcRef.current) {
         try {
           pcRef.current.close();
-        } catch {}
+        } catch { }
         pcRef.current = null;
       }
 
