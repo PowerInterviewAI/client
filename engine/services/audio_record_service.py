@@ -10,7 +10,7 @@ import sounddevice as sd
 from loguru import logger
 from scipy.signal import resample_poly
 
-from engine.services.audio_service import AudioDeviceService
+from engine.services.audio_device_service import AudioDeviceService
 
 
 class BaseAudioRecordService(ABC):

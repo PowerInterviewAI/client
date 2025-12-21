@@ -8,8 +8,8 @@ from engine.cfg.client import config as cfg_client
 from engine.schemas.app_state import RunningState
 from engine.schemas.transcript import Speaker, Transcript
 from engine.services.asr_service import ASRService
+from engine.services.audio_device_service import AudioDeviceService
 from engine.services.audio_record_service import AudioLoopbackRecordService, AudioRecordService
-from engine.services.audio_service import AudioDeviceService
 from engine.services.config_service import ConfigService
 from engine.utils.datetime import DatetimeUtil
 

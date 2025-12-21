@@ -6,7 +6,7 @@ from engine.api.error_handler import RouteErrorHandler
 from engine.app import the_app
 from engine.models.config import Config, ConfigUpdate
 from engine.schemas.app_state import AppState
-from engine.services.audio_service import AudioDeviceService
+from engine.services.audio_device_service import AudioDeviceService
 from engine.services.config_service import ConfigService
 
 router = APIRouter(
