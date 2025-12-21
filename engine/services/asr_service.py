@@ -2,29 +2,24 @@ import asyncio
 import contextlib
 import threading
 from collections.abc import Callable
-from queue import Queue
-from typing import Any
 
 import numpy as np
-import pyaudiowpatch as pyaudio
 import websockets
 from loguru import logger
-from scipy.signal import resample_poly
 from websockets import ClientConnection
 
 from engine.cfg.asr import config as cfg_asr
 from engine.schemas.asr import ASRResult, ASRResultType
-from engine.services.audio_service import AudioService
+from engine.services.audio_record_service import AudioRecordService
 
 
 class ASRService:
     """
-    Capture audio locally and stream raw PCM16 to a TranscribeStreaming server.
+    Stream audio to a TranscribeStreaming server via WebSocket.
     Receives JSON transcript messages from the server and calls callbacks.
+    Uses AudioRecordService for audio capture.
     No automatic reconnect; connect once per start() and stop on error or stop().
     """
-
-    TARGET_RATE = 16_000
 
     def __init__(
         self,
@@ -35,28 +30,18 @@ class ASRService:
         on_partial: Callable[[str], None] | None = None,
         queue_maxsize: int = 40,
     ) -> None:
-        # Audio config
-        dev_info = AudioService.get_device_info_by_index(device_index)
-        self.sample_rate = int(dev_info["defaultSampleRate"])
-        self.channels = dev_info["maxInputChannels"]
-
-        self.device_index = device_index
-        self.block_duration = block_duration
-        self.blocksize = int(self.sample_rate * self.block_duration)
+        # Callbacks for transcript results
         self.on_final = on_final
         self.on_partial = on_partial
 
-        # Thread-safe queue for audio frames (numpy float32 arrays)
-        self.audio_queue: Queue[np.ndarray[Any, Any]] = Queue(maxsize=queue_maxsize)
+        # Audio recorder
+        self.audio_recorder = AudioRecordService(
+            device_index=device_index,
+            block_duration=block_duration,
+            queue_maxsize=queue_maxsize,
+        )
 
-        # Threading flags
-        self.running = threading.Event()
-
-        # PyAudio objects
-        self.pa: pyaudio.PyAudio | None = None
-        self.stream: pyaudio.Stream | None = None
-
-        # Websocket / connection
+        # Websocket config
         self.ws_uri = ws_uri
         self._ws: ClientConnection | None = None
         self._ws_thread: threading.Thread | None = None
@@ -65,133 +50,11 @@ class ASRService:
         self._stop_event = threading.Event()
 
     # -------------------------
-    # Audio capture (threaded)
-    # -------------------------
-    def _audio_callback(
-        self,
-        in_data: bytes,
-        _frame_count: int,
-        _time_info: dict[str, Any],
-        status_flags: int,
-    ) -> tuple[Any, Any]:
-        """PyAudio callback: convert to float32 mono, resample if needed, enqueue."""
-        if status_flags:
-            logger.warning(f"Audio status: {status_flags}")
-
-        # Convert to float32 in [-1,1]
-        data_np = np.frombuffer(in_data, dtype=np.int16).astype(np.float32) / 32768.0
-
-        if self.channels > 1:
-            try:
-                data_np = data_np.reshape(-1, self.channels).mean(axis=1)
-            except Exception:
-                # fallback: take first channel if reshape fails
-                data_np = data_np[:: self.channels]
-
-        if self.sample_rate != self.TARGET_RATE:
-            data_np = resample_poly(data_np, self.TARGET_RATE, self.sample_rate)
-
-        # Non-blocking enqueue: drop oldest if full
-        try:
-            if self.audio_queue.full():
-                with contextlib.suppress(Exception):
-                    self.audio_queue.get_nowait()
-            self.audio_queue.put_nowait(data_np)
-        except Exception:
-            # If put_nowait fails for any reason, drop the frame silently
-            logger.debug("Dropping audio frame (queue full or error).")
-
-        return (None, pyaudio.paContinue)
-
-    # -------------------------
-    # Start / stop capture
-    # -------------------------
-    def start_capture(self) -> None:
-        """Start PyAudio capture."""
-        if self.running.is_set():
-            logger.warning("ASRClient already running.")
-            return
-
-        logger.info("Starting audio capture...")
-        self._stop_event.clear()
-
-        try:
-            self.pa = pyaudio.PyAudio()
-            self.stream = self.pa.open(
-                format=pyaudio.paInt16,
-                channels=self.channels,
-                rate=self.sample_rate,
-                input=True,
-                input_device_index=self.device_index,
-                frames_per_buffer=self.blocksize,
-                stream_callback=self._audio_callback,
-            )
-
-            # Start stream and mark running only after success
-            self.stream.start_stream()
-            self.running.set()
-            logger.info("Audio capture started.")
-
-        except Exception as ex:
-            # Ensure resources are cleaned and state reset on failure
-            logger.exception(f"Failed to start audio capture: {ex}")
-            with contextlib.suppress(Exception):
-                if self.stream is not None:
-                    with contextlib.suppress(Exception):
-                        if hasattr(self.stream, "is_active") and self.stream.is_active():
-                            self.stream.stop_stream()
-                    with contextlib.suppress(Exception):
-                        self.stream.close()
-                self.stream = None
-
-            with contextlib.suppress(Exception):
-                if self.pa is not None:
-                    with contextlib.suppress(Exception):
-                        self.pa.terminate()
-                self.pa = None
-
-            # Indicate we are not running
-            self.running.clear()
-            self._stop_event.set()
-            return
-
-    def stop_capture(self, _join_timeout: float = 5.0) -> None:
-        """Stop audio capture."""
-        if not self.running.is_set():
-            logger.warning("ASRClient not running.")
-            return
-
-        logger.info("Stopping audio capture...")
-        self.running.clear()
-        self._stop_event.set()
-
-        if self.stream and self.stream.is_active():
-            try:
-                self.stream.stop_stream()
-            except Exception:
-                logger.exception("Error stopping stream")
-        if self.stream:
-            try:
-                self.stream.close()
-            except Exception:
-                logger.exception("Error closing stream")
-            self.stream = None
-
-        if self.pa:
-            try:
-                self.pa.terminate()
-            except Exception:
-                logger.exception("Error terminating PyAudio")
-            self.pa = None
-
-        logger.info("Audio capture stopped.")
-
-    # -------------------------
     # Async websocket helpers
     # -------------------------
     async def _get_next_audio(self) -> bytes:
         """
-        Await next audio chunk from the thread-safe queue.
+        Await next audio chunk from the audio recorder.
         Returns raw PCM16 bytes ready to send.
         This blocks in an executor so the event loop is not blocked.
         """
@@ -200,15 +63,20 @@ class ASRService:
             if self._stop_event.is_set():
                 msg = "Stop requested"
                 raise asyncio.CancelledError(msg)
-            with contextlib.suppress(Exception):
-                data_np = await loop.run_in_executor(None, lambda: self.audio_queue.get(timeout=0.1))
+
+            data_np = await loop.run_in_executor(
+                None,
+                lambda: self.audio_recorder.get_audio_frame(timeout=0.1),
+            )
+            if data_np is not None:
                 break
+
         # Convert to PCM16 bytes
         pcm16 = (data_np * 32767).astype(np.int16).tobytes()
         return pcm16  # noqa: RET504
 
     async def _send_loop(self, ws: ClientConnection) -> None:
-        """Pull audio frames from queue and send to websocket as binary frames."""
+        """Pull audio frames from recorder and send to websocket as binary frames."""
         logger.info("Send loop started.")
         try:
             while True:
@@ -218,7 +86,10 @@ class ASRService:
                     break
 
                 try:
-                    pcm_bytes = await asyncio.wait_for(self._get_next_audio(), timeout=cfg_asr.SILENCE_INTERVAL_SECONDS)
+                    pcm_bytes = await asyncio.wait_for(
+                        self._get_next_audio(),
+                        timeout=cfg_asr.SILENCE_INTERVAL_SECONDS,
+                    )
                 except TimeoutError:
                     # Send silence frame to keep connection alive
                     silence_bytes = cfg_asr.SILENCE_FRAME
@@ -316,11 +187,15 @@ class ASRService:
         logger.info(f"Attempting websocket connect to {self.ws_uri}")
         try:
             # Prepare headers with session token if available
-            additional_headers = {}
+            additional_headers: dict[str, str] = {}
             if session_token:
                 additional_headers["Cookie"] = f"session_token={session_token}"
 
-            async with websockets.connect(self.ws_uri, ping_timeout=None, additional_headers=additional_headers) as ws:
+            async with websockets.connect(
+                self.ws_uri,
+                ping_timeout=None,
+                additional_headers=additional_headers,
+            ) as ws:
                 logger.info(f"Connected to server {self.ws_uri}")
                 self._ws = ws
 
@@ -347,12 +222,12 @@ class ASRService:
     # -------------------------
     def start(self, device_index: int | None = None, session_token: str | None = None) -> None:
         """
-        Start capture (sync) and start the asyncio connect/stream task in background.
+        Start audio capture and start the asyncio connect/stream task in background.
         """
-        if device_index is not None:
-            self.device_index = device_index
+        self._stop_event.clear()
 
-        self.start_capture()
+        # Start audio recording
+        self.audio_recorder.start(device_index=device_index)
 
         # Start connect task in background thread
         if self._ws_thread is None or not self._ws_thread.is_alive():
@@ -367,13 +242,13 @@ class ASRService:
         """
         Stop connect task and capture. Safe to call synchronously.
         """
-        logger.info("Stopping ASRClient...")
+        logger.info("Stopping ASRService...")
 
         # Signal stop
         self._stop_event.set()
 
-        # Stop capture (threaded)
-        self.stop_capture()
+        # Stop audio recording
+        self.audio_recorder.stop()
 
         # Wait for websocket thread to finish
         if self._ws_thread and self._ws_thread.is_alive():
@@ -381,10 +256,11 @@ class ASRService:
             if self._ws_thread.is_alive():
                 logger.warning("Websocket thread did not stop within timeout")
 
-        logger.info("ASRClient stopped.")
+        logger.info("ASRService stopped.")
 
     # -------------------------
     # Utility
     # -------------------------
     def is_running(self) -> bool:
-        return self.running.is_set() and not self._stop_event.is_set()
+        """Check if the service is running."""
+        return self.audio_recorder.is_running() and not self._stop_event.is_set()
