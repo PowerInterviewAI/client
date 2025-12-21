@@ -112,21 +112,47 @@ class ASRService:
             return
 
         logger.info("Starting audio capture...")
-        self.running.set()
         self._stop_event.clear()
 
-        self.pa = pyaudio.PyAudio()
-        self.stream = self.pa.open(
-            format=pyaudio.paInt16,
-            channels=self.channels,
-            rate=self.sample_rate,
-            input=True,
-            input_device_index=self.device_index,
-            frames_per_buffer=self.blocksize,
-            stream_callback=self._audio_callback,
-        )
-        self.stream.start_stream()
-        logger.info("Audio capture started.")
+        try:
+            self.pa = pyaudio.PyAudio()
+            self.stream = self.pa.open(
+                format=pyaudio.paInt16,
+                channels=self.channels,
+                rate=self.sample_rate,
+                input=True,
+                input_device_index=self.device_index,
+                frames_per_buffer=self.blocksize,
+                stream_callback=self._audio_callback,
+            )
+
+            # Start stream and mark running only after success
+            self.stream.start_stream()
+            self.running.set()
+            logger.info("Audio capture started.")
+
+        except Exception as ex:
+            # Ensure resources are cleaned and state reset on failure
+            logger.exception(f"Failed to start audio capture: {ex}")
+            with contextlib.suppress(Exception):
+                if self.stream is not None:
+                    with contextlib.suppress(Exception):
+                        if hasattr(self.stream, "is_active") and self.stream.is_active():
+                            self.stream.stop_stream()
+                    with contextlib.suppress(Exception):
+                        self.stream.close()
+                self.stream = None
+
+            with contextlib.suppress(Exception):
+                if self.pa is not None:
+                    with contextlib.suppress(Exception):
+                        self.pa.terminate()
+                self.pa = None
+
+            # Indicate we are not running
+            self.running.clear()
+            self._stop_event.set()
+            return
 
     def stop_capture(self, _join_timeout: float = 5.0) -> None:
         """Stop audio capture."""
