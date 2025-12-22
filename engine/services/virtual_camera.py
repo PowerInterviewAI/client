@@ -57,7 +57,6 @@ class VirtualCameraService:
                                 or (current_fps != self.fps)
                             ):
                                 logger.debug("Camera config changed, restarting camera")
-                                vcam.close()
                                 break
 
                             # Wait until a new frame is available or timeout for next frame
@@ -91,7 +90,6 @@ class VirtualCameraService:
                             logger.warning(f"Failed to send frame: {ex}")
                             # small backoff to avoid tight error loop
                             if self._stop_event.wait(timeout=0.1):
-                                vcam.close()
                                 break
 
                 # refresh local config snapshot
@@ -104,7 +102,6 @@ class VirtualCameraService:
                 logger.warning(f"Failed to start or run virtual camera: {ex}")
                 # Wait a bit before retrying to avoid tight loop
                 if self._stop_event.wait(timeout=5.0):
-                    vcam.close()
                     break
                 # refresh config under lock
                 with self._lock:
