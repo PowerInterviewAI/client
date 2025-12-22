@@ -137,8 +137,8 @@ export default function Home() {
               videoWidth={config?.video_width ?? 640}
               videoHeight={config?.video_height ?? 480}
               enableFaceSwap={config?.enable_face_swap ?? true}
-              enableFaceEnhance={config?.enable_face_enhance ?? false}
               enableBackgroundBlur={config?.enable_background_blur ?? true}
+              enableFaceEnhance={config?.enable_face_enhance ?? false}
             />
           </div>
 
