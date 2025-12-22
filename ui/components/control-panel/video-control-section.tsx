@@ -74,7 +74,7 @@ export function VideoControlSection({
         if (videoPreviewRef.current) {
           videoPreviewRef.current.srcObject = stream;
           // Some browsers need play() after setting srcObject
-          await videoPreviewRef.current.play().catch(() => {});
+          await videoPreviewRef.current.play().catch(() => { });
         }
       } catch (err) {
         toast.error('Unable to access camera');
@@ -106,9 +106,8 @@ export function VideoControlSection({
   return (
     <div className="relative">
       <div
-        className={`flex items-center overflow-hidden border ${
-          config?.enable_video_control ? 'rounded-full' : 'border-destructive rounded-xl text-white'
-        }`}
+        className={`flex items-center overflow-hidden border ${config?.enable_video_control ? 'rounded-full' : 'border-destructive rounded-xl text-white'
+          }`}
       >
         <Tooltip>
           <TooltipTrigger asChild>
@@ -233,6 +232,21 @@ export function VideoControlSection({
                 onClick={() => updateConfig({ enable_face_enhance: !config?.enable_face_enhance })}
               >
                 {config?.enable_face_enhance ? 'On' : 'Off'}
+              </Button>
+            </div>
+
+            {/* Background Blur Toggle */}
+            <div className="flex items-center justify-between">
+              <span className="text-xs">Background Blur</span>
+              <Button
+                variant={config?.enable_background_blur ? 'default' : 'outline'}
+                size="sm"
+                className="w-16"
+                onClick={() =>
+                  updateConfig({ enable_background_blur: !config?.enable_background_blur })
+                }
+              >
+                {config?.enable_background_blur ? 'On' : 'Off'}
               </Button>
             </div>
           </DialogContent>

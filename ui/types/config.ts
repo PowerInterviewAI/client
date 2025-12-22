@@ -27,4 +27,5 @@ export interface Config {
   video_height: number;
   enable_face_swap: boolean;
   enable_face_enhance: boolean;
+  enable_background_blur: boolean;
 }

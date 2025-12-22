@@ -18,6 +18,7 @@ interface VideoPanelProps {
   videoHeight: number;
   enableFaceSwap: boolean;
   enableFaceEnhance: boolean;
+  enableBackgroundBlur: boolean;
   // Optional: streaming fps for websocket
   fps?: number;
   jpegQuality?: number; // 0.0 - 1.0
@@ -38,6 +39,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       videoHeight,
       enableFaceSwap,
       enableFaceEnhance,
+      enableBackgroundBlur,
       fps = 30,
       jpegQuality = 0.7,
     },
@@ -113,7 +115,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
         // Attach remote stream to visible video element
         if (videoRef.current) {
           videoRef.current.srcObject = remoteStream;
-          videoRef.current.play().catch(() => {});
+          videoRef.current.play().catch(() => { });
         }
 
         // Start sending frames from the remote stream to the backend
@@ -175,6 +177,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
           photo,
           swap_face: enableFaceSwap,
           enhance_face: enableFaceEnhance,
+          background_blur: enableBackgroundBlur,
         } as WebRTCOptions,
       } as OfferRequest);
       const answer = res.data;
@@ -267,7 +270,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       if (wsRef.current) {
         try {
           wsRef.current.close();
-        } catch {}
+        } catch { }
         wsRef.current = null;
       }
 
@@ -275,7 +278,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       if (pcRef.current) {
         try {
           pcRef.current.close();
-        } catch {}
+        } catch { }
         pcRef.current = null;
       }
 
