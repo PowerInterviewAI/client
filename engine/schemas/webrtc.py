@@ -16,6 +16,10 @@ class WebRTCOptions(BaseModel):
         bool,
         Field(description="Enhance face flag"),
     ]
+    background_blur: Annotated[
+        bool,
+        Field(description="Background blur flag"),
+    ]
 
 
 class WebRTCOfferRequest(BaseModel):
