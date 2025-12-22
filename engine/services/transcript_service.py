@@ -8,7 +8,9 @@ from engine.cfg.client import config as cfg_client
 from engine.schemas.app_state import RunningState
 from engine.schemas.transcript import Speaker, Transcript
 from engine.services.asr_service import ASRService
-from engine.services.audio_service import AudioService
+from engine.services.audio_device_service import AudioDeviceService
+from engine.services.audio_record_service import AudioLoopbackRecordService, AudioRecordService
+from engine.services.config_service import ConfigService
 from engine.utils.datetime import DatetimeUtil
 
 
@@ -26,6 +28,12 @@ class Transcriber:
         self.self_asr: ASRService | None = None
         self.other_asr: ASRService | None = None
 
+        # Audio recorders
+        self.self_audio_recorder: AudioRecordService | None = None
+        # Start other audio recorder (system loopback) immediately in constructor
+        self.other_audio_recorder: AudioLoopbackRecordService = AudioLoopbackRecordService()
+        self.other_audio_recorder.start()
+
         # Callbacks
         self.callback_on_self_final = callback_on_self_final
         self.callback_on_other_final = callback_on_other_final
@@ -34,10 +42,10 @@ class Transcriber:
         self._lock = threading.Lock()
         self._state = RunningState.IDLE
 
-    def start(self, input_device_index: int, session_token: str | None = None) -> None:
+    def start(self, session_token: str | None = None) -> None:
         """
         Sync start: stops any running services, (re)creates ASRService instances if needed,
-        and starts them.
+        and starts them. Both ASR services now use loopback recording.
         """
         # Stop existing services first
         self.stop()
@@ -62,26 +70,32 @@ class Transcriber:
         if self.self_asr is None:
             self.self_asr = ASRService(
                 ws_uri=cfg_client.BACKEND_ASR_STREAMING_URL,
-                device_index=input_device_index,
                 on_final=self.on_self_final,
                 on_partial=self.on_self_partial,
             )
 
         if self.other_asr is None:
-            loopback_index = AudioService.get_loopback_device().get("index", 0)
             self.other_asr = ASRService(
                 ws_uri=cfg_client.BACKEND_ASR_STREAMING_URL,
-                device_index=loopback_index,
                 on_final=self.on_other_final,
                 on_partial=self.on_other_partial,
             )
 
+        # Create audio recorders
+        # self_asr uses microphone input, other_asr uses system loopback (already started in constructor)
+        input_device_index = AudioDeviceService.get_device_index_by_name(ConfigService.config.audio_input_device_name)
+        self.self_audio_recorder = AudioRecordService(device_index=input_device_index)
+
+        # Start self audio recorder and clear other audio recorder queue
+        self.self_audio_recorder.start()
+        self.other_audio_recorder.clear_queue()
+
         # Start both ASR services
         try:
             if self.self_asr is not None:
-                self.self_asr.start(device_index=input_device_index, session_token=session_token)
+                self.self_asr.start(audio_recorder=self.self_audio_recorder, session_token=session_token)
             if self.other_asr is not None:
-                self.other_asr.start(session_token=session_token)
+                self.other_asr.start(audio_recorder=self.other_audio_recorder, session_token=session_token)
         except Exception:
             logger.exception("Failed to start ASR services")
             # If start failed, ensure we set state appropriately and re-raise
@@ -118,6 +132,15 @@ class Transcriber:
                 logger.exception("Error stopping other_asr")
             finally:
                 self.other_asr = None
+
+        # Stop audio recorders (now handled externally from ASR services)
+        if self.self_audio_recorder is not None:
+            try:
+                self.self_audio_recorder.stop()
+            except Exception:
+                logger.exception("Error stopping self_audio_recorder")
+            finally:
+                self.self_audio_recorder = None
 
         with self._lock:
             self._state = RunningState.STOPPED

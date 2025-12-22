@@ -1,9 +1,9 @@
 import time
 
-import pyaudiowpatch as pyaudio
 from loguru import logger
 
 from engine.services.asr_service import ASRService
+from engine.services.audio_record_service import AudioLoopbackRecordService
 
 
 def test_asr_service() -> None:
@@ -22,19 +22,20 @@ def test_asr_service() -> None:
             logger.debug(f"PARTIAL: {partial}")
             last_partial = partial
 
-    pa = pyaudio.PyAudio()
-    loopback_dev = pa.get_default_wasapi_loopback()
-    pa.terminate()
-
     service = ASRService(
         ws_uri="ws://localhost:8080/api/asr/streaming",
-        device_index=loopback_dev["index"],
         on_final=on_final,
         on_partial=on_partial,
     )
 
+    # Create audio recorder
+    audio_recorder = AudioLoopbackRecordService()
+
+    # Start audio recorder
+    audio_recorder.start()
+
     # Run until interrupted
-    service.start()
+    service.start(audio_recorder=audio_recorder)
     while True:
         try:
             time.sleep(1)

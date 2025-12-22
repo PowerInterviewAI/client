@@ -10,7 +10,8 @@ from engine.models.config import ConfigUpdate
 from engine.schemas.app_state import AppState
 from engine.schemas.summarize import GenerateSummarizeRequest
 from engine.schemas.transcript import Speaker, Transcript
-from engine.services.audio_service import AudioController, AudioService
+from engine.services.audio_control_service import AudioControlService
+from engine.services.audio_device_service import AudioDeviceService
 from engine.services.config_service import ConfigService
 from engine.services.service_monitor import ServiceMonitor
 from engine.services.suggestion_service import SuggestionService
@@ -29,12 +30,13 @@ class PowerInterviewApp:
             callback_on_other_final=self.on_transcriber_other_final,
         )
         self.suggestion_service = SuggestionService()
-        self.audio_controller = AudioController()
+        self.audio_controller = AudioControlService()
         self.virtual_camera_service = VirtualCameraService(
             width=cfg_video.DEFAULT_WIDTH,
             height=cfg_video.DEFAULT_HEIGHT,
             fps=cfg_video.DEFAULT_FPS,
         )
+        self.virtual_camera_service.start()
 
     # ---- Configuration Management ----
     # Config management is handled by ConfigService classmethods
@@ -43,7 +45,6 @@ class PowerInterviewApp:
     def start_assistant(self) -> None:
         self.transcriber.clear_transcripts()
         self.transcriber.start(
-            input_device_index=AudioService.get_device_index_by_name(ConfigService.config.audio_input_device_name),
             session_token=ConfigService.config.session_token if ConfigService.config.session_token else None,
         )
 
@@ -51,8 +52,12 @@ class PowerInterviewApp:
 
         if ConfigService.config.enable_audio_control:
             self.audio_controller.update_parameters(
-                input_device_id=AudioService.get_device_index_by_name(ConfigService.config.audio_input_device_name),
-                output_device_id=AudioService.get_device_index_by_name(ConfigService.config.audio_control_device_name),
+                input_device_id=AudioDeviceService.get_device_index_by_name(
+                    ConfigService.config.audio_input_device_name
+                ),
+                output_device_id=AudioDeviceService.get_device_index_by_name(
+                    ConfigService.config.audio_control_device_name
+                ),
                 delay_secs=ConfigService.config.audio_delay_ms / 1000,
             )
             self.audio_controller.start()
@@ -63,7 +68,6 @@ class PowerInterviewApp:
                 height=ConfigService.config.video_height,
                 fps=cfg_video.DEFAULT_FPS,
             )
-            self.virtual_camera_service.start()
 
     def stop_assistant(self) -> None:
         self.transcriber.stop()
