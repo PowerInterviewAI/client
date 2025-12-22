@@ -71,6 +71,10 @@ class Config(BaseModel):
         bool,
         Field(description="Whether face enhancement is enabled"),
     ] = False
+    enable_background_blur: Annotated[
+        bool,
+        Field(description="Whether background blur is enabled"),
+    ] = False
 
 
 class ConfigUpdate(BaseModel):
@@ -95,3 +99,4 @@ class ConfigUpdate(BaseModel):
     video_height: int | None = None
     enable_face_swap: bool | None = None
     enable_face_enhance: bool | None = None
+    enable_background_blur: bool | None = None
