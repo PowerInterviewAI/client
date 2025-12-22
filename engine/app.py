@@ -36,6 +36,7 @@ class PowerInterviewApp:
             height=cfg_video.DEFAULT_HEIGHT,
             fps=cfg_video.DEFAULT_FPS,
         )
+        self.virtual_camera_service.start()
 
     # ---- Configuration Management ----
     # Config management is handled by ConfigService classmethods
@@ -67,7 +68,6 @@ class PowerInterviewApp:
                 height=ConfigService.config.video_height,
                 fps=cfg_video.DEFAULT_FPS,
             )
-            self.virtual_camera_service.start()
 
     def stop_assistant(self) -> None:
         self.transcriber.stop()

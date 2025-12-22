@@ -1,4 +1,3 @@
-import contextlib
 import threading
 from typing import Any
 
@@ -46,12 +45,66 @@ class VirtualCameraService:
 
         while not self._stop_event.is_set():
             try:
-                logger.debug(f"Starting virtual camera: {current_width}x{current_height} @ {current_fps}fps")
-                vcam = pyvirtualcam.Camera(width=current_width, height=current_height, fps=current_fps)
+                with pyvirtualcam.Camera(width=current_width, height=current_height, fps=current_fps) as vcam:
+                    # Main send loop for the opened camera
+                    frame_interval = 1.0 / max(1, current_fps)
+                    while not self._stop_event.is_set():
+                        with self._cond:
+                            # If config changed, break to recreate camera with new settings
+                            if (
+                                (current_width != self.width)
+                                or (current_height != self.height)
+                                or (current_fps != self.fps)
+                            ):
+                                logger.debug("Camera config changed, restarting camera")
+                                vcam.close()
+                                break
+
+                            # Wait until a new frame is available or timeout for next frame
+                            # This makes the loop responsive to set_frame() and config() calls
+                            self._cond.wait(timeout=frame_interval)
+
+                            # Copy frame under lock to avoid races
+                            frame = None if self._frame is None else self._frame.copy()
+
+                        if frame is None:
+                            # No frame available; send a black frame of the camera size
+                            frame = np.zeros((current_height, current_width, 3), dtype=np.uint8)
+
+                        try:
+                            # Ensure frame has correct shape and dtype
+                            if frame.dtype != np.uint8:
+                                frame = frame.astype(np.uint8)
+
+                            if frame.ndim == 2:  # noqa: PLR2004
+                                # single channel -> convert to 3-channel
+                                frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+
+                            if frame.shape[:2] != (current_height, current_width):
+                                frame = cv2.resize(frame, (current_width, current_height))
+
+                            # Convert BGR (OpenCV) to RGB for pyvirtualcam
+                            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                            vcam.send(rgb)
+                            vcam.sleep_until_next_frame()
+                        except Exception as ex:
+                            logger.warning(f"Failed to send frame: {ex}")
+                            # small backoff to avoid tight error loop
+                            if self._stop_event.wait(timeout=0.1):
+                                vcam.close()
+                                break
+
+                # refresh local config snapshot
+                with self._lock:
+                    current_width = self.width
+                    current_height = self.height
+                    current_fps = self.fps
+
             except Exception as ex:
-                logger.warning(f"Failed to start virtual camera: {ex}")
+                logger.warning(f"Failed to start or run virtual camera: {ex}")
                 # Wait a bit before retrying to avoid tight loop
                 if self._stop_event.wait(timeout=5.0):
+                    vcam.close()
                     break
                 # refresh config under lock
                 with self._lock:
@@ -59,72 +112,6 @@ class VirtualCameraService:
                     current_height = self.height
                     current_fps = self.fps
                 continue
-
-            try:
-                # Main send loop for the opened camera
-                frame_interval = 1.0 / max(1, current_fps)
-                while not self._stop_event.is_set():
-                    with self._cond:
-                        # If config changed, break to recreate camera with new settings
-                        if (
-                            (current_width != self.width)
-                            or (current_height != self.height)
-                            or (current_fps != self.fps)
-                        ):
-                            logger.debug("Camera config changed, restarting camera")
-                            break
-
-                        # Wait until a new frame is available or timeout for next frame
-                        # This makes the loop responsive to set_frame() and config() calls
-                        self._cond.wait(timeout=frame_interval)
-
-                        # Copy frame under lock to avoid races
-                        frame = None if self._frame is None else self._frame.copy()
-
-                    if frame is None:
-                        # No frame available; send a black frame of the camera size
-                        frame = np.zeros((current_height, current_width, 3), dtype=np.uint8)
-
-                    try:
-                        # Ensure frame has correct shape and dtype
-                        if frame.dtype != np.uint8:
-                            frame = frame.astype(np.uint8)
-
-                        if frame.ndim == 2:  # noqa: PLR2004
-                            # single channel -> convert to 3-channel
-                            frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
-
-                        if frame.shape[:2] != (current_height, current_width):
-                            frame = cv2.resize(frame, (current_width, current_height))
-
-                        # Convert BGR (OpenCV) to RGB for pyvirtualcam
-                        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                        vcam.send(rgb)
-                        vcam.sleep_until_next_frame()
-                    except Exception as ex:
-                        logger.warning(f"Failed to send frame: {ex}")
-                        # small backoff to avoid tight error loop
-                        if self._stop_event.wait(timeout=0.1):
-                            break
-
-                # close camera and refresh local config snapshot
-                with contextlib.suppress(Exception):
-                    vcam.close()
-
-                with self._lock:
-                    current_width = self.width
-                    current_height = self.height
-                    current_fps = self.fps
-
-            except Exception as ex:
-                logger.exception(f"Unexpected error in virtual camera loop: {ex}")
-                # ensure camera closed on unexpected error
-                with contextlib.suppress(Exception):
-                    vcam.close()
-
-                # brief pause before retrying
-                if self._stop_event.wait(timeout=0.5):
-                    break
 
         logger.debug("VirtualCameraService worker exiting")
 
