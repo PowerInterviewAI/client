@@ -12,6 +12,10 @@ class WebRTCOptions(BaseModel):
         bool,
         Field(description="Swap face flag"),
     ]
+    background_blur: Annotated[
+        bool,
+        Field(description="Background blur flag"),
+    ]
     enhance_face: Annotated[
         bool,
         Field(description="Enhance face flag"),
