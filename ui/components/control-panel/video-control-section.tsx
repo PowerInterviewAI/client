@@ -74,7 +74,7 @@ export function VideoControlSection({
         if (videoPreviewRef.current) {
           videoPreviewRef.current.srcObject = stream;
           // Some browsers need play() after setting srcObject
-          await videoPreviewRef.current.play().catch(() => { });
+          await videoPreviewRef.current.play().catch(() => {});
         }
       } catch (err) {
         toast.error('Unable to access camera');
@@ -106,8 +106,9 @@ export function VideoControlSection({
   return (
     <div className="relative">
       <div
-        className={`flex items-center overflow-hidden border ${config?.enable_video_control ? 'rounded-full' : 'border-destructive rounded-xl text-white'
-          }`}
+        className={`flex items-center overflow-hidden border ${
+          config?.enable_video_control ? 'rounded-full' : 'border-destructive rounded-xl text-white'
+        }`}
       >
         <Tooltip>
           <TooltipTrigger asChild>
@@ -249,8 +250,6 @@ export function VideoControlSection({
                 {config?.enable_face_enhance ? 'On' : 'Off'}
               </Button>
             </div>
-
-
           </DialogContent>
         </Dialog>
       </div>
