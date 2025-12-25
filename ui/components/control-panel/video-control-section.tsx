@@ -201,7 +201,7 @@ export function VideoControlSection({
                   <SelectValue placeholder="Select resolution" />
                 </SelectTrigger>
                 <SelectContent>
-                  {['640x360', '640x480', '1280x720'].map((res) => (
+                  {['640x360', '640x480', '1280x720', '1920x1080'].map((res) => (
                     <SelectItem key={res} value={res}>
                       {res}
                     </SelectItem>
