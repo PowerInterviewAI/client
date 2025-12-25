@@ -40,7 +40,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       enableFaceSwap,
       enableBackgroundBlur,
       enableFaceEnhance,
-      fps = 30,
+      fps = 20,
       jpegQuality = 0.7,
     },
     ref,
