@@ -1,3 +1,4 @@
+import queue
 import threading
 from typing import Any
 
@@ -25,12 +26,11 @@ class VirtualCameraService:
         self.fps = fps
 
         self._lock = threading.Lock()
-        self._cond = threading.Condition(self._lock)
         self._stop_event = threading.Event()
         self._thread: threading.Thread | None = None
 
-        # stored frame in BGR format (as commonly used by OpenCV)
-        self._frame: np.ndarray[Any, Any] | None = np.zeros((self.height, self.width, 3), dtype=np.uint8)
+        # bounded queue for frames; prevents unbounded memory usage
+        self._frame_queue: queue.Queue[np.ndarray[Any, Any]] = queue.Queue(maxsize=4)
 
     # --- Worker ---------------------------------------------------------
     def _worker(self) -> None:
@@ -47,24 +47,21 @@ class VirtualCameraService:
             try:
                 with pyvirtualcam.Camera(width=current_width, height=current_height, fps=current_fps) as vcam:
                     # Main send loop for the opened camera
-                    frame_interval = 1.0 / max(1, current_fps)
                     while not self._stop_event.is_set():
-                        with self._cond:
-                            # If config changed, break to recreate camera with new settings
-                            if (
-                                (current_width != self.width)
-                                or (current_height != self.height)
-                                or (current_fps != self.fps)
-                            ):
-                                logger.debug("Camera config changed, restarting camera")
-                                break
+                        # If config changed, break to recreate camera with new settings
+                        if (
+                            (current_width != self.width)
+                            or (current_height != self.height)
+                            or (current_fps != self.fps)
+                        ):
+                            logger.debug("Camera config changed, restarting camera")
+                            break
 
-                            # Wait until a new frame is available or timeout for next frame
-                            # This makes the loop responsive to set_frame() and config() calls
-                            self._cond.wait(timeout=frame_interval)
-
-                            # Copy frame under lock to avoid races
-                            frame = None if self._frame is None else self._frame.copy()
+                        # Try to get a frame from the queue; timeout ensures we respect fps
+                        try:
+                            frame = self._frame_queue.get(timeout=1)
+                        except queue.Empty:
+                            frame = None
 
                         if frame is None:
                             # No frame available; send a black frame of the camera size
@@ -126,8 +123,7 @@ class VirtualCameraService:
     def stop(self, join_timeout: float = 5.0) -> None:
         """Stop the background worker and wait up to join_timeout seconds."""
         self._stop_event.set()
-        with self._cond:
-            self._cond.notify_all()
+        # nothing to notify when using queue-based ingestion
         thread = None
         with self._lock:
             thread = self._thread
@@ -137,11 +133,11 @@ class VirtualCameraService:
 
     def update_parameters(self, width: int, height: int, fps: int) -> None:
         """Update camera configuration. Worker will restart camera with new settings."""
-        with self._cond:
+        # update parameters under lock; worker checks these and will restart camera
+        with self._lock:
             self.width = int(width)
             self.height = int(height)
             self.fps = int(fps)
-            self._cond.notify_all()
         logger.debug(f"VirtualCameraService config updated: {self.width}x{self.height} @ {self.fps}fps")
 
     def set_frame(self, frame: np.ndarray[Any, Any]) -> None:
@@ -157,10 +153,15 @@ class VirtualCameraService:
             msg = "frame must be 2D (gray) or 3D (color) numpy array"
             raise ValueError(msg)
 
-        with self._cond:
-            # store a copy to avoid external mutation
-            self._frame = frame.copy()
-            self._cond.notify_all()
+        # enqueue frame for background consumption; drop oldest when full
+        try:
+            self._frame_queue.put_nowait(frame.copy())
+        except queue.Full:
+            try:
+                _ = self._frame_queue.get_nowait()
+                self._frame_queue.put_nowait(frame.copy())
+            except Exception:
+                logger.debug("Dropping frame due to full queue")
 
     @property
     def is_running(self) -> bool:

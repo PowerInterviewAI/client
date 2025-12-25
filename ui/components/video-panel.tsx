@@ -40,7 +40,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       enableFaceSwap,
       enableBackgroundBlur,
       enableFaceEnhance,
-      fps = 30,
+      fps = 20,
       jpegQuality = 0.7,
     },
     ref,
@@ -56,6 +56,8 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
     const frameTimerRef = useRef<number | null>(null);
+    const sendingRef = useRef(false);
+    const droppedRef = useRef(0);
 
     const [isStreaming, setIsStreaming] = useState(false);
 
@@ -235,16 +237,48 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
 
       // Frame loop
       const intervalMs = Math.round(1000 / fps);
+      const BUFFERED_AMOUNT_MAX = 2_000_000; // bytes (2 MB)
+
       const loop = () => {
         try {
+          // Backpressure: if a send/encode is in progress or socket bufferedAmount is high, drop frame
+          if (
+            sendingRef.current ||
+            ws.readyState !== WebSocket.OPEN ||
+            (ws.bufferedAmount && ws.bufferedAmount > BUFFERED_AMOUNT_MAX)
+          ) {
+            droppedRef.current += 1;
+            return;
+          }
+
+          // mark busy (covers encode + send)
+          sendingRef.current = true;
+
           // draw remote frame into canvas
           ctx.drawImage(feederVideo, 0, 0, width, height);
+
           canvas.toBlob(
             (blob) => {
-              if (!blob) return;
+              if (!blob) {
+                sendingRef.current = false;
+                return;
+              }
               if (ws.readyState === WebSocket.OPEN) {
                 // send ArrayBuffer for binary websocket
-                blob.arrayBuffer().then((buf) => ws.send(buf));
+                blob
+                  .arrayBuffer()
+                  .then((buf) => {
+                    try {
+                      ws.send(buf);
+                    } catch (e) {
+                      console.error('WebSocket send error', e);
+                    }
+                  })
+                  .finally(() => {
+                    sendingRef.current = false;
+                  });
+              } else {
+                sendingRef.current = false;
               }
             },
             'image/jpeg',
@@ -253,6 +287,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
         } catch (err) {
           // ignore transient errors (e.g., video not ready)
           console.error(err);
+          sendingRef.current = false;
         }
       };
 
