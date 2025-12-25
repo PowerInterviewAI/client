@@ -271,7 +271,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
                     try {
                       ws.send(buf);
                     } catch (e) {
-                      // ignore send errors
+                      console.error('WebSocket send error', e);
                     }
                   })
                   .finally(() => {
