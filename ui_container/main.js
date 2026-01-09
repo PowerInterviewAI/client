@@ -242,6 +242,25 @@ function resizeWindowByArrow(direction) {
     console.log(`🔄 Window resized ${direction} by ${resizeAmount}px`);
 }
 
+function changeWindowOpacity(direction) {
+    if (!win || win.isDestroyed()) return;
+
+    const currentOpacity = win.getOpacity();
+    const opacityStep = 0.1; // 10% opacity change
+
+    let newOpacity;
+    if (direction === 'up') {
+        // Page Up: Increase opacity (make more opaque)
+        newOpacity = Math.min(1.0, currentOpacity + opacityStep);
+    } else if (direction === 'down') {
+        // Page Down: Decrease opacity (make more transparent)
+        newOpacity = Math.max(0.1, currentOpacity - opacityStep); // minimum 10% opacity
+    }
+
+    win.setOpacity(newOpacity);
+    console.log(`🔄 Window opacity changed to ${(newOpacity * 100).toFixed(0)}%`);
+}
+
 // -------------------------------------------------------------
 // REGISTER GLOBAL HOTKEYS
 // -------------------------------------------------------------
@@ -278,6 +297,10 @@ function registerGlobalHotkeys() {
     globalShortcut.register('CommandOrControl+Shift+Left', () => resizeWindowByArrow('left'));
     globalShortcut.register('CommandOrControl+Shift+Right', () => resizeWindowByArrow('right'));
 
+    // Page key opacity hotkeys (with Ctrl+Shift modifier)
+    globalShortcut.register('CommandOrControl+Shift+PageUp', () => changeWindowOpacity('up'));
+    globalShortcut.register('CommandOrControl+Shift+PageDown', () => changeWindowOpacity('down'));
+
     console.log('🎹 Global hotkeys registered:');
     console.log('  Ctrl+Alt+1: Move to top-left');
     console.log('  Ctrl+Alt+2: Move to top-right');
@@ -295,6 +318,8 @@ function registerGlobalHotkeys() {
     console.log('  Ctrl+Shift+↓: Increase window height');
     console.log('  Ctrl+Shift+←: Decrease window width');
     console.log('  Ctrl+Shift+→: Increase window width');
+    console.log('  Ctrl+Shift+PageUp: Increase opacity');
+    console.log('  Ctrl+Shift+PageDown: Decrease opacity');
 }
 
 // -------------------------------------------------------------
@@ -310,6 +335,7 @@ async function createWindow() {
         title: "Power Interview",
         ...savedBounds,
         alwaysOnTop: true,
+        // transparent: true,
         webPreferences: {
             preload: `${__dirname}/preload.js`
         }

@@ -28,12 +28,17 @@ This Electron application supports global system hotkeys for controlling window 
 - **Ctrl+Shift+←**: Decrease window width by 20 pixels
 - **Ctrl+Shift+→**: Increase window width by 20 pixels
 
+### Window Opacity Controls
+- **Ctrl+Shift+Page Up**: Increase window opacity by 10%
+- **Ctrl+Shift+Page Down**: Decrease window opacity by 10%
+
 ## Notes
 - Hotkeys work globally, even when the application is not in focus
 - The window position uses the primary display's work area (excluding taskbar)
 - Window bounds are automatically saved when the application closes
 - Hotkeys are registered when the application starts and unregistered when it quits
 - Minimum window size is enforced (300px width, 200px height) to prevent unusable windows
+- Window opacity ranges from 10% (minimum) to 100% (fully opaque)
 
 ## Technical Details
 - Uses Electron's `globalShortcut` module for system-wide hotkey registration
