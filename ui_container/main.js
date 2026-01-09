@@ -1,5 +1,5 @@
 const path = require("path");
-const { app, BrowserWindow } = require("electron");
+const { app, BrowserWindow, globalShortcut, screen } = require("electron");
 const { spawn } = require("child_process");
 const net = require("net");
 const Store = require("electron-store").default;
@@ -126,6 +126,178 @@ function waitForServer(url) {
 }
 
 // -------------------------------------------------------------
+// WINDOW CONTROL FUNCTIONS
+// -------------------------------------------------------------
+function moveWindowToCorner(corner) {
+    if (!win || win.isDestroyed()) return;
+
+    const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+    const { width: winWidth, height: winHeight } = win.getBounds();
+
+    let x, y;
+
+    switch (corner) {
+        case 'top-left':
+            x = 0;
+            y = 0;
+            break;
+        case 'top-right':
+            x = screenWidth - winWidth;
+            y = 0;
+            break;
+        case 'bottom-left':
+            x = 0;
+            y = screenHeight - winHeight;
+            break;
+        case 'bottom-right':
+            x = screenWidth - winWidth;
+            y = screenHeight - winHeight;
+            break;
+        case 'center':
+            x = Math.floor((screenWidth - winWidth) / 2);
+            y = Math.floor((screenHeight - winHeight) / 2);
+            break;
+    }
+
+    win.setBounds({ x, y, width: winWidth, height: winHeight });
+    console.log(`🔄 Window moved to ${corner}`);
+}
+
+function toggleMaximize() {
+    if (!win || win.isDestroyed()) return;
+    if (win.isMaximized()) {
+        win.unmaximize();
+        console.log('🔄 Window unmaximized');
+    } else {
+        win.maximize();
+        console.log('🔄 Window maximized');
+    }
+}
+
+function toggleMinimize() {
+    if (!win || win.isDestroyed()) return;
+    if (win.isMinimized()) {
+        win.restore();
+        console.log('🔄 Window restored');
+    } else {
+        win.minimize();
+        console.log('🔄 Window minimized');
+    }
+}
+
+function moveWindowByArrow(direction) {
+    if (!win || win.isDestroyed()) return;
+
+    const bounds = win.getBounds();
+    const moveAmount = 20; // pixels to move
+
+    switch (direction) {
+        case 'up':
+            bounds.y = Math.max(0, bounds.y - moveAmount);
+            break;
+        case 'down':
+            const { height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+            bounds.y = Math.min(screenHeight - bounds.height, bounds.y + moveAmount);
+            break;
+        case 'left':
+            bounds.x = Math.max(0, bounds.x - moveAmount);
+            break;
+        case 'right':
+            const { width: screenWidth } = screen.getPrimaryDisplay().workAreaSize;
+            bounds.x = Math.min(screenWidth - bounds.width, bounds.x + moveAmount);
+            break;
+    }
+
+    win.setBounds(bounds);
+    console.log(`🔄 Window moved ${direction} by ${moveAmount}px`);
+}
+
+function resizeWindowByArrow(direction) {
+    if (!win || win.isDestroyed()) return;
+
+    const bounds = win.getBounds();
+    const resizeAmount = 20; // pixels to resize
+    const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+
+    switch (direction) {
+        case 'up':
+            // Decrease height (shrink upward)
+            bounds.height = Math.max(200, bounds.height - resizeAmount); // minimum height of 200px
+            break;
+        case 'down':
+            // Increase height (grow downward)
+            bounds.height = Math.min(screenHeight, bounds.height + resizeAmount);
+            break;
+        case 'left':
+            // Decrease width (shrink leftward)
+            bounds.width = Math.max(300, bounds.width - resizeAmount); // minimum width of 300px
+            break;
+        case 'right':
+            // Increase width (grow rightward)
+            bounds.width = Math.min(screenWidth - bounds.x, bounds.width + resizeAmount);
+            break;
+    }
+
+    win.setBounds(bounds);
+    console.log(`🔄 Window resized ${direction} by ${resizeAmount}px`);
+}
+
+// -------------------------------------------------------------
+// REGISTER GLOBAL HOTKEYS
+// -------------------------------------------------------------
+function registerGlobalHotkeys() {
+    // Unregister existing hotkeys first
+    globalShortcut.unregisterAll();
+
+    // Window positioning hotkeys
+    globalShortcut.register('CommandOrControl+Alt+1', () => moveWindowToCorner('top-left'));
+    globalShortcut.register('CommandOrControl+Alt+2', () => moveWindowToCorner('top-right'));
+    globalShortcut.register('CommandOrControl+Alt+3', () => moveWindowToCorner('bottom-left'));
+    globalShortcut.register('CommandOrControl+Alt+4', () => moveWindowToCorner('bottom-right'));
+    globalShortcut.register('CommandOrControl+Alt+5', () => moveWindowToCorner('center'));
+
+    // Window state hotkeys
+    globalShortcut.register('CommandOrControl+Alt+M', () => toggleMaximize());
+    globalShortcut.register('CommandOrControl+Alt+N', () => toggleMinimize());
+    globalShortcut.register('CommandOrControl+Alt+R', () => {
+        if (win && !win.isDestroyed()) {
+            win.restore();
+            console.log('🔄 Window restored');
+        }
+    });
+
+    // Arrow key movement hotkeys
+    globalShortcut.register('CommandOrControl+Alt+Up', () => moveWindowByArrow('up'));
+    globalShortcut.register('CommandOrControl+Alt+Down', () => moveWindowByArrow('down'));
+    globalShortcut.register('CommandOrControl+Alt+Left', () => moveWindowByArrow('left'));
+    globalShortcut.register('CommandOrControl+Alt+Right', () => moveWindowByArrow('right'));
+
+    // Arrow key resize hotkeys (with Shift modifier)
+    globalShortcut.register('CommandOrControl+Shift+Up', () => resizeWindowByArrow('up'));
+    globalShortcut.register('CommandOrControl+Shift+Down', () => resizeWindowByArrow('down'));
+    globalShortcut.register('CommandOrControl+Shift+Left', () => resizeWindowByArrow('left'));
+    globalShortcut.register('CommandOrControl+Shift+Right', () => resizeWindowByArrow('right'));
+
+    console.log('🎹 Global hotkeys registered:');
+    console.log('  Ctrl+Alt+1: Move to top-left');
+    console.log('  Ctrl+Alt+2: Move to top-right');
+    console.log('  Ctrl+Alt+3: Move to bottom-left');
+    console.log('  Ctrl+Alt+4: Move to bottom-right');
+    console.log('  Ctrl+Alt+5: Center window');
+    console.log('  Ctrl+Alt+M: Toggle maximize');
+    console.log('  Ctrl+Alt+N: Toggle minimize');
+    console.log('  Ctrl+Alt+R: Restore window');
+    console.log('  Ctrl+Alt+↑: Move window up');
+    console.log('  Ctrl+Alt+↓: Move window down');
+    console.log('  Ctrl+Alt+←: Move window left');
+    console.log('  Ctrl+Alt+→: Move window right');
+    console.log('  Ctrl+Shift+↑: Decrease window height');
+    console.log('  Ctrl+Shift+↓: Increase window height');
+    console.log('  Ctrl+Shift+←: Decrease window width');
+    console.log('  Ctrl+Shift+→: Increase window width');
+}
+
+// -------------------------------------------------------------
 // CREATE WINDOW
 // -------------------------------------------------------------
 async function createWindow() {
@@ -162,4 +334,11 @@ async function createWindow() {
 // -------------------------------------------------------------
 // APP LIFECYCLE
 // -------------------------------------------------------------
-app.whenReady().then(createWindow);
+app.whenReady().then(async () => {
+    await createWindow();
+    registerGlobalHotkeys();
+});
+
+app.on('will-quit', () => {
+    globalShortcut.unregisterAll();
+});
