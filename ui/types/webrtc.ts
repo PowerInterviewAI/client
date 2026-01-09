@@ -1,7 +1,6 @@
 export interface WebRTCOptions {
   photo: string;
   swap_face: boolean;
-  background_blur: boolean;
   enhance_face: boolean;
 }
 

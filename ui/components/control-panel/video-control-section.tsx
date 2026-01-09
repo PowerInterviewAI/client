@@ -223,21 +223,6 @@ export function VideoControlSection({
               </Button>
             </div>
 
-            {/* Background Blur Toggle */}
-            <div className="flex items-center justify-between">
-              <span className="text-xs">Background Blur</span>
-              <Button
-                variant={config?.enable_background_blur ? 'default' : 'outline'}
-                size="sm"
-                className="w-16"
-                onClick={() =>
-                  updateConfig({ enable_background_blur: !config?.enable_background_blur })
-                }
-              >
-                {config?.enable_background_blur ? 'On' : 'Off'}
-              </Button>
-            </div>
-
             {/* Face Enhance Toggle */}
             <div className="flex items-center justify-between">
               <span className="text-xs">Face Enhance</span>

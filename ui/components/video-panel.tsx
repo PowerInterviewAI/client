@@ -17,7 +17,6 @@ interface VideoPanelProps {
   videoWidth: number;
   videoHeight: number;
   enableFaceSwap: boolean;
-  enableBackgroundBlur: boolean;
   enableFaceEnhance: boolean;
   // Optional: streaming fps for websocket
   fps?: number;
@@ -38,7 +37,6 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       videoWidth,
       videoHeight,
       enableFaceSwap,
-      enableBackgroundBlur,
       enableFaceEnhance,
       fps = 20,
       jpegQuality = 0.7,
@@ -178,7 +176,6 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
         options: {
           photo,
           swap_face: enableFaceSwap,
-          background_blur: enableBackgroundBlur,
           enhance_face: enableFaceEnhance,
         } as WebRTCOptions,
       } as OfferRequest);
