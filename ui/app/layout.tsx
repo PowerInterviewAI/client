@@ -25,7 +25,7 @@ export default function RootLayout({
         <Providers>
           <div className="flex flex-col h-screen">
             <Titlebar />
-            <div className="flex-1 flex flex-col overflow-scroll">
+            <div className="flex-1 flex flex-col overflow-auto">
               {children}
             </div>
           </div>
