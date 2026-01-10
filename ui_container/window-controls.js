@@ -134,7 +134,7 @@ function changeWindowOpacity(direction) {
 
     try {
         const currentOpacity = win.getOpacity();
-        const opacityStep = 0.1; // 10% opacity change
+        const opacityStep = 0.2; // 10% opacity change
 
         let newOpacity;
         if (direction === 'up') {
@@ -168,8 +168,8 @@ function enableStealth() {
         // Enable content protection in stealth mode
         win.setContentProtection(true);
 
-        // Start at 50% opacity
-        win.setOpacity(0.5);
+        // Start at 70% opacity
+        win.setOpacity(0.7);
 
         _stealth = true;
         console.log('🕵️‍♀️ Stealth mode enabled');
