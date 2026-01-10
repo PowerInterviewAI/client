@@ -23,7 +23,15 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} antialiased`}>
         <Providers>
-          <div className="flex flex-col h-screen">
+          <div
+            className="flex flex-col h-screen"
+            style={{
+              border: '1px solid var(--border)',
+              borderRadius: 'calc(var(--radius))',
+              boxShadow: '0 12px 30px rgba(0,0,0,0.25)',
+              overflow: 'hidden',
+            }}
+          >
             <Titlebar />
             <div className="flex-1 flex flex-col overflow-auto">
               {children}
