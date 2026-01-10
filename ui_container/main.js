@@ -37,6 +37,8 @@ async function createWindow() {
     win = new BrowserWindow({
         title: "Power Interview",
         ...savedBounds,
+        transparent: true,
+        frame: false,
         webPreferences: {
             preload: `${__dirname}/preload.js`
         }
@@ -79,3 +81,10 @@ app.whenReady().then(async () => {
 app.on('will-quit', () => {
     unregisterHotkeys();
 });
+
+// IPC handlers for window controls exposed to renderer via preload
+const { ipcMain } = require('electron');
+ipcMain.on('window-minimize', () => { if (win && !win.isDestroyed()) win.minimize(); });
+ipcMain.on('window-toggle-maximize', () => { if (win && !win.isDestroyed()) { if (win.isMaximized()) win.unmaximize(); else win.maximize(); }});
+ipcMain.on('window-close', () => { if (win && !win.isDestroyed()) win.close(); });
+ipcMain.handle('window-is-maximized', () => { return !!(win && !win.isDestroyed() && win.isMaximized()); });

@@ -1,4 +1,5 @@
 import Providers from '@/components/providers';
+import Titlebar from '@/components/titlebar';
 import { Inter } from 'next/font/google';
 import './globals.css';
 
@@ -20,7 +21,14 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} antialiased`}>
-        <Providers>{children}</Providers>
+        <Providers>
+          <div className="min-h-screen flex flex-col">
+            <Titlebar />
+            <div className="flex-1">
+              {children}
+            </div>
+          </div>
+        </Providers>
       </body>
     </html>
   );
