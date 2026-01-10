@@ -1,5 +1,5 @@
 const path = require("path");
-const { app, BrowserWindow } = require("electron");
+const { app, BrowserWindow, Menu } = require("electron");
 const Store = require("electron-store").default;
 const store = new Store();
 
@@ -43,6 +43,15 @@ async function createWindow() {
             preload: `${__dirname}/preload.js`
         }
     });
+
+    // Remove the default application menu and hide the menu bar
+    try {
+        Menu.setApplicationMenu(null);
+    } catch (e) {
+        // Ignore if Menu not available for platform
+    }
+    win.setMenuBarVisibility(false);
+    win.setAutoHideMenuBar(true);
 
     // Set window reference for window controls
     setWindowReference(win);
