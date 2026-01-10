@@ -37,8 +37,6 @@ async function createWindow() {
     win = new BrowserWindow({
         title: "Power Interview",
         ...savedBounds,
-        alwaysOnTop: true,
-        transparent: true,
         webPreferences: {
             preload: `${__dirname}/preload.js`
         }
@@ -55,8 +53,6 @@ async function createWindow() {
 
     // Set window reference for window controls
     setWindowReference(win);
-
-    win.setContentProtection(true);
 
     win.on("close", () => {
         store.set("windowBounds", win.getBounds());

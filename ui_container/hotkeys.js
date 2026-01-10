@@ -13,7 +13,10 @@ const {
 // -------------------------------------------------------------
 // REGISTER GLOBAL HOTKEYS
 // -------------------------------------------------------------
-function registerGlobalHotkeys() {
+// registerGlobalHotkeys accepts an optional overrides object so callers
+// (like `main.js`) can provide platform-specific or main-process handlers
+// such as a custom `toggleStealth` that recreates the BrowserWindow.
+function registerGlobalHotkeys(overrides = {}) {
     // Unregister existing hotkeys first
     globalShortcut.unregisterAll();
 
@@ -52,6 +55,21 @@ function registerGlobalHotkeys() {
     globalShortcut.register('CommandOrControl+Shift+PageUp', () => changeWindowOpacity('up'));
     globalShortcut.register('CommandOrControl+Shift+PageDown', () => changeWindowOpacity('down'));
 
+    // Stealth mode toggle — use override if provided, otherwise fallback
+    const fallbackToggle = (() => {
+        try { return require('./window-controls').toggleStealth; } catch (e) { return null; }
+    })();
+    const toggleHandler = overrides.toggleStealth || fallbackToggle;
+    if (typeof toggleHandler === 'function') {
+        globalShortcut.register('CommandOrControl+Alt+S', () => {
+            try {
+                toggleHandler();
+            } catch (e) {
+                console.warn('Failed to toggle stealth:', e.message);
+            }
+        });
+    }
+
     console.log('🎹 Global hotkeys registered:');
     console.log('  Ctrl+Alt+1: Move to top-left');
     console.log('  Ctrl+Alt+2: Move to top-right');
@@ -71,6 +89,7 @@ function registerGlobalHotkeys() {
     console.log('  Ctrl+Shift+→: Increase window width');
     console.log('  Ctrl+Shift+PageUp: Increase opacity');
     console.log('  Ctrl+Shift+PageDown: Decrease opacity');
+    console.log('  Ctrl+Alt+S: Toggle stealth mode (click-through, non-focusable)');
 }
 
 function unregisterHotkeys() {

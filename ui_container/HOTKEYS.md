@@ -32,6 +32,9 @@ This Electron application supports global system hotkeys for controlling window 
 - **Ctrl+Shift+Page Up**: Increase window opacity by 10%
 - **Ctrl+Shift+Page Down**: Decrease window opacity by 10%
 
+### Stealth Mode
+- **Ctrl+Alt+S**: Toggle stealth mode — window remains always-on-top and transparent but becomes click-through and non-focusable (mouse/keyboard events pass to underlying apps)
+
 ## Notes
 - Hotkeys work globally, even when the application is not in focus
 - The window position uses the primary display's work area (excluding taskbar)

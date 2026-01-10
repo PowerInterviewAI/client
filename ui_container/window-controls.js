@@ -2,6 +2,7 @@ const { screen } = require("electron");
 
 // Global reference to the main window (will be set from main.js)
 let win = null;
+let _stealth = false;
 
 // -------------------------------------------------------------
 // WINDOW CONTROL FUNCTIONS
@@ -147,6 +148,53 @@ function changeWindowOpacity(direction) {
     }
 }
 
+function enableStealth() {
+    if (!win || win.isDestroyed()) return;
+    try {
+        // Ensure window stays always on top in stealth mode
+        win.setAlwaysOnTop(true);
+
+        // Ensure the window is transparent (created with transparent:true)
+        // Ignore mouse events so clicks pass through the window
+        // forward: true ensures underlying windows still receive events
+        win.setIgnoreMouseEvents(true, { forward: true });
+        // Make window non-focusable so it doesn't capture keyboard events
+        win.setFocusable(false);
+
+        // Enable content protection in stealth mode
+        win.setContentProtection(true);
+
+        _stealth = true;
+        console.log('🕵️‍♀️ Stealth mode enabled');
+    } catch (err) {
+        console.warn('⚠️ enableStealth failed:', err.message);
+    }
+}
+
+function disableStealth() {
+    if (!win || win.isDestroyed()) return;
+    try {
+        win.setIgnoreMouseEvents(false);
+
+        win.setFocusable(true);
+
+        // Restore previous always-on-top state if we saved one
+        win.setAlwaysOnTop(false);
+
+        // Disable content protection when stealth mode is disabled
+        win.setContentProtection(false);
+
+        _stealth = false;
+        console.log('🟢 Stealth mode disabled');
+    } catch (err) {
+        console.warn('⚠️ disableStealth failed:', err.message);
+    }
+}
+
+function toggleStealth() {
+    if (_stealth) disableStealth(); else enableStealth();
+}
+
 module.exports = {
     setWindowReference,
     moveWindowToCorner,
@@ -154,5 +202,8 @@ module.exports = {
     toggleMinimize,
     moveWindowByArrow,
     resizeWindowByArrow,
-    changeWindowOpacity
+    changeWindowOpacity,
+    enableStealth,
+    disableStealth,
+    toggleStealth
 };
