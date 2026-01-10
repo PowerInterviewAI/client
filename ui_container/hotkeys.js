@@ -55,6 +55,18 @@ function registerGlobalHotkeys(overrides = {}) {
     globalShortcut.register('CommandOrControl+Shift+PageUp', () => changeWindowOpacity('up'));
     globalShortcut.register('CommandOrControl+Shift+PageDown', () => changeWindowOpacity('down'));
 
+    // Send scroll events to renderer for transcript scrolling
+    // Use Ctrl+Alt+PageUp/PageDown to avoid colliding with Ctrl+Shift+PageUp/PageDown
+    const { BrowserWindow } = require('electron');
+    globalShortcut.register('CommandOrControl+Alt+PageUp', () => {
+        const w = BrowserWindow.getAllWindows()[0];
+        if (w && !w.isDestroyed()) w.webContents.send('hotkey-scroll', 'up');
+    });
+    globalShortcut.register('CommandOrControl+Alt+PageDown', () => {
+        const w = BrowserWindow.getAllWindows()[0];
+        if (w && !w.isDestroyed()) w.webContents.send('hotkey-scroll', 'down');
+    });
+
     // Stealth mode toggle — use override if provided, otherwise fallback
     const fallbackToggle = (() => {
         try { return require('./window-controls').toggleStealth; } catch (e) { return null; }
@@ -83,6 +95,8 @@ function registerGlobalHotkeys(overrides = {}) {
     console.log('  Ctrl+Alt+↓: Move window down');
     console.log('  Ctrl+Alt+←: Move window left');
     console.log('  Ctrl+Alt+→: Move window right');
+    console.log('  Ctrl+Alt+PageUp: Scroll suggestions up');
+    console.log('  Ctrl+Alt+PageDown: Scroll suggestions down');
     console.log('  Ctrl+Shift+↑: Decrease window height');
     console.log('  Ctrl+Shift+↓: Increase window height');
     console.log('  Ctrl+Shift+←: Decrease window width');

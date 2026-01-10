@@ -51,6 +51,26 @@ export default function SuggestionsPanel({ suggestions = [] }: SuggestionsPanelP
     }
   }, [suggestions, autoScroll]);
 
+  // Listen for hotkey scroll events from Electron main process
+  useEffect(() => {
+    // @ts-ignore
+    if (typeof window === 'undefined' || !window?.electronAPI?.onHotkeyScroll) return;
+
+    // @ts-ignore
+    const unsubscribe = window.electronAPI.onHotkeyScroll((direction: 'up' | 'down') => {
+      const container = containerRef.current;
+      if (!container) return;
+
+      const distance = Math.max(Math.round(container.clientHeight * 0.9), 100);
+      const top = direction === 'up' ? -distance : distance;
+      container.scrollBy({ top, behavior: 'smooth' });
+    });
+
+    return () => {
+      try { unsubscribe && unsubscribe(); } catch (e) {}
+    };
+  }, [containerRef]);
+
   return (
     <Card className="relative flex flex-col h-full bg-card p-0">
       {/* Header */}
