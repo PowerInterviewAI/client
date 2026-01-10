@@ -25,7 +25,7 @@ export default function RootLayout({
         <Providers>
           <div className="min-h-screen flex flex-col">
             <Titlebar />
-            <div className="flex-1 relative">
+            <div className="flex-1 relative pt-8">
               {children}
             </div>
           </div>

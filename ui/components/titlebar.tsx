@@ -39,7 +39,7 @@ export default function Titlebar() {
     // @ts-ignore
     <div
       style={{ WebkitAppRegion: 'drag' } as any}
-      className="flex items-center gap-3 h-8 px-3 select-none bg-card border-b border-border"
+      className="fixed top-0 left-0 right-0 z-20 flex items-center gap-3 h-8 px-3 select-none bg-card border-b border-border"
     >
       <div className="flex items-center gap-2">
         <div className="text-sm font-medium" style={{ WebkitAppRegion: 'drag' } as any}>
