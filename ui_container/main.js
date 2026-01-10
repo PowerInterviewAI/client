@@ -88,3 +88,41 @@ ipcMain.on('window-minimize', () => { if (win && !win.isDestroyed()) win.minimiz
 ipcMain.on('window-toggle-maximize', () => { if (win && !win.isDestroyed()) { if (win.isMaximized()) win.unmaximize(); else win.maximize(); }});
 ipcMain.on('window-close', () => { if (win && !win.isDestroyed()) win.close(); });
 ipcMain.handle('window-is-maximized', () => { return !!(win && !win.isDestroyed() && win.isMaximized()); });
+
+// Handle incremental resize deltas from renderer (edge dragging)
+ipcMain.on('window-resize-delta', (event, dx, dy, edge) => {
+    try {
+        if (!win || win.isDestroyed()) return;
+        const minWidth = 300;
+        const minHeight = 200;
+        const bounds = win.getBounds();
+        let nb = { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height };
+
+        // Only handle right/bottom/bottom-right resizes (left/top grips disabled)
+        if (edge.includes('right')) {
+            nb.width += dx;
+        }
+        if (edge.includes('bottom')) {
+            nb.height += dy;
+        }
+
+        // enforce minimums and adjust origin if needed
+        if (nb.width < minWidth) {
+            nb.width = minWidth;
+        }
+        if (nb.height < minHeight) {
+            nb.height = minHeight;
+        }
+
+        // clamp to primary display work area
+        const { workArea } = require('electron').screen.getPrimaryDisplay();
+        if (nb.x < workArea.x) nb.x = workArea.x;
+        if (nb.y < workArea.y) nb.y = workArea.y;
+        if (nb.x + nb.width > workArea.x + workArea.width) nb.x = Math.max(workArea.x, workArea.x + workArea.width - nb.width);
+        if (nb.y + nb.height > workArea.y + workArea.height) nb.y = Math.max(workArea.y, workArea.y + workArea.height - nb.height);
+
+        win.setBounds(nb);
+    } catch (err) {
+        console.warn('window-resize-delta handler error:', err && err.message ? err.message : err);
+    }
+});

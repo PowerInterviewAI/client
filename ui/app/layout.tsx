@@ -1,5 +1,6 @@
 import Providers from '@/components/providers';
 import Titlebar from '@/components/titlebar';
+import WindowResizer from '@/components/window-resizer';
 import { Inter } from 'next/font/google';
 import './globals.css';
 
@@ -24,10 +25,11 @@ export default function RootLayout({
         <Providers>
           <div className="min-h-screen flex flex-col">
             <Titlebar />
-            <div className="flex-1">
+            <div className="flex-1 relative">
               {children}
             </div>
           </div>
+          <WindowResizer />
         </Providers>
       </body>
     </html>
