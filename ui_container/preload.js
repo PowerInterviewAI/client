@@ -16,3 +16,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
 	resizeWindowDelta: (dx, dy, edge) => ipcRenderer.send('window-resize-delta', dx, dy, edge)
 });
 
+// Listen for stealth mode changes from main and update body class
+ipcRenderer.on('stealth-changed', (event, isStealth) => {
+	const apply = () => {
+		try {
+			if (isStealth) document.body.classList.add('stealth');
+			else document.body.classList.remove('stealth');
+		} catch (e) {}
+	};
+	if (document.readyState === 'complete' || document.readyState === 'interactive') apply();
+	else window.addEventListener('DOMContentLoaded', apply, { once: true });
+});
+

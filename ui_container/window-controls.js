@@ -172,7 +172,8 @@ function enableStealth() {
         win.setOpacity(0.7);
 
         _stealth = true;
-        console.log('🕵️‍♀️ Stealth mode enabled');
+            console.log('🕵️‍♀️ Stealth mode enabled');
+            try { if (win && !win.isDestroyed()) win.webContents.send('stealth-changed', _stealth); } catch (e) {}
     } catch (err) {
         console.warn('⚠️ enableStealth failed:', err.message);
     }
@@ -196,6 +197,7 @@ function disableStealth() {
 
         _stealth = false;
         console.log('🟢 Stealth mode disabled');
+        try { if (win && !win.isDestroyed()) win.webContents.send('stealth-changed', _stealth); } catch (e) {}
     } catch (err) {
         console.warn('⚠️ disableStealth failed:', err.message);
     }
