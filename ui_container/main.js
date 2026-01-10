@@ -37,7 +37,6 @@ async function createWindow() {
     win = new BrowserWindow({
         title: "Power Interview",
         ...savedBounds,
-        transparent: true,
         webPreferences: {
             preload: `${__dirname}/preload.js`
         }
