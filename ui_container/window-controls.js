@@ -127,6 +127,10 @@ function resizeWindowByArrow(direction) {
 
 function changeWindowOpacity(direction) {
     if (!win || win.isDestroyed()) return;
+    if (!_stealth) {
+        console.log('⚠️ Opacity control is only available in stealth mode');
+        return;
+    }
 
     try {
         const currentOpacity = win.getOpacity();
@@ -164,6 +168,9 @@ function enableStealth() {
         // Enable content protection in stealth mode
         win.setContentProtection(true);
 
+        // Start at 50% opacity
+        win.setOpacity(0.5);
+
         _stealth = true;
         console.log('🕵️‍♀️ Stealth mode enabled');
     } catch (err) {
@@ -183,6 +190,9 @@ function disableStealth() {
 
         // Disable content protection when stealth mode is disabled
         win.setContentProtection(false);
+
+        // Restore full opacity
+        win.setOpacity(1.0);
 
         _stealth = false;
         console.log('🟢 Stealth mode disabled');
