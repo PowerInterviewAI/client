@@ -39,9 +39,10 @@ export default function Titlebar() {
     // @ts-ignore
     <div
       style={{ WebkitAppRegion: 'drag' } as any}
-      className="flex items-center gap-3 h-8 px-3 select-none bg-card border-b border-border"
+      className="flex items-center gap-3 h-8 px-1 select-none bg-card border-b border-border"
     >
       <div className="flex items-center gap-2">
+        <img src="/favicon.svg" alt="logo" className="h-5 w-5" />
         <div className="text-sm font-medium" style={{ WebkitAppRegion: 'drag' } as any}>
           Power Interview
         </div>
