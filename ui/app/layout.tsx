@@ -23,9 +23,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} antialiased`}>
         <Providers>
-          <div className="min-h-screen flex flex-col">
+          <div className="flex flex-col h-screen">
             <Titlebar />
-            <div className="flex-1 relative pt-8">
+            <div className="flex-1 flex flex-col overflow-scroll">
               {children}
             </div>
           </div>
