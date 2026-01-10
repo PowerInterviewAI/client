@@ -134,7 +134,7 @@ function changeWindowOpacity(direction) {
 
     try {
         const currentOpacity = win.getOpacity();
-        const opacityStep = 0.2; // 10% opacity change
+        const opacityStep = 0.1; // 10% opacity change
 
         let newOpacity;
         if (direction === 'up') {
