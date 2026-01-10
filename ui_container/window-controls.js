@@ -76,18 +76,16 @@ function moveWindowByArrow(direction) {
 
     switch (direction) {
         case 'up':
-            bounds.y = Math.max(0, bounds.y - moveAmount);
+            bounds.y = bounds.y - moveAmount;
             break;
         case 'down':
-            const { height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
-            bounds.y = Math.min(screenHeight - bounds.height, bounds.y + moveAmount);
+            bounds.y = bounds.y + moveAmount;
             break;
         case 'left':
-            bounds.x = Math.max(0, bounds.x - moveAmount);
+            bounds.x = bounds.x - moveAmount;
             break;
         case 'right':
-            const { width: screenWidth } = screen.getPrimaryDisplay().workAreaSize;
-            bounds.x = Math.min(screenWidth - bounds.width, bounds.x + moveAmount);
+            bounds.x = bounds.x + moveAmount;
             break;
     }
 
