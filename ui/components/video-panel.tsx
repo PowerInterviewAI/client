@@ -58,6 +58,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
     const droppedRef = useRef(0);
 
     const [isStreaming, setIsStreaming] = useState(false);
+    const [isStealth, setIsStealth] = useState(false);
 
     const checkActiveVideoCodec = () => {
       if (!pcRef.current) return;
@@ -348,6 +349,27 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       return () => stopWebRTC();
     }, []);
 
+    // Track stealth mode via document.body class and adjust UI (video opacity)
+    useEffect(() => {
+      if (typeof document === 'undefined') return;
+      const update = () => setIsStealth(document.body.classList.contains('stealth'));
+      update();
+
+      const obs = new MutationObserver((mutations) => {
+        for (const m of mutations) {
+          if (m.type === 'attributes' && m.attributeName === 'class') update();
+        }
+      });
+      try {
+        obs.observe(document.body, { attributes: true });
+      } catch (e) {}
+      return () => {
+        try {
+          obs.disconnect();
+        } catch (e) {}
+      };
+    }, []);
+
     // ⚡ Expose functions to parent via ref
     useImperativeHandle(ref, () => ({
       startWebRTC,
@@ -355,7 +377,9 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
     }));
 
     return (
-      <Card className="relative w-full h-full overflow-hidden bg-white dark:bg-black shrink-0 py-0">
+      <Card
+        className={`relative w-full h-full overflow-hidden bg-white dark:bg-black shrink-0 py-0 ${isStealth ? 'opacity-20' : ''}`}
+      >
         <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-contain" />
 
         {!isStreaming && (
