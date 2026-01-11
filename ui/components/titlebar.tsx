@@ -101,7 +101,7 @@ export default function Titlebar() {
       </div>
 
       <div
-        className="ml-auto flex items-center gap-2"
+        className="ml-auto flex items-center gap-1"
         // eslint-disable-next-line
         style={{ WebkitAppRegion: 'no-drag' } as any}
       >
