@@ -1,6 +1,5 @@
 'use client';
 
-import { Card } from '@/components/ui/card';
 import { useVideoDevices } from '@/hooks/video-devices';
 import axiosClient from '@/lib/axiosClient';
 import { RunningState } from '@/types/appState';
@@ -377,7 +376,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
     }));
 
     return (
-      <Card
+      <div
         className={`relative w-full h-full overflow-hidden bg-white dark:bg-black shrink-0 py-0 ${isStealth ? 'opacity-20' : ''}`}
       >
         <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-contain" />
@@ -392,12 +391,12 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
         )}
 
         {isStreaming && (
-          <div className="absolute bottom-2 left-2 flex items-center gap-1.5 bg-white/70 dark:bg-black/70 backdrop-blur px-2 py-1 rounded-md">
+          <div className="absolute bottom-2 left-2 flex items-center gap-1.5 bg-white/70 dark:bg-black/70 backdrop-blur px-2 py-1">
             <div className="h-1.5 w-1.5 bg-red-500 rounded-full animate-pulse" />
             <span className="text-black dark:text-white text-xs font-medium">LIVE</span>
           </div>
         )}
-      </Card>
+      </div>
     );
   },
 );

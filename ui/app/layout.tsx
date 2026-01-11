@@ -26,7 +26,7 @@ export default function RootLayout({
           <div
             className="flex flex-col h-screen"
             style={{
-              border: '1px solid var(--border)',
+              border: '2px solid var(--border)',
               borderRadius: 'calc(var(--radius))',
               boxShadow: '0 12px 30px rgba(0,0,0,0.25)',
               overflow: 'hidden',
