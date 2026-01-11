@@ -33,9 +33,7 @@ export default function RootLayout({
             }}
           >
             <Titlebar />
-            <div className="flex-1 flex flex-col overflow-auto">
-              {children}
-            </div>
+            <div className="flex-1 flex flex-col overflow-auto">{children}</div>
           </div>
           <WindowResizer />
         </Providers>

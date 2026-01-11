@@ -42,26 +42,25 @@
 
 /* Stealth mode: make overall background translucent */
 body.stealth {
-  --background: rgba(255,255,255,0.2);
-  --card: rgba(255,255,255,0.2);
-  --popover: rgba(255,255,255,0.2);
-  --sidebar: rgba(255,255,255,0.1);
-  --border: rgba(128,128,128,0.5);
-  --sidebar-border: rgba(128,128,128,0.5);
-  background-color: rgba(255,255,255,0.5) !important;
-  
+  --background: rgba(255, 255, 255, 0.2);
+  --card: rgba(255, 255, 255, 0.2);
+  --popover: rgba(255, 255, 255, 0.2);
+  --sidebar: rgba(255, 255, 255, 0.1);
+  --border: rgba(128, 128, 128, 0.5);
+  --sidebar-border: rgba(128, 128, 128, 0.5);
+  background-color: rgba(255, 255, 255, 0.5) !important;
 }
 
 /* Dark + stealth: use light translucent overlays for dark theme */
 .dark body.stealth {
   /* Make core surface variables translucent so all components inherit translucency */
-  --background: rgba(0,0,0,0.2);
-  --card: rgba(0,0,0,0.2);
-  --popover: rgba(0,0,0,0.2);
-  --sidebar: rgba(0,0,0,0.1);
-  --border: rgba(64,64,64,0.5);
-  --sidebar-border: rgba(64,64,64,0.5);
-  background-color: rgba(0,0,0,0.5) !important;
+  --background: rgba(0, 0, 0, 0.2);
+  --card: rgba(0, 0, 0, 0.2);
+  --popover: rgba(0, 0, 0, 0.2);
+  --sidebar: rgba(0, 0, 0, 0.1);
+  --border: rgba(64, 64, 64, 0.5);
+  --sidebar-border: rgba(64, 64, 64, 0.5);
+  background-color: rgba(0, 0, 0, 0.5) !important;
 }
 
 .dark {

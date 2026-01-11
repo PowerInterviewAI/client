@@ -67,7 +67,9 @@ export default function SuggestionsPanel({ suggestions = [] }: SuggestionsPanelP
     });
 
     return () => {
-      try { unsubscribe && unsubscribe(); } catch (e) {}
+      try {
+        unsubscribe && unsubscribe();
+      } catch (e) {}
     };
   }, [containerRef]);
 
