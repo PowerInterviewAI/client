@@ -48,9 +48,9 @@ export default function WindowResizer() {
       try {
         // @ts-ignore
         window.electronAPI &&
-        // @ts-ignore
+          // @ts-ignore
           window.electronAPI.resizeWindowDelta &&
-        // @ts-ignore
+          // @ts-ignore
           window.electronAPI.resizeWindowDelta(dx, dy, edge);
       } catch (err) {}
     }

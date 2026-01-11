@@ -156,21 +156,19 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="border border-border rounded-lg bg-card">
-        <ControlPanel
-          runningState={appState?.assistant_state ?? RunningState.IDLE}
-          startMutation={startMutation}
-          stopMutation={stopMutation}
-          audioInputDevices={audioInputDevices ?? []}
-          audioOutputDevices={audioOutputDevices ?? []}
-          onProfileClick={() => setIsProfileOpen(true)}
-          onSignOut={handleSignOut}
-          onThemeToggle={handleThemeToggle}
-          isDark={isDark}
-          config={config}
-          updateConfig={updateConfig}
-        />
-      </div>
+      <ControlPanel
+        runningState={appState?.assistant_state ?? RunningState.IDLE}
+        startMutation={startMutation}
+        stopMutation={stopMutation}
+        audioInputDevices={audioInputDevices ?? []}
+        audioOutputDevices={audioOutputDevices ?? []}
+        onProfileClick={() => setIsProfileOpen(true)}
+        onSignOut={handleSignOut}
+        onThemeToggle={handleThemeToggle}
+        isDark={isDark}
+        config={config}
+        updateConfig={updateConfig}
+      />
 
       <ProfileDialog
         isOpen={isProfileOpen}
