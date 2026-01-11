@@ -46,7 +46,7 @@ body.stealth {
   --card: rgba(255, 255, 255, 0.2);
   --popover: rgba(255, 255, 255, 0.2);
   --sidebar: rgba(255, 255, 255, 0.1);
-  --border: rgba(128, 128, 128, 0.5);
+  --border: rgba(192, 192, 192, 0.5);
   --sidebar-border: rgba(128, 128, 128, 0.5);
   background-color: rgba(255, 255, 255, 0.5) !important;
 }
