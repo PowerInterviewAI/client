@@ -2,17 +2,6 @@
 
 import { useCallback } from 'react';
 
-const edges = [
-  'left',
-  'right',
-  'top',
-  'bottom',
-  'top-left',
-  'top-right',
-  'bottom-left',
-  'bottom-right',
-];
-
 function cursorForEdge(edge: string) {
   switch (edge) {
     case 'left':
@@ -46,38 +35,46 @@ export default function WindowResizer() {
       lastX = ev.clientX;
       lastY = ev.clientY;
       try {
+        // eslint-disable-next-line
         // @ts-ignore
         window.electronAPI &&
+          // eslint-disable-next-line
           // @ts-ignore
           window.electronAPI.resizeWindowDelta &&
+          // eslint-disable-next-line
           // @ts-ignore
           window.electronAPI.resizeWindowDelta(dx, dy, edge);
-      } catch (err) {}
+      } catch (err) {
+        console.error('Failed to resize window:', err);
+      }
     }
 
     function onUp() {
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
+      // eslint-disable-next-line
       window.removeEventListener('mouseleave', onUp as any);
     }
 
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
+    // eslint-disable-next-line
     window.addEventListener('mouseleave', onUp as any);
   }, []);
 
   // render selected edge grips (only right/bottom/bottom-right)
   return (
-    // @ts-ignore
     <div className="pointer-events-none fixed inset-0 z-9999">
       {/* Edges: keep only right and bottom */}
       <div
         onMouseDown={(e) => startDrag(e, 'right')}
+        // eslint-disable-next-line
         style={{ cursor: cursorForEdge('right'), WebkitAppRegion: 'no-drag' } as any}
         className="pointer-events-auto absolute top-0 bottom-0 right-0 w-4"
       />
       <div
         onMouseDown={(e) => startDrag(e, 'bottom')}
+        // eslint-disable-next-line
         style={{ cursor: cursorForEdge('bottom'), WebkitAppRegion: 'no-drag' } as any}
         className="pointer-events-auto absolute left-0 right-0 bottom-0 h-4"
       />
@@ -85,6 +82,7 @@ export default function WindowResizer() {
       {/* Corner: keep only bottom-right */}
       <div
         onMouseDown={(e) => startDrag(e, 'bottom-right')}
+        // eslint-disable-next-line
         style={{ cursor: cursorForEdge('bottom-right'), WebkitAppRegion: 'no-drag' } as any}
         className="pointer-events-auto absolute bottom-0 right-0 w-8 h-8"
       />

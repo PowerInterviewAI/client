@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 export default function Titlebar() {
@@ -9,8 +10,10 @@ export default function Titlebar() {
   useEffect(() => {
     let mounted = true;
     // query initial maximize state
+    // eslint-disable-next-line
     // @ts-ignore
     if (typeof window !== 'undefined' && window?.electronAPI?.isMaximized) {
+      // eslint-disable-next-line
       // @ts-ignore
       window.electronAPI.isMaximized().then((v: boolean) => {
         if (mounted) setIsMaximized(!!v);
@@ -38,30 +41,39 @@ export default function Titlebar() {
     });
     try {
       obs.observe(document.body, { attributes: true });
-    } catch (e) {}
+    } catch (e) {
+      console.error('Failed to observe body class mutations', e);
+    }
     return () => {
       try {
         obs.disconnect();
-      } catch (e) {}
+      } catch (e) {
+        console.error('Failed to disconnect mutation observer', e);
+      }
     };
   }, []);
 
   const handleMinimize = () => {
+    // eslint-disable-next-line
     // @ts-ignore
     window.electronAPI?.minimize && window.electronAPI.minimize();
   };
   const handleToggleMaximize = async () => {
+    // eslint-disable-next-line
     // @ts-ignore
     window.electronAPI?.toggleMaximize && window.electronAPI.toggleMaximize();
     // update local state after a short delay
+    // eslint-disable-next-line
     // @ts-ignore
     const v = await (window.electronAPI?.isMaximized
-      ? // @ts-ignore
+      ? // eslint-disable-next-line
+        // @ts-ignore
         window.electronAPI.isMaximized()
       : Promise.resolve(false));
     setIsMaximized(!!v);
   };
   const handleClose = () => {
+    // eslint-disable-next-line
     // @ts-ignore
     window.electronAPI?.close && window.electronAPI.close();
   };
@@ -69,26 +81,35 @@ export default function Titlebar() {
   if (isStealth) return null;
 
   return (
+    // eslint-disable-next-line
     // @ts-ignore
     <div
+      // eslint-disable-next-line
       style={{ WebkitAppRegion: 'drag' } as any}
       className="flex items-center gap-3 h-8 px-1 select-none bg-card border-b border-border"
     >
       <div className="flex items-center gap-2">
-        <img src="/favicon.svg" alt="logo" className="h-5 w-5" />
-        <div className="text-sm font-medium" style={{ WebkitAppRegion: 'drag' } as any}>
+        <Image src="/favicon.svg" alt="logo" className="h-5 w-5" />
+
+        <div
+          className="text-sm font-medium"
+          // eslint-disable-next-line
+          style={{ WebkitAppRegion: 'drag' } as any}
+        >
           Power Interview
         </div>
       </div>
 
       <div
         className="ml-auto flex items-center gap-2"
+        // eslint-disable-next-line
         style={{ WebkitAppRegion: 'no-drag' } as any}
       >
         <button
           onClick={handleMinimize}
           aria-label="Minimize"
           className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
+          // eslint-disable-next-line
           style={{ WebkitAppRegion: 'no-drag' } as any}
         >
           <svg
@@ -107,6 +128,7 @@ export default function Titlebar() {
           onClick={handleToggleMaximize}
           aria-label="Maximize"
           className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
+          // eslint-disable-next-line
           style={{ WebkitAppRegion: 'no-drag' } as any}
         >
           {isMaximized ? (
@@ -154,6 +176,7 @@ export default function Titlebar() {
           onClick={handleClose}
           aria-label="Close"
           className="h-7 w-7 flex items-center justify-center rounded hover:bg-destructive/50"
+          // eslint-disable-next-line
           style={{ WebkitAppRegion: 'no-drag' } as any}
         >
           <svg

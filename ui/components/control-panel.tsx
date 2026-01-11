@@ -75,11 +75,15 @@ export default function ControlPanel({
     });
     try {
       obs.observe(document.body, { attributes: true });
-    } catch (e) {}
+    } catch (e) {
+      console.error('Failed to observe body class mutations', e);
+    }
     return () => {
       try {
         obs.disconnect();
-      } catch (e) {}
+      } catch (e) {
+        console.error('Failed to disconnect mutation observer', e);
+      }
     };
   }, []);
 
