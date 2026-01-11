@@ -98,7 +98,6 @@ function resizeWindowByArrow(direction) {
 
     const bounds = win.getBounds();
     const resizeAmount = 20; // pixels to resize
-    const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
 
     switch (direction) {
         case 'up':
@@ -107,7 +106,7 @@ function resizeWindowByArrow(direction) {
             break;
         case 'down':
             // Increase height (grow downward)
-            bounds.height = Math.min(screenHeight, bounds.height + resizeAmount);
+            bounds.height = bounds.height + resizeAmount;
             break;
         case 'left':
             // Decrease width (shrink leftward)
@@ -115,7 +114,7 @@ function resizeWindowByArrow(direction) {
             break;
         case 'right':
             // Increase width (grow rightward)
-            bounds.width = Math.min(screenWidth - bounds.x, bounds.width + resizeAmount);
+            bounds.width = bounds.width + resizeAmount;
             break;
     }
 
