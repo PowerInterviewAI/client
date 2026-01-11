@@ -1,6 +1,7 @@
 'use client';
 
 import ControlPanel from '@/components/control-panel';
+import HotkeysPanel from '@/components/hotkeys-panel';
 import Loading from '@/components/loading';
 import ProfileDialog from '@/components/profile-dialog';
 import SuggestionsPanel from '@/components/suggestions-panel';
@@ -172,6 +173,8 @@ export default function Home() {
         config={config}
         updateConfig={updateConfig}
       />
+
+      <HotkeysPanel />
 
       <ProfileDialog
         isOpen={isProfileOpen}
