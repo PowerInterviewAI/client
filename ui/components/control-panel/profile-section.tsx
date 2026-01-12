@@ -14,6 +14,7 @@ import { ChevronUp, Key, LogOut, Moon, SettingsIcon, Sun } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 import { ChangePasswordDialog } from './change-password-dialog';
+import { RunningState } from '@/types/appState';
 
 interface ProfileSectionProps {
   config?: Config;
@@ -21,6 +22,8 @@ interface ProfileSectionProps {
   onSignOut: () => void;
   onThemeToggle: () => void;
   isDark: boolean;
+  runningState: RunningState;
+  getDisabled: (state: RunningState, disableOnRunning?: boolean) => boolean;
 }
 
 export function ProfileSection({
@@ -29,9 +32,13 @@ export function ProfileSection({
   onSignOut,
   onThemeToggle,
   isDark,
+  runningState,
+  getDisabled,
 }: ProfileSectionProps) {
   const { changePassword, loading, error, setError } = useAuth();
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+
+  const disabled = getDisabled(runningState, true);
 
   const handleChangePassword = async (currentPassword: string, newPassword: string) => {
     try {
@@ -46,8 +53,8 @@ export function ProfileSection({
   return (
     <div className="flex items-center gap-2">
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="rounded-md hover:bg-muted h-10">
+          <DropdownMenuTrigger asChild>
+          <Button disabled={disabled} variant="ghost" size="sm" className="rounded-md hover:bg-muted h-10">
             <div className="flex items-center gap-2 text-foreground">
               {config?.interview_conf?.photo ? (
                 <Image
@@ -70,16 +77,17 @@ export function ProfileSection({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" side="top">
-          <DropdownMenuItem onClick={onProfileClick}>
+          <DropdownMenuItem onClick={() => !disabled && onProfileClick()} disabled={disabled}>
             <SettingsIcon className="mr-2 h-4 w-4" />
             Configuration
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={onThemeToggle}>
+          <DropdownMenuItem onClick={() => !disabled && onThemeToggle()}>
             {isDark ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
             {isDark ? 'Light mode' : 'Dark mode'}
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
+              if (disabled) return;
               setError(null);
               setIsChangePasswordOpen(true);
             }}
@@ -88,7 +96,7 @@ export function ProfileSection({
             Change password
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={onSignOut}>
+          <DropdownMenuItem onClick={() => !disabled && onSignOut()} disabled={disabled}>
             <LogOut className="mr-2 h-4 w-4" />
             Sign out
           </DropdownMenuItem>

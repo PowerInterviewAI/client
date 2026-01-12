@@ -179,6 +179,8 @@ export default function ControlPanel({
         onSignOut={onSignOut}
         onThemeToggle={onThemeToggle}
         isDark={isDark}
+        runningState={runningState}
+        getDisabled={getDisabled}
       />
 
       <div className="flex flex-1 justify-center gap-2 items-center">
