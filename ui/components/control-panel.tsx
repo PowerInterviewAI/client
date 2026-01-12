@@ -194,7 +194,7 @@ export default function ControlPanel({
   };
 
   return (
-    <div className="flex items-center justify-between gap-2 p-1 border border-border rounded-lg bg-card">
+    <div id="control-panel" className="flex items-center justify-between gap-2 p-1 border border-border rounded-lg bg-card">
       <ProfileSection
         config={config}
         onProfileClick={onProfileClick}

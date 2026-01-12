@@ -17,6 +17,7 @@ import { Config } from '@/types/config';
 import { Transcript } from '@/types/transcript';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { useLayoutEffect } from 'react';
 
 export default function Home() {
   const router = useRouter();
@@ -27,6 +28,7 @@ export default function Home() {
   const [config, setConfig] = useState<Config>();
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const videoPanelRef = useRef<VideoPanelHandle>(null);
+  const [panelHeight, setPanelHeight] = useState<number | null>(null);
 
   // Queries
   const { data: configFetched } = useConfigQuery();
@@ -119,6 +121,25 @@ export default function Home() {
     );
   }
 
+  // compute panel height by subtracting hotkeys/control/video heights from viewport
+  useLayoutEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const compute = () => {
+      const title = document.getElementById('titlebar')?.getBoundingClientRect().height || 0;
+      const hot = document.getElementById('hotkeys-panel')?.getBoundingClientRect().height || 0;
+      const control = document.getElementById('control-panel')?.getBoundingClientRect().height || 0;
+      const video = document.getElementById('video-panel')?.getBoundingClientRect().height || 0;
+      const extra = 24; // spacing/padding between elements
+      const available = Math.max(200, window.innerHeight - (title + hot + control + video + extra));
+      setPanelHeight(available);
+    };
+
+    compute();
+    window.addEventListener('resize', compute, { passive: true });
+    return () => window.removeEventListener('resize', compute);
+  }, []);
+
   return (
     <div className="flex-1 flex flex-col w-full bg-background p-1 space-y-1">
       <HotkeysPanel />
@@ -128,6 +149,7 @@ export default function Home() {
         <div className="flex flex-col gap-1 w-1/2 md:w-96 shrink-0 min-h-0">
           {/* Video Panel - Small and compact */}
           <div
+            id="video-panel"
             className="h-48 shrink-0 border rounded-xl overflow-hidden"
             hidden={!config?.enable_video_control}
           >
@@ -152,13 +174,14 @@ export default function Home() {
             <TranscriptPanel
               username={config?.profile?.username ?? ''}
               transcripts={transcripts ?? []}
+              style={panelHeight ? { height: `${panelHeight}px` } : undefined}
             />
           </div>
         </div>
 
         {/* Right Column: Main Suggestions Panel */}
         <div className="w-1/2 md:flex-1 min-w-60 min-h-0 rounded-lg">
-          <SuggestionsPanel suggestions={appState?.suggestions} />
+          <SuggestionsPanel suggestions={appState?.suggestions} style={panelHeight ? { height: `${panelHeight}px` } : undefined} />
         </div>
       </div>
 
