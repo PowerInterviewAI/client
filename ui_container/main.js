@@ -10,6 +10,13 @@ const { registerGlobalHotkeys, unregisterHotkeys } = require('./hotkeys');
 
 let win = null;
 
+// Prevent Chromium from aggressively throttling timers/rendering
+// when the window is occluded or in the background. This improves
+// continuous video playback when the window is not on top.
+app.commandLine.appendSwitch('disable-background-timer-throttling');
+app.commandLine.appendSwitch('disable-renderer-backgrounding');
+app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
+
 // -------------------------------------------------------------
 // SINGLE INSTANCE LOCK
 // -------------------------------------------------------------
@@ -40,7 +47,10 @@ async function createWindow() {
         transparent: true,
         frame: false,
         webPreferences: {
-            preload: `${__dirname}/preload.js`
+            preload: `${__dirname}/preload.js`,
+            // Keep renderer timers running and avoid throttling when the window
+            // is occluded or not focused so video/audio playback remains smooth.
+            backgroundThrottling: false,
         }
     });
 
