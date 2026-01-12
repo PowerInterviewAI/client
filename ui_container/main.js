@@ -3,6 +3,18 @@ const { app, BrowserWindow, Menu } = require("electron");
 const Store = require("electron-store").default;
 const store = new Store();
 
+// Ensure the application name is set (used by native dialogs/title fallbacks)
+try {
+    if (typeof app.setName === 'function') {
+        app.setName('Power Interview');
+    } else if (typeof app.name !== 'undefined') {
+        app.name = 'Power Interview';
+    }
+} catch (err) {
+    // Non-fatal; proceed without failing the main process
+    console.warn('Failed to set app name:', err && err.message ? err.message : err);
+}
+
 // Import modules
 const { startEngine, getCurrentPort } = require('./engine');
 const { setWindowReference } = require('./window-controls');
