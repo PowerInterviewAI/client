@@ -10,6 +10,7 @@ import { RunningState } from '@/types/appState';
 import { PyAudioDevice } from '@/types/audioDevice';
 import { Config } from '@/types/config';
 import { Ellipsis, Mic, MicOff } from 'lucide-react';
+import { useEffect } from 'react';
 import { toast } from 'sonner';
 
 interface AudioControlSectionProps {
@@ -27,6 +28,15 @@ export function AudioControlSection({
   updateConfig,
   getDisabled,
 }: AudioControlSectionProps) {
+  const VB_AUDIO_INPUT_PREFIX = 'CABLE Input (VB-Audio Virtual';
+  const vbInputExists = audioOutputDevices.some((d) => d.name.startsWith(VB_AUDIO_INPUT_PREFIX));
+
+  useEffect(() => {
+    if (!vbInputExists && config?.enable_audio_control) {
+      updateConfig({ enable_audio_control: false });
+      toast.error('VB-Audio Input device not found — disabling Audio Control');
+    }
+  }, [vbInputExists, config?.enable_audio_control, updateConfig]);
   return (
     <div className="relative">
       <div
@@ -39,11 +49,19 @@ export function AudioControlSection({
             <Button
               variant={config?.enable_audio_control ? 'secondary' : 'destructive'}
               size="icon"
-              className={`h-8 w-8 border-none rounded-none ${
-                config?.enable_audio_control ? '' : ''
-              }`}
-              disabled={getDisabled(runningState)}
+              className={`h-8 w-8 border-none rounded-none ${config?.enable_audio_control ? '' : ''}`}
+              /* disable enabling when VB-Audio input not present; allow disabling */
+              disabled={
+                getDisabled(runningState) || (!vbInputExists && !config?.enable_audio_control)
+              }
               onClick={() => {
+                const tryingToEnable = !config?.enable_audio_control;
+                if (tryingToEnable && !vbInputExists) {
+                  alert(
+                    'VB-Audio Input device not found. Audio control requires VB-Audio Virtual Cable.',
+                  );
+                  return;
+                }
                 if (config?.enable_audio_control) {
                   toast.success('Audio control disabled');
                 } else {
@@ -85,7 +103,11 @@ export function AudioControlSection({
           <DialogContent className="flex flex-col w-72 p-4">
             <DialogTitle>Audio Control Options</DialogTitle>
 
-            {/* (Output device selection removed) */}
+            {!vbInputExists && (
+              <div className="mb-3 text-sm text-destructive">
+                VB-Audio Input device not found. Audio control is unavailable.
+              </div>
+            )}
 
             {/* Audio Delay Input */}
             <div>
