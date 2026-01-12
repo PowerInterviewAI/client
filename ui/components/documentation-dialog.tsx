@@ -27,27 +27,44 @@ export default function DocumentationDialog({ open, onOpenChange }: Documentatio
         </DialogHeader>
 
         <div className="py-2 overflow-auto flex-1">
-          <h3 className="text-sm font-semibold mb-2">Stealth Mode — Overview</h3>
+          <h3 className="text-sm font-semibold mb-2">App Guide — Stealth quick start</h3>
 
           <div className="text-sm text-muted-foreground mb-3 space-y-2">
             <p>
-              Stealth mode makes the window visually present but non-interactive: it ignores mouse
-              input, is non-focusable, and can be kept always-on-top. This is useful for overlaying
-              interview notes or prompts while you use other apps.
+              Quick start: open the app, position the window where you want overlays to appear,
+              then press <strong>Ctrl+Alt+S</strong> to toggle stealth mode. While stealth is active
+              the window remains visually on top but ignores mouse input and is non-focusable.
             </p>
 
-            <ul className="list-disc ml-5">
-              <li>Toggle stealth quickly with <strong>Ctrl+Alt+S</strong>.</li>
-              <li>Use corner hotkeys (Ctrl+Alt+1..5) to snap the window to common locations.</li>
-              <li>Adjust opacity while stealth is active with <strong>Ctrl+Shift+PgUp/PgDn</strong>.</li>
-              <li>Move or resize the window using arrow hotkeys without leaving stealth.</li>
-            </ul>
+            <ol className="list-decimal ml-5 space-y-1">
+              <li>Arrange window where you want prompts or notes to appear.</li>
+              <li>Press <strong>Ctrl+Alt+S</strong> to enter stealth (overlay becomes non-interactive).</li>
+              <li>Snap with <strong>Ctrl+Alt+1..5</strong>, move with <strong>Ctrl+Alt+Arrow</strong>.</li>
+              <li>Resize with <strong>Ctrl+Shift+Arrow</strong>, adjust opacity with <strong>Ctrl+Shift+PgUp/PgDn</strong>.</li>
+              <li>Exit stealth with <strong>Ctrl+Alt+S</strong> to interact with the app normally.</li>
+            </ol>
 
-            <p>
-              Tip: keep opacity around 0.7-0.9 for readability while letting underlying content remain
-              visible. Exit stealth to interact with the app normally.
+            <p className="mt-2">
+              Tip: keep opacity around 0.7–0.9 for readability while letting underlying content remain visible.
             </p>
           </div>
+
+          <h3 className="text-sm font-semibold mb-2">Why stealth is useful for live coding tests</h3>
+          <div className="text-sm text-muted-foreground mb-3">
+            <p>
+              Stealth mode is ideal when you're taking an interview or doing a live coding test: it
+              lets you keep prompts, notes, or sample code visible on top of your IDE but prevents
+              accidental clicks or focus switches.
+            </p>
+
+            <p>
+              <strong>Note about screen sharing:</strong> in many full-screen sharing modes a transparent, non-focusable
+              overlay may not be captured. This means when stealth is active the app window often is
+              not included in a full-screen share in any environment.
+            </p>
+          </div>
+
+        
 
           <h3 className="text-sm font-semibold mb-2">Hotkeys</h3>
           <div className="grid grid-cols-2 gap-2">
