@@ -38,6 +38,22 @@ export function VideoControlSection({
   const previewStreamRef = useRef<MediaStream | null>(null);
   const videoDevices = useVideoDevices();
 
+  const OBS_CAMERA_PREFIX = 'OBS Virtual';
+  const obsCameraExists = videoDevices.some((d) => d.label.includes(OBS_CAMERA_PREFIX));
+
+  useEffect(() => {
+    if (!obsCameraExists && config?.enable_video_control) {
+      updateConfig({ enable_video_control: false });
+      toast.error('OBS Virtual Camera not found — disabling Video Control');
+    }
+  }, [obsCameraExists, config?.enable_video_control, updateConfig]);
+
+  const usableVideoDevices = videoDevices.filter((d) => {
+    if (d.label.toLowerCase().startsWith(OBS_CAMERA_PREFIX.toLowerCase())) return false;
+    if (d.label.toLowerCase().includes("virtual")) return false;
+    return true;
+  });
+
   useEffect(() => {
     // Only run when dialog is open
     if (!isVideoDialogOpen) return;
@@ -102,16 +118,6 @@ export function VideoControlSection({
     config?.video_width,
     config?.video_height,
   ]);
-
-  const OBS_CAMERA_PREFIX = 'OBS Virtual';
-  const obsCameraExists = videoDevices.some((d) => d.label.includes(OBS_CAMERA_PREFIX));
-
-  useEffect(() => {
-    if (!obsCameraExists && config?.enable_video_control) {
-      updateConfig({ enable_video_control: false });
-      toast.error('OBS Virtual Camera not found — disabling Video Control');
-    }
-  }, [obsCameraExists, config?.enable_video_control, updateConfig]);
 
   return (
     <div className="relative">
@@ -200,7 +206,7 @@ export function VideoControlSection({
                   <SelectValue placeholder="Select camera" />
                 </SelectTrigger>
                 <SelectContent>
-                  {videoDevices.map((device) => (
+                  {usableVideoDevices.map((device) => (
                     <SelectItem key={device.label} value={device.label}>
                       {device.label}
                     </SelectItem>
