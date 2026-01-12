@@ -38,11 +38,12 @@ export default function Home() {
     const compute = () => {
       const title = document.getElementById('titlebar')?.getBoundingClientRect().height || 0;
       const hot = document.getElementById('hotkeys-panel')?.getBoundingClientRect().height || 0;
-      const control = document.getElementById('control-panel')?.getBoundingClientRect().height || 0;
+      let control = document.getElementById('control-panel')?.getBoundingClientRect().height || 0;
       let video = document.getElementById('video-panel')?.getBoundingClientRect().height || 0;
-      const extra = 24; // spacing/padding between elements
+      const extra = 16; // spacing/padding between elements
 
       if (video > 0) video += 4; // account for border
+      if (control > 0) control += 4; // account for border
 
       // Transcript (left) sits below title/hotkeys/video/control — subtract video height
       const leftAvailable = Math.max(
