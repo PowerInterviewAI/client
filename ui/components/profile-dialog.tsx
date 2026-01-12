@@ -61,7 +61,7 @@ export default function ProfileDialog({
         <DialogTitle>Edit Profile</DialogTitle>
 
         <div className="flex-1 overflow-y-auto">
-          <div className="p-6 space-y-5">
+          <div className="space-y-5">
             <div className="flex flex-col justify-center">
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
                 Profile Photo
@@ -133,12 +133,12 @@ export default function ProfileDialog({
 
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                Profile Data
+                CV / Resume Content
               </label>
               <Textarea
                 value={profileData}
                 onChange={(e) => setProfileData(e.target.value)}
-                placeholder="Enter profile details"
+                placeholder="Enter your CV or resume content"
                 className="text-sm min-h-[100px] max-h-[200px] overflow-auto"
               />
             </div>
