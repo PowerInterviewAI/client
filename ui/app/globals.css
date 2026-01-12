@@ -42,10 +42,10 @@
 
 /* Stealth mode: make overall background translucent */
 body.stealth {
-  --background: rgba(255, 255, 255, 0.2);
-  --card: rgba(255, 255, 255, 0.2);
-  --popover: rgba(255, 255, 255, 0.2);
-  --sidebar: rgba(255, 255, 255, 0.1);
+  --background: rgba(255, 255, 255, 0.3);
+  --card: rgba(255, 255, 255, 0.3);
+  --popover: rgba(255, 255, 255, 0.3);
+  --sidebar: rgba(255, 255, 255, 0.2);
   --border: rgba(192, 192, 192, 0.5);
   --sidebar-border: rgba(128, 128, 128, 0.5);
   background-color: rgba(255, 255, 255, 0.5) !important;
@@ -54,10 +54,10 @@ body.stealth {
 /* Dark + stealth: use light translucent overlays for dark theme */
 .dark body.stealth {
   /* Make core surface variables translucent so all components inherit translucency */
-  --background: rgba(0, 0, 0, 0.2);
-  --card: rgba(0, 0, 0, 0.2);
-  --popover: rgba(0, 0, 0, 0.2);
-  --sidebar: rgba(0, 0, 0, 0.1);
+  --background: rgba(0, 0, 0, 0.3);
+  --card: rgba(0, 0, 0, 0.3);
+  --popover: rgba(0, 0, 0, 0.3);
+  --sidebar: rgba(0, 0, 0, 0.2);
   --border: rgba(64, 64, 64, 0.5);
   --sidebar-border: rgba(64, 64, 64, 0.5);
   background-color: rgba(0, 0, 0, 0.5) !important;

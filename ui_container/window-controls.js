@@ -139,7 +139,7 @@ function changeWindowOpacity(direction) {
             newOpacity = Math.min(1.0, currentOpacity + opacityStep);
         } else if (direction === 'down') {
             // Page Down: Decrease opacity (make more transparent)
-            newOpacity = Math.max(0.1, currentOpacity - opacityStep); // minimum 10% opacity
+            newOpacity = Math.max(0.2, currentOpacity - opacityStep); // minimum 20% opacity
         }
 
         win.setOpacity(newOpacity);
