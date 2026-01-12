@@ -103,6 +103,16 @@ export function VideoControlSection({
     config?.video_height,
   ]);
 
+  const OBS_CAMERA_PREFIX = 'OBS Virtual';
+  const obsCameraExists = videoDevices.some((d) => d.label.includes(OBS_CAMERA_PREFIX));
+
+  useEffect(() => {
+    if (!obsCameraExists && config?.enable_video_control) {
+      updateConfig({ enable_video_control: false });
+      toast.error('OBS Virtual Camera not found — disabling Video Control');
+    }
+  }, [obsCameraExists, config?.enable_video_control, updateConfig]);
+
   return (
     <div className="relative">
       <div
@@ -116,8 +126,15 @@ export function VideoControlSection({
               variant={config?.enable_video_control ? 'secondary' : 'destructive'}
               size="icon"
               className="h-8 w-8 border-none rounded-none"
-              disabled={getDisabled(runningState)}
+              disabled={
+                getDisabled(runningState) || (!obsCameraExists && !config?.enable_video_control)
+              }
               onClick={() => {
+                const tryingToEnable = !config?.enable_video_control;
+                if (tryingToEnable && !obsCameraExists) {
+                  alert('OBS Virtual Camera not found. Video control requires OBS Virtual Camera.');
+                  return;
+                }
                 toast.success(
                   config?.enable_video_control ? 'Video control disabled' : 'Video control enabled',
                 );
@@ -159,6 +176,11 @@ export function VideoControlSection({
             <DialogTitle>Video Control Options</DialogTitle>
 
             {/* Camera Preview */}
+            {!obsCameraExists && (
+              <div className="mb-3 text-sm text-destructive">
+                OBS Virtual Camera not found. Video control is unavailable.
+              </div>
+            )}
             <video
               ref={videoPreviewRef}
               autoPlay
