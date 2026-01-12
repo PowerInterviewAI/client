@@ -114,13 +114,6 @@ ipcMain.on('window-resize-delta', (event, dx, dy, edge) => {
             nb.height = minHeight;
         }
 
-        // clamp to primary display work area
-        const { workArea } = require('electron').screen.getPrimaryDisplay();
-        if (nb.x < workArea.x) nb.x = workArea.x;
-        if (nb.y < workArea.y) nb.y = workArea.y;
-        if (nb.x + nb.width > workArea.x + workArea.width) nb.x = Math.max(workArea.x, workArea.x + workArea.width - nb.width);
-        if (nb.y + nb.height > workArea.y + workArea.height) nb.y = Math.max(workArea.y, workArea.y + workArea.height - nb.height);
-
         win.setBounds(nb);
     } catch (err) {
         console.warn('window-resize-delta handler error:', err && err.message ? err.message : err);
