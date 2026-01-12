@@ -43,6 +43,10 @@ class GenerateSuggestionRequest(BaseModel):
         str,
         Field(description="The profile data of the user"),
     ]
+    job_description: Annotated[
+        str,
+        Field(description="The job description the user is targeting"),
+    ]
     transcripts: Annotated[
         list[Transcript],
         Field(description="The transcripts of the user"),
