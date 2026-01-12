@@ -131,6 +131,9 @@ export default function Home() {
     }
   }, [appState?.transcripts, transcripts]);
 
+  const suggestions = appState?.suggestions ?? [];
+  const hasSuggestions = suggestions.length > 0;
+
   // Load theme
   useEffect(() => {
     // Check localStorage or system preference
@@ -181,7 +184,9 @@ export default function Home() {
 
       <div className="flex-1 flex overflow-y-hidden gap-1">
         {/* Left Column: Video + Transcription */}
-        <div className="flex flex-col gap-1 w-1/2 md:w-96 shrink-0 min-h-0">
+        <div
+          className={`flex flex-col gap-1 ${hasSuggestions ? 'w-1/2 md:w-96' : 'flex-1'} transition-all duration-300 ease-in-out`}
+        >
           {/* Video Panel - Small and compact */}
           <div
             id="video-panel"
@@ -213,12 +218,14 @@ export default function Home() {
         </div>
 
         {/* Right Column: Main Suggestions Panel */}
-        <div className="w-1/2 md:flex-1 min-w-60 min-h-0 rounded-lg">
-          <SuggestionsPanel
-            suggestions={appState?.suggestions}
-            style={suggestionsHeight ? { height: `${suggestionsHeight}px` } : undefined}
-          />
-        </div>
+        {hasSuggestions && (
+          <div className="w-1/2 md:flex-1 min-w-60 min-h-0 rounded-lg">
+            <SuggestionsPanel
+              suggestions={suggestions}
+              style={suggestionsHeight ? { height: `${suggestionsHeight}px` } : undefined}
+            />
+          </div>
+        )}
       </div>
 
       <ControlPanel
