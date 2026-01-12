@@ -56,7 +56,7 @@ export default function DocumentationDialog({ open, onOpenChange }: Documentatio
             </ol>
 
             <p className="mt-2">
-              Tip: keep opacity around 0.7–0.9 for readability while letting underlying content
+              Tip: keep opacity around 0.7-0.9 for readability while letting underlying content
               remain visible.
             </p>
           </div>
