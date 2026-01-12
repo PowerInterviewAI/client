@@ -7,6 +7,7 @@ import { Config } from '@/types/config';
 import { X } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import { Dialog, DialogContent, DialogFooter, DialogTitle } from './ui/dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 interface ProfileDialogProps {
@@ -54,33 +55,13 @@ export default function ProfileDialog({
     reader.readAsDataURL(file);
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-      <div className="bg-card rounded-lg w-full max-w-lg max-h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-border px-6 py-4 shrink-0">
-          <h2 className="text-lg font-semibold text-foreground">Edit Profile</h2>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={() => onOpenChange(false)}
-                className="h-6 w-6 rounded-md hover:bg-muted flex items-center justify-center transition-colors"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Close</p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[90vh] w-full max-w-lg">
+        <DialogTitle>Edit Profile</DialogTitle>
 
-        {/* Content */}
         <div className="flex-1 overflow-y-auto">
           <div className="p-6 space-y-5">
-            {/* Profile Photo */}
             <div className="flex flex-col justify-center">
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
                 Profile Photo
@@ -101,7 +82,6 @@ export default function ProfileDialog({
                   </div>
                 )}
 
-                {/* Overlay for change photo */}
                 <label
                   htmlFor="photo-upload"
                   className="absolute inset-0 flex items-center justify-center bg-black/40 text-white text-xs opacity-0 hover:opacity-100 rounded-md cursor-pointer transition-opacity"
@@ -109,7 +89,6 @@ export default function ProfileDialog({
                   Change
                 </label>
 
-                {/* Remove button */}
                 {photo && (
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -128,7 +107,6 @@ export default function ProfileDialog({
                 )}
               </div>
 
-              {/* Hidden file input */}
               <input
                 id="photo-upload"
                 type="file"
@@ -141,7 +119,6 @@ export default function ProfileDialog({
               </p>
             </div>
 
-            {/* Username */}
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
                 Username
@@ -154,7 +131,6 @@ export default function ProfileDialog({
               />
             </div>
 
-            {/* Profile Data (multiline) */}
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
                 Profile Data
@@ -169,16 +145,17 @@ export default function ProfileDialog({
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="border-t border-border px-6 py-3 flex items-center justify-end gap-2 shrink-0">
-          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button size="sm" onClick={handleSave} className="bg-primary hover:bg-primary/90">
-            Save Changes
-          </Button>
-        </div>
-      </div>
-    </div>
+        <DialogFooter>
+          <div className="flex items-center justify-end gap-2 w-full">
+            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button size="sm" onClick={handleSave} className="bg-primary hover:bg-primary/90">
+              Save Changes
+            </Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
