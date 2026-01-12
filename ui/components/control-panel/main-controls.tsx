@@ -57,6 +57,35 @@ export function MainControls({ runningState, stateConfig, getDisabled }: MainCon
     }
   };
 
+  const handleStartStopClick = async () => {
+    try {
+      // Call the provided click handler. It may be sync or return a Promise.
+      // eslint-disable-next-line
+      const res = onClick() as any;
+
+      // If we're currently running, the user is stopping — wait for any async stop
+      // action to complete before asking about export.
+      if (runningState === RunningState.RUNNING) {
+        if (res && typeof res.then === 'function') {
+          try {
+            await res;
+          } catch (e) {
+            // ignore errors from the stop action here; still show export prompt
+            console.error('Error awaiting stop action', e);
+          }
+        }
+
+        // Ask user whether to export transcription after stop
+        const confirmExport = window.confirm('Export transcription now?');
+        if (confirmExport) {
+          await onExportTranscript();
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   return (
     <>
       {/* Divider */}
@@ -66,7 +95,7 @@ export function MainControls({ runningState, stateConfig, getDisabled }: MainCon
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
-            onClick={onClick}
+            onClick={handleStartStopClick}
             size="sm"
             className={`h-8 w-16 text-xs font-medium rounded-full cursor-pointer ${className}`}
             disabled={getDisabled(runningState, false)}
