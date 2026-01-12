@@ -1,9 +1,9 @@
 'use client';
 
+import ConfigurationDialog from '@/components/configuration-dialog';
 import ControlPanel from '@/components/control-panel';
 import HotkeysPanel from '@/components/hotkeys-panel';
 import Loading from '@/components/loading';
-import ConfigurationDialog from '@/components/configuration-dialog';
 import SuggestionsPanel from '@/components/suggestions-panel';
 import TranscriptPanel from '@/components/transcript-panel';
 import { VideoPanel, VideoPanelHandle } from '@/components/video-panel';

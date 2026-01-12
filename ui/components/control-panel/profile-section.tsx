@@ -9,12 +9,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import useAuth from '@/hooks/use-auth';
+import { RunningState } from '@/types/appState';
 import { Config } from '@/types/config';
 import { ChevronUp, Key, LogOut, Moon, SettingsIcon, Sun } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 import { ChangePasswordDialog } from './change-password-dialog';
-import { RunningState } from '@/types/appState';
 
 interface ProfileSectionProps {
   config?: Config;
@@ -53,8 +53,13 @@ export function ProfileSection({
   return (
     <div className="flex items-center gap-2">
       <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-          <Button disabled={disabled} variant="ghost" size="sm" className="rounded-md hover:bg-muted h-10">
+        <DropdownMenuTrigger asChild>
+          <Button
+            disabled={disabled}
+            variant="ghost"
+            size="sm"
+            className="rounded-md hover:bg-muted h-10"
+          >
             <div className="flex items-center gap-2 text-foreground">
               {config?.interview_conf?.photo ? (
                 <Image

@@ -1,16 +1,15 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/dialog";
-import HotkeysPanel from "@/components/hotkeys-panel";
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { HOTKEYS } from '@/lib/hotkeys';
 
 interface DocumentationDialogProps {
   open: boolean;
@@ -28,7 +27,16 @@ export default function DocumentationDialog({ open, onOpenChange }: Documentatio
 
         <div className="py-2">
           <h3 className="text-sm font-semibold mb-2">Hotkeys</h3>
-          <HotkeysPanel />
+          <div className="flex flex-col gap-2">
+            {HOTKEYS.map(([k, d]) => (
+              <div key={String(k)} className="flex items-start gap-3">
+                <div className="px-2 py-1 rounded bg-muted text-[11px] font-semibold min-w-[90px]">
+                  {k}
+                </div>
+                <div className="text-sm">{d}</div>
+              </div>
+            ))}
+          </div>
         </div>
 
         <DialogFooter>
