@@ -33,6 +33,11 @@ export function TranscriptionOptions({
   audioInputDeviceNotFound,
   getDisabled,
 }: TranscriptionOptionsProps) {
+  const usableAudioInputDevices = audioInputDevices.filter((d) => {
+    if (d.name.toLowerCase().includes('virtual')) return false;
+    return true;
+  });
+
   return (
     <div className="flex items-center">
       <Dialog>
@@ -78,7 +83,7 @@ export function TranscriptionOptions({
                 <SelectValue placeholder="Select microphone" />
               </SelectTrigger>
               <SelectContent>
-                {audioInputDevices.map((device) => (
+                {usableAudioInputDevices.map((device) => (
                   <SelectItem key={device.name} value={`${device.name}`}>
                     {device.name}
                   </SelectItem>
