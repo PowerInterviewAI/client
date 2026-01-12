@@ -7,9 +7,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 interface TranscriptionPanelProps {
   transcripts: Transcript[];
   username: string;
+  style?: React.CSSProperties;
 }
 
-export default function TranscriptPanel({ transcripts, username }: TranscriptionPanelProps) {
+export default function TranscriptPanel({ transcripts, username, style }: TranscriptionPanelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
@@ -39,7 +40,7 @@ export default function TranscriptPanel({ transcripts, username }: Transcription
   }, [transcripts, autoScroll]);
 
   return (
-    <Card className="relative flex flex-col h-full bg-card p-0 overflow-hidden">
+    <Card className="relative flex flex-col h-full bg-card p-0" style={style}>
       <div className="border-b border-border px-4 pt-4 pb-2 shrink-0 flex items-center justify-between gap-4">
         <h3 className="font-semibold text-foreground text-xs">Transcription</h3>
 
