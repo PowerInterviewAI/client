@@ -7,7 +7,14 @@ import { Config } from '@/types/config';
 import { X } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { Dialog, DialogContent, DialogFooter, DialogTitle } from './ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from './ui/dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 interface ProfileDialogProps {
@@ -57,10 +64,15 @@ export default function ProfileDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] w-full max-w-lg">
-        <DialogTitle>Edit Profile</DialogTitle>
+      <DialogContent className="max-h-[90vh]">
+        <DialogHeader>
+          <DialogTitle>Edit Profile</DialogTitle>
+          <DialogDescription>
+            Update your profile information, including your photo, username, and CV/resume content.
+          </DialogDescription>
+        </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-auto">
           <div className="space-y-5">
             <div className="flex flex-col justify-center">
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
@@ -119,7 +131,7 @@ export default function ProfileDialog({
               </p>
             </div>
 
-            <div>
+            <div className="grid gap-2">
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
                 Username
               </label>
@@ -131,7 +143,7 @@ export default function ProfileDialog({
               />
             </div>
 
-            <div>
+            <div className="grid gap-2">
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
                 CV / Resume Content
               </label>
