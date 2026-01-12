@@ -165,8 +165,8 @@ function enableStealth() {
         // Enable content protection in stealth mode
         win.setContentProtection(true);
 
-        // Start at 70% opacity
-        win.setOpacity(0.7);
+        // Start at 80% opacity
+        win.setOpacity(0.8);
 
         _stealth = true;
             console.log('🕵️‍♀️ Stealth mode enabled');
