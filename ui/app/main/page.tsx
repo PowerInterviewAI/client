@@ -39,17 +39,19 @@ export default function Home() {
       const title = document.getElementById('titlebar')?.getBoundingClientRect().height || 0;
       const hot = document.getElementById('hotkeys-panel')?.getBoundingClientRect().height || 0;
       const control = document.getElementById('control-panel')?.getBoundingClientRect().height || 0;
-      const video = document.getElementById('video-panel')?.getBoundingClientRect().height || 0;
+      let video = document.getElementById('video-panel')?.getBoundingClientRect().height || 0;
       const extra = 24; // spacing/padding between elements
+
+      if (video > 0) video += 4; // account for border
 
       // Transcript (left) sits below title/hotkeys/video/control — subtract video height
       const leftAvailable = Math.max(
-        200,
+        100,
         window.innerHeight - (title + hot + control + video + extra),
       );
 
       // Suggestions (right) does not include video area above it, subtract title/hotkeys/control
-      const rightAvailable = Math.max(200, window.innerHeight - (title + hot + control + extra));
+      const rightAvailable = Math.max(100, window.innerHeight - (title + hot + control + extra));
 
       setTranscriptHeight(leftAvailable);
       setSuggestionsHeight(rightAvailable);
