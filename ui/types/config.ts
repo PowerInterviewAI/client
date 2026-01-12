@@ -1,7 +1,8 @@
-export interface UserProfile {
+export interface InterviewConf {
   photo: string;
   username: string;
   profile_data: string;
+  job_description: string;
 }
 
 export enum Language {
@@ -9,7 +10,7 @@ export enum Language {
 }
 
 export interface Config {
-  profile: UserProfile;
+  interview_conf: InterviewConf;
   language: Language;
 
   // Transcription options
@@ -17,7 +18,6 @@ export interface Config {
 
   // Audio control options
   enable_audio_control: boolean;
-  audio_control_device_name: string;
   audio_delay_ms: number;
 
   // Video control options

@@ -7,39 +7,58 @@ import { Config } from '@/types/config';
 import { X } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from './ui/dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
-interface ProfileDialogProps {
+interface ConfigurationDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   initialPhoto: string;
   initialName: string;
   initialProfileData: string;
+  initialJobDescription: string;
   updateConfig: (config: Partial<Config>) => void;
 }
 
-export default function ProfileDialog({
+export default function ConfigurationDialog({
   isOpen,
   onOpenChange,
   initialPhoto,
   initialName,
   initialProfileData,
+  initialJobDescription,
   updateConfig,
-}: ProfileDialogProps) {
+}: ConfigurationDialogProps) {
   const [photo, setPhoto] = useState(initialPhoto);
   const [name, setName] = useState(initialName);
   const [profileData, setProfileData] = useState(initialProfileData);
+  const [jobDescription, setJobDescription] = useState(initialJobDescription);
 
   useEffect(() => {
     if (isOpen) {
       setPhoto(initialPhoto);
       setName(initialName);
       setProfileData(initialProfileData);
+      setJobDescription(initialJobDescription ?? '');
     }
   }, [isOpen, initialPhoto, initialName, initialProfileData]);
 
   const handleSave = () => {
-    updateConfig({ profile: { photo: photo, username: name, profile_data: profileData } });
+    updateConfig({
+      interview_conf: {
+        photo: photo,
+        username: name,
+        profile_data: profileData,
+        job_description: jobDescription,
+      },
+    });
     onOpenChange(false);
   };
 
@@ -54,33 +73,18 @@ export default function ProfileDialog({
     reader.readAsDataURL(file);
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-      <div className="bg-card rounded-lg w-full max-w-lg max-h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-border px-6 py-4 shrink-0">
-          <h2 className="text-lg font-semibold text-foreground">Edit Profile</h2>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={() => onOpenChange(false)}
-                className="h-6 w-6 rounded-md hover:bg-muted flex items-center justify-center transition-colors"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Close</p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[90vh]">
+        <DialogHeader>
+          <DialogTitle>Configuration</DialogTitle>
+          <DialogDescription>
+            Update your configuration: profile photo, username, CV/resume and job description.
+          </DialogDescription>
+        </DialogHeader>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-6 space-y-5">
-            {/* Profile Photo */}
+        <div className="flex-1 overflow-auto p-2">
+          <div className="space-y-5">
             <div className="flex flex-col justify-center">
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
                 Profile Photo
@@ -101,7 +105,6 @@ export default function ProfileDialog({
                   </div>
                 )}
 
-                {/* Overlay for change photo */}
                 <label
                   htmlFor="photo-upload"
                   className="absolute inset-0 flex items-center justify-center bg-black/40 text-white text-xs opacity-0 hover:opacity-100 rounded-md cursor-pointer transition-opacity"
@@ -109,14 +112,15 @@ export default function ProfileDialog({
                   Change
                 </label>
 
-                {/* Remove button */}
                 {photo && (
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
                         type="button"
+                        tabIndex={-1}
                         onClick={() => setPhoto('')}
                         className="absolute -top-2 -right-2 bg-red-500 text-white rounded-md p-1 shadow hover:bg-red-600 transition-colors"
+                        aria-label="Remove photo"
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -128,7 +132,6 @@ export default function ProfileDialog({
                 )}
               </div>
 
-              {/* Hidden file input */}
               <input
                 id="photo-upload"
                 type="file"
@@ -141,8 +144,7 @@ export default function ProfileDialog({
               </p>
             </div>
 
-            {/* Username */}
-            <div>
+            <div className="grid gap-2">
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
                 Username
               </label>
@@ -150,35 +152,47 @@ export default function ProfileDialog({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Enter your username"
-                className="h-9 text-sm"
+                className="text-sm"
               />
             </div>
 
-            {/* Profile Data (multiline) */}
-            <div>
+            <div className="grid gap-2">
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                Profile Data
+                CV / Resume Content
               </label>
               <Textarea
                 value={profileData}
                 onChange={(e) => setProfileData(e.target.value)}
-                placeholder="Enter profile details"
-                className="text-sm min-h-[100px] max-h-[200px] overflow-auto"
+                placeholder="Enter your CV or resume content"
+                className="text-sm min-h-20 max-h-40 overflow-auto"
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                Job Description
+              </label>
+              <Textarea
+                value={jobDescription}
+                onChange={(e) => setJobDescription(e.target.value)}
+                placeholder="Enter the job description you are targeting"
+                className="text-sm min-h-20 max-h-40 overflow-auto"
               />
             </div>
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="border-t border-border px-6 py-3 flex items-center justify-end gap-2 shrink-0">
-          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button size="sm" onClick={handleSave} className="bg-primary hover:bg-primary/90">
-            Save Changes
-          </Button>
-        </div>
-      </div>
-    </div>
+        <DialogFooter>
+          <div className="flex items-center justify-end gap-2 w-full">
+            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button size="sm" onClick={handleSave} className="bg-primary hover:bg-primary/90">
+              Save Changes
+            </Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 COLLECTION_NAME = "users"
 
 
-class UserProfile(BaseModel):
+class InterviewConf(BaseModel):
     photo: Annotated[
         str,
         Field(description="The photo of the user"),
@@ -18,3 +18,7 @@ class UserProfile(BaseModel):
         str,
         Field(description="The profile data of the user"),
     ] = "My name is John Doe."
+    job_description: Annotated[
+        str,
+        Field(description="The job description the user is targeting"),
+    ] = "Software Engineer"

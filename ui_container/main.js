@@ -1,15 +1,21 @@
 const path = require("path");
-const { app, BrowserWindow } = require("electron");
-const { spawn } = require("child_process");
-const net = require("net");
+const { app, BrowserWindow, Menu } = require("electron");
 const Store = require("electron-store").default;
 const store = new Store();
 
+// Import modules
+const { startEngine, getCurrentPort } = require('./engine');
+const { setWindowReference } = require('./window-controls');
+const { registerGlobalHotkeys, unregisterHotkeys } = require('./hotkeys');
+
 let win = null;
-let engine = null;
-let currentPort = 28080;
-let isRestarting = false;
-let restartTimestamps = [];
+
+// Prevent Chromium from aggressively throttling timers/rendering
+// when the window is occluded or in the background. This improves
+// continuous video playback when the window is not on top.
+app.commandLine.appendSwitch('disable-background-timer-throttling');
+app.commandLine.appendSwitch('disable-renderer-backgrounding');
+app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
 
 // -------------------------------------------------------------
 // SINGLE INSTANCE LOCK
@@ -27,105 +33,6 @@ if (!gotLock) {
 }
 
 // -------------------------------------------------------------
-// FIND FREE PORT
-// -------------------------------------------------------------
-function findFreePort(start) {
-    return new Promise(resolve => {
-        function tryPort(port) {
-            const server = net.createServer();
-            server.once("error", () => tryPort(port + 1));
-            server.once("listening", () => {
-                server.close(() => resolve(port));
-            });
-            server.listen(port, "127.0.0.1");
-        }
-        tryPort(start);
-    });
-}
-
-// -------------------------------------------------------------
-// START ENGINE
-// -------------------------------------------------------------
-async function startEngine() {
-    if (isRestarting) return;
-    isRestarting = true;
-
-    // Track restart rate to avoid loops
-    const now = Date.now();
-    restartTimestamps.push(now);
-    restartTimestamps = restartTimestamps.filter(t => now - t < 10000);
-
-    if (restartTimestamps.length > 5) {
-        console.error("❌ Engine restarting too fast. Not restarting again.");
-        isRestarting = false;
-        return;
-    }
-
-    currentPort = await findFreePort(currentPort);
-
-    let exePath = app.isPackaged
-        ? path.join(process.resourcesPath, "..", "bin", "engine.exe")
-        : path.join(__dirname, "bin", "main.dist", "engine.exe");
-    exePath = path.normalize(exePath);
-    console.log(`📂 Using engine path: ${exePath}`);
-
-    console.log(`🚀 Starting engine on port ${currentPort}`);
-
-    engine = spawn(exePath, [
-        "--port", currentPort,
-        "--watch-parent", "true",
-        "--reload", "false"
-    ], {
-        detached: process.platform !== "win32",
-        stdio: ["ignore", "pipe", "pipe"]
-    });
-
-    engine.stdout.on("data", d => console.log("[engine]", d.toString()));
-    engine.stderr.on("data", d => console.error("[engine ERR]", d.toString()));
-
-    engine.on("exit", async (code, signal) => {
-        console.log("⚠ engine exited:", { code, signal });
-
-        console.log("🔁 Restarting engine...");
-
-        // Restart safely
-        isRestarting = false;
-        await startEngine();
-
-        if (win && !win.isDestroyed()) {
-            win.loadURL(`http://localhost:${currentPort}/main`);
-        }
-    });
-
-    // Wait for engine to fully boot
-    await waitForServer(`http://localhost:${currentPort}/main`);
-
-    isRestarting = false;
-    return currentPort;
-}
-
-// -------------------------------------------------------------
-// WAIT FOR ENGINE SERVER
-// -------------------------------------------------------------
-function waitForServer(url) {
-    const http = require("http");
-
-    return new Promise(resolve => {
-        let attempts = 0;
-
-        function check() {
-            if (attempts++ > 50) return resolve(); // timeout fail-safe
-
-            http.get(url, () => resolve()).on("error", () => {
-                setTimeout(check, 200);
-            });
-        }
-
-        check();
-    });
-}
-
-// -------------------------------------------------------------
 // CREATE WINDOW
 // -------------------------------------------------------------
 async function createWindow() {
@@ -137,13 +44,27 @@ async function createWindow() {
     win = new BrowserWindow({
         title: "Power Interview",
         ...savedBounds,
-        alwaysOnTop: true,
+        transparent: true,
+        frame: false,
         webPreferences: {
-            preload: `${__dirname}/preload.js`
+            preload: `${__dirname}/preload.js`,
+            // Keep renderer timers running and avoid throttling when the window
+            // is occluded or not focused so video/audio playback remains smooth.
+            backgroundThrottling: false,
         }
     });
 
-    win.setContentProtection(true);
+    // Remove the default application menu and hide the menu bar
+    try {
+        Menu.setApplicationMenu(null);
+    } catch (e) {
+        // Ignore if Menu not available for platform
+    }
+    win.setMenuBarVisibility(false);
+    win.setAutoHideMenuBar(true);
+
+    // Set window reference for window controls
+    setWindowReference(win);
 
     win.on("close", () => {
         store.set("windowBounds", win.getBounds());
@@ -151,7 +72,7 @@ async function createWindow() {
 
     win.webContents.session.clearCache().then(async () => {
         if (app.isPackaged) {
-            const port = await startEngine();
+            const port = await startEngine(app, win);
             win.loadURL(`http://localhost:${port}/main`);
         } else {
             win.loadURL("http://localhost:3000/main");
@@ -162,4 +83,66 @@ async function createWindow() {
 // -------------------------------------------------------------
 // APP LIFECYCLE
 // -------------------------------------------------------------
-app.whenReady().then(createWindow);
+app.whenReady().then(async () => {
+    await createWindow();
+    registerGlobalHotkeys();
+});
+
+app.on('will-quit', () => {
+    unregisterHotkeys();
+});
+
+// IPC handlers for window controls exposed to renderer via preload
+const { ipcMain } = require('electron');
+const windowControls = require('./window-controls');
+
+ipcMain.on('window-minimize', () => { if (win && !win.isDestroyed()) win.minimize(); });
+ipcMain.on('window-close', () => { if (win && !win.isDestroyed()) win.close(); });
+
+// Stealth controls: allow renderer to set or toggle stealth via IPC
+ipcMain.on('set-stealth', (event, isStealth) => {
+    try {
+        if (isStealth) windowControls.enableStealth(); else windowControls.disableStealth();
+    } catch (err) {
+        console.warn('set-stealth handler error:', err && err.message ? err.message : err);
+    }
+});
+
+ipcMain.on('window-toggle-stealth', () => {
+    try {
+        windowControls.toggleStealth();
+    } catch (err) {
+        console.warn('window-toggle-stealth handler error:', err && err.message ? err.message : err);
+    }
+});
+
+// Handle incremental resize deltas from renderer (edge dragging)
+ipcMain.on('window-resize-delta', (event, dx, dy, edge) => {
+    try {
+        if (!win || win.isDestroyed()) return;
+        const minWidth = 300;
+        const minHeight = 200;
+        const bounds = win.getBounds();
+        let nb = { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height };
+
+        // Only handle right/bottom/bottom-right resizes (left/top grips disabled)
+        if (edge.includes('right')) {
+            nb.width += dx;
+        }
+        if (edge.includes('bottom')) {
+            nb.height += dy;
+        }
+
+        // enforce minimums and adjust origin if needed
+        if (nb.width < minWidth) {
+            nb.width = minWidth;
+        }
+        if (nb.height < minHeight) {
+            nb.height = minHeight;
+        }
+
+        win.setBounds(nb);
+    } catch (err) {
+        console.warn('window-resize-delta handler error:', err && err.message ? err.message : err);
+    }
+});

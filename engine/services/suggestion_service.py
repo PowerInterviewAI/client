@@ -4,7 +4,7 @@ from loguru import logger
 
 from engine.api.error_handler import raise_for_status
 from engine.cfg.client import config as cfg_client
-from engine.models.user_profile import UserProfile
+from engine.models.interview_conf import InterviewConf
 from engine.schemas.suggestion import GenerateSuggestionRequest, Suggestion, SuggestionState
 from engine.schemas.transcript import Speaker, Transcript
 from engine.services.web_client import WebClient
@@ -34,7 +34,7 @@ class SuggestionService:
     def generate_suggestion(
         self,
         transcripts: list[Transcript],
-        profile: UserProfile,
+        interview_conf: InterviewConf,
     ) -> None:
         """The main worker to call backend and stream response."""
         if not transcripts:
@@ -53,8 +53,9 @@ class SuggestionService:
             resp = WebClient.post(
                 cfg_client.BACKEND_SUGGESTIONS_URL,
                 json=GenerateSuggestionRequest(
-                    username=profile.username,
-                    profile_data=profile.profile_data,
+                    username=interview_conf.username,
+                    profile_data=interview_conf.profile_data,
+                    job_description=interview_conf.job_description,
                     transcripts=transcripts,
                 ).model_dump(),
             )
@@ -87,7 +88,7 @@ class SuggestionService:
     def generate_suggestion_async(
         self,
         transcripts: list[Transcript],
-        profile: UserProfile,
+        interview_conf: InterviewConf,
     ) -> None:
         """Spawn a background thread to run generate_suggestion."""
         # Remove trailing SELF transcripts
@@ -103,7 +104,7 @@ class SuggestionService:
         self._stop_event.clear()
 
         # start new thread
-        self._thread = threading.Thread(target=self.generate_suggestion, args=(transcripts, profile))
+        self._thread = threading.Thread(target=self.generate_suggestion, args=(transcripts, interview_conf))
         self._thread.start()
 
     def stop_current_task(self) -> None:

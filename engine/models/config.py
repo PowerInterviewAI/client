@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field
 
-from engine.models.user_profile import UserProfile
+from engine.models.interview_conf import InterviewConf
 
 
 class Language(StrEnum):
@@ -17,10 +17,10 @@ class Config(BaseModel):
     ] = ""
 
     # General options
-    profile: Annotated[
-        UserProfile,
+    interview_conf: Annotated[
+        InterviewConf,
         Field(description="The user profile"),
-    ] = UserProfile()
+    ] = InterviewConf()
     language: Annotated[
         Language,
         Field(description="The language"),
@@ -37,10 +37,6 @@ class Config(BaseModel):
         bool,
         Field(description="Whether audio control is enabled"),
     ] = False
-    audio_control_device_name: Annotated[
-        str,
-        Field(description="The audio control device name"),
-    ] = ""
     audio_delay_ms: Annotated[
         int,
         Field(description="The audio delay in milliseconds"),
@@ -77,7 +73,7 @@ class ConfigUpdate(BaseModel):
     session_token: str | None = None
 
     # General options
-    profile: UserProfile | None = None
+    interview_conf: InterviewConf | None = None
     language: Language | None = None
 
     # Transcript options
@@ -85,7 +81,6 @@ class ConfigUpdate(BaseModel):
 
     # Audio control options
     enable_audio_control: bool | None = None
-    audio_control_device_name: str | None = None
     audio_delay_ms: int | None = None
 
     # Video control options

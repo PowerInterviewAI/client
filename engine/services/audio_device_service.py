@@ -13,6 +13,9 @@ class AudioDeviceService:
     PortAudio limitations and stream interruptions.
     """
 
+    VB_AUDIO_INPUT_DEVICE_NAME = "CABLE Input (VB-Audio Virtual"
+    VB_AUDIO_OUTPUT_DEVICE_NAME = "CABLE Output (VB-Audio Virtual"
+
     # Windows API constants and structures
     WAVE_MAPPER = -1
 
@@ -220,3 +223,39 @@ class AudioDeviceService:
         except Exception as ex:
             logger.error(f"Failed to get device index by name: {name} {ex}")
         return -1
+
+    @classmethod
+    def get_vb_input_device(cls) -> dict[str, Any]:
+        """Get the VB-Audio Virtual Cable Input device info."""
+        try:
+            audio_devices = cls.get_output_devices()
+            for device in audio_devices:
+                if device["name"].startswith(cls.VB_AUDIO_INPUT_DEVICE_NAME):
+                    return device
+        except Exception as ex:
+            logger.error(f"Failed to get VB-Audio Virtual Cable Input device: {ex}")
+        return {}
+
+    @classmethod
+    def get_vb_input_device_index(cls) -> int:
+        """Get the index of the VB-Audio Virtual Cable Input device."""
+        vb_input_device = cls.get_vb_input_device()
+        return vb_input_device.get("index", -1)  # type: ignore  # noqa: PGH003
+
+    @classmethod
+    def get_vb_output_device(cls) -> dict[str, Any]:
+        """Get the VB-Audio Virtual Cable Output device info."""
+        try:
+            audio_devices = cls.get_input_devices()
+            for device in audio_devices:
+                if device["name"].startswith(cls.VB_AUDIO_OUTPUT_DEVICE_NAME):
+                    return device
+        except Exception as ex:
+            logger.error(f"Failed to get VB-Audio Virtual Cable Output device: {ex}")
+        return {}
+
+    @classmethod
+    def get_vb_output_device_index(cls) -> int:
+        """Get the index of the VB-Audio Virtual Cable Output device."""
+        vb_output_device = cls.get_vb_output_device()
+        return vb_output_device.get("index", -1)  # type: ignore  # noqa: PGH003

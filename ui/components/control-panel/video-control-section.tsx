@@ -38,6 +38,23 @@ export function VideoControlSection({
   const previewStreamRef = useRef<MediaStream | null>(null);
   const videoDevices = useVideoDevices();
 
+  const OBS_CAMERA_PREFIX = 'OBS Virtual';
+  const obsCameraExists =
+    videoDevices.length > 0 ? videoDevices.some((d) => d.label.includes(OBS_CAMERA_PREFIX)) : true;
+
+  useEffect(() => {
+    if (!obsCameraExists && config?.enable_video_control) {
+      updateConfig({ enable_video_control: false });
+      toast.error('OBS Virtual Camera not found — disabling Video Control');
+    }
+  }, [obsCameraExists, config?.enable_video_control, updateConfig]);
+
+  const usableVideoDevices = videoDevices.filter((d) => {
+    if (d.label.toLowerCase().startsWith(OBS_CAMERA_PREFIX.toLowerCase())) return false;
+    if (d.label.toLowerCase().includes('virtual')) return false;
+    return true;
+  });
+
   useEffect(() => {
     // Only run when dialog is open
     if (!isVideoDialogOpen) return;
@@ -116,8 +133,15 @@ export function VideoControlSection({
               variant={config?.enable_video_control ? 'secondary' : 'destructive'}
               size="icon"
               className="h-8 w-8 border-none rounded-none"
-              disabled={getDisabled(runningState)}
+              disabled={
+                getDisabled(runningState) || (!obsCameraExists && !config?.enable_video_control)
+              }
               onClick={() => {
+                const tryingToEnable = !config?.enable_video_control;
+                if (tryingToEnable && !obsCameraExists) {
+                  alert('OBS Virtual Camera not found. Video control requires OBS Virtual Camera.');
+                  return;
+                }
                 toast.success(
                   config?.enable_video_control ? 'Video control disabled' : 'Video control enabled',
                 );
@@ -159,6 +183,15 @@ export function VideoControlSection({
             <DialogTitle>Video Control Options</DialogTitle>
 
             {/* Camera Preview */}
+            {!obsCameraExists && (
+              <div className="mb-3 text-sm text-destructive">
+                OBS Virtual Camera not found. Video control is unavailable.
+                <br />
+                Download and install OBS studio from
+                <br />
+                <span className="underline">https://obsproject.com/download</span>
+              </div>
+            )}
             <video
               ref={videoPreviewRef}
               autoPlay
@@ -178,7 +211,7 @@ export function VideoControlSection({
                   <SelectValue placeholder="Select camera" />
                 </SelectTrigger>
                 <SelectContent>
-                  {videoDevices.map((device) => (
+                  {usableVideoDevices.map((device) => (
                     <SelectItem key={device.label} value={device.label}>
                       {device.label}
                     </SelectItem>

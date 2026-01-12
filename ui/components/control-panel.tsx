@@ -1,5 +1,6 @@
 'use client';
 
+import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { useVideoDevices } from '@/hooks/video-devices';
 import { RunningState } from '@/types/appState';
 import { PyAudioDevice } from '@/types/audioDevice';
@@ -59,6 +60,12 @@ export default function ControlPanel({
   config,
   updateConfig,
 }: ControlPanelProps) {
+  const isStealth = useIsStealthMode();
+
+  const videoDevices = useVideoDevices();
+
+  if (isStealth) return null;
+
   const stateConfig: Record<RunningState, StateConfig> = {
     [RunningState.IDLE]: {
       onClick: () => {
@@ -123,30 +130,23 @@ export default function ControlPanel({
   };
   const { dotClass: indicatorDotClass, label: indicatorLabel } = indicatorConfig[runningState];
 
-  const videoDevices = useVideoDevices();
-
   const audioInputDeviceNotFound =
     audioInputDevices.find((d) => d.name === config?.audio_input_device_name) === undefined;
-  const audioControlDeviceNotFound =
-    audioOutputDevices.find((d) => d.name === config?.audio_control_device_name) === undefined;
   const videoDeviceNotFound =
     videoDevices.find((d) => d.label === config?.camera_device_name) === undefined;
 
   const checkCanStart = () => {
     const checks: { ok: boolean; message: string }[] = [
-      { ok: !!config?.profile, message: 'Profile is not set' },
-      { ok: !!config?.profile?.username, message: 'Username is not set' },
-      { ok: !!config?.profile?.photo, message: 'Photo is not set' },
-      { ok: !!config?.profile?.profile_data, message: 'Profile data is not set' },
+      { ok: !!config?.interview_conf, message: 'Profile is not set' },
+      { ok: !!config?.interview_conf?.username, message: 'Username is not set' },
+      { ok: !!config?.interview_conf?.photo, message: 'Photo is not set' },
+      { ok: !!config?.interview_conf?.profile_data, message: 'Profile data is not set' },
 
       {
         ok: !audioInputDeviceNotFound,
         message: `Audio input device "${config?.audio_input_device_name}" is not found`,
       },
-      {
-        ok: !config?.enable_audio_control || !audioControlDeviceNotFound,
-        message: `Audio control device "${config?.audio_control_device_name}" is not found`,
-      },
+      // audio control device name removed; skip this check
       {
         ok: !config?.enable_video_control || !videoDeviceNotFound,
         message: `Video device "${config?.camera_device_name}" is not found`,
@@ -169,13 +169,18 @@ export default function ControlPanel({
   };
 
   return (
-    <div className="flex items-center justify-between gap-2 p-1">
+    <div
+      id="control-panel"
+      className="flex items-center justify-between gap-2 p-1 border border-border rounded-lg bg-card"
+    >
       <ProfileSection
         config={config}
         onProfileClick={onProfileClick}
         onSignOut={onSignOut}
         onThemeToggle={onThemeToggle}
         isDark={isDark}
+        runningState={runningState}
+        getDisabled={getDisabled}
       />
 
       <div className="flex flex-1 justify-center gap-2 items-center">
@@ -193,7 +198,6 @@ export default function ControlPanel({
           audioOutputDevices={audioOutputDevices}
           config={config}
           updateConfig={updateConfig}
-          audioControlDeviceNotFound={audioControlDeviceNotFound}
           getDisabled={getDisabled}
         />
 
