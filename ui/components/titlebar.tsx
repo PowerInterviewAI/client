@@ -1,6 +1,7 @@
 'use client';
 
 import DocumentationDialog from '@/components/documentation-dialog';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
@@ -99,127 +100,161 @@ export default function Titlebar() {
           // eslint-disable-next-line
           style={{ WebkitAppRegion: 'no-drag' } as any}
         >
-          <button
-            onClick={() => setIsDocsOpen(true)}
-            aria-label="Documentation"
-            className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
-            // eslint-disable-next-line
-            style={{ WebkitAppRegion: 'no-drag' } as any}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path d="M12 20v-6" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M12 4v4" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M20 12h-4" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M8 12H4" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-
-          <button
-            onClick={handleToggleStealth}
-            aria-label="Toggle stealth mode"
-            title="Toggle stealth mode"
-            className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
-            // eslint-disable-next-line
-            style={{ WebkitAppRegion: 'no-drag' } as any}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" strokeLinecap="round" strokeLinejoin="round" />
-              <circle cx="12" cy="12" r="3" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-
-          <button
-            onClick={handleMinimize}
-            aria-label="Minimize"
-            className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
-            // eslint-disable-next-line
-            style={{ WebkitAppRegion: 'no-drag' } as any}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path d="M5 12h14" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-
-          <button
-            onClick={handleToggleMaximize}
-            aria-label="Maximize"
-            className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
-            // eslint-disable-next-line
-            style={{ WebkitAppRegion: 'no-drag' } as any}
-          >
-            {isMaximized ? (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => setIsDocsOpen(true)}
+                aria-label="Documentation"
+                className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
+                // eslint-disable-next-line
+                style={{ WebkitAppRegion: 'no-drag' } as any}
               >
-                <rect
-                  x="3"
-                  y="3"
-                  width="14"
-                  height="14"
-                  rx="1"
-                  ry="1"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            ) : (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <rect
-                  x="5"
-                  y="5"
-                  width="14"
-                  height="14"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            )}
-          </button>
+                ?
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Documentation</p>
+            </TooltipContent>
+          </Tooltip>
 
-          <button
-            onClick={handleClose}
-            aria-label="Close"
-            className="h-7 w-7 flex items-center justify-center rounded hover:bg-destructive/50"
-            // eslint-disable-next-line
-            style={{ WebkitAppRegion: 'no-drag' } as any}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path d="M6 6l12 12M6 18L18 6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={handleToggleStealth}
+                aria-label="Toggle stealth mode"
+                title="Toggle stealth mode"
+                className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
+                // eslint-disable-next-line
+                style={{ WebkitAppRegion: 'no-drag' } as any}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <circle cx="12" cy="12" r="3" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Toggle stealth</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={handleMinimize}
+                aria-label="Minimize"
+                className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
+                // eslint-disable-next-line
+                style={{ WebkitAppRegion: 'no-drag' } as any}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path d="M5 12h14" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Minimize</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={handleToggleMaximize}
+                aria-label="Maximize"
+                className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
+                // eslint-disable-next-line
+                style={{ WebkitAppRegion: 'no-drag' } as any}
+              >
+                {isMaximized ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <rect
+                      x="3"
+                      y="3"
+                      width="14"
+                      height="14"
+                      rx="1"
+                      ry="1"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <rect
+                      x="5"
+                      y="5"
+                      width="14"
+                      height="14"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                )}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{isMaximized ? 'Restore' : 'Maximize'}</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={handleClose}
+                aria-label="Close"
+                className="h-7 w-7 flex items-center justify-center rounded hover:bg-destructive/50"
+                // eslint-disable-next-line
+                style={{ WebkitAppRegion: 'no-drag' } as any}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path d="M6 6l12 12M6 18L18 6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Close</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
       </div>
 
