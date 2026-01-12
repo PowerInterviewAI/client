@@ -49,17 +49,6 @@ function moveWindowToCorner(corner) {
     console.log(`🔄 Window moved to ${corner}`);
 }
 
-function toggleMaximize() {
-    if (!win || win.isDestroyed()) return;
-    if (win.isMaximized()) {
-        win.unmaximize();
-        console.log('🔄 Window unmaximized');
-    } else {
-        win.maximize();
-        console.log('🔄 Window maximized');
-    }
-}
-
 function toggleMinimize() {
     if (!win || win.isDestroyed()) return;
     if (win.isMinimized()) {
@@ -212,7 +201,6 @@ function toggleStealth() {
 module.exports = {
     setWindowReference,
     moveWindowToCorner,
-    toggleMaximize,
     toggleMinimize,
     moveWindowByArrow,
     resizeWindowByArrow,

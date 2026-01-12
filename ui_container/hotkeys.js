@@ -3,7 +3,6 @@ const { globalShortcut } = require("electron");
 // Import window control functions
 const {
     moveWindowToCorner,
-    toggleMaximize,
     toggleMinimize,
     moveWindowByArrow,
     resizeWindowByArrow,
