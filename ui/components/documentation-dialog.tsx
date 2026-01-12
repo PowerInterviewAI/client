@@ -66,9 +66,9 @@ export default function DocumentationDialog({ open, onOpenChange }: Documentatio
           </h3>
           <div className="text-sm text-muted-foreground mb-3">
             <p>
-              Stealth mode is ideal when you're taking an interview or doing a live coding test: it
-              lets you keep prompts, notes, or sample code visible on top of your IDE but prevents
-              accidental clicks or focus switches.
+              Stealth mode is ideal when you&apos;re taking an interview or doing a live coding
+              test: it lets you keep prompts, notes, or sample code visible on top of your IDE but
+              prevents accidental clicks or focus switches.
             </p>
 
             <p>
