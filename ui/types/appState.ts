@@ -10,7 +10,7 @@ export enum RunningState {
 }
 
 export interface AppState {
-  is_logged_in: boolean;
+  is_logged_in: boolean | null;
   assistant_state: RunningState;
   transcripts: Transcript[];
   suggestions: Suggestion[];

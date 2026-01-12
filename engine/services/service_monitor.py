@@ -22,7 +22,7 @@ class ServiceMonitor:
         on_logged_out: Callable[[], None] | None = None,
     ) -> None:
         self._app = app
-        self._is_logged_in = False
+        self._is_logged_in: bool | None = None
         self._is_backend_live = False
         self._is_gpu_server_live = False
 
@@ -39,7 +39,7 @@ class ServiceMonitor:
         with self._lock:
             self._is_backend_live = is_running
 
-    def set_logged_in(self, is_logged_in: bool) -> None:  # noqa: FBT001
+    def set_logged_in(self, is_logged_in: bool | None) -> None:  # noqa: FBT001
         with self._lock:
             self._is_logged_in = is_logged_in
 
@@ -47,7 +47,7 @@ class ServiceMonitor:
         with self._lock:
             return self._is_backend_live
 
-    def is_logged_in(self) -> bool:
+    def is_logged_in(self) -> bool | None:
         with self._lock:
             return self._is_logged_in
 
@@ -88,7 +88,7 @@ class ServiceMonitor:
                     if self._on_logged_out:
                         self._on_logged_out()
 
-                self.set_logged_in(False)
+                self.set_logged_in(None)
 
                 time.sleep(1)
                 continue

@@ -19,7 +19,7 @@ class AppState(BaseModel):
     """The app state."""
 
     is_logged_in: Annotated[
-        bool,
+        bool | None,
         Field(description="Whether the user is logged in"),
     ]
     assistant_state: Annotated[

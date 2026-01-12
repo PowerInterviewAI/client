@@ -21,7 +21,9 @@ export default function LogoutPage() {
     }
 
     // Redirect to main page if backend is live and logged in
-    if (appState.is_logged_in) {
+    if (appState.is_logged_in === null) {
+      return;
+    } else if (appState.is_logged_in) {
       router.push('/main');
     } else {
       router.push('/auth/login');
