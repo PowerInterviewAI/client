@@ -39,7 +39,8 @@ export function VideoControlSection({
   const videoDevices = useVideoDevices();
 
   const OBS_CAMERA_PREFIX = 'OBS Virtual';
-  const obsCameraExists = videoDevices.some((d) => d.label.includes(OBS_CAMERA_PREFIX));
+  const obsCameraExists =
+    videoDevices.length > 0 ? videoDevices.some((d) => d.label.includes(OBS_CAMERA_PREFIX)) : true;
 
   useEffect(() => {
     if (!obsCameraExists && config?.enable_video_control) {

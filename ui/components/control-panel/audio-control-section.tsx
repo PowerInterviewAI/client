@@ -29,7 +29,10 @@ export function AudioControlSection({
   getDisabled,
 }: AudioControlSectionProps) {
   const VB_AUDIO_INPUT_PREFIX = 'CABLE Input (VB-Audio Virtual';
-  const vbInputExists = audioOutputDevices.some((d) => d.name.startsWith(VB_AUDIO_INPUT_PREFIX));
+  const vbInputExists =
+    audioOutputDevices.length > 0
+      ? audioOutputDevices.some((d) => d.name.startsWith(VB_AUDIO_INPUT_PREFIX))
+      : true;
 
   useEffect(() => {
     if (!vbInputExists && config?.enable_audio_control) {
