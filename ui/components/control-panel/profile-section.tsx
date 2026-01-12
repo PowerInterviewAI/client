@@ -76,7 +76,7 @@ export function ProfileSection({
           </DropdownMenuItem>
           <DropdownMenuItem onClick={onThemeToggle}>
             {isDark ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
-            {isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            {isDark ? 'Light mode' : 'Dark mode'}
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
