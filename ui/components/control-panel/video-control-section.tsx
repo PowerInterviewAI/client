@@ -190,6 +190,8 @@ export function VideoControlSection({
                 Download and install OBS studio from
                 <br />
                 <span className="underline">https://obsproject.com/download</span>
+                <br />
+                and then restart this application.
               </div>
             )}
             <video
