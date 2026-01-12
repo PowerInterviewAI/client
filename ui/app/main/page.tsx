@@ -84,6 +84,11 @@ export default function Home() {
   const { data: audioOutputDevices } = useAudioOutputDevices(1000);
   const { data: appState, error: appStateError } = useAppState(100);
 
+  // Recompute when assistant running state or appState becomes available
+  useEffect(() => {
+    computeAvailable();
+  }, [appState?.assistant_state, appState, computeAvailable]);
+
   // Mutations
   const updateConfigMutation = useUpdateConfig();
   const startMutation = useStartAssistant(videoPanelRef, config);
