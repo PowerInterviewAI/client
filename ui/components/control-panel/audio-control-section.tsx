@@ -106,6 +106,10 @@ export function AudioControlSection({
             {!vbInputExists && (
               <div className="mb-3 text-sm text-destructive">
                 VB-Audio Input device not found. Audio control is unavailable.
+                <br />
+                Download and install VBCABLE Driver from
+                <br />
+                <span className="underline">https://vb-audio.com/Cable/</span>
               </div>
             )}
 

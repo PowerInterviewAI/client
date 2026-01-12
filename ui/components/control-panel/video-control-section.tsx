@@ -50,7 +50,7 @@ export function VideoControlSection({
 
   const usableVideoDevices = videoDevices.filter((d) => {
     if (d.label.toLowerCase().startsWith(OBS_CAMERA_PREFIX.toLowerCase())) return false;
-    if (d.label.toLowerCase().includes("virtual")) return false;
+    if (d.label.toLowerCase().includes('virtual')) return false;
     return true;
   });
 
@@ -185,6 +185,10 @@ export function VideoControlSection({
             {!obsCameraExists && (
               <div className="mb-3 text-sm text-destructive">
                 OBS Virtual Camera not found. Video control is unavailable.
+                <br />
+                Download and install OBS studio from
+                <br />
+                <span className="underline">https://obsproject.com/download</span>
               </div>
             )}
             <video
