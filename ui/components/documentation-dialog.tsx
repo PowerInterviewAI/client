@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { HOTKEYS } from '@/lib/hotkeys';
+import React from 'react';
 
 interface DocumentationDialogProps {
   open: boolean;
@@ -27,14 +28,14 @@ export default function DocumentationDialog({ open, onOpenChange }: Documentatio
 
         <div className="py-2">
           <h3 className="text-sm font-semibold mb-2">Hotkeys</h3>
-          <div className="flex flex-col gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {HOTKEYS.map(([k, d]) => (
-              <div key={String(k)} className="flex items-start gap-3">
+              <React.Fragment key={k}>
                 <div className="px-2 py-1 rounded bg-muted text-[11px] font-semibold min-w-[90px]">
                   {k}
                 </div>
                 <div className="text-sm">{d}</div>
-              </div>
+              </React.Fragment>
             ))}
           </div>
         </div>
