@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field
 
-from engine.models.user_profile import UserProfile
+from engine.models.interview_conf import InterviewConf
 
 
 class Language(StrEnum):
@@ -17,10 +17,10 @@ class Config(BaseModel):
     ] = ""
 
     # General options
-    profile: Annotated[
-        UserProfile,
+    interview_conf: Annotated[
+        InterviewConf,
         Field(description="The user profile"),
-    ] = UserProfile()
+    ] = InterviewConf()
     language: Annotated[
         Language,
         Field(description="The language"),
@@ -73,7 +73,7 @@ class ConfigUpdate(BaseModel):
     session_token: str | None = None
 
     # General options
-    profile: UserProfile | None = None
+    interview_conf: InterviewConf | None = None
     language: Language | None = None
 
     # Transcript options

@@ -3,7 +3,7 @@
 import ControlPanel from '@/components/control-panel';
 import HotkeysPanel from '@/components/hotkeys-panel';
 import Loading from '@/components/loading';
-import ProfileDialog from '@/components/profile-dialog';
+import ConfigurationDialog from '@/components/configuration-dialog';
 import SuggestionsPanel from '@/components/suggestions-panel';
 import TranscriptPanel from '@/components/transcript-panel';
 import { VideoPanel, VideoPanelHandle } from '@/components/video-panel';
@@ -194,7 +194,7 @@ export default function Home() {
                   ? RunningState.STOPPED
                   : (appState?.assistant_state ?? RunningState.IDLE)
               }
-              photo={config?.profile?.photo ?? ''}
+              photo={config?.interview_conf?.photo ?? ''}
               cameraDeviceName={config?.camera_device_name ?? ''}
               videoWidth={config?.video_width ?? 640}
               videoHeight={config?.video_height ?? 480}
@@ -205,7 +205,7 @@ export default function Home() {
 
           {/* Transcription Panel - Fill remaining space with scroll */}
           <TranscriptPanel
-            username={config?.profile?.username ?? ''}
+            username={config?.interview_conf?.username ?? ''}
             transcripts={transcripts ?? []}
             style={transcriptHeight ? { height: `${transcriptHeight}px` } : undefined}
           />
@@ -234,12 +234,13 @@ export default function Home() {
         updateConfig={updateConfig}
       />
 
-      <ProfileDialog
+      <ConfigurationDialog
         isOpen={isProfileOpen}
         onOpenChange={setIsProfileOpen}
-        initialPhoto={config?.profile?.photo ?? ''}
-        initialName={config?.profile?.username ?? ''}
-        initialProfileData={config?.profile?.profile_data ?? ''}
+        initialPhoto={config?.interview_conf?.photo ?? ''}
+        initialName={config?.interview_conf?.username ?? ''}
+        initialProfileData={config?.interview_conf?.profile_data ?? ''}
+        initialJobDescription={config?.interview_conf?.job_description ?? ''}
         updateConfig={updateConfig}
       />
     </div>

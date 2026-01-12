@@ -240,7 +240,7 @@ class AudioDeviceService:
     def get_vb_input_device_index(cls) -> int:
         """Get the index of the VB-Audio Virtual Cable Input device."""
         vb_input_device = cls.get_vb_input_device()
-        return vb_input_device.get("index", -1)
+        return vb_input_device.get("index", -1)  # type: ignore  # noqa: PGH003
 
     @classmethod
     def get_vb_output_device(cls) -> dict[str, Any]:
@@ -258,4 +258,4 @@ class AudioDeviceService:
     def get_vb_output_device_index(cls) -> int:
         """Get the index of the VB-Audio Virtual Cable Output device."""
         vb_output_device = cls.get_vb_output_device()
-        return vb_output_device.get("index", -1)
+        return vb_output_device.get("index", -1)  # type: ignore  # noqa: PGH003

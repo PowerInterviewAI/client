@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import useAuth from '@/hooks/use-auth';
 import { Config } from '@/types/config';
-import { ChevronUp, Key, LogOut, Moon, Sun, User } from 'lucide-react';
+import { ChevronUp, Key, LogOut, Moon, SettingsIcon, Sun } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 import { ChangePasswordDialog } from './change-password-dialog';
@@ -49,9 +49,9 @@ export function ProfileSection({
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm" className="rounded-md hover:bg-muted h-10">
             <div className="flex items-center gap-2 text-foreground">
-              {config?.profile?.photo ? (
+              {config?.interview_conf?.photo ? (
                 <Image
-                  src={config?.profile?.photo}
+                  src={config?.interview_conf?.photo}
                   alt="Profile preview"
                   className="w-8 h-8 rounded-full object-cover border"
                   width={32}
@@ -59,20 +59,20 @@ export function ProfileSection({
                 />
               ) : (
                 <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-lg font-semibold text-muted-foreground border">
-                  {config?.profile?.username
-                    ? config?.profile?.username.charAt(0).toUpperCase()
+                  {config?.interview_conf?.username
+                    ? config?.interview_conf?.username.charAt(0).toUpperCase()
                     : '?'}
                 </div>
               )}
-              <p className="text-sm font-medium">{config?.profile?.username}</p>
+              <p className="text-sm font-medium">{config?.interview_conf?.username}</p>
               <ChevronUp className="h-4 w-4" />
             </div>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" side="top">
           <DropdownMenuItem onClick={onProfileClick}>
-            <User className="mr-2 h-4 w-4" />
-            Edit profile
+            <SettingsIcon className="mr-2 h-4 w-4" />
+            Configuration
           </DropdownMenuItem>
           <DropdownMenuItem onClick={onThemeToggle}>
             {isDark ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}

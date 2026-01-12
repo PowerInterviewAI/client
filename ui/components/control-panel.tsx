@@ -137,10 +137,10 @@ export default function ControlPanel({
 
   const checkCanStart = () => {
     const checks: { ok: boolean; message: string }[] = [
-      { ok: !!config?.profile, message: 'Profile is not set' },
-      { ok: !!config?.profile?.username, message: 'Username is not set' },
-      { ok: !!config?.profile?.photo, message: 'Photo is not set' },
-      { ok: !!config?.profile?.profile_data, message: 'Profile data is not set' },
+      { ok: !!config?.interview_conf, message: 'Profile is not set' },
+      { ok: !!config?.interview_conf?.username, message: 'Username is not set' },
+      { ok: !!config?.interview_conf?.photo, message: 'Photo is not set' },
+      { ok: !!config?.interview_conf?.profile_data, message: 'Profile data is not set' },
 
       {
         ok: !audioInputDeviceNotFound,

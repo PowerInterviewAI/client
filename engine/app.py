@@ -102,7 +102,7 @@ class PowerInterviewApp:
     def on_transcriber_other_final(self, transcripts: list[Transcript]) -> None:
         self.suggestion_service.generate_suggestion_async(
             transcripts,
-            ConfigService.config.profile,
+            ConfigService.config.interview_conf,
         )
 
     def on_virtual_camera_frame(self, frame_bgr: np.ndarray[Any, Any]) -> None:
@@ -125,7 +125,7 @@ class PowerInterviewApp:
             resp = WebClient.post(
                 cfg_client.BACKEND_SUMMARIZE_URL,
                 json=GenerateSummarizeRequest(
-                    username=ConfigService.config.profile.username,
+                    username=ConfigService.config.interview_conf.username,
                     transcripts=transcripts,
                 ).model_dump(),
             )
@@ -148,7 +148,7 @@ class PowerInterviewApp:
         lines = []
         for t in transcripts:
             time_str = DatetimeUtil.format_timestamp_local(t.timestamp)
-            speaker_name = ConfigService.config.profile.username if t.speaker is Speaker.SELF else "Interviewer"
+            speaker_name = ConfigService.config.interview_conf.username if t.speaker is Speaker.SELF else "Interviewer"
             lines.append(f"#### {speaker_name} | {time_str}\n{t.text}\n")
 
         transcripts_part = "## Transcripts\n\n" + "\n".join(lines)

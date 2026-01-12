@@ -17,37 +17,48 @@ import {
 } from './ui/dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
-interface ProfileDialogProps {
+interface ConfigurationDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   initialPhoto: string;
   initialName: string;
   initialProfileData: string;
+  initialJobDescription: string;
   updateConfig: (config: Partial<Config>) => void;
 }
 
-export default function ProfileDialog({
+export default function ConfigurationDialog({
   isOpen,
   onOpenChange,
   initialPhoto,
   initialName,
   initialProfileData,
+  initialJobDescription,
   updateConfig,
-}: ProfileDialogProps) {
+}: ConfigurationDialogProps) {
   const [photo, setPhoto] = useState(initialPhoto);
   const [name, setName] = useState(initialName);
   const [profileData, setProfileData] = useState(initialProfileData);
+  const [jobDescription, setJobDescription] = useState(initialJobDescription);
 
   useEffect(() => {
     if (isOpen) {
       setPhoto(initialPhoto);
       setName(initialName);
       setProfileData(initialProfileData);
+      setJobDescription(initialJobDescription ?? '');
     }
   }, [isOpen, initialPhoto, initialName, initialProfileData]);
 
   const handleSave = () => {
-    updateConfig({ profile: { photo: photo, username: name, profile_data: profileData } });
+    updateConfig({
+      interview_conf: {
+        photo: photo,
+        username: name,
+        profile_data: profileData,
+        job_description: jobDescription,
+      },
+    });
     onOpenChange(false);
   };
 
@@ -66,9 +77,9 @@ export default function ProfileDialog({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle>Edit Profile</DialogTitle>
+          <DialogTitle>Configuration</DialogTitle>
           <DialogDescription>
-            Update your profile information, including your photo, username, and CV/resume content.
+            Update your configuration: profile photo, username, CV/resume and job description.
           </DialogDescription>
         </DialogHeader>
 
@@ -153,7 +164,19 @@ export default function ProfileDialog({
                 value={profileData}
                 onChange={(e) => setProfileData(e.target.value)}
                 placeholder="Enter your CV or resume content"
-                className="text-sm min-h-[100px] max-h-[200px] overflow-auto"
+                className="text-sm min-h-20 max-h-40 overflow-auto"
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                Job Description
+              </label>
+              <Textarea
+                value={jobDescription}
+                onChange={(e) => setJobDescription(e.target.value)}
+                placeholder="Enter the job description you are targeting"
+                className="text-sm min-h-20 max-h-40 overflow-auto"
               />
             </div>
           </div>

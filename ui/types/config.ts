@@ -1,7 +1,8 @@
-export interface UserProfile {
+export interface InterviewConf {
   photo: string;
   username: string;
   profile_data: string;
+  job_description: string;
 }
 
 export enum Language {
@@ -9,7 +10,7 @@ export enum Language {
 }
 
 export interface Config {
-  profile: UserProfile;
+  interview_conf: InterviewConf;
   language: Language;
 
   // Transcription options

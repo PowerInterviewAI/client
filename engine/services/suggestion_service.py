@@ -4,7 +4,7 @@ from loguru import logger
 
 from engine.api.error_handler import raise_for_status
 from engine.cfg.client import config as cfg_client
-from engine.models.user_profile import UserProfile
+from engine.models.interview_conf import InterviewConf
 from engine.schemas.suggestion import GenerateSuggestionRequest, Suggestion, SuggestionState
 from engine.schemas.transcript import Speaker, Transcript
 from engine.services.web_client import WebClient
@@ -34,7 +34,7 @@ class SuggestionService:
     def generate_suggestion(
         self,
         transcripts: list[Transcript],
-        profile: UserProfile,
+        profile: InterviewConf,
     ) -> None:
         """The main worker to call backend and stream response."""
         if not transcripts:
@@ -87,7 +87,7 @@ class SuggestionService:
     def generate_suggestion_async(
         self,
         transcripts: list[Transcript],
-        profile: UserProfile,
+        profile: InterviewConf,
     ) -> None:
         """Spawn a background thread to run generate_suggestion."""
         # Remove trailing SELF transcripts
