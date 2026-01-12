@@ -4,49 +4,15 @@ import DocumentationDialog from '@/components/documentation-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 export default function Titlebar() {
-  const [isMaximized, setIsMaximized] = useState(false);
   const isStealth = useIsStealthMode();
-
-  useEffect(() => {
-    let mounted = true;
-    // query initial maximize state
-    // eslint-disable-next-line
-    // @ts-ignore
-    if (typeof window !== 'undefined' && window?.electronAPI?.isMaximized) {
-      // eslint-disable-next-line
-      // @ts-ignore
-      window.electronAPI.isMaximized().then((v: boolean) => {
-        if (mounted) setIsMaximized(!!v);
-      });
-    }
-
-    // Optionally, one could subscribe to maximize/unmaximize events
-    return () => {
-      mounted = false;
-    };
-  }, []);
 
   const handleMinimize = () => {
     // eslint-disable-next-line
     // @ts-ignore
     window.electronAPI?.minimize && window.electronAPI.minimize();
-  };
-  const handleToggleMaximize = async () => {
-    // eslint-disable-next-line
-    // @ts-ignore
-    window.electronAPI?.toggleMaximize && window.electronAPI.toggleMaximize();
-    // update local state after a short delay
-    // eslint-disable-next-line
-    // @ts-ignore
-    const v = await (window.electronAPI?.isMaximized
-      ? // eslint-disable-next-line
-        // @ts-ignore
-        window.electronAPI.isMaximized()
-      : Promise.resolve(false));
-    setIsMaximized(!!v);
   };
   const handleClose = () => {
     // eslint-disable-next-line
@@ -171,60 +137,7 @@ export default function Titlebar() {
             </TooltipContent>
           </Tooltip>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={handleToggleMaximize}
-                aria-label="Maximize"
-                className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
-                // eslint-disable-next-line
-                style={{ WebkitAppRegion: 'no-drag' } as any}
-              >
-                {isMaximized ? (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <rect
-                      x="3"
-                      y="3"
-                      width="14"
-                      height="14"
-                      rx="1"
-                      ry="1"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <rect
-                      x="5"
-                      y="5"
-                      width="14"
-                      height="14"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                )}
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{isMaximized ? 'Restore' : 'Maximize'}</p>
-            </TooltipContent>
-          </Tooltip>
+          {/* Maximize button removed by request */}
 
           <Tooltip>
             <TooltipTrigger asChild>

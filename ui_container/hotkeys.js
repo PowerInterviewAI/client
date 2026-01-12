@@ -28,7 +28,7 @@ function registerGlobalHotkeys(overrides = {}) {
     globalShortcut.register('CommandOrControl+Alt+5', () => moveWindowToCorner('center'));
 
     // Window state hotkeys
-    globalShortcut.register('CommandOrControl+Alt+M', () => toggleMaximize());
+    // Maximize shortcut removed
     globalShortcut.register('CommandOrControl+Alt+N', () => toggleMinimize());
     globalShortcut.register('CommandOrControl+Alt+R', () => {
         const { BrowserWindow } = require("electron");
@@ -88,7 +88,7 @@ function registerGlobalHotkeys(overrides = {}) {
     console.log('  Ctrl+Alt+3: Move to bottom-left');
     console.log('  Ctrl+Alt+4: Move to bottom-right');
     console.log('  Ctrl+Alt+5: Center window');
-    console.log('  Ctrl+Alt+M: Toggle maximize');
+    // console.log('  Ctrl+Alt+M: Toggle maximize');
     console.log('  Ctrl+Alt+N: Toggle minimize');
     console.log('  Ctrl+Alt+R: Restore window');
     console.log('  Ctrl+Alt+↑: Move window up');

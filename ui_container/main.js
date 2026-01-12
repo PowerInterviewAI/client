@@ -97,9 +97,7 @@ const { ipcMain } = require('electron');
 const windowControls = require('./window-controls');
 
 ipcMain.on('window-minimize', () => { if (win && !win.isDestroyed()) win.minimize(); });
-ipcMain.on('window-toggle-maximize', () => { if (win && !win.isDestroyed()) { if (win.isMaximized()) win.unmaximize(); else win.maximize(); }});
 ipcMain.on('window-close', () => { if (win && !win.isDestroyed()) win.close(); });
-ipcMain.handle('window-is-maximized', () => { return !!(win && !win.isDestroyed() && win.isMaximized()); });
 
 // Stealth controls: allow renderer to set or toggle stealth via IPC
 ipcMain.on('set-stealth', (event, isStealth) => {
