@@ -28,10 +28,9 @@ export default function useAuth() {
       router.push('/main');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
+      setLoading(false);
       setError(parseErrorMessage(err, 'Login failed'));
       throw err;
-    } finally {
-      setLoading(false);
     }
   };
 
