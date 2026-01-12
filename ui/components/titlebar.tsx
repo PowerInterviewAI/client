@@ -54,6 +54,21 @@ export default function Titlebar() {
   };
 
   const [isDocsOpen, setIsDocsOpen] = useState(false);
+  const handleToggleStealth = () => {
+    if (typeof document === 'undefined') return;
+    const isCurrently = document.body.classList.contains('stealth');
+    if (isCurrently) {
+      document.body.classList.remove('stealth');
+      try {
+        localStorage.removeItem('stealth');
+      } catch {}
+    } else {
+      document.body.classList.add('stealth');
+      try {
+        localStorage.setItem('stealth', '1');
+      } catch {}
+    }
+  };
 
   if (isStealth) return null;
 
@@ -103,6 +118,20 @@ export default function Titlebar() {
               <path d="M12 4v4" strokeLinecap="round" strokeLinejoin="round" />
               <path d="M20 12h-4" strokeLinecap="round" strokeLinejoin="round" />
               <path d="M8 12H4" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+
+          <button
+            onClick={handleToggleStealth}
+            aria-label="Toggle stealth mode"
+            title="Toggle stealth mode"
+            className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
+            // eslint-disable-next-line
+            style={{ WebkitAppRegion: 'no-drag' } as any}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" strokeLinecap="round" strokeLinejoin="round" />
+              <circle cx="12" cy="12" r="3" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
 

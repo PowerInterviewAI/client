@@ -35,13 +35,14 @@ export default function Home() {
   const computeAvailable = useCallback(() => {
     if (typeof window === 'undefined') return;
     const title = document.getElementById('titlebar')?.getBoundingClientRect().height || 0;
-    const hot = document.getElementById('hotkeys-panel')?.getBoundingClientRect().height || 0;
+    let hot = document.getElementById('hotkeys-panel')?.getBoundingClientRect().height || 0;
     let control = document.getElementById('control-panel')?.getBoundingClientRect().height || 0;
     let video = document.getElementById('video-panel')?.getBoundingClientRect().height || 0;
-    const extra = 16; // spacing/padding between elements
+    const extra = 12; // spacing/padding between elements
 
-    if (video > 0) video += 4; // account for border
+    if (hot > 0) hot += 4; // account for border
     if (control > 0) control += 4; // account for border
+    if (video > 0) video += 4; // account for border
 
     const leftAvailable = Math.max(
       100,
@@ -176,7 +177,7 @@ export default function Home() {
 
   return (
     <div className="flex-1 flex flex-col w-full bg-background p-1 space-y-1">
-      <HotkeysPanel />
+      {isStealth && <HotkeysPanel />}
 
       <div className="flex-1 flex overflow-y-hidden gap-1">
         {/* Left Column: Video + Transcription */}
