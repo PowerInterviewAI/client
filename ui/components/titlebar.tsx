@@ -83,7 +83,8 @@ export default function Titlebar() {
   return (
     // eslint-disable-next-line
     // @ts-ignore
-    <div id="titlebar"
+    <div
+      id="titlebar"
       // eslint-disable-next-line
       style={{ WebkitAppRegion: 'drag' } as any}
       className="flex items-center gap-3 h-8 px-1 select-none bg-card border-b border-border"

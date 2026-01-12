@@ -16,8 +16,7 @@ import { RunningState } from '@/types/appState';
 import { Config } from '@/types/config';
 import { Transcript } from '@/types/transcript';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
-import { useLayoutEffect } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 export default function Home() {
   const router = useRouter();
@@ -28,7 +27,38 @@ export default function Home() {
   const [config, setConfig] = useState<Config>();
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const videoPanelRef = useRef<VideoPanelHandle>(null);
-  const [panelHeight, setPanelHeight] = useState<number | null>(null);
+  const [transcriptHeight, setTranscriptHeight] = useState<number | null>(null);
+  const [suggestionsHeight, setSuggestionsHeight] = useState<number | null>(null);
+
+  // compute panel height by subtracting hotkeys/control/video heights from viewport
+  // placed here so hooks order is stable across renders (avoids conditional-hook errors)
+  useLayoutEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const compute = () => {
+      const title = document.getElementById('titlebar')?.getBoundingClientRect().height || 0;
+      const hot = document.getElementById('hotkeys-panel')?.getBoundingClientRect().height || 0;
+      const control = document.getElementById('control-panel')?.getBoundingClientRect().height || 0;
+      const video = document.getElementById('video-panel')?.getBoundingClientRect().height || 0;
+      const extra = 24; // spacing/padding between elements
+
+      // Transcript (left) sits below title/hotkeys/video/control — subtract video height
+      const leftAvailable = Math.max(
+        200,
+        window.innerHeight - (title + hot + control + video + extra),
+      );
+
+      // Suggestions (right) does not include video area above it, subtract title/hotkeys/control
+      const rightAvailable = Math.max(200, window.innerHeight - (title + hot + control + extra));
+
+      setTranscriptHeight(leftAvailable);
+      setSuggestionsHeight(rightAvailable);
+    };
+
+    compute();
+    window.addEventListener('resize', compute, { passive: true });
+    return () => window.removeEventListener('resize', compute);
+  }, []);
 
   // Queries
   const { data: configFetched } = useConfigQuery();
@@ -121,25 +151,6 @@ export default function Home() {
     );
   }
 
-  // compute panel height by subtracting hotkeys/control/video heights from viewport
-  useLayoutEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const compute = () => {
-      const title = document.getElementById('titlebar')?.getBoundingClientRect().height || 0;
-      const hot = document.getElementById('hotkeys-panel')?.getBoundingClientRect().height || 0;
-      const control = document.getElementById('control-panel')?.getBoundingClientRect().height || 0;
-      const video = document.getElementById('video-panel')?.getBoundingClientRect().height || 0;
-      const extra = 24; // spacing/padding between elements
-      const available = Math.max(200, window.innerHeight - (title + hot + control + video + extra));
-      setPanelHeight(available);
-    };
-
-    compute();
-    window.addEventListener('resize', compute, { passive: true });
-    return () => window.removeEventListener('resize', compute);
-  }, []);
-
   return (
     <div className="flex-1 flex flex-col w-full bg-background p-1 space-y-1">
       <HotkeysPanel />
@@ -174,14 +185,17 @@ export default function Home() {
             <TranscriptPanel
               username={config?.profile?.username ?? ''}
               transcripts={transcripts ?? []}
-              style={panelHeight ? { height: `${panelHeight}px` } : undefined}
+              style={transcriptHeight ? { height: `${transcriptHeight}px` } : undefined}
             />
           </div>
         </div>
 
         {/* Right Column: Main Suggestions Panel */}
         <div className="w-1/2 md:flex-1 min-w-60 min-h-0 rounded-lg">
-          <SuggestionsPanel suggestions={appState?.suggestions} style={panelHeight ? { height: `${panelHeight}px` } : undefined} />
+          <SuggestionsPanel
+            suggestions={appState?.suggestions}
+            style={suggestionsHeight ? { height: `${suggestionsHeight}px` } : undefined}
+          />
         </div>
       </div>
 

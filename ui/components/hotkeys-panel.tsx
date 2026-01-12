@@ -14,7 +14,10 @@ export default function HotkeysPanel() {
   ];
 
   return (
-    <div id="hotkeys-panel" className="flex items-center text-muted-foreground bg-white dark:bg-black rounded-md p-1">
+    <div
+      id="hotkeys-panel"
+      className="flex items-center text-muted-foreground bg-white dark:bg-black rounded-md p-1"
+    >
       <div className="flex gap-x-2 gap-y-1 flex-wrap">
         {items.map(([k, d]) => (
           <div key={String(k)} className="flex items-center gap-1">
