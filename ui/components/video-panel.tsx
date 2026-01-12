@@ -1,5 +1,6 @@
 'use client';
 
+import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { useVideoDevices } from '@/hooks/video-devices';
 import axiosClient from '@/lib/axiosClient';
 import { RunningState } from '@/types/appState';
@@ -57,7 +58,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
     const droppedRef = useRef(0);
 
     const [isStreaming, setIsStreaming] = useState(false);
-    const [isStealth, setIsStealth] = useState(false);
+    const isStealth = useIsStealthMode();
 
     const checkActiveVideoCodec = () => {
       if (!pcRef.current) return;
@@ -346,27 +347,6 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
     // cleanup on unmount
     useEffect(() => {
       return () => stopWebRTC();
-    }, []);
-
-    // Track stealth mode via document.body class and adjust UI (video opacity)
-    useEffect(() => {
-      if (typeof document === 'undefined') return;
-      const update = () => setIsStealth(document.body.classList.contains('stealth'));
-      update();
-
-      const obs = new MutationObserver((mutations) => {
-        for (const m of mutations) {
-          if (m.type === 'attributes' && m.attributeName === 'class') update();
-        }
-      });
-      try {
-        obs.observe(document.body, { attributes: true });
-      } catch (e) {}
-      return () => {
-        try {
-          obs.disconnect();
-        } catch (e) {}
-      };
     }, []);
 
     // ⚡ Expose functions to parent via ref

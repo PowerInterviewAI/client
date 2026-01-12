@@ -12,11 +12,12 @@ import { useStartAssistant, useStopAssistant } from '@/hooks/assistant';
 import { useAudioInputDevices, useAudioOutputDevices } from '@/hooks/audio-devices';
 import { useConfigQuery, useUpdateConfig } from '@/hooks/config';
 import useAuth from '@/hooks/use-auth';
+import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { RunningState } from '@/types/appState';
 import { Config } from '@/types/config';
 import { Transcript } from '@/types/transcript';
 import { useRouter } from 'next/navigation';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 export default function Home() {
   const router = useRouter();
@@ -30,38 +31,52 @@ export default function Home() {
   const [transcriptHeight, setTranscriptHeight] = useState<number | null>(null);
   const [suggestionsHeight, setSuggestionsHeight] = useState<number | null>(null);
 
+  // stable compute function so other effects can trigger a recompute
+  const computeAvailable = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    const title = document.getElementById('titlebar')?.getBoundingClientRect().height || 0;
+    const hot = document.getElementById('hotkeys-panel')?.getBoundingClientRect().height || 0;
+    let control = document.getElementById('control-panel')?.getBoundingClientRect().height || 0;
+    let video = document.getElementById('video-panel')?.getBoundingClientRect().height || 0;
+    const extra = 16; // spacing/padding between elements
+
+    if (video > 0) video += 4; // account for border
+    if (control > 0) control += 4; // account for border
+
+    const leftAvailable = Math.max(
+      100,
+      window.innerHeight - (title + hot + control + video + extra),
+    );
+
+    const rightAvailable = Math.max(100, window.innerHeight - (title + hot + control + extra));
+
+    setTranscriptHeight(leftAvailable);
+    setSuggestionsHeight(rightAvailable);
+  }, []);
+  const isStealth = useIsStealthMode();
+
   // compute panel height by subtracting hotkeys/control/video heights from viewport
   // placed here so hooks order is stable across renders (avoids conditional-hook errors)
   useLayoutEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const compute = () => {
-      const title = document.getElementById('titlebar')?.getBoundingClientRect().height || 0;
-      const hot = document.getElementById('hotkeys-panel')?.getBoundingClientRect().height || 0;
-      let control = document.getElementById('control-panel')?.getBoundingClientRect().height || 0;
-      let video = document.getElementById('video-panel')?.getBoundingClientRect().height || 0;
-      const extra = 16; // spacing/padding between elements
+    computeAvailable();
+    window.addEventListener('resize', computeAvailable, { passive: true });
 
-      if (video > 0) video += 4; // account for border
-      if (control > 0) control += 4; // account for border
-
-      // Transcript (left) sits below title/hotkeys/video/control — subtract video height
-      const leftAvailable = Math.max(
-        100,
-        window.innerHeight - (title + hot + control + video + extra),
-      );
-
-      // Suggestions (right) does not include video area above it, subtract title/hotkeys/control
-      const rightAvailable = Math.max(100, window.innerHeight - (title + hot + control + extra));
-
-      setTranscriptHeight(leftAvailable);
-      setSuggestionsHeight(rightAvailable);
+    return () => {
+      window.removeEventListener('resize', computeAvailable);
     };
+  }, [computeAvailable]);
 
-    compute();
-    window.addEventListener('resize', compute, { passive: true });
-    return () => window.removeEventListener('resize', compute);
-  }, []);
+  // Recompute when stealth mode toggles
+  useEffect(() => {
+    computeAvailable();
+  }, [isStealth, computeAvailable]);
+
+  // Recompute when video control setting toggles
+  useEffect(() => {
+    computeAvailable();
+  }, [config?.enable_video_control, computeAvailable]);
 
   // Queries
   const { data: configFetched } = useConfigQuery();

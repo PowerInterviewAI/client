@@ -1,11 +1,12 @@
 'use client';
 
+import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 export default function Titlebar() {
   const [isMaximized, setIsMaximized] = useState(false);
-  const [isStealth, setIsStealth] = useState(false);
+  const isStealth = useIsStealthMode();
 
   useEffect(() => {
     let mounted = true;
@@ -23,33 +24,6 @@ export default function Titlebar() {
     // Optionally, one could subscribe to maximize/unmaximize events
     return () => {
       mounted = false;
-    };
-  }, []);
-
-  // Track stealth class on document.body and hide the titlebar when stealth is enabled
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-    const update = () => setIsStealth(document.body.classList.contains('stealth'));
-    update();
-
-    const obs = new MutationObserver((mutations) => {
-      for (const m of mutations) {
-        if (m.type === 'attributes' && m.attributeName === 'class') {
-          update();
-        }
-      }
-    });
-    try {
-      obs.observe(document.body, { attributes: true });
-    } catch (e) {
-      console.error('Failed to observe body class mutations', e);
-    }
-    return () => {
-      try {
-        obs.disconnect();
-      } catch (e) {
-        console.error('Failed to disconnect mutation observer', e);
-      }
     };
   }, []);
 

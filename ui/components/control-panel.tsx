@@ -1,5 +1,6 @@
 'use client';
 
+import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { useVideoDevices } from '@/hooks/video-devices';
 import { RunningState } from '@/types/appState';
 import { PyAudioDevice } from '@/types/audioDevice';
@@ -7,7 +8,6 @@ import { Config } from '@/types/config';
 import { APIError } from '@/types/error';
 import { UseMutationResult } from '@tanstack/react-query';
 import { Ellipsis, Play, Square } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import {
   AudioControlSection,
   MainControls,
@@ -60,32 +60,7 @@ export default function ControlPanel({
   config,
   updateConfig,
 }: ControlPanelProps) {
-  const [isStealth, setIsStealth] = useState(false);
-
-  // Hide the control panel while stealth mode is active
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-    const update = () => setIsStealth(document.body.classList.contains('stealth'));
-    update();
-
-    const obs = new MutationObserver((mutations) => {
-      for (const m of mutations) {
-        if (m.type === 'attributes' && m.attributeName === 'class') update();
-      }
-    });
-    try {
-      obs.observe(document.body, { attributes: true });
-    } catch (e) {
-      console.error('Failed to observe body class mutations', e);
-    }
-    return () => {
-      try {
-        obs.disconnect();
-      } catch (e) {
-        console.error('Failed to disconnect mutation observer', e);
-      }
-    };
-  }, []);
+  const isStealth = useIsStealthMode();
 
   const videoDevices = useVideoDevices();
 
