@@ -43,7 +43,8 @@ export default function DocumentationDialog({ open, onOpenChange }: Documentatio
                 non-interactive).
               </li>
               <li>
-                Snap with <strong>Ctrl+Alt+1..5</strong>, move with <strong>Ctrl+Alt+Arrow</strong>.
+                Snap with <strong>Ctrl+Alt+1,2,3,4,5</strong>, move with{' '}
+                <strong>Ctrl+Alt+Arrow</strong>.
               </li>
               <li>
                 Resize with <strong>Ctrl+Shift+Arrow</strong>, adjust opacity with{' '}
