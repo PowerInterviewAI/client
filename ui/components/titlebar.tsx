@@ -77,7 +77,7 @@ export default function Titlebar() {
         id="titlebar"
         // eslint-disable-next-line
         style={{ WebkitAppRegion: 'drag' } as any}
-        className="flex items-center gap-3 h-8 px-1 select-none bg-card border-b border-border"
+        className="flex items-center gap-3 h-9 px-1 select-none bg-card border-b border-border"
       >
         <div className="flex items-center gap-2">
           <Image src="/favicon.svg" alt="logo" className="h-5 w-5" width={12} height={12} />
