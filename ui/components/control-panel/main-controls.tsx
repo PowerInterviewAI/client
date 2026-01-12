@@ -5,6 +5,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import axiosClient from '@/lib/axiosClient';
 import { RunningState } from '@/types/appState';
 import { Download, Loader } from 'lucide-react';
+import { run } from 'node:test';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -91,7 +92,7 @@ export function MainControls({ runningState, stateConfig, getDisabled }: MainCon
             size="sm"
             variant="secondary"
             className="h-8 w-8 text-xs rounded-xl cursor-pointer"
-            disabled={exportState === RunningState.RUNNING}
+            disabled={getDisabled(runningState) || exportState === RunningState.RUNNING}
           >
             {exportState === RunningState.IDLE ? (
               <Download className="h-4 w-4" />
