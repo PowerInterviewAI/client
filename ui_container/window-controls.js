@@ -1,8 +1,11 @@
 const { screen } = require("electron");
 
+const Store = require('electron-store').default;
+const store = new Store();
+
 // Global reference to the main window (will be set from main.js)
 let win = null;
-let _stealth = false;
+let _stealth = !!store.get('_stealth');
 
 // -------------------------------------------------------------
 // WINDOW CONTROL FUNCTIONS
@@ -169,8 +172,9 @@ function enableStealth() {
         win.setOpacity(0.8);
 
         _stealth = true;
-            console.log('🕵️‍♀️ Stealth mode enabled');
-            try { if (win && !win.isDestroyed()) win.webContents.send('stealth-changed', _stealth); } catch (e) {}
+        try { store.set('_stealth', _stealth); } catch (e) {}
+        console.log('🕵️‍♀️ Stealth mode enabled');
+        try { if (win && !win.isDestroyed()) win.webContents.send('stealth-changed', _stealth); } catch (e) {}
     } catch (err) {
         console.warn('⚠️ enableStealth failed:', err.message);
     }
@@ -193,6 +197,7 @@ function disableStealth() {
         win.setOpacity(1.0);
 
         _stealth = false;
+        try { store.set('_stealth', _stealth); } catch (e) {}
         console.log('🟢 Stealth mode disabled');
         try { if (win && !win.isDestroyed()) win.webContents.send('stealth-changed', _stealth); } catch (e) {}
     } catch (err) {

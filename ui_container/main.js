@@ -94,10 +94,29 @@ app.on('will-quit', () => {
 
 // IPC handlers for window controls exposed to renderer via preload
 const { ipcMain } = require('electron');
+const windowControls = require('./window-controls');
+
 ipcMain.on('window-minimize', () => { if (win && !win.isDestroyed()) win.minimize(); });
 ipcMain.on('window-toggle-maximize', () => { if (win && !win.isDestroyed()) { if (win.isMaximized()) win.unmaximize(); else win.maximize(); }});
 ipcMain.on('window-close', () => { if (win && !win.isDestroyed()) win.close(); });
 ipcMain.handle('window-is-maximized', () => { return !!(win && !win.isDestroyed() && win.isMaximized()); });
+
+// Stealth controls: allow renderer to set or toggle stealth via IPC
+ipcMain.on('set-stealth', (event, isStealth) => {
+    try {
+        if (isStealth) windowControls.enableStealth(); else windowControls.disableStealth();
+    } catch (err) {
+        console.warn('set-stealth handler error:', err && err.message ? err.message : err);
+    }
+});
+
+ipcMain.on('window-toggle-stealth', () => {
+    try {
+        windowControls.toggleStealth();
+    } catch (err) {
+        console.warn('window-toggle-stealth handler error:', err && err.message ? err.message : err);
+    }
+});
 
 // Handle incremental resize deltas from renderer (edge dragging)
 ipcMain.on('window-resize-delta', (event, dx, dy, edge) => {

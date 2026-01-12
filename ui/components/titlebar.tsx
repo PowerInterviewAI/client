@@ -56,18 +56,14 @@ export default function Titlebar() {
 
   const [isDocsOpen, setIsDocsOpen] = useState(false);
   const handleToggleStealth = () => {
-    if (typeof document === 'undefined') return;
-    const isCurrently = document.body.classList.contains('stealth');
-    if (isCurrently) {
-      document.body.classList.remove('stealth');
-      try {
-        localStorage.removeItem('stealth');
-      } catch {}
-    } else {
-      document.body.classList.add('stealth');
-      try {
-        localStorage.setItem('stealth', '1');
-      } catch {}
+    // Prefer delegating to main process window-controls via preload
+    // eslint-disable-next-line
+    // @ts-ignore
+    if (typeof window !== 'undefined' && window?.electronAPI?.toggleStealth) {
+      // eslint-disable-next-line
+      // @ts-ignore
+      window.electronAPI.toggleStealth();
+      return;
     }
   };
 

@@ -14,6 +14,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     isMaximized: () => ipcRenderer.invoke('window-is-maximized'),
 	// Edge resize support
 	resizeWindowDelta: (dx, dy, edge) => ipcRenderer.send('window-resize-delta', dx, dy, edge)
+	,
+	// Stealth control helpers
+	setStealth: (isStealth) => ipcRenderer.send('set-stealth', !!isStealth),
+	toggleStealth: () => ipcRenderer.send('window-toggle-stealth'),
 });
 
 // Listen for stealth mode changes from main and update body class
