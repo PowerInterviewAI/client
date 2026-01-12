@@ -72,7 +72,7 @@ export default function ProfileDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto p-2">
           <div className="space-y-5">
             <div className="flex flex-col justify-center">
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
@@ -139,7 +139,7 @@ export default function ProfileDialog({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Enter your username"
-                className="h-9 text-sm"
+                className="text-sm"
               />
             </div>
 

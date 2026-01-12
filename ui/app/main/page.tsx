@@ -204,13 +204,11 @@ export default function Home() {
           </div>
 
           {/* Transcription Panel - Fill remaining space with scroll */}
-          <div className="flex-1 min-h-0 rounded-lg overflow-hidden">
-            <TranscriptPanel
-              username={config?.profile?.username ?? ''}
-              transcripts={transcripts ?? []}
-              style={transcriptHeight ? { height: `${transcriptHeight}px` } : undefined}
-            />
-          </div>
+          <TranscriptPanel
+            username={config?.profile?.username ?? ''}
+            transcripts={transcripts ?? []}
+            style={transcriptHeight ? { height: `${transcriptHeight}px` } : undefined}
+          />
         </div>
 
         {/* Right Column: Main Suggestions Panel */}
