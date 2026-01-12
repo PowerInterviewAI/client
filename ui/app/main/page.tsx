@@ -123,7 +123,7 @@ export default function Home() {
     <div className="flex-1 flex flex-col w-full bg-background p-1 space-y-1">
       <div className="flex-1 flex overflow-y-hidden gap-1">
         {/* Left Column: Video + Transcription */}
-        <div className="flex flex-col gap-2 w-1/2 md:w-96 shrink-0 min-h-0">
+        <div className="flex flex-col gap-1 w-1/2 md:w-96 shrink-0 min-h-0">
           {/* Video Panel - Small and compact */}
           <div
             className="h-48 shrink-0 border rounded-xl overflow-hidden"
