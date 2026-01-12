@@ -37,10 +37,6 @@ class Config(BaseModel):
         bool,
         Field(description="Whether audio control is enabled"),
     ] = False
-    audio_control_device_name: Annotated[
-        str,
-        Field(description="The audio control device name"),
-    ] = ""
     audio_delay_ms: Annotated[
         int,
         Field(description="The audio delay in milliseconds"),
@@ -85,7 +81,6 @@ class ConfigUpdate(BaseModel):
 
     # Audio control options
     enable_audio_control: bool | None = None
-    audio_control_device_name: str | None = None
     audio_delay_ms: int | None = None
 
     # Video control options

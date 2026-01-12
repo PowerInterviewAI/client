@@ -1,16 +1,10 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
+// Badge removed; audio control device indicator no longer used
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+// Output device selection removed
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { RunningState } from '@/types/appState';
 import { PyAudioDevice } from '@/types/audioDevice';
@@ -23,7 +17,6 @@ interface AudioControlSectionProps {
   audioOutputDevices: PyAudioDevice[];
   config?: Config;
   updateConfig: (config: Partial<Config>) => void;
-  audioControlDeviceNotFound: boolean;
   getDisabled: (state: RunningState, disableOnRunning?: boolean) => boolean;
 }
 
@@ -32,7 +25,6 @@ export function AudioControlSection({
   audioOutputDevices,
   config,
   updateConfig,
-  audioControlDeviceNotFound,
   getDisabled,
 }: AudioControlSectionProps) {
   return (
@@ -93,25 +85,7 @@ export function AudioControlSection({
           <DialogContent className="flex flex-col w-72 p-4">
             <DialogTitle>Audio Control Options</DialogTitle>
 
-            {/* Output Device Select */}
-            <div className="mb-3">
-              <label className="text-xs text-muted-foreground mb-1 block">Output Device</label>
-              <Select
-                value={config?.audio_control_device_name}
-                onValueChange={(v) => updateConfig({ audio_control_device_name: v })}
-              >
-                <SelectTrigger className="h-8 w-full text-xs">
-                  <SelectValue placeholder="Select device" />
-                </SelectTrigger>
-                <SelectContent>
-                  {audioOutputDevices.map((device) => (
-                    <SelectItem key={device.name} value={`${device.name}`}>
-                      {device.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* (Output device selection removed) */}
 
             {/* Audio Delay Input */}
             <div>
@@ -128,14 +102,7 @@ export function AudioControlSection({
           </DialogContent>
         </Dialog>
       </div>
-      {audioControlDeviceNotFound && (
-        <Badge
-          variant="destructive"
-          className="absolute -bottom-1 -right-1 h-4 min-w-4 rounded-full px-1 flex items-center justify-center text-[10px]"
-        >
-          !
-        </Badge>
-      )}
+      {/* audio control device not applicable */}
     </div>
   );
 }

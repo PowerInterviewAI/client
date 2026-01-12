@@ -54,9 +54,7 @@ class PowerInterviewApp:
                 input_device_id=AudioDeviceService.get_device_index_by_name(
                     ConfigService.config.audio_input_device_name
                 ),
-                output_device_id=AudioDeviceService.get_device_index_by_name(
-                    ConfigService.config.audio_control_device_name
-                ),
+                output_device_id=AudioDeviceService.get_vb_input_device_index(),
                 delay_secs=ConfigService.config.audio_delay_ms / 1000,
             )
             self.audio_controller.start()

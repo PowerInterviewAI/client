@@ -157,8 +157,6 @@ export default function ControlPanel({
 
   const audioInputDeviceNotFound =
     audioInputDevices.find((d) => d.name === config?.audio_input_device_name) === undefined;
-  const audioControlDeviceNotFound =
-    audioOutputDevices.find((d) => d.name === config?.audio_control_device_name) === undefined;
   const videoDeviceNotFound =
     videoDevices.find((d) => d.label === config?.camera_device_name) === undefined;
 
@@ -173,10 +171,7 @@ export default function ControlPanel({
         ok: !audioInputDeviceNotFound,
         message: `Audio input device "${config?.audio_input_device_name}" is not found`,
       },
-      {
-        ok: !config?.enable_audio_control || !audioControlDeviceNotFound,
-        message: `Audio control device "${config?.audio_control_device_name}" is not found`,
-      },
+      // audio control device name removed; skip this check
       {
         ok: !config?.enable_video_control || !videoDeviceNotFound,
         message: `Video device "${config?.camera_device_name}" is not found`,
@@ -223,7 +218,6 @@ export default function ControlPanel({
           audioOutputDevices={audioOutputDevices}
           config={config}
           updateConfig={updateConfig}
-          audioControlDeviceNotFound={audioControlDeviceNotFound}
           getDisabled={getDisabled}
         />
 
