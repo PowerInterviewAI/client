@@ -5,7 +5,8 @@ export const HOTKEYS: Array<[string, string]> = [
   ['Ctrl+Alt+Arrow', 'Move window'],
   ['Ctrl+Shift+Arrow', 'Resize window'],
   ['Ctrl+Alt+PgUp/Down', 'Scroll suggestions up/down'],
-  ['Ctrl+Alt+Shift+S', 'Capture screenshot for code suggestion'],
-  ['Ctrl+Alt+Shift+P', 'Set prompt for code suggestion'],
-  ['Ctrl+Alt+Shift+Enter', 'Submit code suggestion'],
+  // Code suggestion hotkeys
+  ['Ctrl+Alt+Shift+S', 'Capture screenshot'],
+  ['Ctrl+Alt+Shift+P', 'Set prompt'],
+  ['Ctrl+Alt+Shift+Enter', 'Submit'],
 ];
