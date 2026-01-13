@@ -6,6 +6,7 @@ import keyboard
 import numpy as np
 from loguru import logger
 from PIL import ImageGrab
+from PIL.Image import Resampling
 
 from engine.api.error_handler import raise_for_status
 from engine.cfg.client import config as cfg_client
@@ -172,21 +173,25 @@ class PowerInterviewApp:
 
     def _on_hotkey_code_suggestion_capture_screenshot(self) -> None:
         """Capture a screenshot and append it to the pending images buffer."""
-        # Capture screenshot
+        # Capture screenshot and convert to 8-bit grayscale PNG
         img = ImageGrab.grab(all_screens=True)
+        img_gray = img.convert("L")  # 8-bit grayscale
+
+        img_bytes = io.BytesIO()
+        img_gray.save(img_bytes, format="PNG")
 
         # Get thumb image: resize to max 320x240 while maintaining aspect ratio
         thumb_img = img.copy()
-        thumb_img.thumbnail((320, 240), ImageGrab.Resampling.LANCZOS)
+        thumb_img.thumbnail((320, 240), Resampling.LANCZOS)
         thumb_bytes = io.BytesIO()
-        thumb_img.save(thumb_bytes, format="JPEG")
-        img_bytes = io.BytesIO()
-        img.save(img_bytes, format="JPEG")
-        thumb_bytes = thumb_bytes.getvalue()
-        img_bytes = img_bytes.getvalue()
+        # Save thumbnail as PNG (8-bit grayscale)
+        thumb_img.save(thumb_bytes, format="PNG")
 
-        # Append to pending images
-        self.code_suggestion_service.add_image(image_bytes=img_bytes, thumb_bytes=thumb_bytes)
+        # Append to pending images (full image bytes and grayscale thumbnail)
+        self.code_suggestion_service.add_image(
+            image_bytes=img_bytes.getvalue(),
+            thumb_bytes=thumb_bytes.getvalue(),
+        )
 
     def _on_hotkey_code_suggestion_set_prompt(self) -> None:
         """Set the prompt from user's last transcript if available."""
