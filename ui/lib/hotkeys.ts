@@ -1,7 +1,7 @@
 export const HOTKEYS: Array<[string, string]> = [
   ['Ctrl+Alt+S', 'Toggle stealth mode'],
   ['Ctrl+Shift+X', 'Toggle opacity (stealth only)'],
-  ['Ctrl+Alt+1,2,3,4,5', 'Place window'],
+  ['Ctrl+Alt+1-5', 'Place window'],
   ['Ctrl+Alt+Arrow', 'Move window'],
   ['Ctrl+Shift+Arrow', 'Resize window'],
   ['Ctrl+Alt+PgUp/Down', 'Scroll suggestions up/down'],
