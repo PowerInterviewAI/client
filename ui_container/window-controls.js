@@ -1,4 +1,4 @@
-const { screen } = require("electron");
+const { screen } = require('electron');
 
 const Store = require('electron-store').default;
 const store = new Store();
@@ -11,228 +11,239 @@ let _stealth = !!store.get('_stealth');
 // WINDOW CONTROL FUNCTIONS
 // -------------------------------------------------------------
 function setWindowReference(window) {
-    win = window;
+  win = window;
 }
 
 function setWindowBounds(bounds) {
-    if (!win || win.isDestroyed()) return;
-    // Enforce minimum window dimensions and merge with current bounds
-    try {
-        const MIN_WIDTH = 960;
-        const MIN_HEIGHT = 540;
+  if (!win || win.isDestroyed()) return;
+  // Enforce minimum window dimensions and merge with current bounds
+  try {
+    const MIN_WIDTH = 960;
+    const MIN_HEIGHT = 540;
 
-        // Fill missing values from current bounds
-        const current = win.getBounds();
-        const newBounds = Object.assign({}, current, bounds || {});
+    // Fill missing values from current bounds
+    const current = win.getBounds();
+    const newBounds = Object.assign({}, current, bounds || {});
 
-        // Ensure minimums
-        if (newBounds.width < MIN_WIDTH) {
-            newBounds.width = MIN_WIDTH;
-        }
-        if (newBounds.height < MIN_HEIGHT) {
-            newBounds.height = MIN_HEIGHT;
-        }
-
-        win.setBounds(newBounds);
-    } catch (err) {
-        // Fallback to original behaviour if anything goes wrong
-        try { win.setBounds(bounds); } catch (e) {}
+    // Ensure minimums
+    if (newBounds.width < MIN_WIDTH) {
+      newBounds.width = MIN_WIDTH;
     }
+    if (newBounds.height < MIN_HEIGHT) {
+      newBounds.height = MIN_HEIGHT;
+    }
+
+    win.setBounds(newBounds);
+  } catch (err) {
+    // Fallback to original behaviour if anything goes wrong
+    try {
+      win.setBounds(bounds);
+    } catch (e) {}
+  }
 }
 
 function moveWindowToCorner(corner) {
-    if (!win || win.isDestroyed()) return;
+  if (!win || win.isDestroyed()) return;
 
-    const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
-    const { width: winWidth, height: winHeight } = win.getBounds();
+  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+  const { width: winWidth, height: winHeight } = win.getBounds();
 
-    let x, y;
+  let x, y;
 
-    switch (corner) {
-        case 'top-left':
-            x = 0;
-            y = 0;
-            break;
-        case 'top-right':
-            x = screenWidth - winWidth;
-            y = 0;
-            break;
-        case 'bottom-left':
-            x = 0;
-            y = screenHeight - winHeight;
-            break;
-        case 'bottom-right':
-            x = screenWidth - winWidth;
-            y = screenHeight - winHeight;
-            break;
-        case 'center':
-            x = Math.floor((screenWidth - winWidth) / 2);
-            y = Math.floor((screenHeight - winHeight) / 2);
-            break;
-    }
+  switch (corner) {
+    case 'top-left':
+      x = 0;
+      y = 0;
+      break;
+    case 'top-right':
+      x = screenWidth - winWidth;
+      y = 0;
+      break;
+    case 'bottom-left':
+      x = 0;
+      y = screenHeight - winHeight;
+      break;
+    case 'bottom-right':
+      x = screenWidth - winWidth;
+      y = screenHeight - winHeight;
+      break;
+    case 'center':
+      x = Math.floor((screenWidth - winWidth) / 2);
+      y = Math.floor((screenHeight - winHeight) / 2);
+      break;
+  }
 
-    setWindowBounds({ x, y, width: winWidth, height: winHeight });
-    console.log(`🔄 Window moved to ${corner}`);
+  setWindowBounds({ x, y, width: winWidth, height: winHeight });
+  console.log(`🔄 Window moved to ${corner}`);
 }
 
 function toggleMinimize() {
-    if (!win || win.isDestroyed()) return;
-    if (win.isMinimized()) {
-        win.restore();
-        console.log('🔄 Window restored');
-    } else {
-        win.minimize();
-        console.log('🔄 Window minimized');
-    }
+  if (!win || win.isDestroyed()) return;
+  if (win.isMinimized()) {
+    win.restore();
+    console.log('🔄 Window restored');
+  } else {
+    win.minimize();
+    console.log('🔄 Window minimized');
+  }
 }
 
 function moveWindowByArrow(direction) {
-    if (!win || win.isDestroyed()) return;
+  if (!win || win.isDestroyed()) return;
 
-    const bounds = win.getBounds();
-    const moveAmount = 20; // pixels to move
+  const bounds = win.getBounds();
+  const moveAmount = 20; // pixels to move
 
-    switch (direction) {
-        case 'up':
-            bounds.y = bounds.y - moveAmount;
-            break;
-        case 'down':
-            bounds.y = bounds.y + moveAmount;
-            break;
-        case 'left':
-            bounds.x = bounds.x - moveAmount;
-            break;
-        case 'right':
-            bounds.x = bounds.x + moveAmount;
-            break;
-    }
+  switch (direction) {
+    case 'up':
+      bounds.y = bounds.y - moveAmount;
+      break;
+    case 'down':
+      bounds.y = bounds.y + moveAmount;
+      break;
+    case 'left':
+      bounds.x = bounds.x - moveAmount;
+      break;
+    case 'right':
+      bounds.x = bounds.x + moveAmount;
+      break;
+  }
 
-    setWindowBounds(bounds);
-    console.log(`🔄 Window moved ${direction} by ${moveAmount}px`);
+  setWindowBounds(bounds);
+  console.log(`🔄 Window moved ${direction} by ${moveAmount}px`);
 }
 
 function resizeWindowByArrow(direction) {
-    if (!win || win.isDestroyed()) return;
+  if (!win || win.isDestroyed()) return;
 
-    const bounds = win.getBounds();
-    const resizeAmount = 20; // pixels to resize
+  const bounds = win.getBounds();
+  const resizeAmount = 20; // pixels to resize
 
-    switch (direction) {
-        case 'up':
-            // Decrease height (shrink upward)
-            bounds.height = Math.max(200, bounds.height - resizeAmount); // minimum height of 200px
-            break;
-        case 'down':
-            // Increase height (grow downward)
-            bounds.height = bounds.height + resizeAmount;
-            break;
-        case 'left':
-            // Decrease width (shrink leftward)
-            bounds.width = Math.max(300, bounds.width - resizeAmount); // minimum width of 300px
-            break;
-        case 'right':
-            // Increase width (grow rightward)
-            bounds.width = bounds.width + resizeAmount;
-            break;
-    }
+  switch (direction) {
+    case 'up':
+      // Decrease height (shrink upward)
+      bounds.height = Math.max(200, bounds.height - resizeAmount); // minimum height of 200px
+      break;
+    case 'down':
+      // Increase height (grow downward)
+      bounds.height = bounds.height + resizeAmount;
+      break;
+    case 'left':
+      // Decrease width (shrink leftward)
+      bounds.width = Math.max(300, bounds.width - resizeAmount); // minimum width of 300px
+      break;
+    case 'right':
+      // Increase width (grow rightward)
+      bounds.width = bounds.width + resizeAmount;
+      break;
+  }
 
-    setWindowBounds(bounds);
-    console.log(`🔄 Window resized ${direction} by ${resizeAmount}px`);
+  setWindowBounds(bounds);
+  console.log(`🔄 Window resized ${direction} by ${resizeAmount}px`);
 }
 
 function changeWindowOpacity(direction) {
-    if (!win || win.isDestroyed()) return;
-    if (!_stealth) {
-        console.log('⚠️ Opacity control is only available in stealth mode');
-        return;
+  if (!win || win.isDestroyed()) return;
+  if (!_stealth) {
+    console.log('⚠️ Opacity control is only available in stealth mode');
+    return;
+  }
+
+  try {
+    const currentOpacity = win.getOpacity();
+    const opacityStep = 0.1; // 10% opacity change
+
+    let newOpacity;
+    if (direction === 'up') {
+      // Page Up: Increase opacity (make more opaque)
+      newOpacity = Math.min(1.0, currentOpacity + opacityStep);
+    } else if (direction === 'down') {
+      // Page Down: Decrease opacity (make more transparent)
+      newOpacity = Math.max(0.2, currentOpacity - opacityStep); // minimum 20% opacity
     }
 
-    try {
-        const currentOpacity = win.getOpacity();
-        const opacityStep = 0.1; // 10% opacity change
-
-        let newOpacity;
-        if (direction === 'up') {
-            // Page Up: Increase opacity (make more opaque)
-            newOpacity = Math.min(1.0, currentOpacity + opacityStep);
-        } else if (direction === 'down') {
-            // Page Down: Decrease opacity (make more transparent)
-            newOpacity = Math.max(0.2, currentOpacity - opacityStep); // minimum 20% opacity
-        }
-
-        win.setOpacity(newOpacity);
-        console.log(`🔄 Window opacity changed to ${(newOpacity * 100).toFixed(0)}%`);
-    } catch (error) {
-        console.warn('⚠️ Opacity control not supported on this platform:', error.message);
-    }
+    win.setOpacity(newOpacity);
+    console.log(`🔄 Window opacity changed to ${(newOpacity * 100).toFixed(0)}%`);
+  } catch (error) {
+    console.warn('⚠️ Opacity control not supported on this platform:', error.message);
+  }
 }
 
 function enableStealth() {
-    if (!win || win.isDestroyed()) return;
+  if (!win || win.isDestroyed()) return;
+  try {
+    // Ensure window stays always on top in stealth mode
+    win.setAlwaysOnTop(true);
+
+    // Ensure the window is transparent (created with transparent:true)
+    // Ignore mouse events so clicks pass through the window
+    // forward: true ensures underlying windows still receive events
+    win.setIgnoreMouseEvents(true, { forward: true });
+    // Make window non-focusable so it doesn't capture keyboard events
+    win.setFocusable(false);
+
+    // Enable content protection in stealth mode
+    win.setContentProtection(true);
+
+    // Start at 80% opacity
+    win.setOpacity(0.8);
+
+    _stealth = true;
     try {
-        // Ensure window stays always on top in stealth mode
-        win.setAlwaysOnTop(true);
-
-        // Ensure the window is transparent (created with transparent:true)
-        // Ignore mouse events so clicks pass through the window
-        // forward: true ensures underlying windows still receive events
-        win.setIgnoreMouseEvents(true, { forward: true });
-        // Make window non-focusable so it doesn't capture keyboard events
-        win.setFocusable(false);
-
-        // Enable content protection in stealth mode
-        win.setContentProtection(true);
-
-        // Start at 80% opacity
-        win.setOpacity(0.8);
-
-        _stealth = true;
-        try { store.set('_stealth', _stealth); } catch (e) {}
-        console.log('🕵️‍♀️ Stealth mode enabled');
-        try { if (win && !win.isDestroyed()) win.webContents.send('stealth-changed', _stealth); } catch (e) {}
-    } catch (err) {
-        console.warn('⚠️ enableStealth failed:', err.message);
-    }
+      store.set('_stealth', _stealth);
+    } catch (e) {}
+    console.log('🕵️‍♀️ Stealth mode enabled');
+    try {
+      if (win && !win.isDestroyed()) win.webContents.send('stealth-changed', _stealth);
+    } catch (e) {}
+  } catch (err) {
+    console.warn('⚠️ enableStealth failed:', err.message);
+  }
 }
 
 function disableStealth() {
-    if (!win || win.isDestroyed()) return;
+  if (!win || win.isDestroyed()) return;
+  try {
+    win.setIgnoreMouseEvents(false);
+
+    win.setFocusable(true);
+
+    // Restore previous always-on-top state if we saved one
+    win.setAlwaysOnTop(false);
+
+    // Disable content protection when stealth mode is disabled
+    win.setContentProtection(false);
+
+    // Restore full opacity
+    win.setOpacity(1.0);
+
+    _stealth = false;
     try {
-        win.setIgnoreMouseEvents(false);
-
-        win.setFocusable(true);
-
-        // Restore previous always-on-top state if we saved one
-        win.setAlwaysOnTop(false);
-
-        // Disable content protection when stealth mode is disabled
-        win.setContentProtection(false);
-
-        // Restore full opacity
-        win.setOpacity(1.0);
-
-        _stealth = false;
-        try { store.set('_stealth', _stealth); } catch (e) {}
-        console.log('🟢 Stealth mode disabled');
-        try { if (win && !win.isDestroyed()) win.webContents.send('stealth-changed', _stealth); } catch (e) {}
-    } catch (err) {
-        console.warn('⚠️ disableStealth failed:', err.message);
-    }
+      store.set('_stealth', _stealth);
+    } catch (e) {}
+    console.log('🟢 Stealth mode disabled');
+    try {
+      if (win && !win.isDestroyed()) win.webContents.send('stealth-changed', _stealth);
+    } catch (e) {}
+  } catch (err) {
+    console.warn('⚠️ disableStealth failed:', err.message);
+  }
 }
 
 function toggleStealth() {
-    if (_stealth) disableStealth(); else enableStealth();
+  if (_stealth) disableStealth();
+  else enableStealth();
 }
 
 module.exports = {
-    setWindowBounds,
-    setWindowReference,
-    moveWindowToCorner,
-    toggleMinimize,
-    moveWindowByArrow,
-    resizeWindowByArrow,
-    changeWindowOpacity,
-    enableStealth,
-    disableStealth,
-    toggleStealth
+  setWindowBounds,
+  setWindowReference,
+  moveWindowToCorner,
+  toggleMinimize,
+  moveWindowByArrow,
+  resizeWindowByArrow,
+  changeWindowOpacity,
+  enableStealth,
+  disableStealth,
+  toggleStealth,
 };
