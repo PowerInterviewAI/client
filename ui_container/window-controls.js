@@ -83,8 +83,6 @@ function moveWindowToCorner(corner) {
   console.log(`🔄 Window moved to ${corner}`);
 }
 
-// toggleMinimize removed — minimize/restore hotkeys/features eliminated
-
 function moveWindowByArrow(direction) {
   if (!win || win.isDestroyed()) return;
 
@@ -142,8 +140,24 @@ function resizeWindowByArrow(direction) {
 function enableStealth() {
   if (!win || win.isDestroyed()) return;
   try {
-    // Ensure window stays always on top in stealth mode
-    win.setAlwaysOnTop(true);
+    // Ensure window stays always on top in stealth mode (use highest level)
+    try {
+      // Use a high z-order level so the overlay remains above other windows
+      // 'screen-saver' is typically the highest-level available in Electron
+      win.setAlwaysOnTop(true, 'screen-saver');
+    } catch (e) {
+      // Fallback to basic always-on-top if level not supported
+      try {
+        win.setAlwaysOnTop(true);
+      } catch (e) {}
+    }
+
+    // Make the window visible on all workspaces and in fullscreen
+    try {
+      if (typeof win.setVisibleOnAllWorkspaces === 'function') {
+        win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+      }
+    } catch (e) {}
 
     // Ensure the window is transparent (created with transparent:true)
     // Ignore mouse events so clicks pass through the window

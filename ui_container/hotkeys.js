@@ -25,7 +25,6 @@ function registerGlobalHotkeys(overrides = {}) {
   globalShortcut.register('CommandOrControl+Alt+4', () => moveWindowToCorner('bottom-right'));
   globalShortcut.register('CommandOrControl+Alt+5', () => moveWindowToCorner('center'));
 
-
   // Arrow key movement hotkeys
   globalShortcut.register('CommandOrControl+Alt+Up', () => moveWindowByArrow('up'));
   globalShortcut.register('CommandOrControl+Alt+Down', () => moveWindowByArrow('down'));
