@@ -14,6 +14,11 @@ function setWindowReference(window) {
     win = window;
 }
 
+function setWindowBounds(bounds) {
+    if (!win || win.isDestroyed()) return;
+    win.setBounds(bounds);
+}
+
 function moveWindowToCorner(corner) {
     if (!win || win.isDestroyed()) return;
 
@@ -45,7 +50,7 @@ function moveWindowToCorner(corner) {
             break;
     }
 
-    win.setBounds({ x, y, width: winWidth, height: winHeight });
+    setWindowBounds({ x, y, width: winWidth, height: winHeight });
     console.log(`🔄 Window moved to ${corner}`);
 }
 
@@ -81,7 +86,7 @@ function moveWindowByArrow(direction) {
             break;
     }
 
-    win.setBounds(bounds);
+    setWindowBounds(bounds);
     console.log(`🔄 Window moved ${direction} by ${moveAmount}px`);
 }
 
@@ -110,7 +115,7 @@ function resizeWindowByArrow(direction) {
             break;
     }
 
-    win.setBounds(bounds);
+    setWindowBounds(bounds);
     console.log(`🔄 Window resized ${direction} by ${resizeAmount}px`);
 }
 
@@ -199,6 +204,7 @@ function toggleStealth() {
 }
 
 module.exports = {
+    setWindowBounds,
     setWindowReference,
     moveWindowToCorner,
     toggleMinimize,

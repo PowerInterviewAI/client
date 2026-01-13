@@ -17,7 +17,7 @@ try {
 
 // Import modules
 const { startEngine, getCurrentPort } = require('./engine');
-const { setWindowReference } = require('./window-controls');
+const { setWindowBounds, setWindowReference } = require('./window-controls');
 const { registerGlobalHotkeys, unregisterHotkeys } = require('./hotkeys');
 
 let win = null;
@@ -153,7 +153,7 @@ ipcMain.on('window-resize-delta', (event, dx, dy, edge) => {
             nb.height = minHeight;
         }
 
-        win.setBounds(nb);
+        setWindowBounds(nb);
     } catch (err) {
         console.warn('window-resize-delta handler error:', err && err.message ? err.message : err);
     }
