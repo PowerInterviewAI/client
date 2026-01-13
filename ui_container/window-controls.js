@@ -16,7 +16,28 @@ function setWindowReference(window) {
 
 function setWindowBounds(bounds) {
     if (!win || win.isDestroyed()) return;
-    win.setBounds(bounds);
+    // Enforce minimum window dimensions and merge with current bounds
+    try {
+        const MIN_WIDTH = 960;
+        const MIN_HEIGHT = 540;
+
+        // Fill missing values from current bounds
+        const current = win.getBounds();
+        const newBounds = Object.assign({}, current, bounds || {});
+
+        // Ensure minimums
+        if (newBounds.width < MIN_WIDTH) {
+            newBounds.width = MIN_WIDTH;
+        }
+        if (newBounds.height < MIN_HEIGHT) {
+            newBounds.height = MIN_HEIGHT;
+        }
+
+        win.setBounds(newBounds);
+    } catch (err) {
+        // Fallback to original behaviour if anything goes wrong
+        try { win.setBounds(bounds); } catch (e) {}
+    }
 }
 
 function moveWindowToCorner(corner) {
