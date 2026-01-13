@@ -133,6 +133,15 @@ ipcMain.on('window-toggle-stealth', () => {
   }
 });
 
+// Renderer can request an opacity toggle (useful for UI buttons)
+ipcMain.on('window-toggle-opacity', () => {
+  try {
+    windowControls.toggleOpacity();
+  } catch (err) {
+    console.warn('window-toggle-opacity handler error:', err && err.message ? err.message : err);
+  }
+});
+
 // Handle incremental resize deltas from renderer (edge dragging)
 ipcMain.on('window-resize-delta', (event, dx, dy, edge) => {
   try {

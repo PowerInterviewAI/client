@@ -15,6 +15,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Stealth control helpers
   setStealth: isStealth => ipcRenderer.send('set-stealth', !!isStealth),
   toggleStealth: () => ipcRenderer.send('window-toggle-stealth'),
+  // Opacity toggle helper (renderer UI can call this)
+  toggleOpacity: () => ipcRenderer.send('window-toggle-opacity'),
 });
 
 // Listen for stealth mode changes from main and update body class

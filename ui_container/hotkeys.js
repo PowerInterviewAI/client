@@ -7,6 +7,7 @@ const {
   moveWindowByArrow,
   resizeWindowByArrow,
   changeWindowOpacity,
+  toggleOpacity,
 } = require('./window-controls');
 
 // -------------------------------------------------------------
@@ -50,9 +51,14 @@ function registerGlobalHotkeys(overrides = {}) {
   globalShortcut.register('CommandOrControl+Shift+Left', () => resizeWindowByArrow('left'));
   globalShortcut.register('CommandOrControl+Shift+Right', () => resizeWindowByArrow('right'));
 
-  // Page key opacity hotkeys (with Ctrl+Shift modifier)
-  globalShortcut.register('CommandOrControl+Shift+PageUp', () => changeWindowOpacity('up'));
-  globalShortcut.register('CommandOrControl+Shift+PageDown', () => changeWindowOpacity('down'));
+  // Opacity toggle (Ctrl+Shift+V): toggle between 10% and 90% when in stealth mode
+  globalShortcut.register('CommandOrControl+Shift+V', () => {
+    try {
+      toggleOpacity();
+    } catch (e) {
+      console.warn('Failed to toggle opacity:', e.message);
+    }
+  });
 
   // Send scroll events to renderer for transcript scrolling
   // Use Ctrl+Alt+PageUp/PageDown to avoid colliding with Ctrl+Shift+PageUp/PageDown
@@ -104,8 +110,7 @@ function registerGlobalHotkeys(overrides = {}) {
   console.log('  Ctrl+Shift+↓: Increase window height');
   console.log('  Ctrl+Shift+←: Decrease window width');
   console.log('  Ctrl+Shift+→: Increase window width');
-  console.log('  Ctrl+Shift+PageUp: Increase opacity');
-  console.log('  Ctrl+Shift+PageDown: Decrease opacity');
+  console.log('  Ctrl+Shift+V: Toggle opacity between 10% and 90% (stealth only)');
   console.log('  Ctrl+Alt+S: Toggle stealth mode (click-through, non-focusable)');
 }
 

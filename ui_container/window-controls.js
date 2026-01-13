@@ -7,6 +7,12 @@ const store = new Store();
 let win = null;
 let _stealth = !!store.get('_stealth');
 
+// Ensure stealth is disabled by default on load; persist false in store
+try {
+  store.set('_stealth', false);
+  _stealth = false;
+} catch (e) {}
+
 // -------------------------------------------------------------
 // WINDOW CONTROL FUNCTIONS
 // -------------------------------------------------------------
@@ -142,33 +148,6 @@ function resizeWindowByArrow(direction) {
   console.log(`🔄 Window resized ${direction} by ${resizeAmount}px`);
 }
 
-function changeWindowOpacity(direction) {
-  if (!win || win.isDestroyed()) return;
-  if (!_stealth) {
-    console.log('⚠️ Opacity control is only available in stealth mode');
-    return;
-  }
-
-  try {
-    const currentOpacity = win.getOpacity();
-    const opacityStep = 0.1; // 10% opacity change
-
-    let newOpacity;
-    if (direction === 'up') {
-      // Page Up: Increase opacity (make more opaque)
-      newOpacity = Math.min(1.0, currentOpacity + opacityStep);
-    } else if (direction === 'down') {
-      // Page Down: Decrease opacity (make more transparent)
-      newOpacity = Math.max(0.2, currentOpacity - opacityStep); // minimum 20% opacity
-    }
-
-    win.setOpacity(newOpacity);
-    console.log(`🔄 Window opacity changed to ${(newOpacity * 100).toFixed(0)}%`);
-  } catch (error) {
-    console.warn('⚠️ Opacity control not supported on this platform:', error.message);
-  }
-}
-
 function enableStealth() {
   if (!win || win.isDestroyed()) return;
   try {
@@ -235,6 +214,27 @@ function toggleStealth() {
   else enableStealth();
 }
 
+function toggleOpacity() {
+  if (!win || win.isDestroyed()) return;
+  if (!_stealth) {
+    console.log('⚠️ Opacity toggle is only available in stealth mode');
+    return;
+  }
+
+  try {
+    const current = win.getOpacity();
+    const LOW = 0.1;
+    const HIGH = 0.9;
+
+    // If roughly at HIGH, switch to LOW, otherwise switch to HIGH
+    const newOpacity = Math.abs(current - HIGH) < 0.05 ? LOW : HIGH;
+    win.setOpacity(newOpacity);
+    console.log(`🔄 Window opacity toggled to ${(newOpacity * 100).toFixed(0)}%`);
+  } catch (err) {
+    console.warn('⚠️ Opacity toggle not supported on this platform:', err.message);
+  }
+}
+
 module.exports = {
   setWindowBounds,
   setWindowReference,
@@ -242,7 +242,7 @@ module.exports = {
   toggleMinimize,
   moveWindowByArrow,
   resizeWindowByArrow,
-  changeWindowOpacity,
+  toggleOpacity,
   enableStealth,
   disableStealth,
   toggleStealth,
