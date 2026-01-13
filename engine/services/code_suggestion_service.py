@@ -12,6 +12,7 @@ from engine.utils.datetime import DatetimeUtil
 class CodeSuggestionService:
     def __init__(self) -> None:
         self._images_bytes: list[bytes] = []
+        self._thumbs_bytes: list[bytes] = []
         self._user_prompt: str = ""
 
         self._suggestions: dict[int, CodeSuggestion] = {}
@@ -29,7 +30,7 @@ class CodeSuggestionService:
             return [
                 CodeSuggestion(
                     timestamp=DatetimeUtil.get_current_timestamp(),
-                    thumbs_bytes=self._images_bytes,
+                    thumbs_bytes=self._thumbs_bytes,
                     user_prompt=self._user_prompt,
                     suggestion_content="",
                     state=SuggestionState.IDLE,
@@ -42,12 +43,14 @@ class CodeSuggestionService:
         with self._lock:
             self._suggestions.clear()
             self._images_bytes.clear()
+            self._thumbs_bytes.clear()
             self._user_prompt = ""
 
-    def add_image(self, image_bytes: bytes) -> None:
+    def add_image(self, image_bytes: bytes, thumb_bytes: bytes) -> None:
         """Add an image in bytes to the list of images for code suggestion."""
         with self._lock:
             self._images_bytes.append(image_bytes)
+            self._thumbs_bytes.append(thumb_bytes)
 
     def set_user_prompt(self, prompt: str) -> None:
         """Set the user prompt for code suggestion."""
@@ -65,13 +68,14 @@ class CodeSuggestionService:
 
             self._suggestions[tstamp] = CodeSuggestion(
                 timestamp=tstamp,
-                thumbs_bytes=self._images_bytes,
+                thumbs_bytes=self._thumbs_bytes,
                 user_prompt=self._user_prompt,
                 suggestion_content="",
                 state=SuggestionState.PENDING,
             )
 
             self._images_bytes.clear()
+            self._thumbs_bytes.clear()
             self._user_prompt = ""
 
         try:
