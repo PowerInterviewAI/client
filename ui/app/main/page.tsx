@@ -1,5 +1,6 @@
 'use client';
 
+import CodeSuggestionsPanel from '@/components/code-suggestions-panel';
 import ConfigurationDialog from '@/components/configuration-dialog';
 import ControlPanel from '@/components/control-panel';
 import HotkeysPanel from '@/components/hotkeys-panel';
@@ -134,6 +135,9 @@ export default function Home() {
   const suggestions = appState?.suggestions ?? [];
   const hasSuggestions = suggestions.length > 0;
 
+  const codeSuggestions = appState?.code_suggestions ?? [];
+  const hasCodeSuggestions = codeSuggestions.length > 0;
+
   // Load theme
   useEffect(() => {
     // Check localStorage or system preference
@@ -218,12 +222,19 @@ export default function Home() {
         </div>
 
         {/* Right Column: Main Suggestions Panel */}
-        {hasSuggestions && (
+        {(hasSuggestions || hasCodeSuggestions) && (
           <div className="w-1/2 md:flex-1 min-w-60 min-h-0 rounded-lg">
-            <SuggestionsPanel
-              suggestions={suggestions}
-              style={suggestionsHeight ? { height: `${suggestionsHeight}px` } : undefined}
-            />
+            {hasCodeSuggestions ? (
+              <CodeSuggestionsPanel
+                codeSuggestions={codeSuggestions}
+                style={suggestionsHeight ? { height: `${suggestionsHeight}px` } : undefined}
+              />
+            ) : (
+              <SuggestionsPanel
+                suggestions={suggestions}
+                style={suggestionsHeight ? { height: `${suggestionsHeight}px` } : undefined}
+              />
+            )}
           </div>
         )}
       </div>
