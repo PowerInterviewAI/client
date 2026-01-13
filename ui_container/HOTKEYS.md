@@ -12,12 +12,6 @@ This Electron application supports global system hotkeys for controlling window 
 - **Ctrl+Alt+4**: Move window to bottom-right corner
 - **Ctrl+Alt+5**: Center window on screen
 
-### Window State Control
-
-- **Ctrl+Alt+M**: Toggle maximize/restore
-- **Ctrl+Alt+N**: Toggle minimize/restore
-- **Ctrl+Alt+R**: Restore window (from maximized or minimized state)
-
 ### Fine Movement Controls
 
 - **Ctrl+Alt+↑**: Move window up by 20 pixels

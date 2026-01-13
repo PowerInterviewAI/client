@@ -3,10 +3,8 @@ const { globalShortcut } = require('electron');
 // Import window control functions
 const {
   moveWindowToCorner,
-  toggleMinimize,
   moveWindowByArrow,
   resizeWindowByArrow,
-  changeWindowOpacity,
   toggleOpacity,
 } = require('./window-controls');
 
@@ -27,17 +25,6 @@ function registerGlobalHotkeys(overrides = {}) {
   globalShortcut.register('CommandOrControl+Alt+4', () => moveWindowToCorner('bottom-right'));
   globalShortcut.register('CommandOrControl+Alt+5', () => moveWindowToCorner('center'));
 
-  // Window state hotkeys
-  // Maximize shortcut removed
-  globalShortcut.register('CommandOrControl+Alt+N', () => toggleMinimize());
-  globalShortcut.register('CommandOrControl+Alt+R', () => {
-    const { BrowserWindow } = require('electron');
-    const win = BrowserWindow.getAllWindows()[0]; // Get the main window
-    if (win && !win.isDestroyed()) {
-      win.restore();
-      console.log('🔄 Window restored');
-    }
-  });
 
   // Arrow key movement hotkeys
   globalShortcut.register('CommandOrControl+Alt+Up', () => moveWindowByArrow('up'));
@@ -97,9 +84,6 @@ function registerGlobalHotkeys(overrides = {}) {
   console.log('  Ctrl+Alt+3: Move to bottom-left');
   console.log('  Ctrl+Alt+4: Move to bottom-right');
   console.log('  Ctrl+Alt+5: Center window');
-  // console.log('  Ctrl+Alt+M: Toggle maximize');
-  console.log('  Ctrl+Alt+N: Toggle minimize');
-  console.log('  Ctrl+Alt+R: Restore window');
   console.log('  Ctrl+Alt+↑: Move window up');
   console.log('  Ctrl+Alt+↓: Move window down');
   console.log('  Ctrl+Alt+←: Move window left');

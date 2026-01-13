@@ -83,16 +83,7 @@ function moveWindowToCorner(corner) {
   console.log(`🔄 Window moved to ${corner}`);
 }
 
-function toggleMinimize() {
-  if (!win || win.isDestroyed()) return;
-  if (win.isMinimized()) {
-    win.restore();
-    console.log('🔄 Window restored');
-  } else {
-    win.minimize();
-    console.log('🔄 Window minimized');
-  }
-}
+// toggleMinimize removed — minimize/restore hotkeys/features eliminated
 
 function moveWindowByArrow(direction) {
   if (!win || win.isDestroyed()) return;
@@ -239,7 +230,6 @@ module.exports = {
   setWindowBounds,
   setWindowReference,
   moveWindowToCorner,
-  toggleMinimize,
   moveWindowByArrow,
   resizeWindowByArrow,
   toggleOpacity,
