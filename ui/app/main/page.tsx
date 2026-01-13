@@ -189,12 +189,12 @@ export default function Home() {
       <div className="flex-1 flex overflow-y-hidden gap-1">
         {/* Left Column: Video + Transcription */}
         <div
-          className={`flex flex-col ${hasSuggestions || hasCodeSuggestions ? 'w-96' : 'flex-1'} gap-1 transition-all duration-300 ease-in-out`}
+          className={`flex flex-col ${hasSuggestions || hasCodeSuggestions ? 'w-80' : 'flex-1'} gap-1 transition-all duration-300 ease-in-out`}
         >
           {/* Video Panel - Small and compact */}
           <div
             id="video-panel"
-            className="h-45 w-full max-w-96 mx-auto"
+            className="h-45 w-full max-w-80 mx-auto"
             hidden={!config?.enable_video_control}
           >
             <VideoPanel
