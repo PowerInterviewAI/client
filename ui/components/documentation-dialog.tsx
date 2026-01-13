@@ -48,7 +48,8 @@ export default function DocumentationDialog({ open, onOpenChange }: Documentatio
               </li>
               <li>
                 Resize with <strong>Ctrl+Shift+Arrow</strong>, adjust opacity with{' '}
-                <strong>Ctrl+Shift+X</strong> (toggle between ~20% and ~90% opacity; only available in stealth mode).
+                <strong>Ctrl+Shift+X</strong> (toggle between ~20% and ~90% opacity; only available
+                in stealth mode).
               </li>
               <li>
                 Exit stealth with <strong>Ctrl+Alt+S</strong> to interact with the app normally.
