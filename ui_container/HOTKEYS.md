@@ -39,7 +39,7 @@ This Electron application supports global system hotkeys for controlling window 
 
 ### Window Opacity Controls
 
-- **Ctrl+Shift+X**: Toggle window opacity between 10% and 90% (only available when Stealth mode is enabled)
+- **Ctrl+Shift+X**: Toggle window opacity (only available when Stealth mode is enabled)
 
 ### Stealth Mode
 
@@ -51,9 +51,6 @@ This Electron application supports global system hotkeys for controlling window 
 - The window position uses the primary display's work area (excluding taskbar)
 - Window bounds are automatically saved when the application closes
 - Hotkeys are registered when the application starts and unregistered when it quits
-- Minimum window size is enforced (300px width, 200px height) to prevent unusable windows
-- Window opacity ranges from 10% (minimum) to 100% (fully opaque)
-- Window opacity ranges from 10% (minimum) to 100% (fully opaque). The new toggle switches between 10% and 90%.
 
 ## Technical Details
 

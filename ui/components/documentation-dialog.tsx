@@ -48,17 +48,12 @@ export default function DocumentationDialog({ open, onOpenChange }: Documentatio
               </li>
               <li>
                 Resize with <strong>Ctrl+Shift+Arrow</strong>, adjust opacity with{' '}
-                <strong>Ctrl+Shift+PgUp/PgDn</strong>.
+                <strong>Ctrl+Shift+X</strong> (toggle between ~20% and ~90% opacity; only available in stealth mode).
               </li>
               <li>
                 Exit stealth with <strong>Ctrl+Alt+S</strong> to interact with the app normally.
               </li>
             </ol>
-
-            <p className="mt-2">
-              Tip: keep opacity around 0.7-0.9 for readability while letting underlying content
-              remain visible.
-            </p>
           </div>
 
           <h3 className="text-sm font-semibold mb-2">

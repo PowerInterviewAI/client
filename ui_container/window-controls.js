@@ -164,8 +164,8 @@ function enableStealth() {
     // Enable content protection in stealth mode
     win.setContentProtection(true);
 
-    // Start at 80% opacity
-    win.setOpacity(0.8);
+    // Start at 90% opacity
+    win.setOpacity(0.9);
 
     _stealth = true;
     try {
@@ -223,7 +223,7 @@ function toggleOpacity() {
 
   try {
     const current = win.getOpacity();
-    const LOW = 0.1;
+    const LOW = 0.2;
     const HIGH = 0.9;
 
     // If roughly at HIGH, switch to LOW, otherwise switch to HIGH
