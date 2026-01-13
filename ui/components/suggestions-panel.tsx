@@ -82,7 +82,7 @@ export default function SuggestionsPanel({ suggestions = [], style }: Suggestion
     <Card className="relative flex flex-col w-full h-full bg-card p-0" style={style}>
       {/* Header */}
       <div className="border-b border-border px-4 pt-4 pb-2 shrink-0 flex items-center justify-between gap-4">
-        <h3 className="font-semibold text-foreground text-xs">Suggestions</h3>
+        <h3 className="font-semibold text-foreground text-xs">Interview Suggestions</h3>
 
         <label className="flex items-center gap-2 text-xs text-muted-foreground">
           <Checkbox
