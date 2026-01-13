@@ -155,7 +155,7 @@ export default function Home() {
 
   // Redirect to login if not logged in
   useEffect(() => {
-    if (appState && !appState.is_logged_in) {
+    if (appState?.is_logged_in === false) {
       router.push('/auth/login');
     }
   }, [appState, router]);
@@ -171,12 +171,12 @@ export default function Home() {
   }
 
   // Show loading if not logged in (fallback)
-  if (appState && !appState.is_logged_in) {
+  if (appState?.is_logged_in === false) {
     return <Loading disclaimer="Redirecting to login…" />;
   }
 
   // Show loading if GPU server is not live
-  if (appState && !appState.is_gpu_server_live) {
+  if (appState?.is_gpu_server_live === false) {
     return (
       <Loading disclaimer="Initializing AI processing resources… Please allow up to 5 minutes for completion." />
     );
