@@ -39,7 +39,7 @@ This Electron application supports global system hotkeys for controlling window 
 
 ### Window Opacity Controls
 
-- **Ctrl+Shift+V**: Toggle window opacity between 10% and 90% (only available when Stealth mode is enabled)
+- **Ctrl+Shift+X**: Toggle window opacity between 10% and 90% (only available when Stealth mode is enabled)
 
 ### Stealth Mode
 

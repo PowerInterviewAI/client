@@ -51,8 +51,8 @@ function registerGlobalHotkeys(overrides = {}) {
   globalShortcut.register('CommandOrControl+Shift+Left', () => resizeWindowByArrow('left'));
   globalShortcut.register('CommandOrControl+Shift+Right', () => resizeWindowByArrow('right'));
 
-  // Opacity toggle (Ctrl+Shift+V): toggle between 10% and 90% when in stealth mode
-  globalShortcut.register('CommandOrControl+Shift+V', () => {
+  // Opacity toggle (Ctrl+Shift+X): toggle between 10% and 90% when in stealth mode
+  globalShortcut.register('CommandOrControl+Shift+X', () => {
     try {
       toggleOpacity();
     } catch (e) {
@@ -110,7 +110,7 @@ function registerGlobalHotkeys(overrides = {}) {
   console.log('  Ctrl+Shift+↓: Increase window height');
   console.log('  Ctrl+Shift+←: Decrease window width');
   console.log('  Ctrl+Shift+→: Increase window width');
-  console.log('  Ctrl+Shift+V: Toggle opacity between 10% and 90% (stealth only)');
+  console.log('  Ctrl+Shift+X: Toggle opacity between 10% and 90% (stealth only)');
   console.log('  Ctrl+Alt+S: Toggle stealth mode (click-through, non-focusable)');
 }
 
