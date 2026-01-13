@@ -13,3 +13,11 @@ export interface Suggestion {
   answer: string;
   state: SuggestionState;
 }
+
+export interface CodeSuggestion {
+  timestamp: number;
+  thumbs_bytes: string[];
+  user_prompt: string;
+  suggestion_content: string;
+  state: SuggestionState;
+}
