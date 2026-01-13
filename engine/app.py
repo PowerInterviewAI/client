@@ -1,5 +1,7 @@
+import threading
 from typing import Any
 
+import keyboard
 import numpy as np
 from loguru import logger
 
@@ -39,6 +41,13 @@ class PowerInterviewApp:
             fps=cfg_video.DEFAULT_FPS,
         )
 
+        # Pending buffers used by global hotkey handlers for code suggestions
+        self._pending_code_prompt: str | None = None
+        self._pending_code_images: list[bytes] = []
+        self._pending_lock = threading.Lock()
+        self._hotkeys_registered = False
+        self._hotkeys_module = None
+
     # ---- Configuration Management ----
     # Config management is handled by ConfigService classmethods
 
@@ -70,11 +79,23 @@ class PowerInterviewApp:
             )
             self.virtual_camera_service.start()
 
+        # Register global hotkeys
+        try:
+            self.register_global_hotkeys()
+        except Exception as ex:
+            logger.error(f"Failed to register global hotkeys: {ex}")
+
     def stop_assistant(self) -> None:
         self.transcriber.stop()
         self.suggestion_service.stop_current_task()
         self.code_suggestion_service.stop_current_task()
         self.audio_controller.stop()
+
+        # Unregister global hotkeys when stopping assistant
+        try:
+            self.unregister_global_hotkeys()
+        except Exception as ex:
+            logger.error(f"Failed to unregister global hotkeys: {ex}")
 
     # ---- State Management ----
     def get_app_state(self) -> AppState:
@@ -118,6 +139,61 @@ class PowerInterviewApp:
         self.service_monitor.start_auth_monitor()
         self.service_monitor.start_gpu_server_monitor()
         self.service_monitor.start_wakeup_gpu_server_loop()
+
+    # --------------------------
+    # Global hotkey helpers
+    # --------------------------
+    def register_global_hotkeys(self) -> None:
+        """Attempt to register global hotkeys using the `keyboard` module if available."""
+
+        # Map hotkeys to handlers
+        keyboard.add_hotkey("ctrl+alt+shift+s", lambda: self._on_hotkey_code_suggestion_capture_screenshot())
+        keyboard.add_hotkey("ctrl+alt+shift+p", lambda: self._on_hotkey_code_suggestion_set_prompt())
+        keyboard.add_hotkey("ctrl+alt+shift+enter", lambda: self._on_hotkey_code_suggestion_submit())
+
+        self._hotkeys_registered = True
+        logger.debug("Global hotkeys registered: Ctrl+Alt+Shift+S/P/Enter")
+
+    def unregister_global_hotkeys(self) -> None:
+        if not self._hotkeys_registered:
+            return
+        try:
+            keyboard.clear_all_hotkeys()
+        except Exception:
+            try:
+                # older keyboard versions
+                keyboard.unhook_all()
+            except Exception as ex:
+                logger.error(f"Failed to unregister global hotkeys: {ex}")
+        self._hotkeys_registered = False
+        logger.debug("Global hotkeys unregistered")
+
+    def _on_hotkey_code_suggestion_capture_screenshot(self) -> None:
+        """Capture a screenshot and append it to the pending images buffer."""
+        # Capture screenshot
+        data = b""
+
+        # Append to pending images
+        self.code_suggestion_service.add_image(data)
+
+    def _on_hotkey_code_suggestion_set_prompt(self) -> None:
+        """Set the prompt from user's last transcript if available."""
+        # Find the last self transcript
+        user_prompt = ""
+        trans_list = self.transcriber.get_transcripts()
+        for t in trans_list:
+            if t.speaker == Speaker.SELF:
+                user_prompt = t.text
+
+        # Set the pending prompt
+        if user_prompt:
+            self.code_suggestion_service.set_user_prompt(user_prompt)
+        else:
+            logger.warning("No user transcript found to set as prompt")
+
+    def _on_hotkey_code_suggestion_submit(self) -> None:
+        """Submit the code suggestion request using the pending prompt and images."""
+        self.code_suggestion_service.generate_code_suggestion()
 
     # ---- Service methods ----
     def export_transcript(self) -> str:
