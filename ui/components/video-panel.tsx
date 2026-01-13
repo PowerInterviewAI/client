@@ -357,7 +357,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
 
     return (
       <div
-        className={`relative w-full h-full overflow-hidden bg-white dark:bg-black shrink-0 py-0 ${isStealth ? 'opacity-20' : ''}`}
+        className={`relative w-full h-full border rounded-xl overflow-hidden bg-white dark:bg-black shrink-0 py-0 ${isStealth ? 'opacity-30' : ''}`}
       >
         <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-contain" />
 

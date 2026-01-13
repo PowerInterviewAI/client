@@ -190,7 +190,7 @@ export default function Home() {
           {/* Video Panel - Small and compact */}
           <div
             id="video-panel"
-            className="h-48 shrink-0 border rounded-xl overflow-hidden"
+            className="h-45 w-full max-w-96 mx-auto"
             hidden={!config?.enable_video_control}
           >
             <VideoPanel
