@@ -51,3 +51,37 @@ class GenerateSuggestionRequest(BaseModel):
         list[Transcript],
         Field(description="The transcripts of the user"),
     ]
+
+
+class CodeSuggestion(BaseModel):
+    timestamp: Annotated[
+        int,
+        Field(description="The Unix timestamp of the code suggestion"),
+    ]
+    thumbs_bytes: Annotated[
+        list[bytes],
+        Field(description="The list of screenshot thumbnail images in bytes"),
+    ]
+    user_prompt: Annotated[
+        str,
+        Field(description="The user's prompt for code suggestion"),
+    ]
+    suggestion_content: Annotated[
+        str,
+        Field(description="The suggested code content"),
+    ]
+    state: Annotated[
+        SuggestionState,
+        Field(description="The state of the code suggestion"),
+    ]
+
+
+class GenerateCodeSuggestionRequest(BaseModel):
+    user_prompt: Annotated[
+        str,
+        Field(description="The user's prompt for code suggestion"),
+    ]
+    images_bytes: Annotated[
+        list[bytes],
+        Field(description="The list of screenshot images in bytes"),
+    ]

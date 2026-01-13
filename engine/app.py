@@ -12,6 +12,7 @@ from engine.schemas.summarize import GenerateSummarizeRequest
 from engine.schemas.transcript import Speaker, Transcript
 from engine.services.audio_control_service import AudioControlService
 from engine.services.audio_device_service import AudioDeviceService
+from engine.services.code_suggestion_service import CodeSuggestionService
 from engine.services.config_service import ConfigService
 from engine.services.service_monitor import ServiceMonitor
 from engine.services.suggestion_service import SuggestionService
@@ -30,6 +31,7 @@ class PowerInterviewApp:
             callback_on_other_final=self.on_transcriber_other_final,
         )
         self.suggestion_service = SuggestionService()
+        self.code_suggestion_service = CodeSuggestionService()
         self.audio_controller = AudioControlService()
         self.virtual_camera_service = VirtualCameraService(
             width=cfg_video.DEFAULT_WIDTH,
@@ -48,6 +50,7 @@ class PowerInterviewApp:
         )
 
         self.suggestion_service.clear_suggestions()
+        self.code_suggestion_service.clear_suggestions()
 
         if ConfigService.config.enable_audio_control:
             self.audio_controller.update_parameters(
@@ -70,7 +73,7 @@ class PowerInterviewApp:
     def stop_assistant(self) -> None:
         self.transcriber.stop()
         self.suggestion_service.stop_current_task()
-
+        self.code_suggestion_service.stop_current_task()
         self.audio_controller.stop()
 
     # ---- State Management ----
@@ -80,6 +83,7 @@ class PowerInterviewApp:
             assistant_state=self.transcriber.get_state(),
             transcripts=self.transcriber.get_transcripts(),
             suggestions=self.suggestion_service.get_suggestions(),
+            code_suggestions=self.code_suggestion_service.get_suggestions(),
             is_backend_live=self.service_monitor.is_backend_live(),
             is_gpu_server_live=self.service_monitor.is_gpu_server_live(),
         )
