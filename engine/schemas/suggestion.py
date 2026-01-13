@@ -58,9 +58,9 @@ class CodeSuggestion(BaseModel):
         int,
         Field(description="The Unix timestamp of the code suggestion"),
     ]
-    thumbs_bytes: Annotated[
-        list[bytes],
-        Field(description="The list of screenshot thumbnail images in bytes"),
+    image_count: Annotated[
+        int,
+        Field(description="The number of screenshot thumbnail images associated with the suggestion"),
     ]
     user_prompt: Annotated[
         str,

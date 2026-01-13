@@ -6,7 +6,6 @@ import keyboard
 import numpy as np
 from loguru import logger
 from PIL import ImageGrab
-from PIL.Image import Resampling
 
 from engine.api.error_handler import raise_for_status
 from engine.cfg.client import config as cfg_client
@@ -180,18 +179,8 @@ class PowerInterviewApp:
         img_bytes = io.BytesIO()
         img_gray.save(img_bytes, format="PNG")
 
-        # Get thumb image: resize to max 320x240 while maintaining aspect ratio
-        thumb_img = img.copy()
-        thumb_img.thumbnail((320, 240), Resampling.LANCZOS)
-        thumb_bytes = io.BytesIO()
-        # Save thumbnail as PNG (8-bit grayscale)
-        thumb_img.save(thumb_bytes, format="PNG")
-
         # Append to pending images (full image bytes and grayscale thumbnail)
-        self.code_suggestion_service.add_image(
-            image_bytes=img_bytes.getvalue(),
-            thumb_bytes=thumb_bytes.getvalue(),
-        )
+        self.code_suggestion_service.add_image(image_bytes=img_bytes.getvalue())
 
     def _on_hotkey_code_suggestion_set_prompt(self) -> None:
         """Set the prompt from user's last transcript if available."""
