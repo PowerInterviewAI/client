@@ -22,14 +22,14 @@ export default function useIsStealthMode(): boolean {
     try {
       obs.observe(document.body, { attributes: true });
     } catch (e) {
-      // ignore environments where observing isn't permitted
+      console.error('useIsStealthMode: Failed to observe body class changes', e);
     }
 
     return () => {
       try {
         obs.disconnect();
       } catch (e) {
-        /* ignore */
+        console.error('useIsStealthMode: Failed to disconnect MutationObserver', e);
       }
     };
   }, []);

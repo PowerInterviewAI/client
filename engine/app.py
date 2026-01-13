@@ -1,9 +1,11 @@
+import io
 import threading
 from typing import Any
 
 import keyboard
 import numpy as np
 from loguru import logger
+from PIL import ImageGrab
 
 from engine.api.error_handler import raise_for_status
 from engine.cfg.client import config as cfg_client
@@ -171,10 +173,20 @@ class PowerInterviewApp:
     def _on_hotkey_code_suggestion_capture_screenshot(self) -> None:
         """Capture a screenshot and append it to the pending images buffer."""
         # Capture screenshot
-        data = b""
+        img = ImageGrab.grab(all_screens=True)
+
+        # Get thumb image: resize to max 320x240 while maintaining aspect ratio
+        thumb_img = img.copy()
+        thumb_img.thumbnail((320, 240), ImageGrab.Resampling.LANCZOS)
+        thumb_bytes = io.BytesIO()
+        thumb_img.save(thumb_bytes, format="JPEG")
+        img_bytes = io.BytesIO()
+        img.save(img_bytes, format="JPEG")
+        thumb_bytes = thumb_bytes.getvalue()
+        img_bytes = img_bytes.getvalue()
 
         # Append to pending images
-        self.code_suggestion_service.add_image(data)
+        self.code_suggestion_service.add_image(image_bytes=img_bytes, thumb_bytes=thumb_bytes)
 
     def _on_hotkey_code_suggestion_set_prompt(self) -> None:
         """Set the prompt from user's last transcript if available."""
