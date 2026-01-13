@@ -49,8 +49,8 @@ if (!gotLock) {
 // -------------------------------------------------------------
 async function createWindow() {
   const savedBounds = store.get('windowBounds') || {
-    width: 800,
-    height: 600,
+    width: 1024,
+    height: 640,
   };
 
   win = new BrowserWindow({

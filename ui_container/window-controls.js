@@ -24,8 +24,8 @@ function setWindowBounds(bounds) {
   if (!win || win.isDestroyed()) return;
   // Enforce minimum window dimensions and merge with current bounds
   try {
-    const MIN_WIDTH = 960;
-    const MIN_HEIGHT = 540;
+    const MIN_WIDTH = 1024;
+    const MIN_HEIGHT = 640;
 
     // Fill missing values from current bounds
     const current = win.getBounds();
