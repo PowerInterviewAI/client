@@ -188,7 +188,9 @@ export default function Home() {
 
       <div className="flex-1 flex overflow-y-hidden gap-1">
         {/* Left Column: Video + Transcription */}
-        <div className={`flex flex-col gap-1 flex-1 transition-all duration-300 ease-in-out`}>
+        <div
+          className={`flex flex-col ${hasSuggestions || hasCodeSuggestions ? 'w-96' : 'flex-1'} gap-1 transition-all duration-300 ease-in-out`}
+        >
           {/* Video Panel - Small and compact */}
           <div
             id="video-panel"
@@ -220,21 +222,20 @@ export default function Home() {
         </div>
 
         {/* Right Column: Main Suggestions Panel */}
-        {hasSuggestions && (
-          <div className="w-96 min-w-60 min-h-0 rounded-lg">
-            <SuggestionsPanel
-              suggestions={suggestions}
-              style={suggestionsHeight ? { height: `${suggestionsHeight}px` } : undefined}
-            />
-          </div>
-        )}
-
-        {hasCodeSuggestions && (
-          <div className="w-80 min-w-60 min-h-0 rounded-lg">
-            <CodeSuggestionsPanel
-              codeSuggestions={codeSuggestions}
-              style={suggestionsHeight ? { height: `${suggestionsHeight}px` } : undefined}
-            />
+        {(hasSuggestions || hasCodeSuggestions) && (
+          <div className="flex-1 flex gap-1">
+            {hasSuggestions && (
+              <SuggestionsPanel
+                suggestions={suggestions}
+                style={suggestionsHeight ? { height: `${suggestionsHeight}px` } : undefined}
+              />
+            )}
+            {hasCodeSuggestions && (
+              <CodeSuggestionsPanel
+                codeSuggestions={codeSuggestions}
+                style={suggestionsHeight ? { height: `${suggestionsHeight}px` } : undefined}
+              />
+            )}
           </div>
         )}
       </div>
