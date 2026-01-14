@@ -60,14 +60,18 @@ export default function SuggestionsPanel({ suggestions = [], style }: Suggestion
 
     // eslint-disable-next-line
     // @ts-ignore
-    const unsubscribe = window.electronAPI.onHotkeyScroll((direction: 'up' | 'down') => {
-      const container = containerRef.current;
-      if (!container) return;
+    const unsubscribe = window.electronAPI.onHotkeyScroll(
+      (section: string, direction: 'up' | 'down') => {
+        if (section !== '0') return; // only handle for interview suggestions section
 
-      const distance = Math.max(Math.round(container.clientHeight * 0.9), 100);
-      const top = direction === 'up' ? -distance : distance;
-      container.scrollBy({ top, behavior: 'smooth' });
-    });
+        const container = containerRef.current;
+        if (!container) return;
+
+        const distance = Math.max(Math.round(container.clientHeight * 0.9), 100);
+        const top = direction === 'up' ? -distance : distance;
+        container.scrollBy({ top, behavior: 'smooth' });
+      },
+    );
 
     return () => {
       try {
