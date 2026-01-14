@@ -39,7 +39,7 @@ export default function Home() {
     let hot = document.getElementById('hotkeys-panel')?.getBoundingClientRect().height || 0;
     let control = document.getElementById('control-panel')?.getBoundingClientRect().height || 0;
     let video = document.getElementById('video-panel')?.getBoundingClientRect().height || 0;
-    const extra = 10; // spacing/padding between elements
+    const extra = 12; // spacing/padding between elements
 
     if (hot > 0) hot += 4; // account for border
     if (control > 0) control += 4; // account for border
