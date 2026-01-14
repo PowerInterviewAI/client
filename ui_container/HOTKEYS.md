@@ -4,50 +4,38 @@ This Electron application supports global system hotkeys for controlling window 
 
 ## Available Hotkeys
 
-### Window Positioning
+### App / Mode Toggles
 
-- **Ctrl+Alt+1**: Move window to top-left corner
-- **Ctrl+Alt+2**: Move window to top-right corner
-- **Ctrl+Alt+3**: Move window to bottom-left corner
-- **Ctrl+Alt+4**: Move window to bottom-right corner
-- **Ctrl+Alt+5**: Center window on screen
+- **Win+Shift+Q**: Toggle stealth mode
+- **Win+Shift+W**: Toggle opacity (only while in stealth mode)
 
-### Fine Movement Controls
+### Window Management
 
-- **Ctrl+Alt+↑**: Move window up by 20 pixels
-- **Ctrl+Alt+↓**: Move window down by 20 pixels
-- **Ctrl+Alt+←**: Move window left by 20 pixels
-- **Ctrl+Alt+→**: Move window right by 20 pixels
+- **Win+Ctrl+1-9**: Place window (numpad layout — 7/8/9 top, 4/5/6 middle, 1/2/3 bottom)
+- **Win+Ctrl+ArrowKeys**: Move window (small step)
+- **Win+Ctrl+Shift+ArrowKeys**: Resize window (small step)
 
-### Suggestion Scrolling
+### Suggestions / Navigation
 
-- **Ctrl+Alt+Page Up**: Scroll suggestions up
-- **Ctrl+Alt+Page Down**: Scroll suggestions down
+- **Ctrl+Shift+U / J**: Scroll interview suggestions (U = up, J = down)
+- **Ctrl+Shift+I / K**: Scroll code suggestions (I = up, K = down)
 
-### Window Resizing Controls
+### Code Suggestions / Actions
 
-- **Ctrl+Shift+↑**: Decrease window height by 20 pixels
-- **Ctrl+Shift+↓**: Increase window height by 20 pixels
-- **Ctrl+Shift+←**: Decrease window width by 20 pixels
-- **Ctrl+Shift+→**: Increase window width by 20 pixels
-
-### Window Opacity Controls
-
-- **Ctrl+Shift+X**: Toggle window opacity (only available when Stealth mode is enabled)
-
-### Stealth Mode
-
-- **Ctrl+Alt+S**: Toggle stealth mode — window remains always-on-top and transparent but becomes click-through and non-focusable (mouse/keyboard events pass to underlying apps)
+- **Ctrl+Shift+S**: Capture screenshot (renderer action)
+- **Ctrl+Shift+P**: Set prompt (renderer action)
+- **Ctrl+Shift+Enter**: Submit (renderer action)
 
 ## Notes
 
 - Hotkeys work globally, even when the application is not in focus
-- The window position uses the primary display's work area (excluding taskbar)
-- Window bounds are automatically saved when the application closes
-- Hotkeys are registered when the application starts and unregistered when it quits
+- Window placement uses the primary display's work area (excluding taskbar)
+- Window bounds are saved when the application closes
+- Hotkeys are registered on startup and unregistered on quit
 
 ## Technical Details
 
-- Uses Electron's `globalShortcut` module for system-wide hotkey registration
-- Compatible with Windows (Ctrl+Alt+_) and macOS (Cmd+Alt+_)
-- Window positioning calculations account for screen work area and current window size
+- Uses Electron's `globalShortcut` for system-wide hotkeys
+- Uses `Super` (Win) + modifiers for window-positioning and mode toggles
+- Scroll events are delivered via `hotkey-scroll` IPC; renderer can subscribe using `onHotkeyScroll`
+- Other renderer actions are delivered via `hotkey-action` IPC and can be subscribed using `onHotkeyAction`

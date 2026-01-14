@@ -7,6 +7,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('hotkey-scroll', handler);
     return () => ipcRenderer.removeListener('hotkey-scroll', handler);
   },
+  // General hotkey actions (e.g. capture-screenshot, set-prompt, submit)
+  onHotkeyAction: callback => {
+    const handler = (event, action) => callback(action);
+    ipcRenderer.on('hotkey-action', handler);
+    return () => ipcRenderer.removeListener('hotkey-action', handler);
+  },
   // Window controls
   minimize: () => ipcRenderer.send('window-minimize'),
   close: () => ipcRenderer.send('window-close'),

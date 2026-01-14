@@ -50,37 +50,68 @@ function setWindowBounds(bounds) {
 
 function moveWindowToCorner(corner) {
   if (!win || win.isDestroyed()) return;
-
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
   const { width: winWidth, height: winHeight } = win.getBounds();
 
-  let x, y;
+  let x = 0, y = 0;
 
+  // Support 9 positions: top-left, top-center, top-right,
+  // middle-left, center, middle-right,
+  // bottom-left, bottom-center, bottom-right
   switch (corner) {
     case 'top-left':
       x = 0;
+      y = 0;
+      break;
+    case 'top-center':
+      x = Math.floor((screenWidth - winWidth) / 2);
       y = 0;
       break;
     case 'top-right':
       x = screenWidth - winWidth;
       y = 0;
       break;
+    case 'middle-left':
+      x = 0;
+      y = Math.floor((screenHeight - winHeight) / 2);
+      break;
+    case 'center':
+      x = Math.floor((screenWidth - winWidth) / 2);
+      y = Math.floor((screenHeight - winHeight) / 2);
+      break;
+    case 'middle-right':
+      x = screenWidth - winWidth;
+      y = Math.floor((screenHeight - winHeight) / 2);
+      break;
     case 'bottom-left':
       x = 0;
+      y = screenHeight - winHeight;
+      break;
+    case 'bottom-center':
+      x = Math.floor((screenWidth - winWidth) / 2);
       y = screenHeight - winHeight;
       break;
     case 'bottom-right':
       x = screenWidth - winWidth;
       y = screenHeight - winHeight;
       break;
-    case 'center':
+    default:
+      // Fallback to center for unknown positions
       x = Math.floor((screenWidth - winWidth) / 2);
       y = Math.floor((screenHeight - winHeight) / 2);
-      break;
   }
 
   setWindowBounds({ x, y, width: winWidth, height: winHeight });
   console.log(`🔄 Window moved to ${corner}`);
+}
+
+function placeWindow(position) {
+  // alias for moveWindowToCorner with the same position names
+  try {
+    moveWindowToCorner(position);
+  } catch (e) {
+    console.warn('placeWindow failed:', e && e.message ? e.message : e);
+  }
 }
 
 function moveWindowByArrow(direction) {
@@ -244,6 +275,7 @@ module.exports = {
   setWindowBounds,
   setWindowReference,
   moveWindowToCorner,
+  placeWindow,
   moveWindowByArrow,
   resizeWindowByArrow,
   toggleOpacity,
