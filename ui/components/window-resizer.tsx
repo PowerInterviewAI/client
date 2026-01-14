@@ -70,13 +70,13 @@ export default function WindowResizer() {
         onMouseDown={(e) => startDrag(e, 'right')}
         // eslint-disable-next-line
         style={{ cursor: cursorForEdge('right'), WebkitAppRegion: 'no-drag' } as any}
-        className="pointer-events-auto absolute top-0 bottom-0 right-0 w-4"
+        className="pointer-events-auto absolute top-0 bottom-0 right-0 w-2"
       />
       <div
         onMouseDown={(e) => startDrag(e, 'bottom')}
         // eslint-disable-next-line
         style={{ cursor: cursorForEdge('bottom'), WebkitAppRegion: 'no-drag' } as any}
-        className="pointer-events-auto absolute left-0 right-0 bottom-0 h-4"
+        className="pointer-events-auto absolute left-0 right-0 bottom-0 h-2"
       />
 
       {/* Corner: keep only bottom-right */}
@@ -84,7 +84,7 @@ export default function WindowResizer() {
         onMouseDown={(e) => startDrag(e, 'bottom-right')}
         // eslint-disable-next-line
         style={{ cursor: cursorForEdge('bottom-right'), WebkitAppRegion: 'no-drag' } as any}
-        className="pointer-events-auto absolute bottom-0 right-0 w-8 h-8"
+        className="pointer-events-auto absolute bottom-0 right-0 w-4 h-4"
       />
     </div>
   );
