@@ -9,7 +9,6 @@ import { APIError } from '@/types/error';
 import { UseMutationResult } from '@tanstack/react-query';
 import { Ellipsis, Play, Square } from 'lucide-react';
 import {
-  AudioControlSection,
   MainControls,
   ProfileSection,
   StatusIndicator,
@@ -192,20 +191,12 @@ export default function ControlPanel({
           audioInputDeviceNotFound={audioInputDeviceNotFound}
           getDisabled={getDisabled}
         />
-
-        <AudioControlSection
-          runningState={runningState}
-          audioOutputDevices={audioOutputDevices}
-          config={config}
-          updateConfig={updateConfig}
-          getDisabled={getDisabled}
-        />
-
         <VideoControlSection
           runningState={runningState}
           config={config}
           updateConfig={updateConfig}
           videoDeviceNotFound={videoDeviceNotFound}
+          audioOutputDevices={audioOutputDevices}
           getDisabled={getDisabled}
         />
 

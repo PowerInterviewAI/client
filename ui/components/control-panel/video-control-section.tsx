@@ -3,6 +3,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -13,6 +14,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useVideoDevices } from '@/hooks/video-devices';
 import { RunningState } from '@/types/appState';
+import { PyAudioDevice } from '@/types/audioDevice';
 import { Config } from '@/types/config';
 import { Ellipsis, Video, VideoOff } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -23,6 +25,7 @@ interface VideoControlSectionProps {
   config?: Config;
   updateConfig: (config: Partial<Config>) => void;
   videoDeviceNotFound: boolean;
+  audioOutputDevices: PyAudioDevice[];
   getDisabled: (state: RunningState, disableOnRunning?: boolean) => boolean;
 }
 
@@ -31,6 +34,7 @@ export function VideoControlSection({
   config,
   updateConfig,
   videoDeviceNotFound,
+  audioOutputDevices,
   getDisabled,
 }: VideoControlSectionProps) {
   const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
@@ -42,12 +46,22 @@ export function VideoControlSection({
   const obsCameraExists =
     videoDevices.length > 0 ? videoDevices.some((d) => d.label.includes(OBS_CAMERA_PREFIX)) : true;
 
+  const VB_AUDIO_INPUT_PREFIX = 'CABLE Input (VB-Audio Virtual';
+  const vbInputExists =
+    audioOutputDevices.length > 0
+      ? audioOutputDevices.some((d) => d.name.startsWith(VB_AUDIO_INPUT_PREFIX))
+      : true;
+
   useEffect(() => {
     if (!obsCameraExists && config?.enable_video_control) {
       updateConfig({ enable_video_control: false });
       toast.error('OBS Virtual Camera not found — disabling Video Control');
     }
-  }, [obsCameraExists, config?.enable_video_control, updateConfig]);
+    if (!vbInputExists && config?.enable_video_control) {
+      updateConfig({ enable_video_control: false });
+      toast.error('VB-Audio Input device not found — disabling Video Control');
+    }
+  }, [obsCameraExists, vbInputExists, config?.enable_video_control, updateConfig]);
 
   const usableVideoDevices = videoDevices.filter((d) => {
     if (d.label.toLowerCase().startsWith(OBS_CAMERA_PREFIX.toLowerCase())) return false;
@@ -269,6 +283,19 @@ export function VideoControlSection({
               >
                 {config?.enable_face_enhance ? 'On' : 'Off'}
               </Button>
+            </div>
+
+            {/* Audio Delay (moved from audio control) */}
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Audio Delay (ms)</label>
+              <Input
+                type="number"
+                value={config?.audio_delay_ms ?? ''}
+                onChange={(e) => updateConfig({ audio_delay_ms: Number(e.target.value) || 0 })}
+                className="w-full h-8 px-2 text-xs border rounded-md bg-background"
+                min={0}
+                step={10}
+              />
             </div>
           </DialogContent>
         </Dialog>
