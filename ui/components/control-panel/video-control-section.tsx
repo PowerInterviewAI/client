@@ -148,12 +148,15 @@ export function VideoControlSection({
               size="icon"
               className="h-8 w-8 border-none rounded-none"
               disabled={
-                getDisabled(runningState) || (!obsCameraExists && !config?.enable_video_control)
+                getDisabled(runningState) ||
+                ((!obsCameraExists || !vbInputExists) && !config?.enable_video_control)
               }
               onClick={() => {
                 const tryingToEnable = !config?.enable_video_control;
-                if (tryingToEnable && !obsCameraExists) {
-                  alert('OBS Virtual Camera not found. Video control requires OBS Virtual Camera.');
+                if (tryingToEnable && (!obsCameraExists || !vbInputExists)) {
+                  alert(
+                    'OBS Virtual Camera or VB-Audio Input not found. Video control requires both.',
+                  );
                   return;
                 }
                 toast.success(
@@ -196,10 +199,11 @@ export function VideoControlSection({
           <DialogContent className="flex flex-col w-72 p-4 gap-4">
             <DialogTitle>Video Control Options</DialogTitle>
 
-            {/* Camera Preview */}
             {!obsCameraExists && (
-              <div className="mb-3 text-sm text-destructive">
-                OBS Virtual Camera not found. Video control is unavailable.
+              <div className="text-sm text-destructive">
+                OBS Virtual Camera not found.
+                <br />
+                FaceSwap feature requires OBS Virtual Camera.
                 <br />
                 Download and install OBS studio from
                 <br />
@@ -208,95 +212,116 @@ export function VideoControlSection({
                 and then restart this application.
               </div>
             )}
-            <video
-              ref={videoPreviewRef}
-              autoPlay
-              muted
-              playsInline
-              className="w-full h-32 bg-black rounded-md object-contain"
-            />
+            {!vbInputExists && (
+              <div className="text-sm text-destructive">
+                VB-Audio Input device not found.
+                <br />
+                AudioSync feature requires VB-Audio Virtual Cable.
+                <br />
+                Download and install VBCABLE Driver from
+                <br />
+                <span className="underline">https://vb-audio.com/Cable/</span>
+              </div>
+            )}
 
-            {/* Camera Device Select */}
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Camera Device</label>
-              <Select
-                value={`${config?.camera_device_name}`}
-                onValueChange={(v) => updateConfig({ camera_device_name: v })}
-              >
-                <SelectTrigger className="h-8 w-full text-xs">
-                  <SelectValue placeholder="Select camera" />
-                </SelectTrigger>
-                <SelectContent>
-                  {usableVideoDevices.map((device) => (
-                    <SelectItem key={device.label} value={device.label}>
-                      {device.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {obsCameraExists && vbInputExists && (
+              <>
+                {/* Camera Preview */}
+                <video
+                  ref={videoPreviewRef}
+                  autoPlay
+                  muted
+                  playsInline
+                  className="w-full h-32 bg-black rounded-md object-contain"
+                />
 
-            {/* Resolution Select */}
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Resolution</label>
-              <Select
-                value={`${config?.video_width}x${config?.video_height}`}
-                onValueChange={(v) => {
-                  const [w, h] = v.split('x').map(Number);
-                  updateConfig({ video_width: w, video_height: h });
-                }}
-              >
-                <SelectTrigger className="h-8 w-full text-xs">
-                  <SelectValue placeholder="Select resolution" />
-                </SelectTrigger>
-                <SelectContent>
-                  {['640x360', '640x480', '1280x720', '1920x1080'].map((res) => (
-                    <SelectItem key={res} value={res}>
-                      {res}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                {/* Camera Device Select */}
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Camera Device</label>
+                  <Select
+                    value={`${config?.camera_device_name}`}
+                    onValueChange={(v) => updateConfig({ camera_device_name: v })}
+                  >
+                    <SelectTrigger className="h-8 w-full text-xs">
+                      <SelectValue placeholder="Select camera" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {usableVideoDevices.map((device) => (
+                        <SelectItem key={device.label} value={device.label}>
+                          {device.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            {/* Face Swap Toggle */}
-            <div className="flex items-center justify-between">
-              <span className="text-xs">Face Swap</span>
-              <Button
-                variant={config?.enable_face_swap ? 'default' : 'outline'}
-                size="sm"
-                className="w-16"
-                onClick={() => updateConfig({ enable_face_swap: !config?.enable_face_swap })}
-              >
-                {config?.enable_face_swap ? 'On' : 'Off'}
-              </Button>
-            </div>
+                {/* Resolution Select */}
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Resolution</label>
+                  <Select
+                    value={`${config?.video_width}x${config?.video_height}`}
+                    onValueChange={(v) => {
+                      const [w, h] = v.split('x').map(Number);
+                      updateConfig({ video_width: w, video_height: h });
+                    }}
+                  >
+                    <SelectTrigger className="h-8 w-full text-xs">
+                      <SelectValue placeholder="Select resolution" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {['640x360', '640x480', '1280x720', '1920x1080'].map((res) => (
+                        <SelectItem key={res} value={res}>
+                          {res}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            {/* Face Enhance Toggle */}
-            <div className="flex items-center justify-between">
-              <span className="text-xs">Face Enhance</span>
-              <Button
-                variant={config?.enable_face_enhance ? 'default' : 'outline'}
-                size="sm"
-                className="w-16"
-                onClick={() => updateConfig({ enable_face_enhance: !config?.enable_face_enhance })}
-              >
-                {config?.enable_face_enhance ? 'On' : 'Off'}
-              </Button>
-            </div>
+                {/* Face Swap Toggle */}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs">Face Swap</span>
+                  <Button
+                    variant={config?.enable_face_swap ? 'default' : 'outline'}
+                    size="sm"
+                    className="w-16"
+                    onClick={() => updateConfig({ enable_face_swap: !config?.enable_face_swap })}
+                  >
+                    {config?.enable_face_swap ? 'On' : 'Off'}
+                  </Button>
+                </div>
 
-            {/* Audio Delay (moved from audio control) */}
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Audio Delay (ms)</label>
-              <Input
-                type="number"
-                value={config?.audio_delay_ms ?? ''}
-                onChange={(e) => updateConfig({ audio_delay_ms: Number(e.target.value) || 0 })}
-                className="w-full h-8 px-2 text-xs border rounded-md bg-background"
-                min={0}
-                step={10}
-              />
-            </div>
+                {/* Face Enhance Toggle */}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs">Face Enhance</span>
+                  <Button
+                    variant={config?.enable_face_enhance ? 'default' : 'outline'}
+                    size="sm"
+                    className="w-16"
+                    onClick={() =>
+                      updateConfig({ enable_face_enhance: !config?.enable_face_enhance })
+                    }
+                  >
+                    {config?.enable_face_enhance ? 'On' : 'Off'}
+                  </Button>
+                </div>
+
+                {/* Audio Delay (moved from audio control) */}
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">
+                    Audio Sync Delay (ms)
+                  </label>
+                  <Input
+                    type="number"
+                    value={config?.audio_delay_ms ?? ''}
+                    onChange={(e) => updateConfig({ audio_delay_ms: Number(e.target.value) || 0 })}
+                    className="w-full h-8 px-2 text-xs border rounded-md bg-background"
+                    min={0}
+                    step={10}
+                  />
+                </div>
+              </>
+            )}
           </DialogContent>
         </Dialog>
       </div>
