@@ -45,7 +45,7 @@ export default function Titlebar() {
         style={{ WebkitAppRegion: 'drag' } as any}
         className="flex items-center gap-3 h-9 px-1 select-none bg-card border-b border-border"
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 px-1">
           <Image src="/favicon.svg" alt="logo" className="h-5 w-5" width={12} height={12} />
 
           <div
