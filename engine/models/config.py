@@ -32,16 +32,6 @@ class Config(BaseModel):
         Field(description="The audio input device name"),
     ] = ""
 
-    # Audio control options
-    enable_audio_control: Annotated[
-        bool,
-        Field(description="Whether audio control is enabled"),
-    ] = False
-    audio_delay_ms: Annotated[
-        int,
-        Field(description="The audio delay in milliseconds"),
-    ] = 300
-
     # Video control options
     enable_video_control: Annotated[
         bool,
@@ -67,6 +57,10 @@ class Config(BaseModel):
         bool,
         Field(description="Whether face enhancement is enabled"),
     ] = False
+    audio_delay_ms: Annotated[
+        int,
+        Field(description="The audio delay in milliseconds"),
+    ] = 300
 
 
 class ConfigUpdate(BaseModel):
@@ -79,10 +73,6 @@ class ConfigUpdate(BaseModel):
     # Transcript options
     audio_input_device_name: str | None = None
 
-    # Audio control options
-    enable_audio_control: bool | None = None
-    audio_delay_ms: int | None = None
-
     # Video control options
     enable_video_control: bool | None = None
     camera_device_name: str | None = None
@@ -90,3 +80,4 @@ class ConfigUpdate(BaseModel):
     video_height: int | None = None
     enable_face_swap: bool | None = None
     enable_face_enhance: bool | None = None
+    audio_delay_ms: int | None = None

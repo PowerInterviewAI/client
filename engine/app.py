@@ -63,7 +63,13 @@ class PowerInterviewApp:
         self.suggestion_service.clear_suggestions()
         self.code_suggestion_service.clear_suggestions()
 
-        if ConfigService.config.enable_audio_control:
+        if ConfigService.config.enable_video_control:
+            self.virtual_camera_service.update_parameters(
+                width=ConfigService.config.video_width,
+                height=ConfigService.config.video_height,
+                fps=cfg_video.DEFAULT_FPS,
+            )
+            self.virtual_camera_service.start()
             self.audio_controller.update_parameters(
                 input_device_id=AudioDeviceService.get_device_index_by_name(
                     ConfigService.config.audio_input_device_name
@@ -72,14 +78,6 @@ class PowerInterviewApp:
                 delay_secs=ConfigService.config.audio_delay_ms / 1000,
             )
             self.audio_controller.start()
-
-        if ConfigService.config.enable_video_control:
-            self.virtual_camera_service.update_parameters(
-                width=ConfigService.config.video_width,
-                height=ConfigService.config.video_height,
-                fps=cfg_video.DEFAULT_FPS,
-            )
-            self.virtual_camera_service.start()
 
         # Register global hotkeys
         try:
