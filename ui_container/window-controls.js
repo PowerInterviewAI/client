@@ -198,9 +198,6 @@ function enableStealth() {
     // Make window non-focusable so it doesn't capture keyboard events
     win.setFocusable(false);
 
-    // Enable content protection in stealth mode
-    win.setContentProtection(true);
-
     // Make the window semi-transparent
     win.setOpacity(0.85);
 
@@ -226,9 +223,6 @@ function disableStealth() {
 
     // Restore previous always-on-top state if we saved one
     win.setAlwaysOnTop(false);
-
-    // Disable content protection when stealth mode is disabled
-    win.setContentProtection(false);
 
     // Restore full opacity
     win.setOpacity(1.0);

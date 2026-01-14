@@ -75,6 +75,9 @@ async function createWindow() {
   win.setMenuBarVisibility(false);
   win.setAutoHideMenuBar(true);
 
+  // Enable content protection to prevent screen capture/recording
+  win.setContentProtection(true);
+
   // Set window reference for window controls
   setWindowReference(win);
 
