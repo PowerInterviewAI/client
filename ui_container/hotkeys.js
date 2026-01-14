@@ -79,35 +79,20 @@ function registerGlobalHotkeys(overrides = {}) {
   // Interview suggestions: Ctrl+Alt+Shift+U (up) / Ctrl+Alt+Shift+J (down)
   globalShortcut.register('Control+Alt+Shift+U', () => {
     const w = BrowserWindow.getAllWindows()[0];
-    if (w && !w.isDestroyed()) w.webContents.send('hotkey-scroll', 'up');
+    if (w && !w.isDestroyed()) w.webContents.send('hotkey-scroll', '0', 'up');
   });
   globalShortcut.register('Control+Alt+Shift+J', () => {
     const w = BrowserWindow.getAllWindows()[0];
-    if (w && !w.isDestroyed()) w.webContents.send('hotkey-scroll', 'down');
+    if (w && !w.isDestroyed()) w.webContents.send('hotkey-scroll', '0', 'down');
   });
   // Code suggestions: Ctrl+Alt+Shift+I (up) / Ctrl+Alt+Shift+K (down)
   globalShortcut.register('Control+Alt+Shift+I', () => {
     const w = BrowserWindow.getAllWindows()[0];
-    if (w && !w.isDestroyed()) w.webContents.send('hotkey-scroll', 'up');
+    if (w && !w.isDestroyed()) w.webContents.send('hotkey-scroll', '1', 'up');
   });
   globalShortcut.register('Control+Alt+Shift+K', () => {
     const w = BrowserWindow.getAllWindows()[0];
-    if (w && !w.isDestroyed()) w.webContents.send('hotkey-scroll', 'down');
-  });
-
-  // Additional renderer actions: Capture screenshot, set prompt, submit
-  // These send action events to the renderer; UI can wire handlers via ipc if needed.
-  globalShortcut.register('Control+Alt+Shift+S', () => {
-    const w = BrowserWindow.getAllWindows()[0];
-    if (w && !w.isDestroyed()) w.webContents.send('hotkey-action', 'capture-screenshot');
-  });
-  globalShortcut.register('Control+Alt+Shift+P', () => {
-    const w = BrowserWindow.getAllWindows()[0];
-    if (w && !w.isDestroyed()) w.webContents.send('hotkey-action', 'set-prompt');
-  });
-  globalShortcut.register('Control+Alt+Shift+Enter', () => {
-    const w = BrowserWindow.getAllWindows()[0];
-    if (w && !w.isDestroyed()) w.webContents.send('hotkey-action', 'submit');
+    if (w && !w.isDestroyed()) w.webContents.send('hotkey-scroll', '1', 'down');
   });
 
   console.log('🎹 Global hotkeys registered:');

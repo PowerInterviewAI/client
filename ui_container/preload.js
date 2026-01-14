@@ -3,15 +3,9 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('electronAPI', {
   // Hotkey scroll events
   onHotkeyScroll: callback => {
-    const handler = (event, direction) => callback(direction);
+    const handler = (event, section, direction) => callback(section, direction);
     ipcRenderer.on('hotkey-scroll', handler);
     return () => ipcRenderer.removeListener('hotkey-scroll', handler);
-  },
-  // General hotkey actions (e.g. capture-screenshot, set-prompt, submit)
-  onHotkeyAction: callback => {
-    const handler = (event, action) => callback(action);
-    ipcRenderer.on('hotkey-action', handler);
-    return () => ipcRenderer.removeListener('hotkey-action', handler);
   },
   // Window controls
   minimize: () => ipcRenderer.send('window-minimize'),

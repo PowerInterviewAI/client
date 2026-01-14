@@ -38,4 +38,3 @@ This Electron application supports global system hotkeys for controlling window 
 - Uses Electron's `globalShortcut` for system-wide hotkeys
 - Uses `Ctrl+Alt+Shift` modifiers for all global hotkeys in this set
 - Scroll events are delivered via `hotkey-scroll` IPC; renderer can subscribe using `onHotkeyScroll`
-- Other renderer actions are delivered via `hotkey-action` IPC and can be subscribed using `onHotkeyAction`
