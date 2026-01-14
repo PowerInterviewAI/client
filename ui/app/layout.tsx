@@ -1,6 +1,5 @@
+import MainFrame from '@/components/main-frame';
 import Providers from '@/components/providers';
-import Titlebar from '@/components/titlebar';
-import WindowResizer from '@/components/window-resizer';
 import { Inter } from 'next/font/google';
 import './globals.css';
 
@@ -21,21 +20,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} antialiased`}>
+      <body className={`${inter.className} antialiased`} style={{ backgroundColor: 'transparent' }}>
         <Providers>
-          <div
-            className="flex flex-col h-screen"
-            style={{
-              border: '2px solid var(--border)',
-              borderRadius: 'calc(var(--radius))',
-              boxShadow: '0 12px 30px rgba(0,0,0,0.25)',
-              overflow: 'hidden',
-            }}
-          >
-            <Titlebar />
-            <div className="flex-1 flex flex-col overflow-auto">{children}</div>
-          </div>
-          <WindowResizer />
+          <MainFrame>{children}</MainFrame>
         </Providers>
       </body>
     </html>
