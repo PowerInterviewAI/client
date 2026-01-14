@@ -31,28 +31,29 @@ export default function DocumentationDialog({ open, onOpenChange }: Documentatio
 
           <div className="text-sm text-muted-foreground mb-3 space-y-2">
             <p>
-              Quick start: open the app, position the window where you want overlays to appear, then
-              press <strong>Ctrl+Alt+S</strong> to toggle stealth mode. While stealth is active the
-              window remains visually on top but ignores mouse input and is non-focusable.
+              Quick start: open the app, position the window where you want overlays to appear,
+              then press <strong>Win+Shift+Q</strong> to toggle stealth mode. While stealth is
+              active the window remains visually on top but ignores mouse input and is
+              non-focusable.
             </p>
 
             <ol className="list-decimal ml-5 space-y-1">
               <li>Arrange window where you want prompts or notes to appear.</li>
               <li>
-                Press <strong>Ctrl+Alt+S</strong> to enter stealth (overlay becomes
+                Press <strong>Win+Shift+Q</strong> to enter stealth (overlay becomes
                 non-interactive).
               </li>
               <li>
-                Snap with <strong>Ctrl+Alt+1,2,3,4,5</strong>, move with{' '}
-                <strong>Ctrl+Alt+Arrow</strong>.
+                Place the window with <strong>Win+Ctrl+1-9</strong> (numpad-style grid), move it
+                with <strong>Win+Ctrl+Arrow</strong>.
               </li>
               <li>
-                Resize with <strong>Ctrl+Shift+Arrow</strong>, adjust opacity with{' '}
-                <strong>Ctrl+Shift+X</strong> (toggle between ~20% and ~90% opacity; only available
-                in stealth mode).
+                Resize with <strong>Win+Ctrl+Shift+Arrow</strong>, adjust opacity with{' '}
+                <strong>Win+Shift+W</strong> (toggle between ~20% and ~90% opacity; only
+                available in stealth mode).
               </li>
               <li>
-                Exit stealth with <strong>Ctrl+Alt+S</strong> to interact with the app normally.
+                Exit stealth with <strong>Win+Shift+Q</strong> to interact with the app normally.
               </li>
             </ol>
           </div>
