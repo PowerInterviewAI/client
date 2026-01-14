@@ -103,43 +103,6 @@ export function ProfileSection({
             Change password
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={() => {
-              if (disabled) return;
-              try {
-                // Use the exposed electron API when available
-                if (
-                  typeof window !== 'undefined' &&
-                  // eslint-disable-next-line
-                  // @ts-ignore
-                  window.electronAPI &&
-                  // eslint-disable-next-line
-                  // @ts-ignore
-                  window.electronAPI.toggleStealth
-                ) {
-                  // eslint-disable-next-line
-                  // @ts-ignore
-                  window.electronAPI.toggleStealth();
-                }
-              } catch (e) {
-                console.warn('Toggle stealth failed', e);
-              }
-            }}
-          >
-            <Eye className="mr-2 h-4 w-4" />
-            Toggle Stealth
-          </DropdownMenuItem>
-
-          <DropdownMenuItem
-            onClick={() => {
-              if (disabled) return;
-              setIsDocumentationOpen(true);
-            }}
-          >
-            <BookOpen className="mr-2 h-4 w-4" />
-            Documentation
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => !disabled && onSignOut()} disabled={disabled}>
             <LogOut className="mr-2 h-4 w-4" />
             Sign out

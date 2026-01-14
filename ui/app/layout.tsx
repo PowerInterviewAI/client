@@ -2,6 +2,7 @@ import Providers from '@/components/providers';
 import WindowResizer from '@/components/window-resizer';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import Titlebar from '@/components/titlebar';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -31,6 +32,7 @@ export default function RootLayout({
               overflow: 'hidden',
             }}
           >
+            <Titlebar />
             <div className="flex-1 flex flex-col overflow-auto">{children}</div>
           </div>
           <WindowResizer />
