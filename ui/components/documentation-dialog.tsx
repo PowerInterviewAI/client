@@ -32,27 +32,27 @@ export default function DocumentationDialog({ open, onOpenChange }: Documentatio
           <div className="text-sm text-muted-foreground mb-3 space-y-2">
             <p>
               Quick start: open the app, position the window where you want overlays to appear, then
-              press <strong>Win+Shift+Q</strong> to toggle stealth mode. While stealth is active the
+              press <strong>Ctrl+Alt+Shift+Q</strong> to toggle stealth mode. While stealth is active the
               window remains visually on top but ignores mouse input and is non-focusable.
             </p>
 
             <ol className="list-decimal ml-5 space-y-1">
               <li>Arrange window where you want prompts or notes to appear.</li>
               <li>
-                Press <strong>Win+Shift+Q</strong> to enter stealth (overlay becomes
+                Press <strong>Ctrl+Alt+Shift+Q</strong> to enter stealth (overlay becomes
                 non-interactive).
               </li>
               <li>
-                Place the window with <strong>Win+Ctrl+1-9</strong> (numpad-style grid), move it
-                with <strong>Win+Ctrl+Arrow</strong>.
+                Place the window with <strong>Ctrl+Alt+Shift+1-9</strong> (numpad-style grid), move it
+                with <strong>Ctrl+Alt+Shift+Arrow</strong>.
               </li>
               <li>
-                Resize with <strong>Win+Ctrl+Shift+Arrow</strong>, adjust opacity with{' '}
-                <strong>Win+Shift+W</strong> (toggle between ~20% and ~90% opacity; only available
+                Resize with <strong>Ctrl+Alt+Shift+F1-F4</strong>, adjust opacity with{' '}
+                <strong>Ctrl+Alt+Shift+W</strong> (toggle between ~20% and ~90% opacity; only available
                 in stealth mode).
               </li>
               <li>
-                Exit stealth with <strong>Win+Shift+Q</strong> to interact with the app normally.
+                Exit stealth with <strong>Ctrl+Alt+Shift+Q</strong> to interact with the app normally.
               </li>
             </ol>
           </div>

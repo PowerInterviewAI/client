@@ -20,11 +20,11 @@ function registerGlobalHotkeys(overrides = {}) {
   // Unregister existing hotkeys first
   globalShortcut.unregisterAll();
 
-  // Stealth mode toggle — Win+Shift+Q
-  globalShortcut.register('Super+Shift+Q', () => toggleStealth());
+  // Stealth mode toggle — Ctrl+Alt+Shift+Q
+  globalShortcut.register('Control+Alt+Shift+Q', () => toggleStealth());
 
-  // Opacity toggle (Win+Shift+W): toggle opacity when in stealth mode
-  globalShortcut.register('Super+Shift+W', () => toggleOpacity());
+  // Opacity toggle (Ctrl+Alt+Shift+W): toggle opacity when in stealth mode
+  globalShortcut.register('Control+Alt+Shift+W', () => toggleOpacity());
 
   // Window positioning hotkeys (Win+Ctrl+1-9)
   // Map numpad-style positions: 7 8 9
@@ -55,71 +55,75 @@ function registerGlobalHotkeys(overrides = {}) {
     }
   };
   for (let i = 1; i <= 9; i++) {
-    globalShortcut.register(`Super+Control+${i}`, () => {
+    // Register Ctrl+Alt+Shift+1..9 for placement (match ui/lib/hotkeys.ts)
+    globalShortcut.register(`Control+Alt+Shift+${i}`, () => {
       const pos = numToCorner(i);
-      // Place window at the requested 9-position grid
       moveWindowToCorner(pos);
     });
   }
 
   // Arrow key movement hotkeys (Win+Ctrl+ArrowKeys)
-  globalShortcut.register('Super+Control+Up', () => moveWindowByArrow('up'));
-  globalShortcut.register('Super+Control+Down', () => moveWindowByArrow('down'));
-  globalShortcut.register('Super+Control+Left', () => moveWindowByArrow('left'));
-  globalShortcut.register('Super+Control+Right', () => moveWindowByArrow('right'));
+  // Movement: Ctrl+Alt+Shift+Arrow
+  globalShortcut.register('Control+Alt+Shift+Up', () => moveWindowByArrow('up'));
+  globalShortcut.register('Control+Alt+Shift+Down', () => moveWindowByArrow('down'));
+  globalShortcut.register('Control+Alt+Shift+Left', () => moveWindowByArrow('left'));
+  globalShortcut.register('Control+Alt+Shift+Right', () => moveWindowByArrow('right'));
 
   // Arrow key resize hotkeys (Win+Ctrl+Shift+ArrowKeys)
-  globalShortcut.register('Super+Control+Shift+Up', () => resizeWindowByArrow('up'));
-  globalShortcut.register('Super+Control+Shift+Down', () => resizeWindowByArrow('down'));
-  globalShortcut.register('Super+Control+Shift+Left', () => resizeWindowByArrow('left'));
-  globalShortcut.register('Super+Control+Shift+Right', () => resizeWindowByArrow('right'));
+  // Resize presets / actions: Ctrl+Alt+Shift+F1-F4
+  // Map F9..F12 to simple preset resizes implemented in window-controls
+  const { resizeWindowPreset } = require('./window-controls');
+  globalShortcut.register('Control+Alt+Shift+F9', () => resizeWindowByArrow('left'));
+  globalShortcut.register('Control+Alt+Shift+F10', () => resizeWindowByArrow('right'));
+  globalShortcut.register('Control+Alt+Shift+F11', () => resizeWindowByArrow('up'));
+  globalShortcut.register('Control+Alt+Shift+F12', () => resizeWindowByArrow('down'));
 
   // Send scroll events to renderer for suggestions/code scrolling
-  // Interview suggestions: Ctrl+Shift+U (up) / Ctrl+Shift+J (down)
-  globalShortcut.register('Control+Shift+U', () => {
+  // Interview suggestions: Ctrl+Alt+Shift+U (up) / Ctrl+Alt+Shift+J (down)
+  globalShortcut.register('Control+Alt+Shift+U', () => {
     const w = BrowserWindow.getAllWindows()[0];
     if (w && !w.isDestroyed()) w.webContents.send('hotkey-scroll', 'up');
   });
-  globalShortcut.register('Control+Shift+J', () => {
+  globalShortcut.register('Control+Alt+Shift+J', () => {
     const w = BrowserWindow.getAllWindows()[0];
     if (w && !w.isDestroyed()) w.webContents.send('hotkey-scroll', 'down');
   });
-  // Code suggestions: Ctrl+Shift+I (up) / Ctrl+Shift+K (down)
-  globalShortcut.register('Control+Shift+I', () => {
+  // Code suggestions: Ctrl+Alt+Shift+I (up) / Ctrl+Alt+Shift+K (down)
+  globalShortcut.register('Control+Alt+Shift+I', () => {
     const w = BrowserWindow.getAllWindows()[0];
     if (w && !w.isDestroyed()) w.webContents.send('hotkey-scroll', 'up');
   });
-  globalShortcut.register('Control+Shift+K', () => {
+  globalShortcut.register('Control+Alt+Shift+K', () => {
     const w = BrowserWindow.getAllWindows()[0];
     if (w && !w.isDestroyed()) w.webContents.send('hotkey-scroll', 'down');
   });
 
   // Additional renderer actions: Capture screenshot, set prompt, submit
   // These send action events to the renderer; UI can wire handlers via ipc if needed.
-  globalShortcut.register('Control+Shift+S', () => {
+  globalShortcut.register('Control+Alt+Shift+S', () => {
     const w = BrowserWindow.getAllWindows()[0];
     if (w && !w.isDestroyed()) w.webContents.send('hotkey-action', 'capture-screenshot');
   });
-  globalShortcut.register('Control+Shift+P', () => {
+  globalShortcut.register('Control+Alt+Shift+P', () => {
     const w = BrowserWindow.getAllWindows()[0];
     if (w && !w.isDestroyed()) w.webContents.send('hotkey-action', 'set-prompt');
   });
-  globalShortcut.register('Control+Shift+Enter', () => {
+  globalShortcut.register('Control+Alt+Shift+Enter', () => {
     const w = BrowserWindow.getAllWindows()[0];
     if (w && !w.isDestroyed()) w.webContents.send('hotkey-action', 'submit');
   });
 
   console.log('🎹 Global hotkeys registered:');
-  console.log('  Win+Ctrl+1-9: Place window (numpad layout)');
-  console.log('  Win+Ctrl+Arrow: Move window');
-  console.log('  Win+Ctrl+Shift+Arrow: Resize window');
-  console.log('  Win+Shift+Q: Toggle stealth mode');
-  console.log('  Win+Shift+W: Toggle opacity (stealth only)');
-  console.log('  Ctrl+Shift+U / J: Scroll interview suggestions');
-  console.log('  Ctrl+Shift+I / K: Scroll code suggestions');
-  console.log('  Ctrl+Shift+S: Capture screenshot (renderer action)');
-  console.log('  Ctrl+Shift+P: Set prompt (renderer action)');
-  console.log('  Ctrl+Shift+Enter: Submit (renderer action)');
+  console.log('  Ctrl+Alt+Shift+1-9: Place window (numpad layout)');
+  console.log('  Ctrl+Alt+Shift+Arrow: Move window');
+  console.log('  Ctrl+Alt+Shift+F9-F12: Resize window');
+  console.log('  Ctrl+Alt+Shift+Q: Toggle stealth mode');
+  console.log('  Ctrl+Alt+Shift+W: Toggle opacity (stealth only)');
+  console.log('  Ctrl+Alt+Shift+U / J: Scroll interview suggestions');
+  console.log('  Ctrl+Alt+Shift+I / K: Scroll code suggestions');
+  console.log('  Ctrl+Alt+Shift+S: Capture screenshot (renderer action)');
+  console.log('  Ctrl+Alt+Shift+P: Set prompt (renderer action)');
+  console.log('  Ctrl+Alt+Shift+Enter: Submit (renderer action)');
 }
 
 function unregisterHotkeys() {

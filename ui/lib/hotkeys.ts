@@ -6,7 +6,7 @@ export const HOTKEYS: Array<[string, string]> = [
   // Window management
   ['Ctrl+Alt+Shift+1-9', 'Place window'], //  corner / side / center
   ['Ctrl+Alt+Shift+ArrowKeys', 'Move window'],
-  ['Ctrl+Alt+Shift+F1-F4', 'Resize window'],
+  ['Ctrl+Alt+Shift+F9-F12', 'Resize window'],
 
   // Suggestions / navigation
   ['Ctrl+Alt+Shift+U / J', 'Scroll interview suggestions'],
