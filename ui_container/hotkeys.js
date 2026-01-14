@@ -69,10 +69,7 @@ function registerGlobalHotkeys(overrides = {}) {
   globalShortcut.register('Control+Alt+Shift+Left', () => moveWindowByArrow('left'));
   globalShortcut.register('Control+Alt+Shift+Right', () => moveWindowByArrow('right'));
 
-  // Arrow key resize hotkeys (Win+Ctrl+Shift+ArrowKeys)
-  // Resize presets / actions: Ctrl+Alt+Shift+F1-F4
-  // Map F9..F12 to simple preset resizes implemented in window-controls
-  const { resizeWindowPreset } = require('./window-controls');
+  // Resize window hotkeys: Ctrl+Alt+Shift+F9-F12
   globalShortcut.register('Control+Alt+Shift+F9', () => resizeWindowByArrow('left'));
   globalShortcut.register('Control+Alt+Shift+F10', () => resizeWindowByArrow('right'));
   globalShortcut.register('Control+Alt+Shift+F11', () => resizeWindowByArrow('up'));
