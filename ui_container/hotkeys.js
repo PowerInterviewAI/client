@@ -1,3 +1,4 @@
+const { BrowserWindow } = require('electron');
 const { globalShortcut } = require('electron');
 
 // Import window control functions
@@ -6,6 +7,7 @@ const {
   moveWindowByArrow,
   resizeWindowByArrow,
   toggleOpacity,
+  toggleStealth,
 } = require('./window-controls');
 
 // -------------------------------------------------------------
@@ -18,22 +20,38 @@ function registerGlobalHotkeys(overrides = {}) {
   // Unregister existing hotkeys first
   globalShortcut.unregisterAll();
 
+  // Stealth mode toggle — Win+Shift+Q
+  globalShortcut.register('Super+Shift+Q', () => toggleStealth());
+
+  // Opacity toggle (Win+Shift+W): toggle opacity when in stealth mode
+  globalShortcut.register('Super+Shift+W', () => toggleOpacity());
+
   // Window positioning hotkeys (Win+Ctrl+1-9)
   // Map numpad-style positions: 7 8 9
   //                             4 5 6
   //                             1 2 3
-  const numToCorner = (n) => {
+  const numToCorner = n => {
     switch (String(n)) {
-      case '1': return 'bottom-left';
-      case '2': return 'bottom-center';
-      case '3': return 'bottom-right';
-      case '4': return 'middle-left';
-      case '5': return 'center';
-      case '6': return 'middle-right';
-      case '7': return 'top-left';
-      case '8': return 'top-center';
-      case '9': return 'top-right';
-      default: return 'center';
+      case '1':
+        return 'bottom-left';
+      case '2':
+        return 'bottom-center';
+      case '3':
+        return 'bottom-right';
+      case '4':
+        return 'middle-left';
+      case '5':
+        return 'center';
+      case '6':
+        return 'middle-right';
+      case '7':
+        return 'top-left';
+      case '8':
+        return 'top-center';
+      case '9':
+        return 'top-right';
+      default:
+        return 'center';
     }
   };
   for (let i = 1; i <= 9; i++) {
@@ -56,17 +74,7 @@ function registerGlobalHotkeys(overrides = {}) {
   globalShortcut.register('Super+Control+Shift+Left', () => resizeWindowByArrow('left'));
   globalShortcut.register('Super+Control+Shift+Right', () => resizeWindowByArrow('right'));
 
-  // Opacity toggle (Win+Shift+W): toggle opacity when in stealth mode
-  globalShortcut.register('Super+Shift+W', () => {
-    try {
-      toggleOpacity();
-    } catch (e) {
-      console.warn('Failed to toggle opacity:', e.message);
-    }
-  });
-
   // Send scroll events to renderer for suggestions/code scrolling
-  const { BrowserWindow } = require('electron');
   // Interview suggestions: Ctrl+Shift+U (up) / Ctrl+Shift+J (down)
   globalShortcut.register('Control+Shift+U', () => {
     const w = BrowserWindow.getAllWindows()[0];
@@ -85,25 +93,6 @@ function registerGlobalHotkeys(overrides = {}) {
     const w = BrowserWindow.getAllWindows()[0];
     if (w && !w.isDestroyed()) w.webContents.send('hotkey-scroll', 'down');
   });
-
-  // Stealth mode toggle — Win+Shift+Q
-  const fallbackToggle = (() => {
-    try {
-      return require('./window-controls').toggleStealth;
-    } catch (e) {
-      return null;
-    }
-  })();
-  const toggleHandler = overrides.toggleStealth || fallbackToggle;
-  if (typeof toggleHandler === 'function') {
-    globalShortcut.register('Super+Shift+Q', () => {
-      try {
-        toggleHandler();
-      } catch (e) {
-        console.warn('Failed to toggle stealth:', e.message);
-      }
-    });
-  }
 
   // Additional renderer actions: Capture screenshot, set prompt, submit
   // These send action events to the renderer; UI can wire handlers via ipc if needed.

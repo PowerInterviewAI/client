@@ -53,7 +53,8 @@ function moveWindowToCorner(corner) {
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
   const { width: winWidth, height: winHeight } = win.getBounds();
 
-  let x = 0, y = 0;
+  let x = 0,
+    y = 0;
 
   // Support 9 positions: top-left, top-center, top-right,
   // middle-left, center, middle-right,

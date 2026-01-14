@@ -1,8 +1,8 @@
 import Providers from '@/components/providers';
+import Titlebar from '@/components/titlebar';
 import WindowResizer from '@/components/window-resizer';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import Titlebar from '@/components/titlebar';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 

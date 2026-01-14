@@ -12,7 +12,7 @@ import {
 import useAuth from '@/hooks/use-auth';
 import { RunningState } from '@/types/appState';
 import { Config } from '@/types/config';
-import { BookOpen, ChevronUp, Eye, Key, LogOut, Moon, SettingsIcon, Sun } from 'lucide-react';
+import { ChevronUp, Key, LogOut, Moon, SettingsIcon, Sun } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 import { ChangePasswordDialog } from './change-password-dialog';

@@ -31,10 +31,9 @@ export default function DocumentationDialog({ open, onOpenChange }: Documentatio
 
           <div className="text-sm text-muted-foreground mb-3 space-y-2">
             <p>
-              Quick start: open the app, position the window where you want overlays to appear,
-              then press <strong>Win+Shift+Q</strong> to toggle stealth mode. While stealth is
-              active the window remains visually on top but ignores mouse input and is
-              non-focusable.
+              Quick start: open the app, position the window where you want overlays to appear, then
+              press <strong>Win+Shift+Q</strong> to toggle stealth mode. While stealth is active the
+              window remains visually on top but ignores mouse input and is non-focusable.
             </p>
 
             <ol className="list-decimal ml-5 space-y-1">
@@ -49,8 +48,8 @@ export default function DocumentationDialog({ open, onOpenChange }: Documentatio
               </li>
               <li>
                 Resize with <strong>Win+Ctrl+Shift+Arrow</strong>, adjust opacity with{' '}
-                <strong>Win+Shift+W</strong> (toggle between ~20% and ~90% opacity; only
-                available in stealth mode).
+                <strong>Win+Shift+W</strong> (toggle between ~20% and ~90% opacity; only available
+                in stealth mode).
               </li>
               <li>
                 Exit stealth with <strong>Win+Shift+Q</strong> to interact with the app normally.
