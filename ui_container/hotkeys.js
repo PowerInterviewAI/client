@@ -62,18 +62,17 @@ function registerGlobalHotkeys(overrides = {}) {
     });
   }
 
-  // Arrow key movement hotkeys (Win+Ctrl+ArrowKeys)
-  // Movement: Ctrl+Alt+Shift+Arrow
+  // Window movement hotkeys: Ctrl+Alt+Shift+Arrow
   globalShortcut.register('Control+Alt+Shift+Up', () => moveWindowByArrow('up'));
   globalShortcut.register('Control+Alt+Shift+Down', () => moveWindowByArrow('down'));
   globalShortcut.register('Control+Alt+Shift+Left', () => moveWindowByArrow('left'));
   globalShortcut.register('Control+Alt+Shift+Right', () => moveWindowByArrow('right'));
 
-  // Resize window hotkeys: Ctrl+Alt+Shift+F9-F12
-  globalShortcut.register('Control+Alt+Shift+F9', () => resizeWindowByArrow('left'));
-  globalShortcut.register('Control+Alt+Shift+F10', () => resizeWindowByArrow('right'));
-  globalShortcut.register('Control+Alt+Shift+F11', () => resizeWindowByArrow('up'));
-  globalShortcut.register('Control+Alt+Shift+F12', () => resizeWindowByArrow('down'));
+  // Resize window hotkeys: Ctrl+Win+Shift+Arrow
+  globalShortcut.register('Control+Super+Shift+Up', () => resizeWindowByArrow('up'));
+  globalShortcut.register('Control+Super+Shift+Down', () => resizeWindowByArrow('down'));
+  globalShortcut.register('Control+Super+Shift+Right', () => resizeWindowByArrow('right'));
+  globalShortcut.register('Control+Super+Shift+Left', () => resizeWindowByArrow('left'));
 
   // Send scroll events to renderer for suggestions/code scrolling
   // Interview suggestions: Ctrl+Alt+Shift+U (up) / Ctrl+Alt+Shift+J (down)
