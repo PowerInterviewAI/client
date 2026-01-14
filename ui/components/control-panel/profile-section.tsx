@@ -1,5 +1,6 @@
 'use client';
 
+import DocumentationDialog from '@/components/documentation-dialog';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -11,7 +12,7 @@ import {
 import useAuth from '@/hooks/use-auth';
 import { RunningState } from '@/types/appState';
 import { Config } from '@/types/config';
-import { ChevronUp, Key, LogOut, Moon, SettingsIcon, Sun } from 'lucide-react';
+import { BookOpen, ChevronUp, Eye, Key, LogOut, Moon, SettingsIcon, Sun } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 import { ChangePasswordDialog } from './change-password-dialog';
@@ -37,6 +38,7 @@ export function ProfileSection({
 }: ProfileSectionProps) {
   const { changePassword, loading, error, setError } = useAuth();
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const [isDocumentationOpen, setIsDocumentationOpen] = useState(false);
 
   const disabled = getDisabled(runningState, true);
 
@@ -101,6 +103,43 @@ export function ProfileSection({
             Change password
           </DropdownMenuItem>
           <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => {
+              if (disabled) return;
+              try {
+                // Use the exposed electron API when available
+                if (
+                  typeof window !== 'undefined' &&
+                  // eslint-disable-next-line
+                  // @ts-ignore
+                  window.electronAPI &&
+                  // eslint-disable-next-line
+                  // @ts-ignore
+                  window.electronAPI.toggleStealth
+                ) {
+                  // eslint-disable-next-line
+                  // @ts-ignore
+                  window.electronAPI.toggleStealth();
+                }
+              } catch (e) {
+                console.warn('Toggle stealth failed', e);
+              }
+            }}
+          >
+            <Eye className="mr-2 h-4 w-4" />
+            Toggle Stealth
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            onClick={() => {
+              if (disabled) return;
+              setIsDocumentationOpen(true);
+            }}
+          >
+            <BookOpen className="mr-2 h-4 w-4" />
+            Documentation
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => !disabled && onSignOut()} disabled={disabled}>
             <LogOut className="mr-2 h-4 w-4" />
             Sign out
@@ -115,6 +154,7 @@ export function ProfileSection({
         loading={loading}
         error={error}
       />
+      <DocumentationDialog open={isDocumentationOpen} onOpenChange={setIsDocumentationOpen} />
     </div>
   );
 }
