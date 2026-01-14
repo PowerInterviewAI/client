@@ -40,27 +40,6 @@
   --sidebar-ring: oklch(0.505 0.216 249.6);
 }
 
-/* Stealth mode: make overall background translucent */
-body.stealth {
-  --background: rgba(255, 255, 255, 0.5);
-  --card: rgba(255, 255, 255, 0.5);
-  --popover: rgba(255, 255, 255, 0.5);
-  --sidebar: rgba(255, 255, 255, 0.5);
-  --border: rgba(192, 192, 192, 0.5);
-  --sidebar-border: rgba(128, 128, 128, 0.5);
-}
-
-/* Dark + stealth: use light translucent overlays for dark theme */
-.dark body.stealth {
-  /* Make core surface variables translucent so all components inherit translucency */
-  --background: rgba(0, 0, 0, 0.5);
-  --card: rgba(0, 0, 0, 0.5);
-  --popover: rgba(0, 0, 0, 0.5);
-  --sidebar: rgba(0, 0, 0, 0.5);
-  --border: rgba(64, 64, 64, 0.5);
-  --sidebar-border: rgba(64, 64, 64, 0.5);
-}
-
 .dark {
   --background: oklch(0.15 0 0);
   --foreground: oklch(0.95 0 0);
