@@ -78,8 +78,10 @@ export default function DocumentationDialog({ open, onOpenChange }: Documentatio
           <div className="grid grid-cols-2 gap-2">
             {HOTKEYS.map(([k, d]) => (
               <React.Fragment key={k}>
-                <div className="px-2 py-1 rounded bg-muted text-[11px] font-semibold min-w-[90px]">
-                  {k}
+                <div>
+                  <div className="px-2 py-1 rounded bg-muted text-[11px] font-semibold min-w-[90px]">
+                    {k}
+                  </div>
                 </div>
                 <div className="text-sm">{d}</div>
               </React.Fragment>
