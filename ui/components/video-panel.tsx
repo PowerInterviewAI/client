@@ -1,6 +1,5 @@
 'use client';
 
-import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { useVideoDevices } from '@/hooks/video-devices';
 import axiosClient from '@/lib/axiosClient';
 import { RunningState } from '@/types/appState';
@@ -58,7 +57,6 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
     const droppedRef = useRef(0);
 
     const [isStreaming, setIsStreaming] = useState(false);
-    const isStealth = useIsStealthMode();
 
     const checkActiveVideoCodec = () => {
       if (!pcRef.current) return;
@@ -356,9 +354,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
     }));
 
     return (
-      <div
-        className={`relative w-full h-full border rounded-xl overflow-hidden bg-white dark:bg-black shrink-0 py-0 ${isStealth ? 'opacity-30' : ''}`}
-      >
+      <div className="relative w-full h-full border rounded-xl overflow-hidden bg-white dark:bg-black shrink-0 py-0">
         <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-contain" />
 
         {!isStreaming && (
