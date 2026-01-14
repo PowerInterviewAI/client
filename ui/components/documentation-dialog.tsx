@@ -22,18 +22,26 @@ export default function DocumentationDialog({ open, onOpenChange }: Documentatio
 
   const stealthKey = useMemo(
     () => HOTKEYS.find(([, short]) => /stealth/i.test(short))?.[0] ?? 'Ctrl+Shift+Q',
-    []
+    [],
   );
   const opacityKey = useMemo(
     () => HOTKEYS.find(([, short]) => /opacity/i.test(short))?.[0] ?? 'Ctrl+Shift+D',
-    []
+    [],
   );
   const placeKey = useMemo(
-    () => HOTKEYS.find(([, short]) => /place window/i.test(short) || /place/i.test(short))?.[0] ?? 'Ctrl+Shift+1-9',
-    []
+    () =>
+      HOTKEYS.find(([, short]) => /place window/i.test(short) || /place/i.test(short))?.[0] ??
+      'Ctrl+Shift+1-9',
+    [],
   );
-  const moveKey = useMemo(() => HOTKEYS.find(([, short]) => /move window/i.test(short))?.[0] ?? 'Ctrl+Alt+Shift+Arrow', []);
-  const resizeKey = useMemo(() => HOTKEYS.find(([, short]) => /resize/i.test(short))?.[0] ?? 'Ctrl+Win+Shift+Arrow', []);
+  const moveKey = useMemo(
+    () => HOTKEYS.find(([, short]) => /move window/i.test(short))?.[0] ?? 'Ctrl+Alt+Shift+Arrow',
+    [],
+  );
+  const resizeKey = useMemo(
+    () => HOTKEYS.find(([, short]) => /resize/i.test(short))?.[0] ?? 'Ctrl+Win+Shift+Arrow',
+    [],
+  );
 
   const rows = useMemo(() => {
     const q = filter.trim().toLowerCase();
@@ -56,10 +64,9 @@ export default function DocumentationDialog({ open, onOpenChange }: Documentatio
 
           <div className="text-sm text-muted-foreground mb-3 space-y-2">
             <p>
-              Quick start: open the app, position the window where you want overlays to appear,
-              then press <strong>{stealthKey}</strong> to toggle stealth mode. While stealth is
-              active the window remains visually on top but ignores mouse input and is
-              non-focusable.
+              Quick start: open the app, position the window where you want overlays to appear, then
+              press <strong>{stealthKey}</strong> to toggle stealth mode. While stealth is active
+              the window remains visually on top but ignores mouse input and is non-focusable.
             </p>
 
             <ol className="list-decimal ml-5 space-y-1">
@@ -69,13 +76,13 @@ export default function DocumentationDialog({ open, onOpenChange }: Documentatio
                 non-interactive).
               </li>
               <li>
-                Place the window with <strong>{placeKey}</strong> (numpad-style grid), move it
-                with <strong>{moveKey}</strong>.
+                Place the window with <strong>{placeKey}</strong> (numpad-style grid), move it with{' '}
+                <strong>{moveKey}</strong>.
               </li>
               <li>
-                Resize with <strong>{resizeKey}</strong> and the directional resize hotkeys
-                provided by the app; adjust opacity with <strong>{opacityKey}</strong> (toggle
-                modes where available).
+                Resize with <strong>{resizeKey}</strong> and the directional resize hotkeys provided
+                by the app; adjust opacity with <strong>{opacityKey}</strong> (toggle modes where
+                available).
               </li>
               <li>
                 Exit stealth with <strong>{stealthKey}</strong> to interact with the app normally.
@@ -87,7 +94,7 @@ export default function DocumentationDialog({ open, onOpenChange }: Documentatio
           <div className="grid grid-cols-3 gap-2">
             {HOTKEYS.map(([k, d, l]) => (
               <React.Fragment key={k}>
-                <div className='col-span-1'>
+                <div className="col-span-1">
                   <div className="px-2 py-1 rounded bg-muted text-[11px] font-semibold min-w-[90px]">
                     {k}
                   </div>

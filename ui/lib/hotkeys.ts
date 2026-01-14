@@ -9,7 +9,11 @@ export const HOTKEYS: Array<[string, string, string]> = [
   ['Ctrl+Win+Shift+Arrow', 'Resize window', 'Resize window in the specified direction'],
 
   // Suggestions / navigation
-  ['Ctrl+Shift+U / J', 'Scroll interview suggestions', 'Scroll Up/Down in the interview suggestions panel'],
+  [
+    'Ctrl+Shift+U / J',
+    'Scroll interview suggestions',
+    'Scroll Up/Down in the interview suggestions panel',
+  ],
   ['Ctrl+Shift+I / K', 'Scroll code suggestions', 'Scroll Up/Down in the code suggestions panel'],
   // Code suggestions
   ['Ctrl+Alt+Shift+S', 'Take screenshot', 'Take a screenshot for code suggestions'],
