@@ -30,7 +30,22 @@ export default function Home() {
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const videoPanelRef = useRef<VideoPanelHandle>(null);
   const [transcriptHeight, setTranscriptHeight] = useState<number | null>(null);
-  const [suggestionsHeight, setSuggestionsHeight] = useState<number | null>(null);
+  const [suggestionHeight, setSuggestionHeight] = useState<number | null>(null);
+
+  // Queries
+  const { data: configFetched } = useConfigQuery();
+  const { data: audioInputDevices } = useAudioInputDevices(1000);
+  const { data: audioOutputDevices } = useAudioOutputDevices(1000);
+  const { data: appState, error: appStateError } = useAppState(100);
+
+  const replySuggestions = appState?.suggestions ?? [];
+  const hasReplySuggestions = replySuggestions.length > 0;
+
+  const codeSuggestions = appState?.code_suggestions ?? [];
+  const hasCodeSuggestions = codeSuggestions.length > 0;
+
+  const hasSuggestions = hasReplySuggestions || hasCodeSuggestions;
+  const suggestionPanelCount = (hasReplySuggestions ? 1 : 0) + (hasCodeSuggestions ? 1 : 0);
 
   // stable compute function so other effects can trigger a recompute
   const computeAvailable = useCallback(() => {
@@ -45,15 +60,15 @@ export default function Home() {
     if (control > 0) control += 4; // account for border
     if (video > 0) video += 4; // account for border
 
-    const leftAvailable = Math.max(
-      100,
-      window.innerHeight - (title + hot + control + video + extra),
+    setTranscriptHeight(
+      Math.max(100, window.innerHeight - (title + hot + control + video + extra)),
     );
-
-    const rightAvailable = Math.max(100, window.innerHeight - (title + hot + control + extra));
-
-    setTranscriptHeight(leftAvailable);
-    setSuggestionsHeight(rightAvailable);
+    setSuggestionHeight(
+      Math.max(
+        100,
+        window.innerHeight - (title + hot + control + extra) - (suggestionPanelCount - 1) * 4,
+      ) / (suggestionPanelCount ?? 1),
+    );
   }, []);
   const isStealth = useIsStealthMode();
 
@@ -79,12 +94,6 @@ export default function Home() {
   useEffect(() => {
     computeAvailable();
   }, [config?.enable_video_control, computeAvailable]);
-
-  // Queries
-  const { data: configFetched } = useConfigQuery();
-  const { data: audioInputDevices } = useAudioInputDevices(1000);
-  const { data: audioOutputDevices } = useAudioOutputDevices(1000);
-  const { data: appState, error: appStateError } = useAppState(100);
 
   // Recompute when assistant running state or appState becomes available
   useEffect(() => {
@@ -131,12 +140,6 @@ export default function Home() {
       setTranscripts(appState?.transcripts);
     }
   }, [appState?.transcripts, transcripts]);
-
-  const suggestions = appState?.suggestions ?? [];
-  const hasSuggestions = suggestions.length > 0;
-
-  const codeSuggestions = appState?.code_suggestions ?? [];
-  const hasCodeSuggestions = codeSuggestions.length > 0;
 
   // Load theme
   useEffect(() => {
@@ -189,7 +192,7 @@ export default function Home() {
       <div className="flex-1 flex overflow-y-hidden gap-1">
         {/* Left Column: Video + Transcription */}
         <div
-          className={`flex flex-col ${hasSuggestions || hasCodeSuggestions ? 'w-80' : 'flex-1'} gap-1 transition-all duration-300 ease-in-out`}
+          className={`flex flex-col ${hasSuggestions ? 'w-80' : 'flex-1'} gap-1 transition-all duration-300 ease-in-out`}
         >
           {/* Video Panel - Small and compact */}
           <div
@@ -222,18 +225,18 @@ export default function Home() {
         </div>
 
         {/* Right Column: Main Suggestions Panel */}
-        {(hasSuggestions || hasCodeSuggestions) && (
-          <div className="flex-1 flex gap-1">
-            {hasSuggestions && (
+        {(hasReplySuggestions || hasCodeSuggestions) && (
+          <div className="flex-1 flex flex-col gap-1 h-full overflow-auto">
+            {hasReplySuggestions && (
               <SuggestionsPanel
-                suggestions={suggestions}
-                style={suggestionsHeight ? { height: `${suggestionsHeight}px` } : undefined}
+                suggestions={replySuggestions}
+                style={suggestionHeight ? { height: `${suggestionHeight}px` } : undefined}
               />
             )}
             {hasCodeSuggestions && (
               <CodeSuggestionsPanel
                 codeSuggestions={codeSuggestions}
-                style={suggestionsHeight ? { height: `${suggestionsHeight}px` } : undefined}
+                style={suggestionHeight ? { height: `${suggestionHeight}px` } : undefined}
               />
             )}
           </div>

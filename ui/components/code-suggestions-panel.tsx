@@ -55,7 +55,11 @@ export default function CodeSuggestionsPanel({
   }, [codeSuggestions, autoScroll]);
 
   return (
-    <Card className="relative flex flex-col w-full h-full bg-card p-0" style={style}>
+    <Card
+      className="flex flex-col w-full h-full bg-card p-0 transition-all duration-300 ease-in-out"
+      style={style}
+    >
+      {/* Header */}
       <div className="border-b border-border px-4 pt-4 pb-2 shrink-0 flex items-center justify-between gap-4">
         <h3 className="font-semibold text-foreground text-xs">Code Suggestions</h3>
 
@@ -70,6 +74,7 @@ export default function CodeSuggestionsPanel({
         </label>
       </div>
 
+      {/* Scrollable Content */}
       <div ref={containerRef} className="flex-1 overflow-y-auto mb-2">
         {!hasItems && (
           <div className="flex items-center justify-center h-full text-center p-4">
