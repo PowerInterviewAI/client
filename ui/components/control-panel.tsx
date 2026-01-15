@@ -9,11 +9,11 @@ import { APIError } from '@/types/error';
 import { UseMutationResult } from '@tanstack/react-query';
 import { Ellipsis, Play, Square } from 'lucide-react';
 import {
+  AudioOptions,
   MainControls,
   ProfileSection,
   StatusIndicator,
-  TranscriptionOptions,
-  VideoControlSection,
+  VideoOptions,
 } from './control-panel/';
 
 interface ControlPanelProps {
@@ -183,7 +183,7 @@ export default function ControlPanel({
       />
 
       <div className="flex flex-1 justify-center gap-2 items-center">
-        <TranscriptionOptions
+        <AudioOptions
           runningState={runningState}
           audioInputDevices={audioInputDevices}
           config={config}
@@ -191,7 +191,7 @@ export default function ControlPanel({
           audioInputDeviceNotFound={audioInputDeviceNotFound}
           getDisabled={getDisabled}
         />
-        <VideoControlSection
+        <VideoOptions
           runningState={runningState}
           config={config}
           updateConfig={updateConfig}

@@ -14,9 +14,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { RunningState } from '@/types/appState';
 import { PyAudioDevice } from '@/types/audioDevice';
 import { Config } from '@/types/config';
-import { MessageSquareText } from 'lucide-react';
+import { Mic } from 'lucide-react';
 
-interface TranscriptionOptionsProps {
+interface AudioOptionsProps {
   runningState: RunningState;
   audioInputDevices: PyAudioDevice[];
   config?: Config;
@@ -25,14 +25,14 @@ interface TranscriptionOptionsProps {
   getDisabled: (state: RunningState, disableOnRunning?: boolean) => boolean;
 }
 
-export function TranscriptionOptions({
+export function AudioOptions({
   runningState,
   audioInputDevices,
   config,
   updateConfig,
   audioInputDeviceNotFound,
   getDisabled,
-}: TranscriptionOptionsProps) {
+}: AudioOptionsProps) {
   const usableAudioInputDevices = audioInputDevices.filter((d) => {
     if (d.name.toLowerCase().includes('virtual')) return false;
     return true;
@@ -46,12 +46,12 @@ export function TranscriptionOptions({
             <DialogTrigger asChild>
               <div className="relative">
                 <Button
-                  variant="default"
+                  variant="secondary"
                   size="icon"
                   className="h-8 w-12 border-none rounded-full"
                   disabled={getDisabled(runningState)}
                 >
-                  <MessageSquareText className="h-4 w-4" />
+                  <Mic className="h-4 w-4" />
                 </Button>
                 {audioInputDeviceNotFound && (
                   <Badge
@@ -65,12 +65,12 @@ export function TranscriptionOptions({
             </DialogTrigger>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Transcription options</p>
+            <p>Audio options</p>
           </TooltipContent>
         </Tooltip>
 
         <DialogContent className="flex flex-col w-72 p-4">
-          <DialogTitle>Transcription Options</DialogTitle>
+          <DialogTitle>Audio Options</DialogTitle>
 
           {/* Microphone Select */}
           <div className="mb-3">

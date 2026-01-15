@@ -20,7 +20,7 @@ import { Ellipsis, Video, VideoOff } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-interface VideoControlSectionProps {
+interface VideoOptionsProps {
   runningState: RunningState;
   config?: Config;
   updateConfig: (config: Partial<Config>) => void;
@@ -29,14 +29,14 @@ interface VideoControlSectionProps {
   getDisabled: (state: RunningState, disableOnRunning?: boolean) => boolean;
 }
 
-export function VideoControlSection({
+export function VideoOptions({
   runningState,
   config,
   updateConfig,
   videoDeviceNotFound,
   audioOutputDevices,
   getDisabled,
-}: VideoControlSectionProps) {
+}: VideoOptionsProps) {
   const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
   const previewStreamRef = useRef<MediaStream | null>(null);

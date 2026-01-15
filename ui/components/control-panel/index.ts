@@ -1,5 +1,5 @@
+export { AudioOptions } from './audio-options';
 export { MainControls } from './main-controls';
 export { ProfileSection } from './profile-section';
 export { StatusIndicator } from './status-indicator';
-export { TranscriptionOptions } from './transcription-options';
-export { VideoControlSection } from './video-control-section';
+export { VideoOptions } from './video-options';
