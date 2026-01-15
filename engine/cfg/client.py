@@ -19,7 +19,8 @@ class Config(BaseSettings):
     BACKEND_AUTH_LOGOUT_URL: str = f"{BACKEND_URL}/api/auth/logout"
     BACKEND_AUTH_CHANGE_PASSWORD_URL: str = f"{BACKEND_URL}/api/auth/change-password"
 
-    BACKEND_SUGGESTIONS_URL: str = f"{BACKEND_URL}/api/llm/suggestion"
+    BACKEND_REPLY_SUGGESTIONS_URL: str = f"{BACKEND_URL}/api/llm/reply-suggestion"
+    BACKEND_CODE_SUGGESTIONS_URL: str = f"{BACKEND_URL}/api/llm/code-suggestion"
     BACKEND_SUMMARIZE_URL: str = f"{BACKEND_URL}/api/llm/summarize"
 
     BACKEND_WEBRTC_OFFER_URL: str = f"{BACKEND_URL}/api/webrtc/offer"

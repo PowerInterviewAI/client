@@ -18,8 +18,8 @@ from engine.services.audio_control_service import AudioControlService
 from engine.services.audio_device_service import AudioDeviceService
 from engine.services.code_suggestion_service import CodeSuggestionService
 from engine.services.config_service import ConfigService
+from engine.services.reply_suggestion_service import ReplySuggestionService
 from engine.services.service_monitor import ServiceMonitor
-from engine.services.suggestion_service import SuggestionService
 from engine.services.transcript_service import Transcriber
 from engine.services.virtual_camera import VirtualCameraService
 from engine.services.web_client import WebClient
@@ -34,7 +34,7 @@ class PowerInterviewApp:
             callback_on_self_final=self.on_transcriber_self_final,
             callback_on_other_final=self.on_transcriber_other_final,
         )
-        self.suggestion_service = SuggestionService()
+        self.suggestion_service = ReplySuggestionService()
         self.code_suggestion_service = CodeSuggestionService()
         self.audio_controller = AudioControlService()
         self.virtual_camera_service = VirtualCameraService(

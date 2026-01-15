@@ -5,7 +5,7 @@ import ConfigurationDialog from '@/components/configuration-dialog';
 import ControlPanel from '@/components/control-panel';
 import HotkeysPanel from '@/components/hotkeys-panel';
 import Loading from '@/components/loading';
-import SuggestionsPanel from '@/components/suggestions-panel';
+import ReplySuggestionsPanel from '@/components/reply-suggestions-panel';
 import TranscriptPanel from '@/components/transcript-panel';
 import { VideoPanel, VideoPanelHandle } from '@/components/video-panel';
 import { useAppState } from '@/hooks/app-state';
@@ -228,7 +228,7 @@ export default function Home() {
         {(hasReplySuggestions || hasCodeSuggestions) && (
           <div className="flex-1 flex flex-col gap-1 h-full overflow-auto">
             {hasReplySuggestions && (
-              <SuggestionsPanel
+              <ReplySuggestionsPanel
                 suggestions={replySuggestions}
                 style={{ height: `${suggestionHeight}px` }}
               />

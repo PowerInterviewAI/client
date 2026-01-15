@@ -65,8 +65,8 @@ class CodeSuggestionService:
         with self._lock:
             payload = GenerateCodeSuggestionRequest(
                 user_prompt=self._user_prompt,
-                images_bytes=self._images_bytes,
-            ).model_dump()
+                images_b64=self._images_bytes,
+            ).model_dump(mode="json")
 
             self._suggestions[tstamp] = CodeSuggestion(
                 timestamp=tstamp,
@@ -80,7 +80,7 @@ class CodeSuggestionService:
             self._user_prompt = ""
 
         try:
-            url = f"{cfg_client.BACKEND_SUGGESTIONS_URL}/code"
+            url = cfg_client.BACKEND_CODE_SUGGESTIONS_URL
             resp = WebClient.post(url, json=payload)
             raise_for_status(resp)
 

@@ -5,15 +5,15 @@ from loguru import logger
 from engine.api.error_handler import raise_for_status
 from engine.cfg.client import config as cfg_client
 from engine.models.interview_conf import InterviewConf
-from engine.schemas.suggestion import GenerateSuggestionRequest, Suggestion, SuggestionState
+from engine.schemas.suggestion import GenerateReplySuggestionRequest, ReplySuggestion, SuggestionState
 from engine.schemas.transcript import Speaker, Transcript
 from engine.services.web_client import WebClient
 from engine.utils.datetime import DatetimeUtil
 
 
-class SuggestionService:
+class ReplySuggestionService:
     def __init__(self) -> None:
-        self._suggestions: dict[int, Suggestion] = {}
+        self._suggestions: dict[int, ReplySuggestion] = {}
         self._lock = threading.Lock()
         self._thread: threading.Thread | None = None
         self._stop_event = threading.Event()
@@ -22,7 +22,7 @@ class SuggestionService:
     # Public API
     # --------------------------
 
-    def get_suggestions(self) -> list[Suggestion]:
+    def get_suggestions(self) -> list[ReplySuggestion]:
         with self._lock:
             return list(self._suggestions.values())
 
@@ -42,7 +42,7 @@ class SuggestionService:
 
         tstamp = DatetimeUtil.get_current_timestamp()
         with self._lock:
-            self._suggestions[tstamp] = Suggestion(
+            self._suggestions[tstamp] = ReplySuggestion(
                 timestamp=tstamp,
                 last_question=transcripts[-1].text,
                 answer="",
@@ -51,8 +51,8 @@ class SuggestionService:
 
         try:
             resp = WebClient.post(
-                cfg_client.BACKEND_SUGGESTIONS_URL,
-                json=GenerateSuggestionRequest(
+                cfg_client.BACKEND_REPLY_SUGGESTIONS_URL,
+                json=GenerateReplySuggestionRequest(
                     username=interview_conf.username,
                     profile_data=interview_conf.profile_data,
                     job_description=interview_conf.job_description,

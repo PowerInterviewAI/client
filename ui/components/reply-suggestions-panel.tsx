@@ -1,18 +1,18 @@
 'use client';
 
 import { Card } from '@/components/ui/card';
-import { Suggestion, SuggestionState } from '@/types/suggestion';
+import { ReplySuggestion, SuggestionState } from '@/types/suggestion';
 import { Loader2, PauseCircle, Zap } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Checkbox } from './ui/checkbox';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 interface SuggestionsPanelProps {
-  suggestions?: Suggestion[];
+  suggestions?: ReplySuggestion[];
   style?: React.CSSProperties;
 }
 
-export default function SuggestionsPanel({ suggestions = [], style }: SuggestionsPanelProps) {
+export default function ReplySuggestionsPanel({ suggestions = [], style }: SuggestionsPanelProps) {
   const hasSuggestions = suggestions.length > 0;
 
   const containerRef = useRef<HTMLDivElement | null>(null);

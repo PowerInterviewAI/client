@@ -7,7 +7,7 @@ export enum SuggestionState {
   ERROR = 'error',
 }
 
-export interface Suggestion {
+export interface ReplySuggestion {
   timestamp: number;
   last_question: string;
   answer: string;
