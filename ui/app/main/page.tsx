@@ -220,7 +220,7 @@ export default function Home() {
           <TranscriptPanel
             username={config?.interview_conf?.username ?? ''}
             transcripts={transcripts ?? []}
-            style={transcriptHeight ? { height: `${transcriptHeight}px` } : undefined}
+            style={(transcriptHeight ?? 0) > 0 ? { height: `${transcriptHeight}px` } : undefined}
           />
         </div>
 
@@ -230,13 +230,13 @@ export default function Home() {
             {hasReplySuggestions && (
               <SuggestionsPanel
                 suggestions={replySuggestions}
-                style={suggestionHeight ? { height: `${suggestionHeight}px` } : undefined}
+                style={{ height: `${suggestionHeight}px` }}
               />
             )}
             {hasCodeSuggestions && (
               <CodeSuggestionsPanel
                 codeSuggestions={codeSuggestions}
-                style={suggestionHeight ? { height: `${suggestionHeight}px` } : undefined}
+                style={{ height: `${suggestionHeight}px` }}
               />
             )}
           </div>
