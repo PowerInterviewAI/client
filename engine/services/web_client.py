@@ -38,3 +38,25 @@ class WebClient:
             headers=cls._get_headers(),
             timeout=cfg_client.HTTP_TIMEOUT_SECS,
         )
+
+    @classmethod
+    def post_file(cls, url: str, files: Any) -> Response:  # uploads multipart/form-data files  # noqa: ANN401
+        """
+        Uploads multipart/form-data files to the specified URL.
+
+        Args:
+            url (str): The URL to which the files will be uploaded.
+            files (Any): The files to be uploaded in multipart/form-data format.
+
+        Returns:
+            Response: The response from the server.
+        """
+        session_token = ConfigService.config.session_token
+        cookies = {cfg_auth.SESSION_TOKEN_COOKIE_NAME: session_token} if session_token else {}
+        return requests.post(
+            url,
+            files=files,
+            cookies=cookies,
+            headers=cls._get_headers(),
+            timeout=cfg_client.HTTP_TIMEOUT_SECS,
+        )

@@ -81,7 +81,3 @@ class GenerateCodeSuggestionRequest(BaseModel):
         str,
         Field(description="The user's prompt for code suggestion"),
     ]
-    images_b64: Annotated[
-        list[str],
-        Field(description="The list of screenshot images in base64 format"),
-    ]

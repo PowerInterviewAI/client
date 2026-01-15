@@ -21,7 +21,7 @@ def test_code_suggestion_service() -> None:
     service.add_image(image_bytes=img_bytes.getvalue())
 
     # Set user prompt
-    service.set_user_prompt("Generate a Python function to add two numbers.")
+    service.set_user_prompt("Describe about the codes you can see from the attached images.")
 
     # Generate code suggeston
     service.generate_code_suggestion()

@@ -1,4 +1,3 @@
-import base64
 import threading
 
 from loguru import logger
@@ -12,7 +11,8 @@ from engine.utils.datetime import DatetimeUtil
 
 class CodeSuggestionService:
     def __init__(self) -> None:
-        self._images_bytes: list[bytes] = []
+        # uploaded image filenames (server-side)
+        self._uploaded_image_names: list[str] = []
         self._user_prompt: str = ""
 
         self._suggestions: dict[int, CodeSuggestion] = {}
@@ -29,7 +29,7 @@ class CodeSuggestionService:
         with self._lock:
             pending_prompt = CodeSuggestion(
                 timestamp=DatetimeUtil.get_current_timestamp(),
-                image_count=len(self._images_bytes),
+                image_count=len(self._uploaded_image_names),
                 user_prompt=self._user_prompt,
                 suggestion_content="",
                 state=SuggestionState.IDLE,
@@ -39,7 +39,7 @@ class CodeSuggestionService:
                     pending_prompt,
                     *list(self._suggestions.values()),
                 ]
-                if self._user_prompt or self._images_bytes
+                if self._user_prompt or self._uploaded_image_names
                 else list(self._suggestions.values())
             )
 
@@ -47,13 +47,28 @@ class CodeSuggestionService:
         self.stop_current_task()
         with self._lock:
             self._suggestions.clear()
-            self._images_bytes.clear()
+            self._uploaded_image_names.clear()
             self._user_prompt = ""
 
     def add_image(self, image_bytes: bytes) -> None:
         """Add an image in bytes to the list of images for code suggestion."""
-        with self._lock:
-            self._images_bytes.append(image_bytes)
+        # upload image to backend as multipart file and save returned filename (plain text)
+        files = {"image_file": ("screenshot.png", image_bytes, "application/octet-stream")}
+        try:
+            resp = WebClient.post_file(cfg_client.BACKEND_UPLOAD_IMAGE_URL, files=files)
+            raise_for_status(resp)
+
+            name = resp.text.strip()
+            if not name:
+                msg = f"Unexpected upload response: {resp.text}"
+                raise RuntimeError(msg)  # noqa: TRY301
+
+            with self._lock:
+                self._uploaded_image_names.append(name)
+
+        except Exception as ex:
+            logger.error(f"Failed to upload image for suggestion: {ex}")
+            raise
 
     def set_user_prompt(self, prompt: str) -> None:
         """Set the user prompt for code suggestion."""
@@ -64,20 +79,31 @@ class CodeSuggestionService:
         """Call backend to generate a code suggestion and stream the response into the suggestion record."""
         tstamp = DatetimeUtil.get_current_timestamp()
         with self._lock:
+            # build image URLs from uploaded filenames
+            images_urls: list[str] = []
+            if self._uploaded_image_names:
+                images_urls = [f"{cfg_client.BACKEND_GET_IMAGE_URL}/{n}" for n in self._uploaded_image_names]
+
+            # append image URLs to the LLM prompt instead of sending them as separate fields
+            built_prompt = self._user_prompt or ""
+            if images_urls:
+                imgs_block = "\n\nImages:\n" + "\n".join(images_urls)
+                built_prompt = f"{built_prompt}{imgs_block}" if built_prompt else imgs_block
+
             payload = GenerateCodeSuggestionRequest(
-                user_prompt=self._user_prompt,
-                images_b64=[base64.b64encode(img).decode("utf-8") for img in self._images_bytes],
+                user_prompt=built_prompt,
             ).model_dump(mode="json")
 
             self._suggestions[tstamp] = CodeSuggestion(
                 timestamp=tstamp,
-                image_count=len(self._images_bytes),
+                image_count=len(images_urls),
                 user_prompt=self._user_prompt,
                 suggestion_content="",
                 state=SuggestionState.PENDING,
             )
 
-            self._images_bytes.clear()
+            # clear uploaded lists and prompt (they are now part of the suggestion)
+            self._uploaded_image_names.clear()
             self._user_prompt = ""
 
         try:
@@ -110,7 +136,7 @@ class CodeSuggestionService:
 
     def generate_code_suggestion_async(self) -> None:
         """Spawn a background thread to run generate_code_suggestion."""
-        if not self._images_bytes and not self._user_prompt:
+        if not self._uploaded_image_names and not self._user_prompt:
             return
 
         # cancel the current thread if running

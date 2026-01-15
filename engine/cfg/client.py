@@ -21,6 +21,8 @@ class Config(BaseSettings):
 
     BACKEND_REPLY_SUGGESTIONS_URL: str = f"{BACKEND_URL}/api/llm/reply-suggestion"
     BACKEND_CODE_SUGGESTIONS_URL: str = f"{BACKEND_URL}/api/llm/code-suggestion"
+    BACKEND_UPLOAD_IMAGE_URL: str = f"{BACKEND_URL}/api/llm/upload-image"
+    BACKEND_GET_IMAGE_URL: str = f"{BACKEND_URL}/api/llm/get-image"
     BACKEND_SUMMARIZE_URL: str = f"{BACKEND_URL}/api/llm/summarize"
 
     BACKEND_WEBRTC_OFFER_URL: str = f"{BACKEND_URL}/api/webrtc/offer"
