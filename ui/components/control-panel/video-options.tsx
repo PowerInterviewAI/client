@@ -137,8 +137,8 @@ export function VideoOptions({
   return (
     <div className="relative">
       <div
-        className={`flex items-center overflow-hidden border ${
-          config?.enable_video_control ? 'rounded-full' : 'border-destructive rounded-xl text-white'
+        className={`flex items-center overflow-hidden border rounded-full ${
+          config?.enable_video_control ? '' : 'text-white'
         }`}
       >
         <Tooltip>
@@ -197,7 +197,7 @@ export function VideoOptions({
           </Tooltip>
 
           <DialogContent className="flex flex-col w-72 p-4 gap-4">
-            <DialogTitle>Video Control Options</DialogTitle>
+            <DialogTitle>Video Options</DialogTitle>
 
             {!obsCameraExists && (
               <div className="text-sm text-destructive">
