@@ -1,9 +1,12 @@
 from loguru import logger
 from pydantic_settings import BaseSettings
 
+from engine.utils.env import EnvUtil
+
 
 class Config(BaseSettings):
-    DEBUG: bool = False
+    IS_DEBUG: bool = False
+    IS_TEST: bool = EnvUtil.is_test()
 
     APP_TITLE: str = "Power Interview Backend"
     APP_NAME: str = "Power Interview"
@@ -13,4 +16,5 @@ class Config(BaseSettings):
 
 
 config = Config()
-logger.debug(f"Debug mode: {config.DEBUG}")
+logger.debug(f"Is Debug: {config.IS_DEBUG}")
+logger.debug(f"Is Test: {config.IS_TEST}")
