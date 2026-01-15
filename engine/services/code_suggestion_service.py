@@ -1,3 +1,4 @@
+import base64
 import threading
 
 from loguru import logger
@@ -65,7 +66,7 @@ class CodeSuggestionService:
         with self._lock:
             payload = GenerateCodeSuggestionRequest(
                 user_prompt=self._user_prompt,
-                images_b64=self._images_bytes,
+                images_b64=[base64.b64encode(img).decode("utf-8") for img in self._images_bytes],
             ).model_dump(mode="json")
 
             self._suggestions[tstamp] = CodeSuggestion(
