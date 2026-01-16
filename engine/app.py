@@ -148,7 +148,6 @@ class PowerInterviewApp:
 
         # Map hotkeys to handlers
         keyboard.add_hotkey("ctrl+alt+shift+s", lambda: self._on_hotkey_code_suggestion_capture_screenshot())
-        keyboard.add_hotkey("ctrl+alt+shift+p", lambda: self._on_hotkey_code_suggestion_set_prompt())
         keyboard.add_hotkey("ctrl+alt+shift+enter", lambda: self._on_hotkey_code_suggestion_submit())
 
         self._hotkeys_registered = True
@@ -179,21 +178,6 @@ class PowerInterviewApp:
 
         # Append to pending images (full image bytes and grayscale thumbnail)
         self.code_suggestion_service.add_image(image_bytes=img_bytes.getvalue())
-
-    def _on_hotkey_code_suggestion_set_prompt(self) -> None:
-        """Set the prompt from user's last transcript if available."""
-        # Find the last self transcript
-        user_prompt = ""
-        trans_list = self.transcriber.get_transcripts()
-        for t in trans_list:
-            if t.speaker == Speaker.SELF:
-                user_prompt = t.text
-
-        # Set the pending prompt
-        if user_prompt:
-            self.code_suggestion_service.set_user_prompt(user_prompt)
-        else:
-            logger.warning("No user transcript found to set as prompt")
 
     def _on_hotkey_code_suggestion_submit(self) -> None:
         """Submit the code suggestion request using the pending prompt and images."""

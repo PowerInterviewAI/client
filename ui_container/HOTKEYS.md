@@ -23,7 +23,6 @@ This Electron application supports global system hotkeys for controlling window 
 ### Code Suggestions / Actions
 
 - **Ctrl+Alt+Shift+S**: Capture screenshot (renderer action)
-- **Ctrl+Alt+Shift+P**: Set prompt (renderer action)
 - **Ctrl+Alt+Shift+Enter**: Submit (renderer action)
 
 ## Notes

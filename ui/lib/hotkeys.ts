@@ -21,6 +21,5 @@ export const HOTKEYS: Array<[string, string, string]> = [
   ],
   // Code suggestions
   ['Ctrl+Alt+Shift+S', 'Take screenshot', 'Take a screenshot for code suggestions'],
-  ['Ctrl+Alt+Shift+P', 'Set prompt', 'Set the current prompt for code suggestions'],
   ['Ctrl+Alt+Shift+Enter', 'Submit', 'Submit prompt for code suggestions'],
 ];
