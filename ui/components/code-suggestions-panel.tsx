@@ -143,15 +143,15 @@ export default function CodeSuggestionsPanel({
                   )}
 
                   {s.state === SuggestionState.LOADING && (
-                    <div className="text-sm text-foreground/80 leading-relaxed">
-                      <div className="whitespace-pre-wrap text-xs">{s.suggestion_content}</div>
+                    <div className="text-sm text-foreground leading-relaxed">
+                      <div className="whitespace-pre-wrap text-sm">{s.suggestion_content}</div>
                       <div className="text-xs text-muted-foreground mt-1">(streaming...)</div>
                     </div>
                   )}
 
                   {s.state === SuggestionState.SUCCESS && (
-                    <div className="text-sm text-foreground/80 leading-relaxed">
-                      <div className="whitespace-pre-wrap text-xs">{s.suggestion_content}</div>
+                    <div className="text-sm text-foreground leading-relaxed">
+                      <div className="whitespace-pre-wrap text-sm">{s.suggestion_content}</div>
                     </div>
                   )}
 
