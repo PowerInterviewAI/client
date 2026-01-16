@@ -21,7 +21,7 @@ def test_code_suggestion_service() -> None:
     service.add_image(image_bytes=img_bytes.getvalue())
 
     # Generate code suggeston
-    service.generate_code_suggestion()
+    service.generate_code_suggestion_async()
 
     # Wait for generation complete
     time.sleep(2)

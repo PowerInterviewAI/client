@@ -186,7 +186,7 @@ class PowerInterviewApp:
 
     def _on_hotkey_code_suggestion_submit(self) -> None:
         """Submit the code suggestion request using the pending prompt and images."""
-        self.code_suggestion_service.generate_code_suggestion(
+        self.code_suggestion_service.generate_code_suggestion_async(
             transcripts=self.transcriber.get_transcripts(),
         )
 

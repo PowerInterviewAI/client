@@ -84,7 +84,7 @@ class CodeSuggestionService:
         parts: list[str] = [f"{t.speaker}: {t.text}" for t in transcripts]
         return "\n".join(parts)
 
-    def generate_code_suggestion(self, transcripts: list[Transcript] | None = None) -> None:
+    def _generate_code_suggestion(self, transcripts: list[Transcript] | None = None) -> None:
         """Call backend to generate a code suggestion and stream the response into the suggestion record."""
         tstamp = DatetimeUtil.get_current_timestamp()
         with self._lock:
@@ -133,7 +133,7 @@ class CodeSuggestionService:
             with self._lock:
                 self._suggestions[tstamp].state = SuggestionState.ERROR
 
-    def generate_code_suggestion_async(self) -> None:
+    def generate_code_suggestion_async(self, transcripts: list[Transcript] | None = None) -> None:
         """Spawn a background thread to run generate_code_suggestion."""
         # If there are no uploaded images, there is nothing to suggest from.
         if not self._uploaded_image_names:
@@ -149,7 +149,7 @@ class CodeSuggestionService:
         # generate_code_suggestion API; to pass transcripts to the thread
         # the caller should spawn the thread themselves or adapt this
         # method to accept transcripts)
-        self._thread = threading.Thread(target=self.generate_code_suggestion)
+        self._thread = threading.Thread(target=self._generate_code_suggestion, args=(transcripts,))
         self._thread.start()
 
     def stop_current_task(self) -> None:
