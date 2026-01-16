@@ -85,6 +85,11 @@ export default function Home() {
     };
   }, [computeAvailable]);
 
+  // Recompute when panels mount/unmount
+  useEffect(() => {
+    computeAvailable();
+  }, [hasCodeSuggestions, hasReplySuggestions, computeAvailable]);
+
   // Recompute when stealth mode toggles
   useEffect(() => {
     computeAvailable();

@@ -49,6 +49,38 @@ export default function CodeSuggestionsPanel({
     if (autoScroll) scrollToLatest('smooth');
   }, [codeSuggestions, autoScroll]);
 
+  
+  // Listen for hotkey scroll events from Electron main process
+  useEffect(() => {
+    // eslint-disable-next-line
+    // @ts-ignore
+    if (typeof window === 'undefined' || !window?.electronAPI?.onHotkeyScroll) return;
+
+    // eslint-disable-next-line
+    // @ts-ignore
+    const unsubscribe = window.electronAPI.onHotkeyScroll(
+      (section: string, direction: 'up' | 'down') => {
+        if (section !== '1') return; // only handle for code suggestions section
+
+        const container = containerRef.current;
+        if (!container) return;
+
+        const distance = Math.max(Math.round(container.clientHeight * 0.9), 100);
+        const top = direction === 'up' ? -distance : distance;
+        container.scrollBy({ top, behavior: 'smooth' });
+      },
+    );
+
+    return () => {
+      try {
+        unsubscribe && unsubscribe();
+      } catch (e) {
+        console.error('Failed to unsubscribe from hotkey scroll events', e);
+      }
+    };
+  }, [containerRef]);
+
+
   return (
     <Card
       className="flex flex-col w-full h-full bg-card p-0 transition-all duration-300 ease-in-out"
