@@ -1,17 +1,10 @@
 'use client';
 
 import { Card } from '@/components/ui/card';
-import { SuggestionState } from '@/types/suggestion';
+import { SuggestionState, CodeSuggestion } from '@/types/suggestion';
 import { File, Loader2, PauseCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Checkbox } from './ui/checkbox';
-
-interface CodeSuggestion {
-  prompt?: string;
-  code?: string;
-  thumbnail?: string; // base64 data URI or url
-  state?: SuggestionState;
-}
 
 interface CodeSuggestionsPanelProps {
   codeSuggestions?: CodeSuggestion[];
@@ -93,9 +86,9 @@ export default function CodeSuggestionsPanel({
                 className="flex gap-3 pb-3 border-b border-border/40 last:border-0"
               >
                 <div className="shrink-0">
-                  {s.thumbnail ? (
+                  {s.image_urls && s.image_urls.length > 0 ? (
                     <img
-                      src={s.thumbnail}
+                      src={s.image_urls[0]}
                       className="h-12 w-16 object-cover rounded-md"
                       alt="thumb"
                     />
@@ -108,7 +101,7 @@ export default function CodeSuggestionsPanel({
 
                 <div className="flex-1">
                   <div className="text-xs text-muted-foreground">
-                    <strong>Prompt:</strong> {s.prompt ?? '—'}
+                    <strong>Prompt:</strong> {s.user_prompt ?? '—'}
                   </div>
 
                   {s.state === SuggestionState.PENDING && (
@@ -120,7 +113,7 @@ export default function CodeSuggestionsPanel({
 
                   {s.state === SuggestionState.LOADING && (
                     <div className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">
-                      <pre className="whitespace-pre-wrap text-xs">{s.code}</pre>
+                      <pre className="whitespace-pre-wrap text-xs">{s.suggestion_content}</pre>
                       <div className="text-xs text-muted-foreground mt-1">(streaming...)</div>
                     </div>
                   )}
@@ -128,7 +121,7 @@ export default function CodeSuggestionsPanel({
                   {s.state === SuggestionState.SUCCESS && (
                     <div className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">
                       <pre className="whitespace-pre-wrap text-xs bg-muted p-2 rounded-md overflow-auto">
-                        {s.code}
+                        {s.suggestion_content}
                       </pre>
                     </div>
                   )}
