@@ -117,15 +117,20 @@ export default function CodeSuggestionsPanel({
               <div
                 key={idx}
                 ref={idx === codeSuggestions.length - 1 ? lastItemRef : null}
-                className="flex gap-3 pb-3 border-b border-border/40 last:border-0"
+                className="flex flex-col gap-3 pb-3 border-b border-border/40 last:border-0"
               >
-                <div className="shrink-0">
+                <div className="flex shrink-0">
                   {s.image_urls && s.image_urls.length > 0 ? (
-                    <img
-                      src={s.image_urls[0]}
-                      className="h-12 w-16 object-cover rounded-md"
-                      alt="thumb"
-                    />
+                    <div className="flex gap-2 overflow-x-auto">
+                      {s.image_urls.map((url, i) => (
+                        <img
+                          key={i}
+                          src={url}
+                          className="h-12 w-16 object-cover rounded-md"
+                          alt={`thumb-${i}`}
+                        />
+                      ))}
+                    </div>
                   ) : (
                     <div className="h-12 w-16 flex items-center justify-center rounded-md bg-muted">
                       <File className="h-5 w-5 text-muted-foreground" />
