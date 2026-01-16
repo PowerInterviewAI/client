@@ -58,9 +58,9 @@ class CodeSuggestion(BaseModel):
         int,
         Field(description="The Unix timestamp of the code suggestion"),
     ]
-    image_names: Annotated[
+    image_urls: Annotated[
         list[str],
-        Field(description="The list of image names associated with the suggestion"),
+        Field(description="The list of image URLs associated with the suggestion"),
     ]
     user_prompt: Annotated[
         str | None,

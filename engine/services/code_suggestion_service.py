@@ -29,7 +29,7 @@ class CodeSuggestionService:
         with self._lock:
             pending_prompt = CodeSuggestion(
                 timestamp=DatetimeUtil.get_current_timestamp(),
-                image_names=self._uploaded_image_names,
+                image_urls=[f"{cfg_client.BACKEND_GET_IMAGE_URL}/{name}" for name in self._uploaded_image_names],
                 user_prompt=self._user_prompt,
                 suggestion_content="",
                 state=SuggestionState.IDLE,
@@ -86,7 +86,7 @@ class CodeSuggestionService:
 
             self._suggestions[tstamp] = CodeSuggestion(
                 timestamp=tstamp,
-                image_names=self._uploaded_image_names,
+                image_urls=[f"{cfg_client.BACKEND_GET_IMAGE_URL}/{name}" for name in self._uploaded_image_names],
                 user_prompt=self._user_prompt,
                 suggestion_content="",
                 state=SuggestionState.PENDING,
