@@ -4,8 +4,6 @@ import { Card } from '@/components/ui/card';
 import { CodeSuggestion, SuggestionState } from '@/types/suggestion';
 import { File, Loader2, PauseCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { Checkbox } from './ui/checkbox';
 
 interface CodeSuggestionsPanelProps {
@@ -49,7 +47,6 @@ export default function CodeSuggestionsPanel({
     if (autoScroll) scrollToLatest('smooth');
   }, [codeSuggestions, autoScroll]);
 
-  
   // Listen for hotkey scroll events from Electron main process
   useEffect(() => {
     // eslint-disable-next-line
@@ -79,7 +76,6 @@ export default function CodeSuggestionsPanel({
       }
     };
   }, [containerRef]);
-
 
   return (
     <Card
@@ -139,7 +135,6 @@ export default function CodeSuggestionsPanel({
                 </div>
 
                 <div className="flex-1">
-
                   {s.state === SuggestionState.PENDING && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -149,22 +144,14 @@ export default function CodeSuggestionsPanel({
 
                   {s.state === SuggestionState.LOADING && (
                     <div className="text-sm text-foreground/80 leading-relaxed">
-                      <div className="whitespace-pre-wrap text-xs">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {s.suggestion_content}
-                        </ReactMarkdown>
-                      </div>
+                      <div className="whitespace-pre-wrap text-xs">{s.suggestion_content}</div>
                       <div className="text-xs text-muted-foreground mt-1">(streaming...)</div>
                     </div>
                   )}
 
                   {s.state === SuggestionState.SUCCESS && (
                     <div className="text-sm text-foreground/80 leading-relaxed">
-                      <div className="whitespace-pre-wrap text-xs bg-muted p-2 rounded-md overflow-auto">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {s.suggestion_content}
-                        </ReactMarkdown>
-                      </div>
+                      <div className="whitespace-pre-wrap text-xs">{s.suggestion_content}</div>
                     </div>
                   )}
 
