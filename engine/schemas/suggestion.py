@@ -63,7 +63,7 @@ class CodeSuggestion(BaseModel):
         Field(description="The list of image names associated with the suggestion"),
     ]
     user_prompt: Annotated[
-        str,
+        str | None,
         Field(description="The user's prompt for code suggestion"),
     ]
     suggestion_content: Annotated[
@@ -78,7 +78,7 @@ class CodeSuggestion(BaseModel):
 
 class GenerateCodeSuggestionRequest(BaseModel):
     user_prompt: Annotated[
-        str,
+        str | None,
         Field(description="The user's prompt for code suggestion"),
     ]
     image_names: Annotated[

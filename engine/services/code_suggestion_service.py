@@ -13,7 +13,7 @@ class CodeSuggestionService:
     def __init__(self) -> None:
         # uploaded image filenames (server-side)
         self._uploaded_image_names: list[str] = []
-        self._user_prompt: str = ""
+        self._user_prompt: str | None = None
 
         self._suggestions: dict[int, CodeSuggestion] = {}
 
@@ -48,7 +48,7 @@ class CodeSuggestionService:
         with self._lock:
             self._suggestions.clear()
             self._uploaded_image_names.clear()
-            self._user_prompt = ""
+            self._user_prompt = None
 
     def add_image(self, image_bytes: bytes) -> None:
         """Add an image in bytes to the list of images for code suggestion."""
@@ -94,7 +94,7 @@ class CodeSuggestionService:
 
             # clear uploaded lists and prompt (they are now part of the suggestion)
             self._uploaded_image_names.clear()
-            self._user_prompt = ""
+            self._user_prompt = None
 
         try:
             url = cfg_client.BACKEND_CODE_SUGGESTIONS_URL
