@@ -10,7 +10,7 @@
       "request": "launch",
       "module": "engine.main",
       "env": {
-        "DEBUG": "true"
+        "IS_DEBUG": "true"
       }
     },
     {
@@ -19,7 +19,7 @@
       "request": "launch",
       "module": "engine.main",
       "env": {
-        "DEBUG": "false"
+        "IS_DEBUG": "false"
       }
     }
   ]
