@@ -29,7 +29,7 @@ class CodeSuggestionService:
         with self._lock:
             pending_prompt = CodeSuggestion(
                 timestamp=DatetimeUtil.get_current_timestamp(),
-                image_count=len(self._uploaded_image_names),
+                image_names=self._uploaded_image_names,
                 user_prompt=self._user_prompt,
                 suggestion_content="",
                 state=SuggestionState.IDLE,
@@ -79,24 +79,14 @@ class CodeSuggestionService:
         """Call backend to generate a code suggestion and stream the response into the suggestion record."""
         tstamp = DatetimeUtil.get_current_timestamp()
         with self._lock:
-            # build image URLs from uploaded filenames
-            images_urls: list[str] = []
-            if self._uploaded_image_names:
-                images_urls = [f"{cfg_client.BACKEND_GET_IMAGE_URL}/{n}" for n in self._uploaded_image_names]
-
-            # append image URLs to the LLM prompt instead of sending them as separate fields
-            built_prompt = self._user_prompt or ""
-            if images_urls:
-                imgs_block = "\n\nImages:\n" + "\n".join(images_urls)
-                built_prompt = f"{built_prompt}{imgs_block}" if built_prompt else imgs_block
-
             payload = GenerateCodeSuggestionRequest(
-                user_prompt=built_prompt,
+                user_prompt=self._user_prompt,
+                image_names=self._uploaded_image_names,
             ).model_dump(mode="json")
 
             self._suggestions[tstamp] = CodeSuggestion(
                 timestamp=tstamp,
-                image_count=len(images_urls),
+                image_names=self._uploaded_image_names,
                 user_prompt=self._user_prompt,
                 suggestion_content="",
                 state=SuggestionState.PENDING,

@@ -58,9 +58,9 @@ class CodeSuggestion(BaseModel):
         int,
         Field(description="The Unix timestamp of the code suggestion"),
     ]
-    image_count: Annotated[
-        int,
-        Field(description="The number of screenshot thumbnail images associated with the suggestion"),
+    image_names: Annotated[
+        list[str],
+        Field(description="The list of image names associated with the suggestion"),
     ]
     user_prompt: Annotated[
         str,
@@ -80,4 +80,8 @@ class GenerateCodeSuggestionRequest(BaseModel):
     user_prompt: Annotated[
         str,
         Field(description="The user's prompt for code suggestion"),
+    ]
+    image_names: Annotated[
+        list[str],
+        Field(description="The list of image names associated with the suggestion"),
     ]
