@@ -16,6 +16,7 @@ import useAuth from '@/hooks/use-auth';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { RunningState } from '@/types/appState';
 import { Config } from '@/types/config';
+import { CodeSuggestion, ReplySuggestion } from '@/types/suggestion';
 import { Transcript } from '@/types/transcript';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
@@ -28,6 +29,8 @@ export default function Home() {
   const [isDark, setIsDark] = useState(false);
   const [config, setConfig] = useState<Config>();
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
+  const [replySuggestions, setReplySuggestions] = useState<ReplySuggestion[]>([]);
+  const [codeSuggestions, setCodeSuggestions] = useState<CodeSuggestion[]>([]);
   const videoPanelRef = useRef<VideoPanelHandle>(null);
   const [transcriptHeight, setTranscriptHeight] = useState<number | null>(null);
   const [suggestionHeight, setSuggestionHeight] = useState<number | null>(null);
@@ -38,10 +41,7 @@ export default function Home() {
   const { data: audioOutputDevices } = useAudioOutputDevices(1000);
   const { data: appState, error: appStateError } = useAppState(100);
 
-  const replySuggestions = appState?.suggestions ?? [];
   const hasReplySuggestions = replySuggestions.length > 0;
-
-  const codeSuggestions = appState?.code_suggestions ?? [];
   const hasCodeSuggestions = codeSuggestions.length > 0;
 
   const hasSuggestions = hasReplySuggestions || hasCodeSuggestions;
@@ -63,12 +63,16 @@ export default function Home() {
     setTranscriptHeight(
       Math.max(100, window.innerHeight - (title + hot + control + video + extra)),
     );
-    setSuggestionHeight(
-      Math.max(
-        100,
-        window.innerHeight - (title + hot + control + extra) - (suggestionPanelCount - 1) * 4,
-      ) / (suggestionPanelCount ?? 1),
-    );
+    if (suggestionPanelCount > 0) {
+      setSuggestionHeight(
+        Math.max(
+          100,
+          window.innerHeight - (title + hot + control + extra) - (suggestionPanelCount - 1) * 4,
+        ) / suggestionPanelCount,
+      );
+    } else {
+      setSuggestionHeight(0);
+    }
   }, []);
   const isStealth = useIsStealthMode();
 
@@ -145,6 +149,16 @@ export default function Home() {
       setTranscripts(appState?.transcripts);
     }
   }, [appState?.transcripts, transcripts]);
+  useEffect(() => {
+    if (appState?.suggestions && appState?.suggestions !== replySuggestions) {
+      setReplySuggestions(appState?.suggestions);
+    }
+  }, [appState?.suggestions, replySuggestions]);
+  useEffect(() => {
+    if (appState?.code_suggestions && appState?.code_suggestions !== codeSuggestions) {
+      setCodeSuggestions(appState?.code_suggestions);
+    }
+  }, [appState?.code_suggestions, codeSuggestions]);
 
   // Load theme
   useEffect(() => {
