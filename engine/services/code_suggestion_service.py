@@ -35,8 +35,8 @@ class CodeSuggestionService:
             )
             return (
                 [
-                    pending_prompt,
                     *list(self._suggestions.values()),
+                    pending_prompt,
                 ]
                 if self._uploaded_image_names
                 else list(self._suggestions.values())
