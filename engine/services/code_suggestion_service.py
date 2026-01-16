@@ -42,12 +42,15 @@ class CodeSuggestionService:
                 else list(self._suggestions.values())
             )
 
+    def clear_images(self) -> None:
+        with self._lock:
+            self._uploaded_image_names.clear()
+
     def clear_suggestions(self) -> None:
         self.stop_current_task()
         with self._lock:
             self._suggestions.clear()
             self._uploaded_image_names.clear()
-            # user prompt is no longer stored on the service
 
     def add_image(self, image_bytes: bytes) -> None:
         """Add an image in bytes to the list of images for code suggestion."""

@@ -1,6 +1,6 @@
 export const HOTKEYS: Array<[string, string, string]> = [
   // App / mode toggles
-  ['Ctrl+Shift+Q', 'Toggle stealth mode', 'Toggle stealth mode on or off'],
+  ['Ctrl+Shift+Q', 'Toggle stealth', 'Toggle stealth mode on or off'],
   ['Ctrl+Shift+D', 'Toggle opacity', 'Toggle window opacity (only in stealth mode)'],
 
   // Window management
@@ -20,6 +20,7 @@ export const HOTKEYS: Array<[string, string, string]> = [
     'Scroll Up/Down in the coding test suggestions panel',
   ],
   // Code suggestions
-  ['Ctrl+Alt+Shift+S', 'Take screenshot', 'Take a screenshot for code suggestions'],
+  ['Ctrl+Alt+Shift+S', 'Screenshot', 'Take a screenshot for code suggestions'],
+  ['Ctrl+Alt+Shift+C', 'Clear screenshots', 'Clear pending screenshots for code suggestions'],
   ['Ctrl+Alt+Shift+Enter', 'Submit', 'Submit prompt for code suggestions'],
 ];

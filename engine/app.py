@@ -148,10 +148,11 @@ class PowerInterviewApp:
 
         # Map hotkeys to handlers
         keyboard.add_hotkey("ctrl+alt+shift+s", lambda: self._on_hotkey_code_suggestion_capture_screenshot())
+        keyboard.add_hotkey("ctrl+alt+shift+c", lambda: self._on_hotkey_code_suggestion_clear_images())
         keyboard.add_hotkey("ctrl+alt+shift+enter", lambda: self._on_hotkey_code_suggestion_submit())
 
         self._hotkeys_registered = True
-        logger.debug("Global hotkeys registered: Ctrl+Alt+Shift+S/P/Enter")
+        logger.debug("Global hotkeys registered: Ctrl+Alt+Shift+S/C/Enter")
 
     def unregister_global_hotkeys(self) -> None:
         if not self._hotkeys_registered:
@@ -178,6 +179,10 @@ class PowerInterviewApp:
 
         # Append to pending images (full image bytes and grayscale thumbnail)
         self.code_suggestion_service.add_image(image_bytes=img_bytes.getvalue())
+
+    def _on_hotkey_code_suggestion_clear_images(self) -> None:
+        """Clear the pending images buffer for code suggestion."""
+        self.code_suggestion_service.clear_images()
 
     def _on_hotkey_code_suggestion_submit(self) -> None:
         """Submit the code suggestion request using the pending prompt and images."""
