@@ -1,9 +1,11 @@
 'use client';
 
 import { Card } from '@/components/ui/card';
-import { SuggestionState, CodeSuggestion } from '@/types/suggestion';
+import { CodeSuggestion, SuggestionState } from '@/types/suggestion';
 import { File, Loader2, PauseCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Checkbox } from './ui/checkbox';
 
 interface CodeSuggestionsPanelProps {
@@ -112,17 +114,23 @@ export default function CodeSuggestionsPanel({
                   )}
 
                   {s.state === SuggestionState.LOADING && (
-                    <div className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">
-                      <pre className="whitespace-pre-wrap text-xs">{s.suggestion_content}</pre>
+                    <div className="text-sm text-foreground/80 leading-relaxed">
+                      <div className="whitespace-pre-wrap text-xs">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {s.suggestion_content}
+                        </ReactMarkdown>
+                      </div>
                       <div className="text-xs text-muted-foreground mt-1">(streaming...)</div>
                     </div>
                   )}
 
                   {s.state === SuggestionState.SUCCESS && (
-                    <div className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">
-                      <pre className="whitespace-pre-wrap text-xs bg-muted p-2 rounded-md overflow-auto">
-                        {s.suggestion_content}
-                      </pre>
+                    <div className="text-sm text-foreground/80 leading-relaxed">
+                      <div className="whitespace-pre-wrap text-xs bg-muted p-2 rounded-md overflow-auto">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {s.suggestion_content}
+                        </ReactMarkdown>
+                      </div>
                     </div>
                   )}
 
