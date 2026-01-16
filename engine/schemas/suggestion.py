@@ -62,10 +62,6 @@ class CodeSuggestion(BaseModel):
         list[str],
         Field(description="The list of image URLs associated with the suggestion"),
     ]
-    user_prompt: Annotated[
-        str | None,
-        Field(description="The user's prompt for code suggestion"),
-    ]
     suggestion_content: Annotated[
         str,
         Field(description="The suggested code content"),

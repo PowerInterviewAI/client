@@ -102,9 +102,6 @@ export default function CodeSuggestionsPanel({
                 </div>
 
                 <div className="flex-1">
-                  <div className="text-xs text-muted-foreground">
-                    <strong>Prompt:</strong> {s.user_prompt ?? '—'}
-                  </div>
 
                   {s.state === SuggestionState.PENDING && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">

@@ -17,7 +17,6 @@ export interface ReplySuggestion {
 export interface CodeSuggestion {
   timestamp: number;
   image_urls: string[];
-  user_prompt: string | null;
   suggestion_content: string;
   state: SuggestionState;
 }
