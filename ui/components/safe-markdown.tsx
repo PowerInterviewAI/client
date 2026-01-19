@@ -54,17 +54,20 @@ const components = {
       </code>
     );
   },
-  ul: ({ children, ...props }: any) => (
+  ul: ({ children, ordered, ...props }: any) => (
+    // drop `ordered` (non-DOM boolean) to avoid React warning about non-boolean attributes
     <ul className="list-disc pl-5" {...props}>
       {children}
     </ul>
   ),
-  ol: ({ children, ...props }: any) => (
+  ol: ({ children, ordered, ...props }: any) => (
+    // drop `ordered` (non-DOM boolean) to avoid React warning about non-boolean attributes
     <ol className="list-decimal pl-5" {...props}>
       {children}
     </ol>
   ),
-  li: ({ children, ...props }: any) => (
+  li: ({ children, ordered, ...props }: any) => (
+    // drop `ordered` (non-DOM boolean) to avoid React warning about non-boolean attributes
     <li className="my-1" {...props}>
       {children}
     </li>
