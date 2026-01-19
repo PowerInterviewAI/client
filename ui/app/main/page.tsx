@@ -5,6 +5,7 @@ import ConfigurationDialog from '@/components/configuration-dialog';
 import ControlPanel from '@/components/control-panel';
 import HotkeysPanel from '@/components/hotkeys-panel';
 import Loading from '@/components/loading';
+import { useTheme } from '@/components/providers';
 import ReplySuggestionsPanel from '@/components/reply-suggestions-panel';
 import TranscriptPanel from '@/components/transcript-panel';
 import { VideoPanel, VideoPanelHandle } from '@/components/video-panel';
@@ -25,7 +26,6 @@ export default function Home() {
   const { logout } = useAuth();
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isDark, setIsDark] = useState(false);
   const [config, setConfig] = useState<Config>();
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const [replySuggestions, setReplySuggestions] = useState<ReplySuggestion[]>([]);
@@ -114,19 +114,8 @@ export default function Home() {
   const startMutation = useStartAssistant(videoPanelRef, config);
   const stopMutation = useStopAssistant(videoPanelRef);
 
-  // Theme handling
-  const handleThemeToggle = () => {
-    const newIsDark = !isDark;
-    setIsDark(newIsDark);
-
-    if (newIsDark) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  };
+  // Theme handled by ThemeProvider via context
+  const { theme, toggleTheme } = useTheme();
 
   // Sign out handling
   const handleSignOut = async () => {
@@ -160,20 +149,7 @@ export default function Home() {
     }
   }, [appState?.code_suggestions, codeSuggestions]);
 
-  // Load theme
-  useEffect(() => {
-    // Check localStorage or system preference
-    const storedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-    if (storedTheme === 'dark' || (!storedTheme && prefersDark)) {
-      setIsDark(true);
-      document.documentElement.classList.add('dark');
-    } else {
-      setIsDark(false);
-      document.documentElement.classList.remove('dark');
-    }
-  }, []);
+  // Theme initialisation moved to ThemeProvider
 
   // Redirect to login if not logged in
   const router = useRouter();
@@ -279,8 +255,8 @@ export default function Home() {
         audioOutputDevices={audioOutputDevices ?? []}
         onProfileClick={() => setIsProfileOpen(true)}
         onSignOut={handleSignOut}
-        onThemeToggle={handleThemeToggle}
-        isDark={isDark}
+        onThemeToggle={toggleTheme}
+        isDark={theme === 'dark'}
         config={config}
         updateConfig={updateConfig}
       />

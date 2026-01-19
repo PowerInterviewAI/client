@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { CodeSuggestion, SuggestionState } from '@/types/suggestion';
 import { File, Loader2, PauseCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { SafeMarkdown } from './safe-markdown';
 import { Checkbox } from './ui/checkbox';
 
 interface CodeSuggestionsPanelProps {
@@ -144,14 +145,18 @@ export default function CodeSuggestionsPanel({
 
                   {s.state === SuggestionState.LOADING && (
                     <div className="text-sm text-foreground leading-relaxed">
-                      <div className="whitespace-pre-wrap text-sm">{s.suggestion_content}</div>
+                      <div className="text-sm">
+                        <SafeMarkdown content={s.suggestion_content} />
+                      </div>
                       <div className="text-xs text-muted-foreground mt-1">(streaming...)</div>
                     </div>
                   )}
 
                   {s.state === SuggestionState.SUCCESS && (
                     <div className="text-sm text-foreground leading-relaxed">
-                      <div className="whitespace-pre-wrap text-sm">{s.suggestion_content}</div>
+                      <div className="text-sm">
+                        <SafeMarkdown content={s.suggestion_content} />
+                      </div>
                     </div>
                   )}
 
