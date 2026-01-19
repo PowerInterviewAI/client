@@ -18,8 +18,8 @@ import { RunningState } from '@/types/appState';
 import { Config } from '@/types/config';
 import { CodeSuggestion, ReplySuggestion } from '@/types/suggestion';
 import { Transcript } from '@/types/transcript';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 export default function Home() {
   const { logout } = useAuth();
@@ -47,6 +47,7 @@ export default function Home() {
   const suggestionPanelCount = (hasReplySuggestions ? 1 : 0) + (hasCodeSuggestions ? 1 : 0);
 
   // stable compute function so other effects can trigger a recompute
+  // include `suggestionPanelCount` in deps to avoid stale closure
   const computeAvailable = useCallback(() => {
     if (typeof window === 'undefined') return;
     const title = document.getElementById('titlebar')?.getBoundingClientRect().height || 0;
@@ -72,7 +73,7 @@ export default function Home() {
     } else {
       setSuggestionHeight(0);
     }
-  }, []);
+  }, [suggestionPanelCount]);
   const isStealth = useIsStealthMode();
 
   // compute panel height by subtracting hotkeys/control/video heights from viewport
@@ -181,7 +182,6 @@ export default function Home() {
   useEffect(() => {
     if (appState?.is_logged_in === false && !_redirectedToLogin.current) {
       _redirectedToLogin.current = true;
-      console.log('Not logged in, redirecting to /auth/login');
       try {
         router.replace('/auth/login');
       } catch (e) {
