@@ -75,8 +75,8 @@ function registerGlobalHotkeys(overrides = {}) {
   globalShortcut.register('Control+Super+Shift+Left', () => resizeWindowByArrow('left'));
 
   // Send scroll events to renderer for suggestions/code scrolling
-  // Interview suggestions: Ctrl+Shift+U (up) / Ctrl+Shift+J (down)
-  globalShortcut.register('Control+Shift+U', () => {
+  // Reply suggestions: Ctrl+Shift+K (up) / Ctrl+Shift+J (down)
+  globalShortcut.register('Control+Shift+K', () => {
     const w = BrowserWindow.getAllWindows()[0];
     if (w && !w.isDestroyed()) w.webContents.send('hotkey-scroll', '0', 'up');
   });
@@ -84,12 +84,12 @@ function registerGlobalHotkeys(overrides = {}) {
     const w = BrowserWindow.getAllWindows()[0];
     if (w && !w.isDestroyed()) w.webContents.send('hotkey-scroll', '0', 'down');
   });
-  // Code suggestions: Ctrl+Shift+I (up) / Ctrl+Shift+K (down)
+  // Code suggestions: Ctrl+Shift+I (up) / Ctrl+Shift+U (down)
   globalShortcut.register('Control+Shift+I', () => {
     const w = BrowserWindow.getAllWindows()[0];
     if (w && !w.isDestroyed()) w.webContents.send('hotkey-scroll', '1', 'up');
   });
-  globalShortcut.register('Control+Shift+K', () => {
+  globalShortcut.register('Control+Shift+U', () => {
     const w = BrowserWindow.getAllWindows()[0];
     if (w && !w.isDestroyed()) w.webContents.send('hotkey-scroll', '1', 'down');
   });
@@ -100,8 +100,8 @@ function registerGlobalHotkeys(overrides = {}) {
   console.log('  Ctrl+Shift+1-9: Place window (numpad layout)');
   console.log('  Ctrl+Alt+Shift+Arrow: Move window');
   console.log('  Ctrl+Win+Shift+Arrow: Resize window');
-  console.log('  Ctrl+Shift+U / J: Scroll interview suggestions');
-  console.log('  Ctrl+Shift+I / K: Scroll code suggestions');
+  console.log('  Ctrl+Shift+J / K: Scroll interview suggestions (J down, K up)');
+  console.log('  Ctrl+Shift+U / I: Scroll code suggestions (U down, I up)');
   console.log('  Ctrl+Alt+Shift+S: Capture screenshot (renderer action)');
   console.log('  Ctrl+Alt+Shift+Enter: Submit (renderer action)');
 }

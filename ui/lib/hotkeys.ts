@@ -10,14 +10,14 @@ export const HOTKEYS: Array<[string, string, string]> = [
 
   // Suggestions / navigation
   [
-    'Ctrl+Shift+U / J',
+    'Ctrl+Shift+J / K',
     'Scroll reply suggestions',
-    'Scroll Up/Down in the interview reply suggestions panel',
+    'Scroll Down/Up in the interview reply suggestions panel',
   ],
   [
-    'Ctrl+Shift+I / K',
+    'Ctrl+Shift+U / I',
     'Scroll code suggestions',
-    'Scroll Up/Down in the coding test suggestions panel',
+    'Scroll Down/Up in the coding test suggestions panel',
   ],
   // Code suggestions
   ['Ctrl+Alt+Shift+S', 'Screenshot', 'Take a screenshot for code suggestions'],
