@@ -117,13 +117,13 @@ export default function ReplySuggestionsPanel({ suggestions = [], style }: Sugge
                   <Zap className="h-4 w-4 mt-0.5 text-accent shrink-0" />
                 )}
                 <div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-xs text-muted-foreground mb-2">
                     <strong>Interviewer:</strong> {s.last_question}
                   </div>
 
                   {(s.state === SuggestionState.LOADING || s.state === SuggestionState.SUCCESS) && (
                     <div className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
-                      {s.answer}
+                      🪄 {s.answer}
                     </div>
                   )}
 
