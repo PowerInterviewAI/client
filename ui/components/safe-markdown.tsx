@@ -5,6 +5,8 @@ import rehypeHighlight from 'rehype-highlight';
 import rehypeSanitize from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
 
+import { cn } from '@/lib/utils';
+
 const sanitizeSchema: Schema = {
   ...defaultSchema,
   attributes: {
@@ -27,15 +29,29 @@ const components = {
       {children}
     </a>
   ),
-  pre: ({ children, ...props }: any) => (
-    <pre className="overflow-x-auto rounded-md bg-muted/60 p-3 text-xs leading-relaxed" {...props}>
+  pre: ({ children, className, ...props }: any) => (
+    <pre
+      className={cn(
+        'overflow-x-auto rounded-md bg-muted/60 p-3 text-xs leading-relaxed font-mono',
+        className,
+      )}
+      {...props}
+    >
       {children}
     </pre>
   ),
   code: ({ children, className, ...props }: any) => {
     const { inline, ...rest } = props;
+    const isInline = inline === true;
     return (
-      <code className={className} {...rest}>
+      <code
+        className={cn(
+          'font-mono',
+          isInline && 'rounded bg-muted/60 px-1 py-0.5 text-[0.85em]',
+          className,
+        )}
+        {...rest}
+      >
         {children}
       </code>
     );
