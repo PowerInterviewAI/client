@@ -21,6 +21,9 @@ export default function ReplySuggestionsPanel({ suggestions = [], style }: Sugge
   const containerRef = useRef<HTMLDivElement | null>(null);
   const lastItemRef = useRef<HTMLDivElement | null>(null);
 
+  const lastHotkeyAtRef = useRef<number>(0);
+  const HOTKEY_SMOOTH_THRESHOLD = 150; // ms
+
   const [autoScroll, setAutoScroll] = useState(true);
 
   // helper: scroll last item into view at the bottom of container (conventional for newest)
@@ -52,7 +55,13 @@ export default function ReplySuggestionsPanel({ suggestions = [], style }: Sugge
 
         const distance = Math.max(Math.round(container.clientHeight * 0.5), 100);
         const top = direction === 'up' ? -distance : distance;
-        container.scrollBy({ top, behavior: 'smooth' });
+
+        const now = Date.now();
+        const dt = now - (lastHotkeyAtRef.current || 0);
+        const behavior: ScrollBehavior = dt < HOTKEY_SMOOTH_THRESHOLD ? 'auto' : 'smooth';
+        lastHotkeyAtRef.current = now;
+
+        container.scrollBy({ top, behavior });
       },
     );
 

@@ -23,6 +23,9 @@ export default function CodeSuggestionsPanel({
 
   const [autoScroll, setAutoScroll] = useState(true);
 
+  const lastHotkeyAtRef = useRef<number>(0);
+  const HOTKEY_SMOOTH_THRESHOLD = 150; // ms
+
   const panelLoading = codeSuggestions.some(
     (s) => s.state === SuggestionState.PENDING || s.state === SuggestionState.LOADING,
   );
@@ -48,9 +51,15 @@ export default function CodeSuggestionsPanel({
         const container = containerRef.current;
         if (!container) return;
 
-        const distance = Math.max(Math.round(container.clientHeight * 0.5), 100);
+        const distance = Math.max(Math.round(container.clientHeight * 0.9), 100);
         const top = direction === 'up' ? -distance : distance;
-        container.scrollBy({ top, behavior: 'smooth' });
+
+        const now = Date.now();
+        const dt = now - (lastHotkeyAtRef.current || 0);
+        const behavior: ScrollBehavior = dt < HOTKEY_SMOOTH_THRESHOLD ? 'auto' : 'smooth';
+        lastHotkeyAtRef.current = now;
+
+        container.scrollBy({ top, behavior });
       },
     );
 
