@@ -117,7 +117,7 @@ export default function ReplySuggestionsPanel({ suggestions = [], style }: Sugge
                   )}
 
                   {s.state === SuggestionState.LOADING && (
-                    <div className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">
+                    <div className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
                       {s.answer}
                       <div className="text-xs text-muted-foreground mt-1">
                         (streaming... more content may arrive)
@@ -126,7 +126,7 @@ export default function ReplySuggestionsPanel({ suggestions = [], style }: Sugge
                   )}
 
                   {s.state === SuggestionState.SUCCESS && (
-                    <div className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">
+                    <div className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
                       {s.answer}
                     </div>
                   )}

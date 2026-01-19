@@ -129,7 +129,7 @@ export default function CodeSuggestionsPanel({
                   )}
 
                   {s.state === SuggestionState.LOADING && (
-                    <div className="text-sm text-foreground leading-relaxed">
+                    <div className="text-sm text-foreground/90 leading-relaxed">
                       <div className="text-sm">
                         <SafeMarkdown content={s.suggestion_content} />
                       </div>
@@ -138,7 +138,7 @@ export default function CodeSuggestionsPanel({
                   )}
 
                   {s.state === SuggestionState.SUCCESS && (
-                    <div className="text-sm text-foreground leading-relaxed">
+                    <div className="text-sm text-foreground/90 leading-relaxed">
                       <div className="text-sm">
                         <SafeMarkdown content={s.suggestion_content} />
                       </div>
