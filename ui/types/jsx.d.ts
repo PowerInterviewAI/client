@@ -5,7 +5,10 @@ import type { JSX as ReactJSX } from 'react';
 
 declare global {
   namespace JSX {
-    interface IntrinsicElements extends ReactJSX.IntrinsicElements {}
+    // Use a type alias instead of an empty interface to avoid
+    // `@typescript-eslint/no-empty-object-type` while keeping
+    // the global JSX.IntrinsicElements mapped to React's definitions.
+    type IntrinsicElements = ReactJSX.IntrinsicElements;
   }
 }
 
