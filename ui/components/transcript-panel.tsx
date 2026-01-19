@@ -2,7 +2,6 @@ import { Card } from '@/components/ui/card';
 import { Speaker, Transcript } from '@/types/transcript';
 import { useEffect, useRef, useState } from 'react';
 import { Checkbox } from './ui/checkbox';
-import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 interface TranscriptionPanelProps {
   transcripts: Transcript[];
@@ -13,25 +12,8 @@ interface TranscriptionPanelProps {
 export default function TranscriptPanel({ transcripts, username, style }: TranscriptionPanelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
-  const [showScrollButton, setShowScrollButton] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
 
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const handleScroll = () => {
-      const isNearBottom =
-        container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-      setShowScrollButton(!isNearBottom);
-    };
-
-    container.addEventListener('scroll', handleScroll);
-    // run once to set initial state
-    handleScroll();
-
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, []);
 
   // Auto-scroll when 'transcripts' changes only if autoScroll is enabled
   useEffect(() => {
@@ -83,31 +65,7 @@ export default function TranscriptPanel({ transcripts, username, style }: Transc
         )}
       </div>
 
-      {/* Scroll to End Button */}
-      {transcripts.length > 0 && showScrollButton && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={() => endRef.current?.scrollIntoView({ behavior: 'smooth' })}
-              className="absolute bottom-4 right-4 z-10 flex items-center gap-2 px-3 py-2 rounded-full bg-primary text-white shadow-lg hover:bg-primary/90 transition-all"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Scroll to latest suggestion</p>
-          </TooltipContent>
-        </Tooltip>
-      )}
+      {/* scroll-to-bottom button removed; auto-scroll still available via toggle */}
     </Card>
   );
 }

@@ -5,7 +5,6 @@ import { ReplySuggestion, SuggestionState } from '@/types/suggestion';
 import { Loader2, PauseCircle, Zap } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Checkbox } from './ui/checkbox';
-import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 interface SuggestionsPanelProps {
   suggestions?: ReplySuggestion[];
@@ -18,23 +17,8 @@ export default function ReplySuggestionsPanel({ suggestions = [], style }: Sugge
   const containerRef = useRef<HTMLDivElement | null>(null);
   const lastItemRef = useRef<HTMLDivElement | null>(null);
 
-  const [showScrollButton, setShowScrollButton] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
 
-  // show/hide scroll-to-latest button when user scrolls away from bottom
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const handleScroll = () => {
-      const isNearBottom =
-        container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-      setShowScrollButton(!isNearBottom);
-    };
-
-    container.addEventListener('scroll', handleScroll, { passive: true });
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, []);
 
   // helper: scroll last item to top of container
   const scrollToLatest = (behavior: ScrollBehavior = 'smooth') => {
@@ -84,7 +68,7 @@ export default function ReplySuggestionsPanel({ suggestions = [], style }: Sugge
 
   return (
     <Card
-      className="flex flex-col w-full h-full bg-card p-0 transition-all duration-300 ease-in-out"
+      className="relative flex flex-col w-full h-full bg-card p-0 transition-all duration-300 ease-in-out"
       style={style}
     >
       {/* Header */}
@@ -173,31 +157,7 @@ export default function ReplySuggestionsPanel({ suggestions = [], style }: Sugge
         )}
       </div>
 
-      {/* Scroll to latest button */}
-      {hasItems && showScrollButton && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={() => scrollToLatest('smooth')}
-              className="absolute bottom-4 right-4 z-10 flex items-center gap-2 px-3 py-2 rounded-full bg-primary text-white hover:bg-primary/90 transition-all"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Scroll to latest suggestion</p>
-          </TooltipContent>
-        </Tooltip>
-      )}
+      {/* scroll-to-latest button removed; auto-scroll still available via toggle */}
     </Card>
   );
 }

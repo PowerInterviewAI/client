@@ -11,7 +11,12 @@ module.exports = {
     './ui/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        sans: ['var(--font-inter)', 'sans-serif'],
+        mono: ['var(--font-mono)', 'monospace'],
+      },
+    },
   },
   plugins: [],
 };
