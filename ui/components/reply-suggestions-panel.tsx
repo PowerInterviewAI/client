@@ -19,7 +19,6 @@ export default function ReplySuggestionsPanel({ suggestions = [], style }: Sugge
 
   const [autoScroll, setAutoScroll] = useState(true);
 
-
   // helper: scroll last item to top of container
   const scrollToLatest = (behavior: ScrollBehavior = 'smooth') => {
     const last = lastItemRef.current;

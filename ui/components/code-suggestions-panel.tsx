@@ -23,7 +23,6 @@ export default function CodeSuggestionsPanel({
 
   const [autoScroll, setAutoScroll] = useState(true);
 
-
   const scrollToLatest = (behavior: ScrollBehavior = 'smooth') => {
     const last = lastItemRef.current;
     if (!last) return;

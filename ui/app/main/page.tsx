@@ -231,15 +231,15 @@ export default function Home() {
         {/* Right Column: Main Suggestions Panel */}
         {(hasReplySuggestions || hasCodeSuggestions) && (
           <div className="flex-1 flex flex-col gap-1 h-full overflow-auto">
-            {hasReplySuggestions && (
-              <ReplySuggestionsPanel
-                suggestions={replySuggestions}
-                style={{ height: `${suggestionHeight}px` }}
-              />
-            )}
             {hasCodeSuggestions && (
               <CodeSuggestionsPanel
                 codeSuggestions={codeSuggestions}
+                style={{ height: `${suggestionHeight}px` }}
+              />
+            )}
+            {hasReplySuggestions && (
+              <ReplySuggestionsPanel
+                suggestions={replySuggestions}
                 style={{ height: `${suggestionHeight}px` }}
               />
             )}

@@ -14,7 +14,6 @@ export default function TranscriptPanel({ transcripts, username, style }: Transc
   const endRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
 
-
   // Auto-scroll when 'transcripts' changes only if autoScroll is enabled
   useEffect(() => {
     if (!autoScroll) return;
