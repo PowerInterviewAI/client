@@ -32,7 +32,7 @@ const components = {
   pre: ({ children, className, ...props }: any) => (
     <pre
       className={cn(
-        'overflow-x-auto rounded-md bg-muted/60 p-3 text-xs leading-relaxed font-mono',
+        'rounded-md bg-muted/60 p-3 text-xs leading-relaxed font-mono whitespace-pre-wrap',
         className,
       )}
       {...props}
@@ -43,15 +43,12 @@ const components = {
   code: ({ children, className, ...props }: any) => {
     const { inline, ...rest } = props;
     const isInline = inline === true;
+    const codeClass = isInline
+      ? cn('font-mono rounded bg-muted/60 px-1 py-0.5 text-[0.85em]', className)
+      : cn('font-mono whitespace-pre-wrap break-words', className);
+
     return (
-      <code
-        className={cn(
-          'font-mono',
-          isInline && 'rounded bg-muted/60 px-1 py-0.5 text-[0.85em]',
-          className,
-        )}
-        {...rest}
-      >
+      <code className={codeClass} {...rest}>
         {children}
       </code>
     );
