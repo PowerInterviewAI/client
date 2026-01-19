@@ -47,7 +47,7 @@ export default function CodeSuggestionsPanel({
         const container = containerRef.current;
         if (!container) return;
 
-        const distance = Math.max(Math.round(container.clientHeight * 0.9), 100);
+        const distance = Math.max(Math.round(container.clientHeight * 0.5), 100);
         const top = direction === 'up' ? -distance : distance;
 
         const now = Date.now();
