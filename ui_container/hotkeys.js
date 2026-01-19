@@ -103,6 +103,7 @@ function registerGlobalHotkeys(overrides = {}) {
   console.log('  Ctrl+Shift+J / K: Scroll interview suggestions (J down, K up)');
   console.log('  Ctrl+Shift+U / I: Scroll code suggestions (U down, I up)');
   console.log('  Ctrl+Alt+Shift+S: Capture screenshot (renderer action)');
+  console.log('  Ctrl+Alt+Shift+C: Clear screenshots (renderer action)');
   console.log('  Ctrl+Alt+Shift+Enter: Submit (renderer action)');
 }
 
