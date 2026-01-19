@@ -191,7 +191,7 @@ export default function Home() {
 
   return (
     <div className="flex-1 flex flex-col w-full bg-background p-1 space-y-1">
-      {isStealth && <HotkeysPanel />}
+      {isStealth && <HotkeysPanel runningState={appState?.assistant_state ?? RunningState.IDLE} />}
 
       <div className="flex-1 flex overflow-y-hidden gap-1">
         {/* Left Column: Video + Transcription */}
