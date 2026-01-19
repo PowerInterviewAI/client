@@ -160,7 +160,7 @@ export default function Home() {
       _redirectedToLogin.current = true;
       try {
         router.replace('/auth/login');
-      } catch (e) {
+      } catch {
         // fallback to direct navigation
         window.location.href = '/auth/login';
       }

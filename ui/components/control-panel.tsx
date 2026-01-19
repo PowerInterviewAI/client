@@ -34,11 +34,6 @@ type StateConfig = {
   label: string;
 };
 
-type IndicatorConfig = {
-  dotClass: string;
-  label: string;
-};
-
 export default function ControlPanel({
   runningState,
   audioInputDevices,
