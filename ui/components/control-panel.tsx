@@ -8,13 +8,8 @@ import { Config } from '@/types/config';
 import { APIError } from '@/types/error';
 import { UseMutationResult } from '@tanstack/react-query';
 import { Ellipsis, Play, Square } from 'lucide-react';
-import {
-  AudioOptions,
-  MainControls,
-  ProfileSection,
-  StatusIndicator,
-  VideoOptions,
-} from './control-panel/';
+import { AudioOptions, MainControls, ProfileSection, VideoOptions } from './control-panel/';
+import RunningIndicator from './running-indicator';
 
 interface ControlPanelProps {
   runningState: RunningState;
@@ -105,30 +100,6 @@ export default function ControlPanel({
   };
   const { onClick, className, icon, label } = stateConfig[runningState];
 
-  const indicatorConfig: Record<RunningState, IndicatorConfig> = {
-    [RunningState.IDLE]: {
-      dotClass: 'bg-muted-foreground',
-      label: 'Idle',
-    },
-    [RunningState.STARTING]: {
-      dotClass: 'bg-primary animate-pulse',
-      label: 'Starting',
-    },
-    [RunningState.RUNNING]: {
-      dotClass: 'bg-destructive animate-pulse',
-      label: 'Running',
-    },
-    [RunningState.STOPPING]: {
-      dotClass: 'bg-destructive animate-pulse',
-      label: 'Stopping',
-    },
-    [RunningState.STOPPED]: {
-      dotClass: 'bg-muted-foreground',
-      label: 'Stopped',
-    },
-  };
-  const { dotClass: indicatorDotClass, label: indicatorLabel } = indicatorConfig[runningState];
-
   const audioInputDeviceNotFound =
     audioInputDevices.find((d) => d.name === config?.audio_input_device_name) === undefined;
   const videoDeviceNotFound =
@@ -207,7 +178,7 @@ export default function ControlPanel({
         />
       </div>
 
-      <StatusIndicator indicatorConfig={{ dotClass: indicatorDotClass, label: indicatorLabel }} />
+      <RunningIndicator runningState={runningState} />
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { HOTKEYS } from '@/lib/hotkeys';
 import { RunningState } from '@/types/appState';
+import { RunningIndicator } from './running-indicator';
 
 type IndicatorConfig = {
   dotClass: string;
@@ -13,29 +14,7 @@ type Props = {
 };
 
 export default function HotkeysPanel({ runningState = RunningState.IDLE }: Props) {
-  const indicatorConfig: Record<RunningState, IndicatorConfig> = {
-    [RunningState.IDLE]: {
-      dotClass: 'bg-muted-foreground',
-      label: 'Idle',
-    },
-    [RunningState.STARTING]: {
-      dotClass: 'bg-primary animate-pulse',
-      label: 'Starting',
-    },
-    [RunningState.RUNNING]: {
-      dotClass: 'bg-destructive animate-pulse',
-      label: 'Running',
-    },
-    [RunningState.STOPPING]: {
-      dotClass: 'bg-destructive animate-pulse',
-      label: 'Stopping',
-    },
-    [RunningState.STOPPED]: {
-      dotClass: 'bg-muted-foreground',
-      label: 'Stopped',
-    },
-  };
-  const { dotClass: indicatorDotClass, label: indicatorLabel } = indicatorConfig[runningState];
+  // use RunningIndicator for consistent rendering
 
   return (
     <div
@@ -44,7 +23,7 @@ export default function HotkeysPanel({ runningState = RunningState.IDLE }: Props
     >
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
-          <span className={`inline-block h-3 w-3 rounded-full ${indicatorDotClass}`} />
+          <RunningIndicator runningState={runningState} compact />
         </div>
         <div className="hidden sm:flex gap-x-2 gap-y-1 flex-wrap">
           {HOTKEYS.map(([k, d]) => (
