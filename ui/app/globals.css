@@ -41,6 +41,52 @@
   --sidebar-ring: oklch(0.505 0.216 249.6);
 }
 
+/* Highlight.js dark-mode overrides -------------------------------------------------- */
+.dark .hljs {
+  background: #0b1220; /* dark background */
+  color: #c9d1d9; /* main text */
+}
+.dark .hljs-comment,
+.dark .hljs-quote {
+  color: #6a737d;
+  font-style: italic;
+}
+.dark .hljs-keyword,
+.dark .hljs-selector-tag,
+.dark .hljs-subst {
+  color: #ff7b72;
+}
+.dark .hljs-number,
+.dark .hljs-literal,
+.dark .hljs-variable,
+.dark .hljs-template-variable,
+.dark .hljs-tag .hljs-attr {
+  color: #ffa657;
+}
+.dark .hljs-string,
+.dark .hljs-doctag,
+.dark .hljs-title,
+.dark .hljs-section,
+.dark .hljs-selector-id {
+  color: #9be7c4;
+}
+.dark .hljs-function,
+.dark .hljs-class .hljs-title {
+  color: #79b8ff;
+}
+.dark .hljs-attr,
+.dark .hljs-built_in,
+.dark .hljs-builtin-name,
+.dark .hljs-meta {
+  color: #d2a8ff;
+}
+.dark .hljs-emphasis {
+  font-style: italic;
+}
+.dark .hljs-strong {
+  font-weight: 600;
+}
+
 .dark {
   --background: oklch(0.15 0 0);
   --foreground: oklch(0.95 0 0);
