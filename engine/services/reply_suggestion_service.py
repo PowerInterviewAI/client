@@ -58,6 +58,7 @@ class ReplySuggestionService:
                     job_description=interview_conf.job_description,
                     transcripts=transcripts,
                 ).model_dump(),
+                stream=True,
             )
             raise_for_status(resp)
 

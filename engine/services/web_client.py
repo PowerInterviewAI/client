@@ -28,7 +28,7 @@ class WebClient:
         )
 
     @classmethod
-    def post(cls, url: str, json: Any) -> Response:  # noqa: ANN401
+    def post(cls, url: str, json: Any, stream: bool = False) -> Response:  # noqa: ANN401, FBT001, FBT002
         session_token = ConfigService.config.session_token
         cookies = {cfg_auth.SESSION_TOKEN_COOKIE_NAME: session_token} if session_token else {}
         return requests.post(
@@ -37,6 +37,7 @@ class WebClient:
             cookies=cookies,
             headers=cls._get_headers(),
             timeout=cfg_client.HTTP_TIMEOUT_SECS,
+            stream=stream,
         )
 
     @classmethod

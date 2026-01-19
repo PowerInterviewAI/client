@@ -107,7 +107,7 @@ class CodeSuggestionService:
 
         try:
             url = cfg_client.BACKEND_CODE_SUGGESTIONS_URL
-            resp = WebClient.post(url, json=payload)
+            resp = WebClient.post(url, json=payload, stream=True)
             raise_for_status(resp)
 
             for chunk in resp.iter_content(chunk_size=1024):

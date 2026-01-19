@@ -24,7 +24,7 @@ def test_code_suggestion_service() -> None:
     service.generate_code_suggestion_async()
 
     # Wait for generation complete
-    time.sleep(2)
+    time.sleep(10)
 
     # Show result
     suggestions = service.get_suggestions()
