@@ -6,6 +6,7 @@ import { File, Loader2, PauseCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { SafeMarkdown } from './safe-markdown';
 import { Checkbox } from './ui/checkbox';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 interface CodeSuggestionsPanelProps {
   codeSuggestions?: CodeSuggestion[];
@@ -180,21 +181,28 @@ export default function CodeSuggestionsPanel({
       </div>
 
       {hasItems && showScrollButton && (
-        <button
-          onClick={() => scrollToLatest('smooth')}
-          className="absolute bottom-4 right-4 z-10 flex items-center gap-2 px-3 py-2 rounded-full bg-primary text-white hover:bg-primary/90 transition-all"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => scrollToLatest('smooth')}
+              className="absolute bottom-4 right-4 z-10 flex items-center gap-2 px-3 py-2 rounded-full bg-primary text-white hover:bg-primary/90 transition-all"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Scroll to latest suggestion</p>
+          </TooltipContent>
+        </Tooltip>
       )}
     </Card>
   );

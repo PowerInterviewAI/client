@@ -13,7 +13,7 @@ interface SuggestionsPanelProps {
 }
 
 export default function ReplySuggestionsPanel({ suggestions = [], style }: SuggestionsPanelProps) {
-  const hasSuggestions = suggestions.length > 0;
+  const hasItems = suggestions.length > 0;
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const lastItemRef = useRef<HTMLDivElement | null>(null);
@@ -104,7 +104,7 @@ export default function ReplySuggestionsPanel({ suggestions = [], style }: Sugge
 
       {/* Scrollable Content */}
       <div ref={containerRef} className="flex-1 overflow-y-auto mb-2">
-        {!hasSuggestions && (
+        {!hasItems && (
           <div className="flex items-center justify-center h-full text-center p-4">
             <div>
               <p className="text-sm text-muted-foreground">No suggestions yet</p>
@@ -112,7 +112,7 @@ export default function ReplySuggestionsPanel({ suggestions = [], style }: Sugge
           </div>
         )}
 
-        {hasSuggestions && (
+        {hasItems && (
           <div className="p-4 space-y-3">
             {suggestions.map((s, idx) => (
               <div
@@ -174,7 +174,7 @@ export default function ReplySuggestionsPanel({ suggestions = [], style }: Sugge
       </div>
 
       {/* Scroll to latest button */}
-      {hasSuggestions && showScrollButton && (
+      {hasItems && showScrollButton && (
         <Tooltip>
           <TooltipTrigger asChild>
             <button
