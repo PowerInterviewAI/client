@@ -4,12 +4,10 @@ import Loading from '@/components/loading';
 import { useAppState } from '@/hooks/app-state';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   const { data: appState } = useAppState(100);
-  const router = useRouter();
 
   useEffect(() => {
     console.log('AuthLayout appState:', appState?.is_logged_in);
@@ -17,14 +15,14 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     if (appState?.is_logged_in === true) {
       // use Next.js router to perform client-side navigation
       try {
-        router.replace('/main');
+        window.location.href = '/main';
       } catch (e) {
         // fallback
         console.log('Router replace failed, falling back to window.location.href', e);
         window.location.href = '/main';
       }
     }
-  }, [appState?.is_logged_in, router]);
+  }, [appState?.is_logged_in]);
 
   // Show loading state while checking backend status
   if (appState?.is_logged_in === false) {

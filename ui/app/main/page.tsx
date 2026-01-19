@@ -18,11 +18,10 @@ import { RunningState } from '@/types/appState';
 import { Config } from '@/types/config';
 import { CodeSuggestion, ReplySuggestion } from '@/types/suggestion';
 import { Transcript } from '@/types/transcript';
-import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
-  const router = useRouter();
   const { logout } = useAuth();
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -176,11 +175,21 @@ export default function Home() {
   }, []);
 
   // Redirect to login if not logged in
+  const router = useRouter();
+  const _redirectedToLogin = useRef(false);
+
   useEffect(() => {
-    if (appState?.is_logged_in === false) {
-      router.push('/auth/login');
+    if (appState?.is_logged_in === false && !_redirectedToLogin.current) {
+      _redirectedToLogin.current = true;
+      console.log('Not logged in, redirecting to /auth/login');
+      try {
+        router.replace('/auth/login');
+      } catch (e) {
+        // fallback to direct navigation
+        window.location.href = '/auth/login';
+      }
     }
-  }, [appState, router]);
+  }, [appState?.is_logged_in, router]);
 
   // Show loading if app state is not loaded yet
   if (!appState && !appStateError) {
