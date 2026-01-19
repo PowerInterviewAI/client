@@ -23,6 +23,10 @@ export default function CodeSuggestionsPanel({
 
   const [autoScroll, setAutoScroll] = useState(true);
 
+  const panelLoading = codeSuggestions.some(
+    (s) => s.state === SuggestionState.PENDING || s.state === SuggestionState.LOADING,
+  );
+
   const scrollToLatest = (behavior: ScrollBehavior = 'smooth') => {
     const last = lastItemRef.current;
     if (!last) return;
@@ -66,7 +70,15 @@ export default function CodeSuggestionsPanel({
     >
       {/* Header */}
       <div className="border-b border-border px-4 pt-4 pb-2 shrink-0 flex items-center justify-between gap-4">
-        <h3 className="font-semibold text-foreground text-xs">Code Suggestions</h3>
+        <div className="flex items-center gap-4">
+          <h3 className="font-semibold text-foreground text-xs">Code Suggestions</h3>
+          {panelLoading && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Generating...</span>
+            </div>
+          )}
+        </div>
 
         <label className="flex items-center gap-2 text-xs text-muted-foreground">
           <Checkbox
@@ -117,23 +129,7 @@ export default function CodeSuggestionsPanel({
                 </div>
 
                 <div className="flex-1">
-                  {s.state === SuggestionState.PENDING && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Generating...</span>
-                    </div>
-                  )}
-
-                  {s.state === SuggestionState.LOADING && (
-                    <div className="text-sm text-foreground/90 leading-relaxed">
-                      <div className="text-sm">
-                        <SafeMarkdown content={s.suggestion_content} />
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-1">(streaming...)</div>
-                    </div>
-                  )}
-
-                  {s.state === SuggestionState.SUCCESS && (
+                  {(s.state === SuggestionState.LOADING || s.state === SuggestionState.SUCCESS) && (
                     <div className="text-sm text-foreground/90 leading-relaxed">
                       <div className="text-sm">
                         <SafeMarkdown content={s.suggestion_content} />

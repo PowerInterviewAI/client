@@ -14,12 +14,16 @@ interface SuggestionsPanelProps {
 export default function ReplySuggestionsPanel({ suggestions = [], style }: SuggestionsPanelProps) {
   const hasItems = suggestions.length > 0;
 
+  const panelLoading = suggestions.some(
+    (s) => s.state === SuggestionState.PENDING || s.state === SuggestionState.LOADING,
+  );
+
   const containerRef = useRef<HTMLDivElement | null>(null);
   const lastItemRef = useRef<HTMLDivElement | null>(null);
 
   const [autoScroll, setAutoScroll] = useState(true);
 
-  // helper: scroll last item to top of container
+  // helper: scroll last item into view at the bottom of container (conventional for newest)
   const scrollToLatest = (behavior: ScrollBehavior = 'smooth') => {
     const last = lastItemRef.current;
     if (!last) return;
@@ -68,7 +72,15 @@ export default function ReplySuggestionsPanel({ suggestions = [], style }: Sugge
     >
       {/* Header */}
       <div className="border-b border-border px-4 pt-4 pb-2 shrink-0 flex items-center justify-between gap-4">
-        <h3 className="font-semibold text-foreground text-xs">Reply Suggestions</h3>
+        <div className="flex items-center gap-4">
+          <h3 className="font-semibold text-foreground text-xs">Reply Suggestions</h3>
+          {panelLoading && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Generating...</span>
+            </div>
+          )}
+        </div>
 
         <label className="flex items-center gap-2 text-xs text-muted-foreground">
           <Checkbox
@@ -105,23 +117,7 @@ export default function ReplySuggestionsPanel({ suggestions = [], style }: Sugge
                     <strong>Interviewer:</strong> {s.last_question}
                   </div>
 
-                  {s.state === SuggestionState.PENDING && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Generating...</span>
-                    </div>
-                  )}
-
-                  {s.state === SuggestionState.LOADING && (
-                    <div className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
-                      {s.answer}
-                      <div className="text-xs text-muted-foreground mt-1">
-                        (streaming... more content may arrive)
-                      </div>
-                    </div>
-                  )}
-
-                  {s.state === SuggestionState.SUCCESS && (
+                  {(s.state === SuggestionState.LOADING || s.state === SuggestionState.SUCCESS) && (
                     <div className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
                       {s.answer}
                     </div>
