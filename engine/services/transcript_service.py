@@ -211,13 +211,18 @@ class Transcriber:
         with self._lock:
             final_transcripts = copy.deepcopy(self.transcripts)
 
-        return self.merge_transcripts(final_transcripts)
+        return self.merge_other_transcripts(final_transcripts)
 
-    def merge_transcripts(self, transcripts: list[Transcript]) -> list[Transcript]:
+    def merge_other_transcripts(self, transcripts: list[Transcript]) -> list[Transcript]:
+        """
+        Merge transcripts but only merge consecutive entries from the OTHER speaker.
+        SELF transcripts are kept as separate entries even if consecutive.
+        """
         ret: list[Transcript] = []
         transcripts.sort(key=lambda t: t.timestamp)
         for t in transcripts:
-            if ret and ret[-1].speaker == t.speaker:
+            # Only merge when both last and current are OTHER (interviewer/system)
+            if ret and ret[-1].speaker == t.speaker and t.speaker == Speaker.OTHER:
                 ret[-1].text += " " + t.text
             else:
                 ret.append(t)
@@ -232,7 +237,7 @@ class Transcriber:
             if self.transcript_other_partial.text != "":
                 transcripts.append(copy.deepcopy(self.transcript_other_partial))
 
-        return self.merge_transcripts(transcripts=transcripts)
+        return self.merge_other_transcripts(transcripts=transcripts)
 
     def clear_transcripts(self) -> None:
         with self._lock:
