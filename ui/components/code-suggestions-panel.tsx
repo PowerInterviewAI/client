@@ -26,10 +26,6 @@ export default function CodeSuggestionsPanel({
   const lastHotkeyAtRef = useRef<number>(0);
   const HOTKEY_SMOOTH_THRESHOLD = 150; // ms
 
-  const panelLoading = codeSuggestions.some(
-    (s) => s.state === SuggestionState.PENDING || s.state === SuggestionState.LOADING,
-  );
-
   const scrollToLatest = (behavior: ScrollBehavior = 'smooth') => {
     const last = lastItemRef.current;
     if (!last) return;
@@ -81,12 +77,6 @@ export default function CodeSuggestionsPanel({
       <div className="border-b border-border px-4 pt-4 pb-2 shrink-0 flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <h3 className="font-semibold text-foreground text-xs">Code Suggestions</h3>
-          {panelLoading && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Generating...</span>
-            </div>
-          )}
         </div>
 
         <label className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -120,19 +110,37 @@ export default function CodeSuggestionsPanel({
               >
                 <div className="flex shrink-0">
                   {s.image_urls && s.image_urls.length > 0 ? (
-                    <div className="flex gap-2 overflow-x-auto">
-                      {s.image_urls.map((url, i) => (
-                        <img
-                          key={i}
-                          src={url}
-                          className="h-12 w-16 object-cover rounded-md"
-                          alt={`thumb-${i}`}
-                        />
-                      ))}
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-2 overflow-x-auto">
+                        {s.image_urls.map((url, i) => (
+                          <img
+                            key={i}
+                            src={url}
+                            className="h-12 w-16 object-cover rounded-md"
+                            alt={`thumb-${i}`}
+                          />
+                        ))}
+                      </div>
+                      {(s.state === SuggestionState.PENDING ||
+                        s.state === SuggestionState.LOADING) && (
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Generating</span>
+                        </div>
+                      )}
                     </div>
                   ) : (
-                    <div className="h-12 w-16 flex items-center justify-center rounded-md bg-muted">
-                      <File className="h-5 w-5 text-muted-foreground" />
+                    <div className="flex items-center gap-2">
+                      <div className="h-12 w-16 flex items-center justify-center rounded-md bg-muted">
+                        <File className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      {(s.state === SuggestionState.PENDING ||
+                        s.state === SuggestionState.LOADING) && (
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Generating</span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

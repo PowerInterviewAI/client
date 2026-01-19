@@ -14,10 +14,6 @@ interface SuggestionsPanelProps {
 export default function ReplySuggestionsPanel({ suggestions = [], style }: SuggestionsPanelProps) {
   const hasItems = suggestions.length > 0;
 
-  const panelLoading = suggestions.some(
-    (s) => s.state === SuggestionState.PENDING || s.state === SuggestionState.LOADING,
-  );
-
   const containerRef = useRef<HTMLDivElement | null>(null);
   const lastItemRef = useRef<HTMLDivElement | null>(null);
 
@@ -83,12 +79,6 @@ export default function ReplySuggestionsPanel({ suggestions = [], style }: Sugge
       <div className="border-b border-border px-4 pt-4 pb-2 shrink-0 flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <h3 className="font-semibold text-foreground text-xs">Reply Suggestions</h3>
-          {panelLoading && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Generating...</span>
-            </div>
-          )}
         </div>
 
         <label className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -120,7 +110,12 @@ export default function ReplySuggestionsPanel({ suggestions = [], style }: Sugge
                 ref={idx === suggestions.length - 1 ? lastItemRef : null}
                 className="flex gap-3 pb-3 border-b border-border/40 last:border-0"
               >
-                <Zap className="h-4 w-4 mt-0.5 text-accent shrink-0" />
+                {idx === suggestions.length - 1 &&
+                (s.state === SuggestionState.PENDING || s.state === SuggestionState.LOADING) ? (
+                  <Loader2 className="h-4 w-4 mt-0.5 text-accent shrink-0 animate-spin" />
+                ) : (
+                  <Zap className="h-4 w-4 mt-0.5 text-accent shrink-0" />
+                )}
                 <div>
                   <div className="text-xs text-muted-foreground">
                     <strong>Interviewer:</strong> {s.last_question}
