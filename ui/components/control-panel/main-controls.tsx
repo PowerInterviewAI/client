@@ -74,12 +74,6 @@ export function MainControls({ runningState, stateConfig, getDisabled }: MainCon
             console.error('Error awaiting stop action', e);
           }
         }
-
-        // Ask user whether to export transcription after stop
-        const confirmExport = window.confirm('Export transcription now?');
-        if (confirmExport) {
-          await onExportTranscript();
-        }
       }
     } catch (err) {
       console.error(err);
