@@ -148,7 +148,7 @@ class PowerInterviewApp:
 
         # Map hotkeys to handlers
         keyboard.add_hotkey("ctrl+alt+shift+s", lambda: self._on_hotkey_code_suggestion_capture_screenshot())
-        keyboard.add_hotkey("ctrl+alt+shift+c", lambda: self._on_hotkey_code_suggestion_clear_images())
+        keyboard.add_hotkey("ctrl+alt+shift+x", lambda: self._on_hotkey_code_suggestion_clear_images())
         keyboard.add_hotkey("ctrl+alt+shift+enter", lambda: self._on_hotkey_code_suggestion_submit())
 
         self._hotkeys_registered = True

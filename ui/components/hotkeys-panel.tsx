@@ -14,8 +14,6 @@ type Props = {
 };
 
 export default function HotkeysPanel({ runningState = RunningState.IDLE }: Props) {
-  // use RunningIndicator for consistent rendering
-
   return (
     <div
       id="hotkeys-panel"
