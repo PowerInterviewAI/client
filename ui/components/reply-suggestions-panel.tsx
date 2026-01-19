@@ -50,7 +50,7 @@ export default function ReplySuggestionsPanel({ suggestions = [], style }: Sugge
         const container = containerRef.current;
         if (!container) return;
 
-        const distance = Math.max(Math.round(container.clientHeight * 0.9), 100);
+        const distance = Math.max(Math.round(container.clientHeight * 0.5), 100);
         const top = direction === 'up' ? -distance : distance;
         container.scrollBy({ top, behavior: 'smooth' });
       },
