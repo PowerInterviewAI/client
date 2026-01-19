@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { HOTKEYS } from '@/lib/hotkeys';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 
 interface DocumentationDialogProps {
   open: boolean;
@@ -18,8 +18,6 @@ interface DocumentationDialogProps {
 }
 
 export default function DocumentationDialog({ open, onOpenChange }: DocumentationDialogProps) {
-  const [filter, setFilter] = useState('');
-
   const stealthKey = useMemo(
     () => HOTKEYS.find(([, short]) => /stealth/i.test(short))?.[0] ?? 'Ctrl+Shift+Q',
     [],
@@ -42,14 +40,6 @@ export default function DocumentationDialog({ open, onOpenChange }: Documentatio
     () => HOTKEYS.find(([, short]) => /resize/i.test(short))?.[0] ?? 'Ctrl+Win+Shift+Arrow',
     [],
   );
-
-  const rows = useMemo(() => {
-    const q = filter.trim().toLowerCase();
-    return HOTKEYS.filter(([k, short, long]) => {
-      if (!q) return true;
-      return [k, short, long].join(' ').toLowerCase().includes(q);
-    });
-  }, [filter]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
