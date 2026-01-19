@@ -18,101 +18,178 @@ const sanitizeSchema: Schema = {
   },
 };
 
-const components = {
-  a: ({ children, href, ...props }: any) => (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer noopener"
-      className="underline underline-offset-2"
-      {...props}
-    >
-      {children}
-    </a>
-  ),
-  pre: ({ children, className, ...props }: any) => (
-    <pre
-      className={cn(
-        'rounded-md bg-muted/60 p-3 text-xs leading-relaxed font-mono whitespace-pre-wrap',
-        className,
-      )}
-      {...props}
-    >
-      {children}
-    </pre>
-  ),
-  code: ({ children, className, ...props }: any) => {
-    const { inline, ...rest } = props;
+type MarkdownNodeProp = {
+  node?: unknown;
+};
+
+type LinkProps = React.AnchorHTMLAttributes<HTMLAnchorElement> &
+  MarkdownNodeProp & {
+    href?: string;
+    children?: React.ReactNode;
+  };
+
+type PreProps = React.HTMLAttributes<HTMLPreElement> &
+  MarkdownNodeProp & {
+    className?: string;
+    children?: React.ReactNode;
+  };
+
+type CodeProps = React.HTMLAttributes<HTMLElement> &
+  MarkdownNodeProp & {
+    inline?: boolean;
+    className?: string;
+    children?: React.ReactNode;
+  };
+
+type UlProps = React.HTMLAttributes<HTMLUListElement> &
+  MarkdownNodeProp & {
+    ordered?: boolean;
+    children?: React.ReactNode;
+  };
+
+type OlProps = React.OlHTMLAttributes<HTMLOListElement> &
+  MarkdownNodeProp & {
+    ordered?: boolean;
+    children?: React.ReactNode;
+  };
+
+type LiProps = React.LiHTMLAttributes<HTMLLIElement> &
+  MarkdownNodeProp & {
+    ordered?: boolean;
+    children?: React.ReactNode;
+  };
+
+type PProps = React.HTMLAttributes<HTMLParagraphElement> &
+  MarkdownNodeProp & {
+    children?: React.ReactNode;
+  };
+
+type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
+
+function headingFactory<L extends HeadingLevel>(level: L) {
+  // formulaic scale: base (h1) and ratio (multiply previous by ratio for next)
+  const base = 1.4; // rem for h1
+  const ratio = 0.85; // multiply previous size by this to get next
+  const sizes = Array.from({ length: 6 }, (_, i) => Number((base * Math.pow(ratio, i)).toFixed(4)));
+  const mbs = ['my-[2.2]', 'my-[1.8]', 'my-[1.4]', 'my-[1.2]', 'my-[1]', 'my-[1]'];
+
+  const Heading: React.FC<React.HTMLAttributes<HTMLHeadingElement> & MarkdownNodeProp> =
+    function MarkdownHeading({ children, className, style, node, ...props }) {
+      void node;
+      const weight = level === 1 ? 'font-bold' : 'font-semibold';
+      const classStr = cn('scroll-m-20', weight, mbs[level - 1], className);
+      const Tag = `h${level}` as `h${L}`;
+      const fontSize = sizes[level - 1];
+      const mergedStyle = { ...(style || {}), fontSize: `${fontSize}rem` } as React.CSSProperties;
+      return React.createElement(
+        Tag,
+        { className: classStr, style: mergedStyle, ...props },
+        children,
+      );
+    };
+
+  Heading.displayName = `SafeMarkdownHeading${level}`;
+  return Heading;
+}
+
+const components: Components = {
+  a: function MarkdownLink({ children, href, node, ...props }: LinkProps) {
+    void node;
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noreferrer noopener"
+        className="underline underline-offset-2"
+        {...props}
+      >
+        {children}
+      </a>
+    );
+  },
+  pre: function MarkdownPre({ children, className, node, ...props }: PreProps) {
+    void node;
+    return (
+      <pre
+        className={cn(
+          'rounded-md bg-muted/60 p-3 text-xs leading-relaxed font-mono whitespace-pre-wrap',
+          className,
+        )}
+        {...props}
+      >
+        {children}
+      </pre>
+    );
+  },
+  code: function MarkdownCode({ children, className, inline, node, ...props }: CodeProps) {
+    void node;
     const isInline = inline === true;
     const codeClass = isInline
       ? cn('font-mono rounded bg-muted/60 px-1 py-0.5 text-[0.85em]', className)
       : cn('font-mono whitespace-pre-wrap break-words', className);
 
     return (
-      <code className={codeClass} {...rest}>
+      <code className={codeClass} {...props}>
         {children}
       </code>
     );
   },
-  ul: ({ children, ordered, ...props }: any) => (
-    // drop `ordered` (non-DOM boolean) to avoid React warning about non-boolean attributes
-    <ul className="list-disc pl-5" {...props}>
-      {children}
-    </ul>
-  ),
-  ol: ({ children, ordered, ...props }: any) => (
-    // drop `ordered` (non-DOM boolean) to avoid React warning about non-boolean attributes
-    <ol className="list-decimal pl-5" {...props}>
-      {children}
-    </ol>
-  ),
-  li: ({ children, ordered, ...props }: any) => (
-    // drop `ordered` (non-DOM boolean) to avoid React warning about non-boolean attributes
-    <li className="my-1" {...props}>
-      {children}
-    </li>
-  ),
-  p: ({ children, ...props }: any) => (
-    <p className="my-2" {...props}>
-      {children}
-    </p>
-  ),
-  // headings generated by factory below
-} satisfies Components;
-
-function headingFactory(level: number) {
-  // formulaic scale: base (h1) and ratio (multiply previous by ratio for next)
-  const base = 1.4; // rem for h1
-  const ratio = 0.85; // multiply previous size by this to get next
-  const sizes = Array.from({ length: 6 }, (_, i) => Number((base * Math.pow(ratio, i)).toFixed(4)));
-  const mbs = ['my-[2.2]', 'my-[1.8]', 'my-[1.4]', 'my-[1.2]', 'my-[1]', 'my-[1]'];
-  return ({ children, className, style, ...props }: any) => {
-    const weight = level === 1 ? 'font-bold' : 'font-semibold';
-    const classStr = cn('scroll-m-20', weight, mbs[level - 1], className);
-    const Tag = `h${level}`;
-    const fontSize = sizes[level - 1];
-    const mergedStyle = { ...(style || {}), fontSize: `${fontSize}rem` } as React.CSSProperties;
-    return React.createElement(
-      Tag,
-      { className: classStr, style: mergedStyle, ...props },
-      children,
+  ul: function MarkdownUl({ children, ordered, node, ...props }: UlProps) {
+    void ordered;
+    void node;
+    return (
+      <ul className="list-disc pl-5" {...props}>
+        {children}
+      </ul>
     );
-  };
-}
-
-// Attach generated heading renderers (h1..h6)
-for (let i = 1; i <= 6; i++) {
-  // @ts-ignore assign into components object
-  (components as any)[`h${i}`] = headingFactory(i);
-}
+  },
+  ol: function MarkdownOl({ children, ordered, node, ...props }: OlProps) {
+    void ordered;
+    void node;
+    return (
+      <ol className="list-decimal pl-5" {...props}>
+        {children}
+      </ol>
+    );
+  },
+  li: function MarkdownLi({ children, ordered, node, ...props }: LiProps) {
+    void ordered;
+    void node;
+    return (
+      <li className="my-1" {...props}>
+        {children}
+      </li>
+    );
+  },
+  p: function MarkdownP({ children, node, ...props }: PProps) {
+    void node;
+    return (
+      <p className="my-2" {...props}>
+        {children}
+      </p>
+    );
+  },
+  h1: headingFactory(1),
+  h2: headingFactory(2),
+  h3: headingFactory(3),
+  h4: headingFactory(4),
+  h5: headingFactory(5),
+  h6: headingFactory(6),
+};
 
 export function SafeMarkdown({ content }: { content?: string }) {
   if (!content) return null;
 
+  type MarkdownProps = React.ComponentProps<typeof ReactMarkdown>;
+  const rehypePlugins = [
+    rehypeHighlight,
+    [rehypeSanitize, sanitizeSchema],
+  ] as unknown as MarkdownProps['rehypePlugins'];
+
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
-      rehypePlugins={[rehypeHighlight as any, [rehypeSanitize, sanitizeSchema]]}
+      rehypePlugins={rehypePlugins}
       components={components}
     >
       {content}

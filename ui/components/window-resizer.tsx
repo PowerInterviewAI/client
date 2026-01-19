@@ -35,15 +35,8 @@ export default function WindowResizer() {
       lastX = ev.clientX;
       lastY = ev.clientY;
       try {
-        // eslint-disable-next-line
-        // @ts-ignore
-        window.electronAPI &&
-          // eslint-disable-next-line
-          // @ts-ignore
-          window.electronAPI.resizeWindowDelta &&
-          // eslint-disable-next-line
-          // @ts-ignore
-          window.electronAPI.resizeWindowDelta(dx, dy, edge);
+        const api = window.electronAPI;
+        if (api?.resizeWindowDelta) api.resizeWindowDelta(dx, dy, edge);
       } catch (err) {
         console.error('Failed to resize window:', err);
       }

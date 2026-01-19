@@ -107,9 +107,12 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       const remoteStream = new MediaStream();
       pc.ontrack = (event) => {
         // Add incoming tracks to remoteStream
-        event.streams?.[0]
-          ? remoteStream.addTrack(event.streams[0].getTracks()[0])
-          : event.track && remoteStream.addTrack(event.track);
+        if (event.streams?.[0]) {
+          const firstTrack = event.streams[0].getTracks()[0];
+          if (firstTrack) remoteStream.addTrack(firstTrack);
+        } else if (event.track) {
+          remoteStream.addTrack(event.track);
+        }
 
         // Attach remote stream to visible video element
         if (videoRef.current) {

@@ -10,24 +10,18 @@ export default function Titlebar() {
   const isStealth = useIsStealthMode();
 
   const handleMinimize = () => {
-    // eslint-disable-next-line
-    // @ts-ignore
-    window.electronAPI?.minimize && window.electronAPI.minimize();
+    const api = window.electronAPI;
+    if (api?.minimize) api.minimize();
   };
   const handleClose = () => {
-    // eslint-disable-next-line
-    // @ts-ignore
-    window.electronAPI?.close && window.electronAPI.close();
+    const api = window.electronAPI;
+    if (api?.close) api.close();
   };
 
   const [isDocsOpen, setIsDocsOpen] = useState(false);
   const handleToggleStealth = () => {
     // Prefer delegating to main process window-controls via preload
-    // eslint-disable-next-line
-    // @ts-ignore
     if (typeof window !== 'undefined' && window?.electronAPI?.toggleStealth) {
-      // eslint-disable-next-line
-      // @ts-ignore
       window.electronAPI.toggleStealth();
       return;
     }
@@ -37,8 +31,6 @@ export default function Titlebar() {
 
   return (
     <>
-      {/* eslint-disable-next-line */}
-      {/* @ts-ignore */}
       <div
         id="titlebar"
         // eslint-disable-next-line

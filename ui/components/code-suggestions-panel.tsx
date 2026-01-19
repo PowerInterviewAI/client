@@ -35,12 +35,8 @@ export default function CodeSuggestionsPanel({
 
   // Listen for hotkey scroll events from Electron main process
   useEffect(() => {
-    // eslint-disable-next-line
-    // @ts-ignore
     if (typeof window === 'undefined' || !window?.electronAPI?.onHotkeyScroll) return;
 
-    // eslint-disable-next-line
-    // @ts-ignore
     const unsubscribe = window.electronAPI.onHotkeyScroll(
       (section: string, direction: 'up' | 'down') => {
         if (section !== '1') return; // only handle for code suggestions section
@@ -56,7 +52,7 @@ export default function CodeSuggestionsPanel({
 
     return () => {
       try {
-        unsubscribe && unsubscribe();
+        if (typeof unsubscribe === 'function') unsubscribe();
       } catch (e) {
         console.error('Failed to unsubscribe from hotkey scroll events', e);
       }
