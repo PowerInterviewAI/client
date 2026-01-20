@@ -42,6 +42,9 @@ export default function Home() {
 
   const hasReplySuggestions = replySuggestions.length > 0;
   const hasCodeSuggestions = codeSuggestions.length > 0;
+  const hasTranscripts = transcripts.length > 0;
+  const hideVideoPanel = !config?.enable_video_control;
+  const hideTranscriptPanel = hasCodeSuggestions && !hasTranscripts;
 
   const hasSuggestions = hasReplySuggestions || hasCodeSuggestions;
   const suggestionPanelCount = (hasReplySuggestions ? 1 : 0) + (hasCodeSuggestions ? 1 : 0);
@@ -92,7 +95,14 @@ export default function Home() {
   // Recompute when panels mount/unmount
   useEffect(() => {
     computeAvailable();
-  }, [hasCodeSuggestions, hasReplySuggestions, computeAvailable]);
+  }, [
+    hasCodeSuggestions,
+    hasReplySuggestions,
+    hasTranscripts,
+    hideVideoPanel,
+    hideTranscriptPanel,
+    computeAvailable,
+  ]);
 
   // Recompute when stealth mode toggles
   useEffect(() => {
@@ -149,8 +159,6 @@ export default function Home() {
     }
   }, [appState?.code_suggestions, codeSuggestions]);
 
-  // Theme initialisation moved to ThemeProvider
-
   // Redirect to login if not logged in
   const router = useRouter();
   const _redirectedToLogin = useRef(false);
@@ -197,13 +205,10 @@ export default function Home() {
         {/* Left Column: Video + Transcription */}
         <div
           className={`flex flex-col ${hasSuggestions ? 'w-80' : 'flex-1'} gap-1 transition-all duration-300 ease-in-out`}
+          hidden={hideVideoPanel && hideTranscriptPanel}
         >
           {/* Video Panel - Small and compact */}
-          <div
-            id="video-panel"
-            className="h-45 w-full max-w-80 mx-auto"
-            hidden={!config?.enable_video_control}
-          >
+          <div id="video-panel" className="h-45 w-full max-w-80 mx-auto" hidden={hideVideoPanel}>
             <VideoPanel
               ref={videoPanelRef}
               runningState={
@@ -221,11 +226,13 @@ export default function Home() {
           </div>
 
           {/* Transcription Panel - Fill remaining space with scroll */}
-          <TranscriptPanel
-            username={config?.interview_conf?.username ?? ''}
-            transcripts={transcripts ?? []}
-            style={(transcriptHeight ?? 0) > 0 ? { height: `${transcriptHeight}px` } : undefined}
-          />
+          {(!hideTranscriptPanel || !hideVideoPanel) && (
+            <TranscriptPanel
+              username={config?.interview_conf?.username ?? ''}
+              transcripts={transcripts}
+              style={(transcriptHeight ?? 0) > 0 ? { height: `${transcriptHeight}px` } : undefined}
+            />
+          )}
         </div>
 
         {/* Right Column: Main Suggestions Panel */}
