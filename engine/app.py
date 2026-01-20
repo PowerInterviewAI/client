@@ -146,10 +146,19 @@ class PowerInterviewApp:
     def register_global_hotkeys(self) -> None:
         """Attempt to register global hotkeys using the `keyboard` module if available."""
 
-        # Map hotkeys to handlers
-        keyboard.add_hotkey("ctrl+alt+shift+s", lambda: self._on_hotkey_code_suggestion_capture_screenshot())
-        keyboard.add_hotkey("ctrl+alt+shift+x", lambda: self._on_hotkey_code_suggestion_clear_images())
-        keyboard.add_hotkey("ctrl+alt+shift+enter", lambda: self._on_hotkey_code_suggestion_submit())
+        def _safe_hotkey(handler_callable):  # type:ignore  # noqa: ANN001, ANN202, PGH003
+            def _wrapped() -> None:
+                try:
+                    handler_callable()
+                except Exception as ex:
+                    logger.warning(f"Hotkey handler error: {ex}")
+
+            return _wrapped
+
+        # Map hotkeys to handlers (wrapped safely so exceptions don't escape)
+        keyboard.add_hotkey("ctrl+alt+shift+s", _safe_hotkey(self._on_hotkey_code_suggestion_capture_screenshot))  # type: ignore  # noqa: PGH003
+        keyboard.add_hotkey("ctrl+alt+shift+x", _safe_hotkey(self._on_hotkey_code_suggestion_clear_images))  # type: ignore  # noqa: PGH003
+        keyboard.add_hotkey("ctrl+alt+shift+enter", _safe_hotkey(self._on_hotkey_code_suggestion_submit))  # type: ignore  # noqa: PGH003
 
         self._hotkeys_registered = True
         logger.debug("Global hotkeys registered: Ctrl+Alt+Shift+S/C/Enter")
@@ -178,11 +187,7 @@ class PowerInterviewApp:
         img_gray.save(img_bytes, format="PNG")
 
         # Append to pending images (full image bytes and grayscale thumbnail)
-        try:
-            self.code_suggestion_service.add_image(image_bytes=img_bytes.getvalue())
-        except Exception as ex:
-            # Prevent exceptions from escaping hotkey handlers which can break the keyboard listener
-            logger.warning(f"Failed to add screenshot for code suggestion (hotkey): {ex}")
+        self.code_suggestion_service.add_image(image_bytes=img_bytes.getvalue())
 
     def _on_hotkey_code_suggestion_clear_images(self) -> None:
         """Clear the pending images buffer for code suggestion."""
