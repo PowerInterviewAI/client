@@ -4,6 +4,7 @@ from loguru import logger
 
 from engine.api.error_handler import raise_for_status
 from engine.cfg.client import config as cfg_client
+from engine.cfg.llm import config as cfg_llm
 from engine.schemas.suggestion import CodeSuggestion, GenerateCodeSuggestionRequest, SuggestionState
 from engine.schemas.transcript import Transcript
 from engine.services.web_client import WebClient
@@ -54,6 +55,13 @@ class CodeSuggestionService:
 
     def add_image(self, image_bytes: bytes) -> None:
         """Add an image in bytes to the list of images for code suggestion."""
+        # enforce maximum screenshots limit
+        with self._lock:
+            if len(self._uploaded_image_names) >= cfg_llm.MAX_SCREENSHOTS:
+                msg = f"Maximum screenshots ({cfg_llm.MAX_SCREENSHOTS}) reached"
+                logger.warning(msg)
+                raise RuntimeError(msg)
+
         # upload image to backend as multipart file and save returned filename (plain text)
         files = {"image_file": ("screenshot.png", image_bytes, "application/octet-stream")}
         try:
