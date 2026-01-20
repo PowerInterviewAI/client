@@ -1,5 +1,6 @@
 'use client';
 
+import DocumentationDialog from '@/components/documentation-dialog';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -37,6 +38,7 @@ export function ProfileSection({
 }: ProfileSectionProps) {
   const { changePassword, loading, error, setError } = useAuth();
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const [isDocumentationOpen, setIsDocumentationOpen] = useState(false);
 
   const disabled = getDisabled(runningState, true);
 
@@ -115,6 +117,7 @@ export function ProfileSection({
         loading={loading}
         error={error}
       />
+      <DocumentationDialog open={isDocumentationOpen} onOpenChange={setIsDocumentationOpen} />
     </div>
   );
 }

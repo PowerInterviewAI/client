@@ -21,15 +21,15 @@ class RouteErrorHandler(APIRoute):
             try:
                 return await original_route_handler(request)
             except RequestValidationError:
-                if cfg_api.DEBUG:
+                if cfg_api.IS_DEBUG:
                     logger.exception("RequestValidationError")
                 raise
             except HTTPException:
-                if cfg_api.DEBUG:
+                if cfg_api.IS_DEBUG:
                     logger.exception("HTTPException")
                 raise
             except (ValueError, TypeError) as ex:
-                if cfg_api.DEBUG:
+                if cfg_api.IS_DEBUG:
                     logger.exception(f"ValidationError due to: {ex}")
                 raise ValidationErrorException(
                     error_code=ErrorCode422.VALIDATION_ERROR,

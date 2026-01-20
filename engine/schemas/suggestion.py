@@ -15,7 +15,7 @@ class SuggestionState(StrEnum):
     ERROR = "error"
 
 
-class Suggestion(BaseModel):
+class ReplySuggestion(BaseModel):
     timestamp: Annotated[
         int,
         Field(description="The Unix timestamp of the suggestions"),
@@ -34,7 +34,7 @@ class Suggestion(BaseModel):
     ]
 
 
-class GenerateSuggestionRequest(BaseModel):
+class GenerateReplySuggestionRequest(BaseModel):
     username: Annotated[
         str,
         Field(description="The username of the user"),
@@ -50,4 +50,34 @@ class GenerateSuggestionRequest(BaseModel):
     transcripts: Annotated[
         list[Transcript],
         Field(description="The transcripts of the user"),
+    ]
+
+
+class CodeSuggestion(BaseModel):
+    timestamp: Annotated[
+        int,
+        Field(description="The Unix timestamp of the code suggestion"),
+    ]
+    image_urls: Annotated[
+        list[str],
+        Field(description="The list of image URLs associated with the suggestion"),
+    ]
+    suggestion_content: Annotated[
+        str,
+        Field(description="The suggested code content"),
+    ]
+    state: Annotated[
+        SuggestionState,
+        Field(description="The state of the code suggestion"),
+    ]
+
+
+class GenerateCodeSuggestionRequest(BaseModel):
+    user_prompt: Annotated[
+        str | None,
+        Field(description="The user's prompt for code suggestion"),
+    ]
+    image_names: Annotated[
+        list[str],
+        Field(description="The list of image names associated with the suggestion"),
     ]

@@ -74,12 +74,6 @@ export function MainControls({ runningState, stateConfig, getDisabled }: MainCon
             console.error('Error awaiting stop action', e);
           }
         }
-
-        // Ask user whether to export transcription after stop
-        const confirmExport = window.confirm('Export transcription now?');
-        if (confirmExport) {
-          await onExportTranscript();
-        }
       }
     } catch (err) {
       console.error(err);
@@ -88,9 +82,6 @@ export function MainControls({ runningState, stateConfig, getDisabled }: MainCon
 
   return (
     <>
-      {/* Divider */}
-      <div className="h-4 w-px bg-border" />
-
       {/* Start/Stop Button */}
       <Tooltip>
         <TooltipTrigger asChild>
@@ -108,9 +99,6 @@ export function MainControls({ runningState, stateConfig, getDisabled }: MainCon
           <p>Start/Stop Assistant</p>
         </TooltipContent>
       </Tooltip>
-
-      {/* Divider */}
-      <div className="h-4 w-px bg-border" />
 
       {/* Export transcription button */}
       <Tooltip>

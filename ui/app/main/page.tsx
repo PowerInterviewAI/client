@@ -1,10 +1,12 @@
 'use client';
 
+import CodeSuggestionsPanel from '@/components/code-suggestions-panel';
 import ConfigurationDialog from '@/components/configuration-dialog';
 import ControlPanel from '@/components/control-panel';
 import HotkeysPanel from '@/components/hotkeys-panel';
 import Loading from '@/components/loading';
-import SuggestionsPanel from '@/components/suggestions-panel';
+import { useTheme } from '@/components/providers';
+import ReplySuggestionsPanel from '@/components/reply-suggestions-panel';
 import TranscriptPanel from '@/components/transcript-panel';
 import { VideoPanel, VideoPanelHandle } from '@/components/video-panel';
 import { useAppState } from '@/hooks/app-state';
@@ -15,23 +17,40 @@ import useAuth from '@/hooks/use-auth';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { RunningState } from '@/types/appState';
 import { Config } from '@/types/config';
+import { CodeSuggestion, ReplySuggestion } from '@/types/suggestion';
 import { Transcript } from '@/types/transcript';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 export default function Home() {
-  const router = useRouter();
   const { logout } = useAuth();
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isDark, setIsDark] = useState(false);
   const [config, setConfig] = useState<Config>();
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
+  const [replySuggestions, setReplySuggestions] = useState<ReplySuggestion[]>([]);
+  const [codeSuggestions, setCodeSuggestions] = useState<CodeSuggestion[]>([]);
   const videoPanelRef = useRef<VideoPanelHandle>(null);
   const [transcriptHeight, setTranscriptHeight] = useState<number | null>(null);
-  const [suggestionsHeight, setSuggestionsHeight] = useState<number | null>(null);
+  const [suggestionHeight, setSuggestionHeight] = useState<number | null>(null);
+
+  // Queries
+  const { data: configFetched } = useConfigQuery();
+  const { data: audioInputDevices } = useAudioInputDevices(1000);
+  const { data: audioOutputDevices } = useAudioOutputDevices(1000);
+  const { data: appState, error: appStateError } = useAppState(100);
+
+  const hasReplySuggestions = replySuggestions.length > 0;
+  const hasCodeSuggestions = codeSuggestions.length > 0;
+  const hasTranscripts = transcripts.length > 0;
+  const hideVideoPanel = !config?.enable_video_control;
+  const hideTranscriptPanel = hasCodeSuggestions && !hasTranscripts;
+
+  const hasSuggestions = hasReplySuggestions || hasCodeSuggestions;
+  const suggestionPanelCount = (hasReplySuggestions ? 1 : 0) + (hasCodeSuggestions ? 1 : 0);
 
   // stable compute function so other effects can trigger a recompute
+  // include `suggestionPanelCount` in deps to avoid stale closure
   const computeAvailable = useCallback(() => {
     if (typeof window === 'undefined') return;
     const title = document.getElementById('titlebar')?.getBoundingClientRect().height || 0;
@@ -44,16 +63,20 @@ export default function Home() {
     if (control > 0) control += 4; // account for border
     if (video > 0) video += 4; // account for border
 
-    const leftAvailable = Math.max(
-      100,
-      window.innerHeight - (title + hot + control + video + extra),
+    setTranscriptHeight(
+      Math.max(100, window.innerHeight - (title + hot + control + video + extra)),
     );
-
-    const rightAvailable = Math.max(100, window.innerHeight - (title + hot + control + extra));
-
-    setTranscriptHeight(leftAvailable);
-    setSuggestionsHeight(rightAvailable);
-  }, []);
+    if (suggestionPanelCount > 0) {
+      setSuggestionHeight(
+        Math.max(
+          100,
+          window.innerHeight - (title + hot + control + extra) - (suggestionPanelCount - 1) * 4,
+        ) / suggestionPanelCount,
+      );
+    } else {
+      setSuggestionHeight(0);
+    }
+  }, [suggestionPanelCount]);
   const isStealth = useIsStealthMode();
 
   // compute panel height by subtracting hotkeys/control/video heights from viewport
@@ -69,6 +92,18 @@ export default function Home() {
     };
   }, [computeAvailable]);
 
+  // Recompute when panels mount/unmount
+  useEffect(() => {
+    computeAvailable();
+  }, [
+    hasCodeSuggestions,
+    hasReplySuggestions,
+    hasTranscripts,
+    hideVideoPanel,
+    hideTranscriptPanel,
+    computeAvailable,
+  ]);
+
   // Recompute when stealth mode toggles
   useEffect(() => {
     computeAvailable();
@@ -78,12 +113,6 @@ export default function Home() {
   useEffect(() => {
     computeAvailable();
   }, [config?.enable_video_control, computeAvailable]);
-
-  // Queries
-  const { data: configFetched } = useConfigQuery();
-  const { data: audioInputDevices } = useAudioInputDevices(1000);
-  const { data: audioOutputDevices } = useAudioOutputDevices(1000);
-  const { data: appState, error: appStateError } = useAppState(100);
 
   // Recompute when assistant running state or appState becomes available
   useEffect(() => {
@@ -95,19 +124,8 @@ export default function Home() {
   const startMutation = useStartAssistant(videoPanelRef, config);
   const stopMutation = useStopAssistant(videoPanelRef);
 
-  // Theme handling
-  const handleThemeToggle = () => {
-    const newIsDark = !isDark;
-    setIsDark(newIsDark);
-
-    if (newIsDark) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  };
+  // Theme handled by ThemeProvider via context
+  const { theme, toggleTheme } = useTheme();
 
   // Sign out handling
   const handleSignOut = async () => {
@@ -130,31 +148,32 @@ export default function Home() {
       setTranscripts(appState?.transcripts);
     }
   }, [appState?.transcripts, transcripts]);
-
-  const suggestions = appState?.suggestions ?? [];
-  const hasSuggestions = suggestions.length > 0;
-
-  // Load theme
   useEffect(() => {
-    // Check localStorage or system preference
-    const storedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-    if (storedTheme === 'dark' || (!storedTheme && prefersDark)) {
-      setIsDark(true);
-      document.documentElement.classList.add('dark');
-    } else {
-      setIsDark(false);
-      document.documentElement.classList.remove('dark');
+    if (appState?.suggestions && appState?.suggestions !== replySuggestions) {
+      setReplySuggestions(appState?.suggestions);
     }
-  }, []);
+  }, [appState?.suggestions, replySuggestions]);
+  useEffect(() => {
+    if (appState?.code_suggestions && appState?.code_suggestions !== codeSuggestions) {
+      setCodeSuggestions(appState?.code_suggestions);
+    }
+  }, [appState?.code_suggestions, codeSuggestions]);
 
   // Redirect to login if not logged in
+  const router = useRouter();
+  const _redirectedToLogin = useRef(false);
+
   useEffect(() => {
-    if (appState && !appState.is_logged_in) {
-      router.push('/auth/login');
+    if (appState?.is_logged_in === false && !_redirectedToLogin.current) {
+      _redirectedToLogin.current = true;
+      try {
+        router.replace('/auth/login');
+      } catch {
+        // fallback to direct navigation
+        window.location.href = '/auth/login';
+      }
     }
-  }, [appState, router]);
+  }, [appState?.is_logged_in, router]);
 
   // Show loading if app state is not loaded yet
   if (!appState && !appStateError) {
@@ -167,12 +186,12 @@ export default function Home() {
   }
 
   // Show loading if not logged in (fallback)
-  if (appState && !appState.is_logged_in) {
+  if (appState?.is_logged_in === false) {
     return <Loading disclaimer="Redirecting to login…" />;
   }
 
   // Show loading if GPU server is not live
-  if (appState && !appState.is_gpu_server_live) {
+  if (appState?.is_gpu_server_live === false) {
     return (
       <Loading disclaimer="Initializing AI processing resources… Please allow up to 5 minutes for completion." />
     );
@@ -180,19 +199,16 @@ export default function Home() {
 
   return (
     <div className="flex-1 flex flex-col w-full bg-background p-1 space-y-1">
-      {isStealth && <HotkeysPanel />}
+      {isStealth && <HotkeysPanel runningState={appState?.assistant_state ?? RunningState.IDLE} />}
 
       <div className="flex-1 flex overflow-y-hidden gap-1">
         {/* Left Column: Video + Transcription */}
         <div
-          className={`flex flex-col gap-1 ${hasSuggestions ? 'w-1/2 md:w-96' : 'flex-1'} transition-all duration-300 ease-in-out`}
+          className={`flex flex-col ${hasSuggestions ? 'w-80' : 'flex-1'} gap-1 transition-all duration-300 ease-in-out`}
+          hidden={hideVideoPanel && hideTranscriptPanel}
         >
           {/* Video Panel - Small and compact */}
-          <div
-            id="video-panel"
-            className="h-48 shrink-0 border rounded-xl overflow-hidden"
-            hidden={!config?.enable_video_control}
-          >
+          <div id="video-panel" className="h-45 w-full max-w-80 mx-auto" hidden={hideVideoPanel}>
             <VideoPanel
               ref={videoPanelRef}
               runningState={
@@ -210,20 +226,30 @@ export default function Home() {
           </div>
 
           {/* Transcription Panel - Fill remaining space with scroll */}
-          <TranscriptPanel
-            username={config?.interview_conf?.username ?? ''}
-            transcripts={transcripts ?? []}
-            style={transcriptHeight ? { height: `${transcriptHeight}px` } : undefined}
-          />
+          {(!hideTranscriptPanel || !hideVideoPanel) && (
+            <TranscriptPanel
+              username={config?.interview_conf?.username ?? ''}
+              transcripts={transcripts}
+              style={(transcriptHeight ?? 0) > 0 ? { height: `${transcriptHeight}px` } : undefined}
+            />
+          )}
         </div>
 
         {/* Right Column: Main Suggestions Panel */}
-        {hasSuggestions && (
-          <div className="w-1/2 md:flex-1 min-w-60 min-h-0 rounded-lg">
-            <SuggestionsPanel
-              suggestions={suggestions}
-              style={suggestionsHeight ? { height: `${suggestionsHeight}px` } : undefined}
-            />
+        {(hasReplySuggestions || hasCodeSuggestions) && (
+          <div className="flex-1 flex flex-col gap-1 h-full overflow-auto">
+            {hasCodeSuggestions && (
+              <CodeSuggestionsPanel
+                codeSuggestions={codeSuggestions}
+                style={{ height: `${suggestionHeight}px` }}
+              />
+            )}
+            {hasReplySuggestions && (
+              <ReplySuggestionsPanel
+                suggestions={replySuggestions}
+                style={{ height: `${suggestionHeight}px` }}
+              />
+            )}
           </div>
         )}
       </div>
@@ -236,8 +262,8 @@ export default function Home() {
         audioOutputDevices={audioOutputDevices ?? []}
         onProfileClick={() => setIsProfileOpen(true)}
         onSignOut={handleSignOut}
-        onThemeToggle={handleThemeToggle}
-        isDark={isDark}
+        onThemeToggle={toggleTheme}
+        isDark={theme === 'dark'}
         config={config}
         updateConfig={updateConfig}
       />

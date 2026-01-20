@@ -16,7 +16,7 @@ from engine.init import init_app, init_watch_parent
 
 # Create FastAPI instance
 api = FastAPI(
-    debug=cfg_api.DEBUG,
+    debug=cfg_api.IS_DEBUG,
     title=cfg_api.APP_TITLE,
     contact={
         "name": cfg_api.APP_NAME,
@@ -125,7 +125,7 @@ if __name__ == "__main__":
 
     uvicorn.run(
         "engine.main:api",
-        reload=args.reload and cfg_api.DEBUG,
+        reload=args.reload and cfg_api.IS_DEBUG,
         host=args.host,
         port=args.port,
     )

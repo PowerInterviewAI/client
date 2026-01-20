@@ -2,7 +2,6 @@
 
 import axiosClient from '@/lib/axiosClient';
 import axios from 'axios';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 function parseErrorMessage(err: unknown, defaultMessage: string): string {
@@ -16,7 +15,6 @@ function parseErrorMessage(err: unknown, defaultMessage: string): string {
 }
 
 export default function useAuth() {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,7 +23,7 @@ export default function useAuth() {
     setError(null);
     try {
       await axiosClient.post('/auth/login', { email, password });
-      router.push('/main');
+      window.location.href = '/main';
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setLoading(false);
@@ -40,7 +38,7 @@ export default function useAuth() {
     try {
       await axiosClient.post('/auth/signup', { email, password });
       // After signup, go to login page
-      router.push('/auth/login');
+      window.location.href = '/auth/login';
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(parseErrorMessage(err, 'Signup failed'));
@@ -55,7 +53,7 @@ export default function useAuth() {
     setError(null);
     try {
       await axiosClient.get('/auth/logout');
-      router.push('/auth/login');
+      window.location.href = '/auth/login';
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {

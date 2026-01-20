@@ -1,0 +1,12 @@
+node_modules/
+dist/
+build/
+bin/
+resources/
+**/dist/
+*.map
+*.log
+*.local
+/.cache
+.git
+.vscode

@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field
 
-from engine.schemas.suggestion import Suggestion
+from engine.schemas.suggestion import CodeSuggestion, ReplySuggestion
 from engine.schemas.transcript import Transcript
 
 
@@ -19,7 +19,7 @@ class AppState(BaseModel):
     """The app state."""
 
     is_logged_in: Annotated[
-        bool,
+        bool | None,
         Field(description="Whether the user is logged in"),
     ]
     assistant_state: Annotated[
@@ -31,8 +31,12 @@ class AppState(BaseModel):
         Field(description="The list of transcripts"),
     ]
     suggestions: Annotated[
-        list[Suggestion],
+        list[ReplySuggestion],
         Field(description="The list of suggestions"),
+    ]
+    code_suggestions: Annotated[
+        list[CodeSuggestion],
+        Field(description="The list of code suggestions"),
     ]
     is_backend_live: Annotated[
         bool,

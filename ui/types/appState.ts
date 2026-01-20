@@ -1,4 +1,4 @@
-import { Suggestion } from './suggestion';
+import { CodeSuggestion, ReplySuggestion } from './suggestion';
 import { Transcript } from './transcript';
 
 export enum RunningState {
@@ -10,10 +10,11 @@ export enum RunningState {
 }
 
 export interface AppState {
-  is_logged_in: boolean;
+  is_logged_in: boolean | null;
   assistant_state: RunningState;
   transcripts: Transcript[];
-  suggestions: Suggestion[];
+  suggestions: ReplySuggestion[];
+  code_suggestions: CodeSuggestion[];
   is_backend_live: boolean;
   is_gpu_server_live: boolean;
 }

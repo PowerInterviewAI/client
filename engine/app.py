@@ -1,7 +1,11 @@
+import io
+import threading
 from typing import Any
 
+import keyboard
 import numpy as np
 from loguru import logger
+from PIL import ImageGrab
 
 from engine.api.error_handler import raise_for_status
 from engine.cfg.client import config as cfg_client
@@ -12,9 +16,10 @@ from engine.schemas.summarize import GenerateSummarizeRequest
 from engine.schemas.transcript import Speaker, Transcript
 from engine.services.audio_control_service import AudioControlService
 from engine.services.audio_device_service import AudioDeviceService
+from engine.services.code_suggestion_service import CodeSuggestionService
 from engine.services.config_service import ConfigService
+from engine.services.reply_suggestion_service import ReplySuggestionService
 from engine.services.service_monitor import ServiceMonitor
-from engine.services.suggestion_service import SuggestionService
 from engine.services.transcript_service import Transcriber
 from engine.services.virtual_camera import VirtualCameraService
 from engine.services.web_client import WebClient
@@ -29,13 +34,21 @@ class PowerInterviewApp:
             callback_on_self_final=self.on_transcriber_self_final,
             callback_on_other_final=self.on_transcriber_other_final,
         )
-        self.suggestion_service = SuggestionService()
+        self.suggestion_service = ReplySuggestionService()
+        self.code_suggestion_service = CodeSuggestionService()
         self.audio_controller = AudioControlService()
         self.virtual_camera_service = VirtualCameraService(
             width=cfg_video.DEFAULT_WIDTH,
             height=cfg_video.DEFAULT_HEIGHT,
             fps=cfg_video.DEFAULT_FPS,
         )
+
+        # Pending buffers used by global hotkey handlers for code suggestions
+        self._pending_code_prompt: str | None = None
+        self._pending_code_images: list[bytes] = []
+        self._pending_lock = threading.Lock()
+        self._hotkeys_registered = False
+        self._hotkeys_module = None
 
     # ---- Configuration Management ----
     # Config management is handled by ConfigService classmethods
@@ -48,8 +61,15 @@ class PowerInterviewApp:
         )
 
         self.suggestion_service.clear_suggestions()
+        self.code_suggestion_service.clear_suggestions()
 
-        if ConfigService.config.enable_audio_control:
+        if ConfigService.config.enable_video_control:
+            self.virtual_camera_service.update_parameters(
+                width=ConfigService.config.video_width,
+                height=ConfigService.config.video_height,
+                fps=cfg_video.DEFAULT_FPS,
+            )
+            self.virtual_camera_service.start()
             self.audio_controller.update_parameters(
                 input_device_id=AudioDeviceService.get_device_index_by_name(
                     ConfigService.config.audio_input_device_name
@@ -59,19 +79,23 @@ class PowerInterviewApp:
             )
             self.audio_controller.start()
 
-        if ConfigService.config.enable_video_control:
-            self.virtual_camera_service.update_parameters(
-                width=ConfigService.config.video_width,
-                height=ConfigService.config.video_height,
-                fps=cfg_video.DEFAULT_FPS,
-            )
-            self.virtual_camera_service.start()
+        # Register global hotkeys
+        try:
+            self.register_global_hotkeys()
+        except Exception as ex:
+            logger.error(f"Failed to register global hotkeys: {ex}")
 
     def stop_assistant(self) -> None:
         self.transcriber.stop()
         self.suggestion_service.stop_current_task()
-
+        self.code_suggestion_service.stop_current_task()
         self.audio_controller.stop()
+
+        # Unregister global hotkeys when stopping assistant
+        try:
+            self.unregister_global_hotkeys()
+        except Exception as ex:
+            logger.error(f"Failed to unregister global hotkeys: {ex}")
 
     # ---- State Management ----
     def get_app_state(self) -> AppState:
@@ -80,6 +104,7 @@ class PowerInterviewApp:
             assistant_state=self.transcriber.get_state(),
             transcripts=self.transcriber.get_transcripts(),
             suggestions=self.suggestion_service.get_suggestions(),
+            code_suggestions=self.code_suggestion_service.get_suggestions(),
             is_backend_live=self.service_monitor.is_backend_live(),
             is_gpu_server_live=self.service_monitor.is_gpu_server_live(),
         )
@@ -114,6 +139,65 @@ class PowerInterviewApp:
         self.service_monitor.start_auth_monitor()
         self.service_monitor.start_gpu_server_monitor()
         self.service_monitor.start_wakeup_gpu_server_loop()
+
+    # --------------------------
+    # Global hotkey helpers
+    # --------------------------
+    def register_global_hotkeys(self) -> None:
+        """Attempt to register global hotkeys using the `keyboard` module if available."""
+
+        def _safe_hotkey(handler_callable):  # type:ignore  # noqa: ANN001, ANN202, PGH003
+            def _wrapped() -> None:
+                try:
+                    handler_callable()
+                except Exception as ex:
+                    logger.warning(f"Hotkey handler error: {ex}")
+
+            return _wrapped
+
+        # Map hotkeys to handlers (wrapped safely so exceptions don't escape)
+        keyboard.add_hotkey("ctrl+alt+shift+s", _safe_hotkey(self._on_hotkey_code_suggestion_capture_screenshot))  # type: ignore  # noqa: PGH003
+        keyboard.add_hotkey("ctrl+alt+shift+x", _safe_hotkey(self._on_hotkey_code_suggestion_clear_images))  # type: ignore  # noqa: PGH003
+        keyboard.add_hotkey("ctrl+alt+shift+enter", _safe_hotkey(self._on_hotkey_code_suggestion_submit))  # type: ignore  # noqa: PGH003
+
+        self._hotkeys_registered = True
+        logger.debug("Global hotkeys registered: Ctrl+Alt+Shift+S/C/Enter")
+
+    def unregister_global_hotkeys(self) -> None:
+        if not self._hotkeys_registered:
+            return
+        try:
+            keyboard.clear_all_hotkeys()
+        except Exception:
+            try:
+                # older keyboard versions
+                keyboard.unhook_all()
+            except Exception as ex:
+                logger.error(f"Failed to unregister global hotkeys: {ex}")
+        self._hotkeys_registered = False
+        logger.debug("Global hotkeys unregistered")
+
+    def _on_hotkey_code_suggestion_capture_screenshot(self) -> None:
+        """Capture a screenshot and append it to the pending images buffer."""
+        # Capture screenshot and convert to 8-bit grayscale PNG
+        img = ImageGrab.grab(all_screens=True)
+        img_gray = img.convert("L")  # 8-bit grayscale
+
+        img_bytes = io.BytesIO()
+        img_gray.save(img_bytes, format="PNG")
+
+        # Append to pending images (full image bytes and grayscale thumbnail)
+        self.code_suggestion_service.add_image(image_bytes=img_bytes.getvalue())
+
+    def _on_hotkey_code_suggestion_clear_images(self) -> None:
+        """Clear the pending images buffer for code suggestion."""
+        self.code_suggestion_service.clear_images()
+
+    def _on_hotkey_code_suggestion_submit(self) -> None:
+        """Submit the code suggestion request using the pending prompt and images."""
+        self.code_suggestion_service.generate_code_suggestion_async(
+            transcripts=self.transcriber.get_transcripts(),
+        )
 
     # ---- Service methods ----
     def export_transcript(self) -> str:
