@@ -72,7 +72,7 @@ class CodeSuggestionService:
             logger.error(f"Failed to upload image for suggestion: {ex}")
             raise
 
-    def _build_user_prompt_from_transcripts(self, transcripts: list[Transcript] | None) -> str | None:
+    def _build_user_prompt(self, transcripts: list[Transcript] | None) -> str | None:
         """Construct a textual prompt from provided transcripts.
 
         Returns None when no transcripts are provided.
@@ -88,7 +88,7 @@ class CodeSuggestionService:
         """Call backend to generate a code suggestion and stream the response into the suggestion record."""
         tstamp = DatetimeUtil.get_current_timestamp()
         with self._lock:
-            user_prompt = self._build_user_prompt_from_transcripts(transcripts)
+            user_prompt = self._build_user_prompt(transcripts)
 
             payload = GenerateCodeSuggestionRequest(
                 user_prompt=user_prompt,
