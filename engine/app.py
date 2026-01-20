@@ -178,7 +178,11 @@ class PowerInterviewApp:
         img_gray.save(img_bytes, format="PNG")
 
         # Append to pending images (full image bytes and grayscale thumbnail)
-        self.code_suggestion_service.add_image(image_bytes=img_bytes.getvalue())
+        try:
+            self.code_suggestion_service.add_image(image_bytes=img_bytes.getvalue())
+        except Exception as ex:
+            # Prevent exceptions from escaping hotkey handlers which can break the keyboard listener
+            logger.warning(f"Failed to add screenshot for code suggestion (hotkey): {ex}")
 
     def _on_hotkey_code_suggestion_clear_images(self) -> None:
         """Clear the pending images buffer for code suggestion."""
