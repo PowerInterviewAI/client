@@ -37,8 +37,8 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       videoHeight,
       enableFaceSwap,
       enableFaceEnhance,
-      fps = 20,
-      jpegQuality = 0.7,
+      fps = 30,
+      jpegQuality = 0.8,
     },
     ref,
   ) => {
@@ -143,6 +143,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
           deviceId: videoDeviceId ? { exact: videoDeviceId } : undefined,
           width: { ideal: videoWidth },
           height: { ideal: videoHeight },
+          frameRate: { ideal: fps, max: fps },
         },
         audio: false,
       });
@@ -155,9 +156,12 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
         console.warn('No video capabilities available');
         return;
       }
-      const h264Codecs = caps.codecs.filter((c) => c.mimeType.toLowerCase() === 'video/h264');
-      const h264Rtx = caps.codecs.filter((c) => c.mimeType.toLowerCase() === 'video/rtx');
-      const preferredCodecs = [...h264Codecs, ...h264Rtx];
+      const h264Codecs = caps.codecs.filter(
+        (c) =>
+          c.mimeType.toLowerCase() === 'video/h264' &&
+          c.sdpFmtpLine?.includes('profile-level-id=42c01e'), // Constrained Baseline L3.0
+      );
+      const preferredCodecs = [...h264Codecs];
 
       // Create transceiver BEFORE attaching track
       const videoTransceiver = pc.addTransceiver('video', { direction: 'sendrecv' });
@@ -166,6 +170,29 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       // Attach camera track to transceiver
       const videoTrack = localStream.getVideoTracks()[0];
       await videoTransceiver.sender.replaceTrack(videoTrack);
+
+      const sender = videoTransceiver.sender;
+      const params = sender.getParameters();
+
+      let maxBitrate;
+      if (videoWidth >= 1920) {
+        maxBitrate = 3_500_000; // 1080p
+      } else if (videoWidth >= 1280) {
+        maxBitrate = 1_800_000; // 720p
+      } else {
+        maxBitrate = 500_000; // 640x480
+      }
+
+      params.encodings = [
+        {
+          maxBitrate,
+          maxFramerate: fps,
+        },
+      ];
+
+      params.degradationPreference = 'maintain-framerate';
+
+      await sender.setParameters(params);
 
       // Create offer
       const offer = await pc.createOffer();
