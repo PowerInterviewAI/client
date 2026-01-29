@@ -130,6 +130,9 @@ class PowerInterviewApp:
         # Monitor the backend API server for availability
         self.service_monitor.start_backend_monitor()
 
+        # Start pinging the backend with device info to check login status
+        self.service_monitor.start_ping_worker()
+
         # Monitor the GPU processing server for availability
         self.service_monitor.start_gpu_server_monitor()
 

@@ -8,6 +8,9 @@ from loguru import logger
 
 from engine.api.error_handler import raise_for_status
 from engine.cfg.client import config as cfg_client
+from engine.schemas.app_state import RunningState
+from engine.schemas.ping_client import PingClientRequest
+from engine.services.device_service import DeviceService
 from engine.services.web_client import WebClient
 
 if TYPE_CHECKING:
@@ -71,6 +74,33 @@ class ServiceMonitor:
             return
         self._backend_thread = threading.Thread(target=self._backend_worker, daemon=True)
         self._backend_thread.start()
+
+    def _ping_worker(self) -> None:
+        while not self._stop_event.is_set():
+            # Ping backend with device info to check login status
+            try:
+                device_info = DeviceService.get_device_info()
+                ping_request = PingClientRequest(
+                    device_info=device_info,
+                    is_gpu_alive=self.is_gpu_server_live(),
+                    is_assistant_running=self._app.transcriber.get_state() == RunningState.RUNNING,
+                )
+                resp = WebClient.post(
+                    cfg_client.BACKEND_PING_CLIENT_URL,
+                    json=ping_request.model_dump(mode="json"),
+                )
+                raise_for_status(resp)
+
+                time.sleep(60)
+
+            except Exception:
+                time.sleep(1)
+
+    def start_ping_worker(self) -> None:
+        if self._auth_thread and self._auth_thread.is_alive():
+            return
+        self._auth_thread = threading.Thread(target=self._ping_worker, daemon=True)
+        self._auth_thread.start()
 
     def _gpu_worker(self) -> None:
         while not self._stop_event.is_set():
