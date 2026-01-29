@@ -43,7 +43,7 @@ export default function Home() {
   const hasReplySuggestions = replySuggestions.length > 0;
   const hasCodeSuggestions = codeSuggestions.length > 0;
   const hasTranscripts = transcripts.length > 0;
-  const hideVideoPanel = !config?.enable_video_control;
+  const hideVideoPanel = !config?.face_swap;
   const hideTranscriptPanel = hasCodeSuggestions && !hasTranscripts;
 
   const hasSuggestions = hasReplySuggestions || hasCodeSuggestions;
@@ -109,10 +109,10 @@ export default function Home() {
     computeAvailable();
   }, [isStealth, computeAvailable]);
 
-  // Recompute when video control setting toggles
+  // Recompute when face swap setting toggles
   useEffect(() => {
     computeAvailable();
-  }, [config?.enable_video_control, computeAvailable]);
+  }, [config?.face_swap, computeAvailable]);
 
   // Recompute when assistant running state or appState becomes available
   useEffect(() => {
@@ -220,8 +220,6 @@ export default function Home() {
               cameraDeviceName={config?.camera_device_name ?? ''}
               videoWidth={config?.video_width ?? 640}
               videoHeight={config?.video_height ?? 480}
-              enableFaceSwap={config?.enable_face_swap ?? true}
-              enableFaceEnhance={config?.enable_face_enhance ?? false}
             />
           </div>
 

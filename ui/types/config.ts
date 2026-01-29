@@ -20,12 +20,10 @@ export interface Config {
   // Transcription options
   audio_input_device_name: string;
 
-  // Video control options
-  enable_video_control: boolean;
+  // Video control options - Face Swap Control
+  face_swap: boolean;
   camera_device_name: string;
   video_width: number;
   video_height: number;
-  enable_face_swap: boolean;
-  enable_face_enhance: boolean;
   audio_delay_ms: number;
 }

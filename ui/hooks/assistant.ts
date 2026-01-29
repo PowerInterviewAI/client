@@ -13,7 +13,8 @@ export const useStartAssistant = (
     mutationFn: async () => {
       await axiosClient.get('/app/start-assistant');
 
-      if (config?.enable_video_control) {
+      // Start WebRTC if face swap is enabled
+      if (config?.face_swap) {
         await videoPanelRef.current?.startWebRTC();
       }
     },

@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 
 export default function LoginPage() {
   const { login, loading, error, setError } = useAuth();
-  const {data: config} = useConfigQuery();
+  const { data: config } = useConfigQuery();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 

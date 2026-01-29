@@ -146,7 +146,8 @@ class PowerInterviewApp:
         self.suggestion_service.clear_suggestions()
         self.code_suggestion_service.clear_suggestions()
 
-        if ConfigService.config.enable_video_control:
+        # Start video control and face swap if enabled
+        if ConfigService.config.face_swap:
             self.virtual_camera_service.update_parameters(
                 width=ConfigService.config.video_width,
                 height=ConfigService.config.video_height,

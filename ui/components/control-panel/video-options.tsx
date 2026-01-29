@@ -53,15 +53,16 @@ export function VideoOptions({
       : true;
 
   useEffect(() => {
-    if (!obsCameraExists && config?.enable_video_control) {
-      updateConfig({ enable_video_control: false });
-      toast.error('OBS Virtual Camera not found — disabling Video Control');
+    // Disable face swap if required devices are not found
+    if (!obsCameraExists && config?.face_swap) {
+      updateConfig({ face_swap: false });
+      toast.error('OBS Virtual Camera not found — disabling Face Swap');
     }
-    if (!vbInputExists && config?.enable_video_control) {
-      updateConfig({ enable_video_control: false });
-      toast.error('VB-Audio Input device not found — disabling Video Control');
+    if (!vbInputExists && config?.face_swap) {
+      updateConfig({ face_swap: false });
+      toast.error('VB-Audio Input device not found — disabling Face Swap');
     }
-  }, [obsCameraExists, vbInputExists, config?.enable_video_control, updateConfig]);
+  }, [obsCameraExists, vbInputExists, config?.face_swap, updateConfig]);
 
   const usableVideoDevices = videoDevices.filter((d) => {
     if (d.label.toLowerCase().startsWith(OBS_CAMERA_PREFIX.toLowerCase())) return false;
@@ -127,7 +128,7 @@ export function VideoOptions({
     };
   }, [
     isVideoDialogOpen,
-    config?.enable_video_control,
+    config?.face_swap,
     videoDevices,
     config?.camera_device_name,
     config?.video_width,
@@ -138,42 +139,34 @@ export function VideoOptions({
     <div className="relative">
       <div
         className={`flex items-center overflow-hidden border rounded-full ${
-          config?.enable_video_control ? '' : 'text-white'
+          config?.face_swap ? '' : 'text-white'
         }`}
       >
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant={config?.enable_video_control ? 'secondary' : 'destructive'}
+              variant={config?.face_swap ? 'secondary' : 'destructive'}
               size="icon"
               className="h-8 w-8 border-none rounded-none"
               disabled={
                 getDisabled(runningState) ||
-                ((!obsCameraExists || !vbInputExists) && !config?.enable_video_control)
+                ((!obsCameraExists || !vbInputExists) && !config?.face_swap)
               }
               onClick={() => {
-                const tryingToEnable = !config?.enable_video_control;
+                const tryingToEnable = !config?.face_swap;
                 if (tryingToEnable && (!obsCameraExists || !vbInputExists)) {
-                  alert(
-                    'OBS Virtual Camera or VB-Audio Input not found. Video control requires both.',
-                  );
+                  alert('OBS Virtual Camera or VB-Audio Input not found. Face Swap requires both.');
                   return;
                 }
-                toast.success(
-                  config?.enable_video_control ? 'Video control disabled' : 'Video control enabled',
-                );
-                updateConfig({ enable_video_control: !config?.enable_video_control });
+                toast.success(config?.face_swap ? 'Face Swap disabled' : 'Face Swap enabled');
+                updateConfig({ face_swap: !config?.face_swap });
               }}
             >
-              {config?.enable_video_control ? (
-                <Video className="h-4 w-4" />
-              ) : (
-                <VideoOff className="h-4 w-4" />
-              )}
+              {config?.face_swap ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Toggle video control</p>
+            <p>Toggle Face Swap</p>
           </TooltipContent>
         </Tooltip>
 
@@ -182,7 +175,7 @@ export function VideoOptions({
             <TooltipTrigger asChild>
               <DialogTrigger asChild>
                 <Button
-                  variant={config?.enable_video_control ? 'secondary' : 'destructive'}
+                  variant={config?.face_swap ? 'secondary' : 'destructive'}
                   size="icon"
                   className="h-8 w-8 rounded-none border-none"
                   disabled={getDisabled(runningState)}
@@ -192,18 +185,18 @@ export function VideoOptions({
               </DialogTrigger>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Video control options</p>
+              <p>Face Swap options</p>
             </TooltipContent>
           </Tooltip>
 
           <DialogContent className="flex flex-col w-72 p-4 gap-4">
-            <DialogTitle>Video Options</DialogTitle>
+            <DialogTitle>Face Swap Options</DialogTitle>
 
             {!obsCameraExists && (
               <div className="text-sm text-destructive">
                 OBS Virtual Camera not found.
                 <br />
-                FaceSwap feature requires OBS Virtual Camera.
+                Face Swap feature requires OBS Virtual Camera.
                 <br />
                 Download and install OBS studio from
                 <br />
@@ -216,7 +209,7 @@ export function VideoOptions({
               <div className="text-sm text-destructive">
                 VB-Audio Input device not found.
                 <br />
-                AudioSync feature requires VB-Audio Virtual Cable.
+                Audio Sync feature requires VB-Audio Virtual Cable.
                 <br />
                 Download and install VBCABLE Driver from
                 <br />
@@ -278,35 +271,7 @@ export function VideoOptions({
                   </Select>
                 </div>
 
-                {/* Face Swap Toggle */}
-                <div className="flex items-center justify-between">
-                  <span className="text-xs">Face Swap</span>
-                  <Button
-                    variant={config?.enable_face_swap ? 'default' : 'outline'}
-                    size="sm"
-                    className="w-16"
-                    onClick={() => updateConfig({ enable_face_swap: !config?.enable_face_swap })}
-                  >
-                    {config?.enable_face_swap ? 'On' : 'Off'}
-                  </Button>
-                </div>
-
-                {/* Face Enhance Toggle */}
-                <div className="flex items-center justify-between">
-                  <span className="text-xs">Face Enhance</span>
-                  <Button
-                    variant={config?.enable_face_enhance ? 'default' : 'outline'}
-                    size="sm"
-                    className="w-16"
-                    onClick={() =>
-                      updateConfig({ enable_face_enhance: !config?.enable_face_enhance })
-                    }
-                  >
-                    {config?.enable_face_enhance ? 'On' : 'Off'}
-                  </Button>
-                </div>
-
-                {/* Audio Delay (moved from audio control) */}
+                {/* Audio Delay */}
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">
                     Audio Sync Delay (ms)
