@@ -16,7 +16,7 @@ import { useVideoDevices } from '@/hooks/video-devices';
 import { RunningState } from '@/types/appState';
 import { PyAudioDevice } from '@/types/audioDevice';
 import { Config } from '@/types/config';
-import { Ellipsis, Video, VideoOff } from 'lucide-react';
+import { Ellipsis, UserLock } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -162,7 +162,7 @@ export function VideoOptions({
                 updateConfig({ face_swap: !config?.face_swap });
               }}
             >
-              {config?.face_swap ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
+              <UserLock className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>
