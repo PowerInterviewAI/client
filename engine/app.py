@@ -1,5 +1,7 @@
 import io
 import threading
+import time
+from http import HTTPStatus
 from typing import Any
 
 import keyboard
@@ -54,39 +56,84 @@ class PowerInterviewApp:
 
     # ---- Authentication ----
     def init_app(self) -> None:
-        # Try to authenticate using existing session token
+        """
+        Initialize the application by attempting to authenticate with the backend.
+
+        This method performs the following steps:
+        1. Checks if a session token exists in the configuration
+        2. If a token exists, validates it with the backend by sending a ping request
+        3. If the token is invalid (401 Unauthorized), clears it and marks user as logged out
+        4. If validation succeeds, marks the user as logged in
+        5. Updates the service monitor with the authentication status
+        6. Starts all background monitoring tasks (backend health, GPU server, etc.)
+
+        The method uses a retry loop with exponential backoff (1 second delay) for
+        session token validation to handle temporary network issues. If no session
+        token exists, the user will need to log in through the UI.
+        """
+        # Attempt to authenticate using an existing session token if available
         is_logged_in = False
         if ConfigService.config.session_token:
-            try:
-                logger.info("Existing session token found, attempting to authenticate")
+            # Retry loop to handle transient network failures
+            while True:
+                try:
+                    logger.info("Existing session token found, attempting to authenticate")
 
-                device_info = DeviceService.get_device_info()
-                ping_request = PingClientRequest(
-                    device_info=device_info,
-                    is_gpu_alive=False,
-                    is_assistant_running=False,
-                )
-                resp = WebClient.post(
-                    cfg_client.BACKEND_PING_CLIENT_URL,
-                    json=ping_request.model_dump(mode="json"),
-                )
-                raise_for_status(resp)
-                is_logged_in = True
-                logger.info("Successfully authenticated using existing session token")
+                    # Gather device information for the authentication request
+                    device_info = DeviceService.get_device_info()
 
-            except Exception as ex:
-                logger.warning(f"Existing session token is invalid, need to login again: {ex}")
-                # Clear existing token
-                ConfigService.update_config(ConfigUpdate(session_token=""))
+                    # Create a ping request to validate the session token with the backend
+                    ping_request = PingClientRequest(
+                        device_info=device_info,
+                        is_gpu_alive=False,
+                        is_assistant_running=False,
+                    )
+
+                    # Send the ping request to the backend to validate the token
+                    resp = WebClient.post(
+                        cfg_client.BACKEND_PING_CLIENT_URL,
+                        json=ping_request.model_dump(mode="json"),
+                    )
+
+                    # Check if the session token has expired or been revoked (401 Unauthorized)
+                    if resp.status_code == HTTPStatus.UNAUTHORIZED:
+                        logger.warning("Existing session token is invalid, need to login again")
+                        # Clear the invalid token so the user can log in with credentials again
+                        ConfigService.update_config(ConfigUpdate(session_token=""))
+                        is_logged_in = False
+                        break
+
+                    # Raise an exception for any other HTTP error status codes
+                    raise_for_status(resp)
+
+                    # If we reach here, authentication was successful
+                    is_logged_in = True
+                    logger.info("Successfully authenticated using existing session token")
+                    break
+
+                except Exception as ex:
+                    # Log the error and retry after a short delay
+                    logger.error(f"Failed to authenticate using existing session token: {ex}")
+                    time.sleep(1)
         else:
+            # No session token found in configuration; user must log in through the UI
             logger.info("No existing session token found, user needs to login")
 
+        # Update the service monitor with the authentication status
+        # This allows the UI and other services to respond to the login state
         self.service_monitor.set_logged_in(is_logged_in)
 
         # ---- Background Tasks ----
+        # Start all background monitoring tasks to keep the application healthy
         logger.info("Starting background service monitors")
+
+        # Monitor the backend API server for availability
         self.service_monitor.start_backend_monitor()
+
+        # Monitor the GPU processing server for availability
         self.service_monitor.start_gpu_server_monitor()
+
+        # Periodically wake up the GPU server to prevent it from going to sleep
         self.service_monitor.start_wakeup_gpu_server_loop()
 
     # ---- Assistant Control ----
