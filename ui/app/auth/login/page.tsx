@@ -4,12 +4,14 @@ import { InputPassword } from '@/components/input-password';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { useConfigQuery } from '@/hooks/config';
 import useAuth from '@/hooks/use-auth';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function LoginPage() {
   const { login, loading, error, setError } = useAuth();
+  const { data: config } = useConfigQuery();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -18,6 +20,16 @@ export default function LoginPage() {
     setError(null);
     await login(email.trim(), password);
   };
+
+  useEffect(() => {
+    // Pre-fill email if available from config
+    if (config?.email) {
+      setEmail(config.email);
+    }
+    if (config?.password) {
+      setPassword(config.password);
+    }
+  }, [config?.email, config?.password]);
 
   return (
     <Card className="max-w-md mx-auto">

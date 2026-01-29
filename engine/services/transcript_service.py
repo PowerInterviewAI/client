@@ -221,8 +221,8 @@ class Transcriber:
         ret: list[Transcript] = []
         transcripts.sort(key=lambda t: t.timestamp)
         for t in transcripts:
-            # Only merge when both last and current are OTHER (interviewer/system)
-            if ret and ret[-1].speaker == t.speaker and t.speaker == Speaker.OTHER:
+            # Only merge if the last entry in ret is from the same speaker
+            if ret and ret[-1].speaker == t.speaker:
                 ret[-1].text += " " + t.text
             else:
                 ret.append(t)

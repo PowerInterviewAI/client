@@ -8,13 +8,9 @@ class WebRTCOptions(BaseModel):
         str,
         Field(description="Base64 encoded photo"),
     ]
-    swap_face: Annotated[
-        bool,
-        Field(description="Swap face flag"),
-    ]
     enhance_face: Annotated[
         bool,
-        Field(description="Enhance face flag"),
+        Field(description="Whether to enhance face"),
     ]
 
 

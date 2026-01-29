@@ -16,6 +16,16 @@ class Config(BaseModel):
         Field(description="The session token"),
     ] = ""
 
+    # Authentication
+    email: Annotated[
+        str,
+        Field(description="The user email"),
+    ] = ""
+    password: Annotated[
+        str,
+        Field(description="The user password"),
+    ] = ""
+
     # General options
     interview_conf: Annotated[
         InterviewConf,
@@ -32,10 +42,10 @@ class Config(BaseModel):
         Field(description="The audio input device name"),
     ] = ""
 
-    # Video options
-    enable_video_control: Annotated[
+    # Video options - Face Swap Control
+    face_swap: Annotated[
         bool,
-        Field(description="Whether video control is enabled"),
+        Field(description="Whether face swap with video control is enabled"),
     ] = False
     camera_device_name: Annotated[
         str,
@@ -49,10 +59,6 @@ class Config(BaseModel):
         int,
         Field(description="The video resolution height"),
     ] = 720
-    enable_face_swap: Annotated[
-        bool,
-        Field(description="Whether face swap is enabled"),
-    ] = False
     enable_face_enhance: Annotated[
         bool,
         Field(description="Whether face enhancement is enabled"),
@@ -66,6 +72,10 @@ class Config(BaseModel):
 class ConfigUpdate(BaseModel):
     session_token: str | None = None
 
+    # Authentication
+    email: str | None = None
+    password: str | None = None
+
     # General options
     interview_conf: InterviewConf | None = None
     language: Language | None = None
@@ -73,11 +83,10 @@ class ConfigUpdate(BaseModel):
     # Audio options
     audio_input_device_name: str | None = None
 
-    # Video options
-    enable_video_control: bool | None = None
+    # Video options - Face Swap Control
+    face_swap: bool | None = None
     camera_device_name: str | None = None
     video_width: int | None = None
     video_height: int | None = None
-    enable_face_swap: bool | None = None
     enable_face_enhance: bool | None = None
     audio_delay_ms: int | None = None

@@ -10,12 +10,11 @@ import { toast } from 'sonner';
 
 interface VideoPanelProps {
   runningState: RunningState;
-  // Video control options
+  // Video control options - Face swap is always enabled when video control is active
   photo: string;
   cameraDeviceName: string;
   videoWidth: number;
   videoHeight: number;
-  enableFaceSwap: boolean;
   enableFaceEnhance: boolean;
   // Optional: streaming fps for websocket
   fps?: number;
@@ -35,7 +34,6 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       cameraDeviceName,
       videoWidth,
       videoHeight,
-      enableFaceSwap,
       enableFaceEnhance,
       fps = 30,
       jpegQuality = 0.8,
@@ -198,13 +196,12 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      // Send offer to server
+      // Send offer to server with face swap always enabled
       const res = await axiosClient.post('/video/offer', {
         sdp: offer.sdp,
         type: offer.type,
         options: {
           photo,
-          swap_face: enableFaceSwap,
           enhance_face: enableFaceEnhance,
         } as WebRTCOptions,
       } as OfferRequest);

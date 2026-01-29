@@ -111,9 +111,9 @@ export default function ControlPanel({
         ok: !audioInputDeviceNotFound,
         message: `Audio input device "${config?.audio_input_device_name}" is not found`,
       },
-      // audio control device name removed; skip this check
+      // Validate video device only if face swap is enabled
       {
-        ok: !config?.enable_video_control || !videoDeviceNotFound,
+        ok: !config?.face_swap || !videoDeviceNotFound,
         message: `Video device "${config?.camera_device_name}" is not found`,
       },
     ];
