@@ -12,12 +12,14 @@ from engine.cfg.client import config as cfg_client
 from engine.cfg.video import config as cfg_video
 from engine.models.config import ConfigUpdate
 from engine.schemas.app_state import AppState
+from engine.schemas.ping_client import PingClientRequest
 from engine.schemas.summarize import GenerateSummarizeRequest
 from engine.schemas.transcript import Speaker, Transcript
 from engine.services.audio_control_service import AudioControlService
 from engine.services.audio_device_service import AudioDeviceService
 from engine.services.code_suggestion_service import CodeSuggestionService
 from engine.services.config_service import ConfigService
+from engine.services.device_service import DeviceService
 from engine.services.reply_suggestion_service import ReplySuggestionService
 from engine.services.service_monitor import ServiceMonitor
 from engine.services.transcript_service import Transcriber
@@ -28,7 +30,7 @@ from engine.utils.datetime import DatetimeUtil
 
 class PowerInterviewApp:
     def __init__(self) -> None:
-        self.service_monitor = ServiceMonitor(app=self, on_logged_out=self.on_logged_out)
+        self.service_monitor = ServiceMonitor(app=self)
 
         self.transcriber = Transcriber(
             callback_on_self_final=self.on_transcriber_self_final,
@@ -50,8 +52,42 @@ class PowerInterviewApp:
         self._hotkeys_registered = False
         self._hotkeys_module = None
 
-    # ---- Configuration Management ----
-    # Config management is handled by ConfigService classmethods
+    # ---- Authentication ----
+    def init_app(self) -> None:
+        # Try to authenticate using existing session token
+        is_logged_in = False
+        if ConfigService.config.session_token:
+            try:
+                logger.info("Existing session token found, attempting to authenticate")
+
+                device_info = DeviceService.get_device_info()
+                ping_request = PingClientRequest(
+                    device_info=device_info,
+                    is_gpu_alive=False,
+                    is_assistant_running=False,
+                )
+                resp = WebClient.post(
+                    cfg_client.BACKEND_PING_CLIENT_URL,
+                    json=ping_request.model_dump(mode="json"),
+                )
+                raise_for_status(resp)
+                is_logged_in = True
+                logger.info("Successfully authenticated using existing session token")
+
+            except Exception as ex:
+                logger.warning(f"Existing session token is invalid, need to login again: {ex}")
+                # Clear existing token
+                ConfigService.update_config(ConfigUpdate(session_token=""))
+        else:
+            logger.info("No existing session token found, user needs to login")
+
+        self.service_monitor.set_logged_in(is_logged_in)
+
+        # ---- Background Tasks ----
+        logger.info("Starting background service monitors")
+        self.service_monitor.start_backend_monitor()
+        self.service_monitor.start_gpu_server_monitor()
+        self.service_monitor.start_wakeup_gpu_server_loop()
 
     # ---- Assistant Control ----
     def start_assistant(self) -> None:
@@ -110,17 +146,6 @@ class PowerInterviewApp:
         )
 
     # ---- Callbacks ----
-    def on_logged_out(self) -> None:
-        # Stop the assistant when logout is detected
-        self.stop_assistant()
-
-        # Clear session token in app config when logout is detected
-        ConfigService.update_config(
-            ConfigUpdate(
-                session_token="",
-            )
-        )
-
     def on_transcriber_self_final(self, transcripts: list[Transcript]) -> None:
         pass
 
@@ -132,13 +157,6 @@ class PowerInterviewApp:
 
     def on_virtual_camera_frame(self, frame_bgr: np.ndarray[Any, Any]) -> None:
         self.virtual_camera_service.set_frame(frame_bgr)
-
-    # ---- Background Tasks ----
-    def start_background_tasks(self) -> None:
-        self.service_monitor.start_backend_monitor()
-        self.service_monitor.start_auth_monitor()
-        self.service_monitor.start_gpu_server_monitor()
-        self.service_monitor.start_wakeup_gpu_server_loop()
 
     # --------------------------
     # Global hotkey helpers

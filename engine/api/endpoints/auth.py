@@ -76,15 +76,15 @@ def signup(req: AuthRequest) -> None:
 
 @router.get("/logout")
 def logout() -> None:
+    # Notify backend about logout
+    resp = WebClient.get(cfg_client.BACKEND_AUTH_LOGOUT_URL)
+    raise_for_status(resp)
+
     # Update login status
     the_app.service_monitor.set_logged_in(False)
 
     # Clear session token in app config
     ConfigService.update_config(ConfigUpdate(session_token=""))
-
-    # Notify backend about logout
-    resp = WebClient.get(cfg_client.BACKEND_AUTH_LOGOUT_URL)
-    raise_for_status(resp)
 
 
 @router.post("/change-password")

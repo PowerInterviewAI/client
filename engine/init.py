@@ -33,4 +33,4 @@ def init_watch_parent() -> None:
 
 def init_app() -> None:
     ConfigService.load_config()
-    the_app.start_background_tasks()
+    the_app.init_app()

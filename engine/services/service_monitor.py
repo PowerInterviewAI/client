@@ -1,14 +1,10 @@
 import contextlib
 import threading
 import time
-from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from engine.api.error_handler import raise_for_status
 from engine.cfg.client import config as cfg_client
-from engine.schemas.app_state import RunningState
-from engine.schemas.ping_client import PingClientRequest
-from engine.services.device_service import DeviceService
 from engine.services.web_client import WebClient
 
 if TYPE_CHECKING:
@@ -16,11 +12,7 @@ if TYPE_CHECKING:
 
 
 class ServiceMonitor:
-    def __init__(
-        self,
-        app: "PowerInterviewApp",
-        on_logged_out: Callable[[], None] | None = None,
-    ) -> None:
+    def __init__(self, app: "PowerInterviewApp") -> None:
         self._app = app
         self._is_logged_in: bool | None = None
         self._is_backend_live = False
@@ -33,7 +25,6 @@ class ServiceMonitor:
 
         self._lock = threading.Lock()
         self._stop_event = threading.Event()
-        self._on_logged_out = on_logged_out
 
     def set_backend_live(self, is_running: bool) -> None:  # noqa: FBT001
         with self._lock:
@@ -77,54 +68,6 @@ class ServiceMonitor:
             return
         self._backend_thread = threading.Thread(target=self._backend_worker, daemon=True)
         self._backend_thread.start()
-
-    def _auth_worker(self) -> None:
-        while not self._stop_event.is_set():
-            # If backend is not live, mark as not logged in
-            if not self.is_backend_live():
-                # If just logged out
-                if self.is_logged_in():  # noqa: SIM102
-                    # Trigger logged out callback
-                    if self._on_logged_out:
-                        self._on_logged_out()
-
-                self.set_logged_in(None)
-
-                time.sleep(1)
-                continue
-
-            # Ping backend with device info to check login status
-            try:
-                device_info = DeviceService.get_device_info()
-                ping_request = PingClientRequest(
-                    device_info=device_info,
-                    is_gpu_alive=self.is_gpu_server_live(),
-                    is_assistant_running=self._app.transcriber.get_state() == RunningState.RUNNING,
-                )
-                resp = WebClient.post(
-                    cfg_client.BACKEND_PING_CLIENT_URL,
-                    json=ping_request.model_dump(mode="json"),
-                )
-                raise_for_status(resp)
-
-                self.set_logged_in(True)
-                time.sleep(60)
-
-            except Exception:
-                # If just logged out
-                if self.is_logged_in():  # noqa: SIM102
-                    # Trigger logged out callback
-                    if self._on_logged_out:
-                        self._on_logged_out()
-
-                self.set_logged_in(False)
-                time.sleep(1)
-
-    def start_auth_monitor(self) -> None:
-        if self._auth_thread and self._auth_thread.is_alive():
-            return
-        self._auth_thread = threading.Thread(target=self._auth_worker, daemon=True)
-        self._auth_thread.start()
 
     def _gpu_worker(self) -> None:
         while not self._stop_event.is_set():

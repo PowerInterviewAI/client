@@ -16,6 +16,16 @@ class Config(BaseModel):
         Field(description="The session token"),
     ] = ""
 
+    # Authentication
+    email: Annotated[
+        str,
+        Field(description="The user email"),
+    ] = ""
+    password: Annotated[
+        str,
+        Field(description="The user password"),
+    ] = ""
+
     # General options
     interview_conf: Annotated[
         InterviewConf,
@@ -65,6 +75,10 @@ class Config(BaseModel):
 
 class ConfigUpdate(BaseModel):
     session_token: str | None = None
+
+    # Authentication
+    email: str | None = None
+    password: str | None = None
 
     # General options
     interview_conf: InterviewConf | None = None
