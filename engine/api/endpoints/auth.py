@@ -23,6 +23,13 @@ def login(req: AuthRequest) -> None:
             message="Invalid credentials",
         )
 
+    ConfigService.update_config(
+        cfg=ConfigUpdate(
+            email=req.email,
+            password=req.password,
+        )
+    )
+
     # Authenticate user to backend
     resp = WebClient.post(
         cfg_client.BACKEND_AUTH_LOGIN_URL,

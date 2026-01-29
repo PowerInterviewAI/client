@@ -13,6 +13,10 @@ export interface Config {
   interview_conf: InterviewConf;
   language: Language;
 
+  // Authentication
+  email: string;
+  password: string;
+
   // Transcription options
   audio_input_device_name: string;
 
