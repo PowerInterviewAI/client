@@ -1,7 +1,10 @@
 import contextlib
 import threading
 import time
+from http import HTTPStatus
 from typing import TYPE_CHECKING
+
+from loguru import logger
 
 from engine.api.error_handler import raise_for_status
 from engine.cfg.client import config as cfg_client
@@ -81,8 +84,13 @@ class ServiceMonitor:
             # Ping GPU server
             try:
                 resp = WebClient.get(cfg_client.BACKEND_PING_GPU_SERVER_URL)
-                raise_for_status(resp)
+                if resp.status_code == HTTPStatus.UNAUTHORIZED:
+                    logger.warning("Unauthorized, logging out")
+                    self.set_logged_in(False)
+                    self.set_gpu_server_live(False)
+                    continue
 
+                raise_for_status(resp)
                 self.set_gpu_server_live(True)
                 time.sleep(60)
 
@@ -106,6 +114,11 @@ class ServiceMonitor:
             # Wakeup GPU server
             with contextlib.suppress(Exception):
                 resp = WebClient.get(cfg_client.BACKEND_WAKEUP_GPU_SERVER_URL)
+                if resp.status_code == HTTPStatus.UNAUTHORIZED:
+                    logger.warning("Unauthorized, logging out")
+                    self.set_logged_in(False)
+                    continue
+
                 raise_for_status(resp)
             time.sleep(1)
 
