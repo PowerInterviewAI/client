@@ -15,6 +15,7 @@ interface VideoPanelProps {
   cameraDeviceName: string;
   videoWidth: number;
   videoHeight: number;
+  enableFaceEnhance: boolean;
   // Optional: streaming fps for websocket
   fps?: number;
   jpegQuality?: number; // 0.0 - 1.0
@@ -27,7 +28,16 @@ export interface VideoPanelHandle {
 
 export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
   (
-    { runningState, photo, cameraDeviceName, videoWidth, videoHeight, fps = 30, jpegQuality = 0.8 },
+    {
+      runningState,
+      photo,
+      cameraDeviceName,
+      videoWidth,
+      videoHeight,
+      enableFaceEnhance,
+      fps = 30,
+      jpegQuality = 0.8,
+    },
     ref,
   ) => {
     const videoDevices = useVideoDevices();
@@ -192,8 +202,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
         type: offer.type,
         options: {
           photo,
-          swap_face: true,
-          enhance_face: true,
+          enhance_face: enableFaceEnhance,
         } as WebRTCOptions,
       } as OfferRequest);
       const answer = res.data;

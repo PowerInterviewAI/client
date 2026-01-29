@@ -220,6 +220,7 @@ export default function Home() {
               cameraDeviceName={config?.camera_device_name ?? ''}
               videoWidth={config?.video_width ?? 640}
               videoHeight={config?.video_height ?? 480}
+              enableFaceEnhance={config?.enable_face_enhance ?? false}
             />
           </div>
 

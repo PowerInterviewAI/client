@@ -8,6 +8,10 @@ class WebRTCOptions(BaseModel):
         str,
         Field(description="Base64 encoded photo"),
     ]
+    enhance_face: Annotated[
+        bool,
+        Field(description="Whether to enhance face"),
+    ]
 
 
 class WebRTCOfferRequest(BaseModel):

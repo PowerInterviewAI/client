@@ -271,6 +271,21 @@ export function VideoOptions({
                   </Select>
                 </div>
 
+                {/* Face Enhance Toggle */}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs">Face Enhance</span>
+                  <Button
+                    variant={config?.enable_face_enhance ? 'default' : 'outline'}
+                    size="sm"
+                    className="w-16"
+                    onClick={() =>
+                      updateConfig({ enable_face_enhance: !config?.enable_face_enhance })
+                    }
+                  >
+                    {config?.enable_face_enhance ? 'On' : 'Off'}
+                  </Button>
+                </div>
+
                 {/* Audio Delay */}
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">

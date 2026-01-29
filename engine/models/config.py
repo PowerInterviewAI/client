@@ -59,6 +59,10 @@ class Config(BaseModel):
         int,
         Field(description="The video resolution height"),
     ] = 720
+    enable_face_enhance: Annotated[
+        bool,
+        Field(description="Whether face enhancement is enabled"),
+    ] = False
     audio_delay_ms: Annotated[
         int,
         Field(description="The audio delay in milliseconds"),
@@ -84,4 +88,5 @@ class ConfigUpdate(BaseModel):
     camera_device_name: str | None = None
     video_width: int | None = None
     video_height: int | None = None
+    enable_face_enhance: bool | None = None
     audio_delay_ms: int | None = None

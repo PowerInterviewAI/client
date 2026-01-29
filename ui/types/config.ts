@@ -25,5 +25,6 @@ export interface Config {
   camera_device_name: string;
   video_width: number;
   video_height: number;
+  enable_face_enhance: boolean;
   audio_delay_ms: number;
 }

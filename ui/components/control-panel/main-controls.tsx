@@ -106,7 +106,6 @@ export function MainControls({ runningState, stateConfig, getDisabled }: MainCon
           <Button
             onClick={onExportTranscript}
             size="sm"
-            variant="secondary"
             className="h-8 w-8 text-xs rounded-xl cursor-pointer"
             disabled={getDisabled(runningState) || exportState === RunningState.RUNNING}
           >
