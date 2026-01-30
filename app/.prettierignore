@@ -1,0 +1,12 @@
+node_modules
+dist
+build
+.next
+out
+.turbo
+*.min.js
+*.map
+coverage
+.cache
+public/assets
+**/generated/**
