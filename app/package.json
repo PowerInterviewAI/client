@@ -34,6 +34,13 @@
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.4",
     "vite": "^7.2.4",
-    "wait-on": "^9.0.3"
+    "wait-on": "^9.0.3",
+    "lint-staged": "^14.0.0"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,css,scss,md,html}": [
+      "prettier --write",
+      "eslint --fix"
+    ]
   }
 }
