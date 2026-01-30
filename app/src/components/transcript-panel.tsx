@@ -1,0 +1,70 @@
+import { Card } from '@/components/ui/card';
+import { Speaker, type Transcript } from '@/types/transcript';
+import { useEffect, useRef, useState } from 'react';
+import { Checkbox } from './ui/checkbox';
+
+interface TranscriptionPanelProps {
+  transcripts: Transcript[];
+  username: string;
+  style?: React.CSSProperties;
+}
+
+export default function TranscriptPanel({ transcripts, username, style }: TranscriptionPanelProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const endRef = useRef<HTMLDivElement>(null);
+  const [autoScroll, setAutoScroll] = useState(true);
+
+  // Auto-scroll when 'transcripts' changes only if autoScroll is enabled
+  useEffect(() => {
+    if (!autoScroll) return;
+    endRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [transcripts, autoScroll]);
+
+  return (
+    <Card className="relative flex flex-col h-full bg-card p-0" style={style}>
+      <div className="border-b border-border px-4 pt-4 pb-2 shrink-0 flex items-center justify-between gap-4">
+        <h3 className="font-semibold text-foreground text-xs">Transcription</h3>
+
+        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Checkbox
+            checked={autoScroll}
+            onCheckedChange={(v) => setAutoScroll(v === true)}
+            className="h-4 w-4 rounded border-border bg-background"
+            aria-label="Enable auto-scroll"
+          />
+          <span className="select-none">Auto-scroll</span>
+        </label>
+      </div>
+
+      <div ref={containerRef} className="flex-1 overflow-y-auto mb-2">
+        {transcripts.length === 0 ? (
+          <div className="flex items-center justify-center h-full text-center p-4">
+            <p className="text-sm text-muted-foreground">No transcripts yet</p>
+          </div>
+        ) : (
+          <div className="space-y-2 p-2">
+            {transcripts.map((item, idx) => (
+              <div key={idx} className="space-y-1 pb-1 border-b border-border/50 last:border-0">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-semibold text-primary">
+                    {item.speaker === Speaker.SELF ? username : 'Interviewer'}
+                  </span>
+                  <span className="text-xs text-muted-foreground shrink-0">
+                    {new Date(item.timestamp).toLocaleString()}
+                  </span>
+                </div>
+                <div className="text-sm text-foreground/90 leading-relaxed text-wrap">
+                  {item.text}
+                </div>
+              </div>
+            ))}
+            {/* This invisible div acts as scroll target */}
+            <div ref={endRef} />
+          </div>
+        )}
+      </div>
+
+      {/* scroll-to-bottom button removed; auto-scroll still available via toggle */}
+    </Card>
+  );
+}
