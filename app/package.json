@@ -2,7 +2,7 @@
   "name": "power-interview",
   "private": true,
   "version": "0.9.0",
-  "main": "electron/main.ts",
+  "main": "electron-dist/main.cjs",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,8 +11,9 @@
     "prepare": "node -e \"const cp=require('child_process'); try{const root=cp.execSync('git rev-parse --show-toplevel').toString().trim(); cp.execSync('npx husky install '+root.replace(/\\\\/g,'/')+'/app/.husky',{stdio:[0,1,2], cwd: root});}catch(e){}\"",
     "format": "prettier --write .",
     "preview": "vite preview",
-    "electron:dev": "concurrently \"cross-env BROWSER=none pnpm run dev\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
-    "electron:build": "pnpm run build && electron-builder"
+    "electron:build-main": "tsc -p tsconfig.electron.json && node -e \"const fs=require('fs');const path=require('path');const dir='electron-dist';fs.readdirSync(dir).forEach(f=>{if(f.endsWith('.js')){fs.renameSync(path.join(dir,f),path.join(dir,f.replace('.js','.cjs')))}})\"",
+    "electron:dev": "pnpm run electron:build-main && concurrently \"cross-env BROWSER=none pnpm run dev -- --port 5173 --strictPort\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
+    "electron:build": "pnpm run electron:build-main && pnpm run build && electron-builder"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.4",
@@ -58,9 +59,11 @@
   },
   "build": {
     "appId": "com.powerinterview.app",
+    "productName": "Power Interview",
+    "copyright": "Copyright ©2026 Power Interview",
     "files": [
       "dist/**",
-      "electron/**",
+      "electron-dist/**",
       "package.json"
     ],
     "directories": {
