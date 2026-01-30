@@ -1,15 +1,18 @@
 {
-  "name": "app",
+  "name": "power-interview",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.9.0",
+  "main": "electron/main.ts",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc && vite build",
     "lint": "eslint .",
     "prepare": "node -e \"const cp=require('child_process'); try{const root=cp.execSync('git rev-parse --show-toplevel').toString().trim(); cp.execSync('npx husky install '+root.replace(/\\\\/g,'/')+'/app/.husky',{stdio:[0,1,2], cwd: root});}catch(e){}\"",
     "format": "prettier --write .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "electron:dev": "concurrently \"cross-env BROWSER=none npm run dev\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
+    "electron:build": "npm run build && electron-builder"
   },
   "dependencies": {
     "react": "^19.2.0",
