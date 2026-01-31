@@ -1,7 +1,8 @@
 import path from 'path';
+import fs from 'fs';
 import { spawn, ChildProcess } from 'child_process';
 import * as net from 'net';
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, dialog } from 'electron';
 
 // Global state
 let engine: ChildProcess | null = null;
@@ -75,11 +76,40 @@ export async function startEngine(win: BrowserWindow): Promise<number> {
   exePath = path.normalize(exePath);
   console.log(`📂 Using engine path: ${exePath}`);
 
+  // Check if engine.exe exists
+  if (!fs.existsSync(exePath)) {
+    console.error(`❌ Engine executable not found at: ${exePath}`);
+    isRestarting = false;
+    
+    // Show error dialog to user
+    dialog.showErrorBox(
+      'Engine Not Found',
+      `The Power Interview engine could not be found at:\n${exePath}\n\nPlease ensure the application is properly installed.`
+    );
+    
+    // Clean exit
+    app.quit();
+    throw new Error(`Engine not found: ${exePath}`);
+  }
+
   console.log(`🚀 Starting engine on port ${currentPort}`);
 
   engine = spawn(exePath, ['--port', currentPort.toString(), '--watch-parent', 'true', '--reload', 'false'], {
     detached: process.platform !== 'win32',
     stdio: ['ignore', 'pipe', 'pipe'],
+  });
+
+  // Handle spawn errors (e.g., permission denied, executable format error)
+  engine.on('error', (err) => {
+    console.error('❌ Failed to start engine:', err);
+    isRestarting = false;
+    
+    dialog.showErrorBox(
+      'Engine Start Failed',
+      `Failed to start the Power Interview engine:\n${err.message}\n\nThe application will now close.`
+    );
+    
+    app.quit();
   });
 
   if (engine.stdout) {
@@ -115,4 +145,23 @@ export async function startEngine(win: BrowserWindow): Promise<number> {
  */
 export function getCurrentPort(): number {
   return currentPort;
+}
+
+/**
+ * Stop the engine process cleanly
+ */
+export function stopEngine(): void {
+  if (engine && !engine.killed) {
+    console.log('🛑 Stopping engine process...');
+    engine.kill('SIGTERM');
+    
+    // Force kill after 5 seconds if still running
+    setTimeout(() => {
+      if (engine && !engine.killed) {
+        console.log('⚠️ Force killing engine process');
+        engine.kill('SIGKILL');
+      }
+    }, 5000);
+  }
+  engine = null;
 }

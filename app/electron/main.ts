@@ -14,7 +14,7 @@ interface StoreSchema {
 const store = new ElectronStore<StoreSchema>();
 
 // Import modules
-import { startEngine, getCurrentPort } from './engine.js';
+import { startEngine, getCurrentPort, stopEngine } from './engine.js';
 import { setWindowBounds, setWindowReference } from './window-controls.js';
 import { registerGlobalHotkeys, unregisterHotkeys } from './hotkeys.js';
 import * as windowControls from './window-controls.js';
@@ -105,8 +105,13 @@ async function createWindow() {
     win.webContents.openDevTools();
   } else {
     if (app.isPackaged) {
-      const port = await startEngine(win);
-      win.loadURL(`http://localhost:${port}/main`);
+      try {
+        const port = await startEngine(win);
+        win.loadURL(`http://localhost:${port}/main`);
+      } catch (error) {
+        console.error('Failed to start engine:', error);
+        // Window will close via app.quit() in startEngine error handler
+      }
     } else {
       win.loadFile(path.join(__dirname, '../dist/index.html'));
     }
@@ -122,6 +127,7 @@ app.whenReady().then(async () => {
 });
 
 app.on('will-quit', () => {
+  stopEngine();
   unregisterHotkeys();
 });
 
