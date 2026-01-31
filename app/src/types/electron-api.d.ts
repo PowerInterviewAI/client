@@ -3,7 +3,7 @@ export {};
 declare global {
   interface ElectronAPI {
     // Hotkey scroll events
-    onHotkeyScroll: (callback: (section: string, direction: string) => void) => () => void;
+    onHotkeyScroll: (callback: (section: string, direction: 'up' | 'down') => void) => () => void;
     
     // Window controls
     minimize: () => void;
