@@ -2,7 +2,7 @@
   "name": "power-interview",
   "private": true,
   "version": "0.9.0",
-  "main": "electron-dist/main.cjs",
+  "main": "electron-dist/main.js",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,7 +11,7 @@
     "prepare": "node -e \"const cp=require('child_process'); try{const root=cp.execSync('git rev-parse --show-toplevel').toString().trim(); cp.execSync('npx husky install '+root.replace(/\\\\/g,'/')+'/app/.husky',{stdio:[0,1,2], cwd: root});}catch(e){}\"",
     "format": "prettier --write .",
     "preview": "vite preview",
-    "electron:build-main": "tsc -p tsconfig.electron.json && node -e \"const fs=require('fs');const path=require('path');const dir='electron-dist';fs.readdirSync(dir).forEach(f=>{if(f.endsWith('.js')){fs.renameSync(path.join(dir,f),path.join(dir,f.replace('.js','.cjs')))}})\"",
+    "electron:build-main": "tsc -p tsconfig.electron.json",
     "electron:dev": "pnpm run electron:build-main && concurrently \"cross-env BROWSER=none pnpm run dev -- --port 5173 --strictPort\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
     "electron:build": "pnpm run electron:build-main && pnpm run build && electron-builder"
   },
@@ -26,6 +26,7 @@
     "axios": "^1.13.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "electron-store": "^11.0.2",
     "hast-util-sanitize": "^5.0.2",
     "highlight.js": "^11.11.1",
     "lucide-react": "^0.563.0",
@@ -42,6 +43,7 @@
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@tailwindcss/vite": "^4.1.18",
+    "@types/electron-store": "^3.2.2",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
@@ -73,7 +75,7 @@
     ]
   },
   "build": {
-    "appId": "com.powerinterview.app",
+    "appId": "ai.power-interview",
     "productName": "Power Interview",
     "copyright": "Copyright ©2026 Power Interview",
     "files": [
@@ -82,7 +84,50 @@
       "package.json"
     ],
     "directories": {
-      "buildResources": "build"
-    }
+      "buildResources": "build",
+      "output": "../dist"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "installerLanguages": [
+        "en_US"
+      ],
+      "shortcutName": "Power Interview",
+      "artifactName": "PowerInterview-Setup-${version}.exe"
+    },
+    "extraResources": [
+      {
+        "from": "resources/",
+        "to": "resources",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "extraFiles": [
+      {
+        "from": "bin/main.dist/",
+        "to": "bin",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ]
   }
 }

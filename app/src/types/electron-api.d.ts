@@ -1,15 +1,26 @@
 export {};
 
 declare global {
+  interface ElectronAPI {
+    // Hotkey scroll events
+    onHotkeyScroll: (callback: (section: string, direction: string) => void) => () => void;
+    
+    // Window controls
+    minimize: () => void;
+    close: () => void;
+    
+    // Edge resize support
+    resizeWindowDelta: (dx: number, dy: number, edge: string) => void;
+    
+    // Stealth control helpers
+    setStealth: (isStealth: boolean) => void;
+    toggleStealth: () => void;
+    
+    // Opacity toggle helper
+    toggleOpacity: () => void;
+  }
+
   interface Window {
-    electronAPI?: {
-      resizeWindowDelta?: (dx: number, dy: number, edge: string) => void;
-      onHotkeyScroll?: (
-        cb: (section: string, direction: 'up' | 'down') => void,
-      ) => void | (() => void);
-      toggleStealth?: () => void;
-      minimize?: () => void;
-      close?: () => void;
-    };
+    electronAPI?: ElectronAPI;
   }
 }
