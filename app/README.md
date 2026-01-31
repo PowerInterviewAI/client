@@ -1,73 +1,75 @@
-# React + TypeScript + Vite
+# Power Interview - Electron App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+AI-powered interview preparation assistant with stealth mode overlay.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- 🎯 **Real-time Interview Assistance** - AI-powered suggestions during interviews
+- 👁️ **Stealth Mode** - Transparent overlay window that stays on top
+- ⌨️ **Global Hotkeys** - Control the app from anywhere (see [HOTKEYS.md](HOTKEYS.md))
+- 🚀 **Auto-Engine Management** - Backend starts automatically
+- 💾 **Persistent Settings** - Window position and preferences saved
 
-## React Compiler
+## Development
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+# Install dependencies
+npm install
 
-## Expanding the ESLint configuration
+# Run in development mode (Vite + Electron)
+npm run electron:dev
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+# Build for production
+npm run electron:build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Scripts
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x';
-import reactDom from 'eslint-plugin-react-dom';
+- `npm run dev` - Start Vite dev server only
+- `npm run build` - Build renderer (React app)
+- `npm run electron:build-main` - Compile Electron main process
+- `npm run electron:dev` - Full development with hot reload
+- `npm run electron:build` - Build complete installer
+- `npm run clean` - Remove dist folder
+- `npm run lint` - Run ESLint
+- `npm run format` - Format code with Prettier
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+## Tech Stack
+
+- **Electron 40.1** - Desktop application framework
+- **React 19** - UI framework
+- **TypeScript 5.9** - Type safety
+- **Vite 7** - Build tool and dev server
+- **Tailwind CSS 4** - Styling
+- **React Router 7** - Navigation
+- **Electron Builder** - Packaging and distribution
+
+## Project Structure
+
 ```
+app/
+├── electron/           # Electron main process
+│   ├── main.ts        # Entry point
+│   ├── preload.cts    # IPC bridge (CommonJS)
+│   ├── engine.ts      # Backend management
+│   ├── hotkeys.ts     # Global shortcuts
+│   └── window-controls.ts  # Window positioning & stealth
+├── src/               # React renderer process
+│   ├── pages/         # Route components
+│   ├── components/    # Reusable components
+│   ├── hooks/         # Custom React hooks
+│   └── types/         # TypeScript definitions
+└── electron-dist/     # Compiled Electron code
+```
+
+## Building
+
+The build creates a Windows installer at `../dist/PowerInterview-Setup-{version}.exe`
+
+```bash
+npm run electron:build
+```
+
+## Hotkeys
+
+See [HOTKEYS.md](HOTKEYS.md) for complete list of keyboard shortcuts.

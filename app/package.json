@@ -2,17 +2,19 @@
   "name": "power-interview",
   "private": true,
   "version": "0.9.0",
+  "description": "AI-powered interview preparation assistant",
+  "author": "Power Interview",
   "main": "electron-dist/main.js",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "prepare": "node -e \"const cp=require('child_process'); try{const root=cp.execSync('git rev-parse --show-toplevel').toString().trim(); cp.execSync('npx husky install '+root.replace(/\\\\/g,'/')+'/app/.husky',{stdio:[0,1,2], cwd: root});}catch(e){}\"",
     "format": "prettier --write .",
+    "clean": "node -e \"try{require('fs').rmSync('../dist',{recursive:true,force:true,maxRetries:3,retryDelay:100})}catch(e){console.warn('Clean failed:',e.message)}\"",
     "electron:build-main": "tsc -p tsconfig.electron.json",
-    "electron:dev": "pnpm run electron:build-main && concurrently \"cross-env BROWSER=none pnpm run dev -- --port 5173 --strictPort\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
-    "electron:build": "pnpm run electron:build-main && pnpm run build && electron-builder"
+    "electron:dev": "npm run electron:build-main && concurrently \"cross-env BROWSER=none npm run dev -- --port 5173 --strictPort\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
+    "electron:build": "npm run clean && npm run electron:build-main && npm run build && electron-builder"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.3",
@@ -42,7 +44,6 @@
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@tailwindcss/vite": "^4.1.18",
-    "@types/electron-store": "^3.2.2",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
@@ -77,11 +78,6 @@
     "appId": "ai.power-interview",
     "productName": "Power Interview",
     "copyright": "Copyright ©2026 Power Interview",
-    "files": [
-      "dist/**",
-      "electron-dist/**",
-      "package.json"
-    ],
     "directories": {
       "buildResources": "build",
       "output": "../dist"
