@@ -67,7 +67,7 @@ async function createWindow() {
     transparent: true,
     frame: false,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'preload.cjs'),
       nodeIntegration: false,
       contextIsolation: true,
       // Keep renderer timers running and avoid throttling when the window

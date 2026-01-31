@@ -1,10 +1,10 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "module": "ESNext",
+    "module": "Node16",
     "target": "ES2022",
     "lib": ["ES2022", "DOM"],
-    "moduleResolution": "bundler",
+    "moduleResolution": "node16",
     "outDir": "./electron-dist",
     "rootDir": "./electron",
     "skipLibCheck": true,
