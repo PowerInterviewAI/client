@@ -6,7 +6,7 @@ from engine.cfg.api import config as cfg_api
 
 class Config(BaseSettings):
     BACKEND_URL_ONLINE: str = "https://power-interview-backend.onrender.com"
-    BACKEND_URL_LOCAL: str = "http://localhost:8080"
+    BACKEND_URL_LOCAL: str = "http://localhost:8000"
     BACKEND_URL: str = BACKEND_URL_LOCAL if cfg_api.IS_DEBUG or cfg_api.IS_TEST else BACKEND_URL_ONLINE
 
     BACKEND_PING_URL: str = f"{BACKEND_URL}/api/health-check/ping"
