@@ -10,7 +10,6 @@
     "lint": "eslint .",
     "prepare": "node -e \"const cp=require('child_process'); try{const root=cp.execSync('git rev-parse --show-toplevel').toString().trim(); cp.execSync('npx husky install '+root.replace(/\\\\/g,'/')+'/app/.husky',{stdio:[0,1,2], cwd: root});}catch(e){}\"",
     "format": "prettier --write .",
-    "preview": "vite preview",
     "electron:build-main": "tsc -p tsconfig.electron.json",
     "electron:dev": "pnpm run electron:build-main && concurrently \"cross-env BROWSER=none pnpm run dev -- --port 5173 --strictPort\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
     "electron:build": "pnpm run electron:build-main && pnpm run build && electron-builder"
