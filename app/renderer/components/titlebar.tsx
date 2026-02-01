@@ -2,6 +2,7 @@ import DocumentationDialog from '@/components/documentation-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { useState } from 'react';
+import faviconSvg from '/favicon.svg';
 
 export default function Titlebar() {
   const isStealth = useIsStealthMode();
@@ -35,7 +36,7 @@ export default function Titlebar() {
         className="flex items-center gap-3 h-9 px-1 select-none bg-card border-b border-border"
       >
         <div className="flex items-center gap-2 px-1">
-          <img src="/favicon.svg" alt="logo" className="h-5 w-5" />
+          <img src={faviconSvg} alt="logo" className="h-5 w-5" />
 
           <div
             className="text-sm font-medium"

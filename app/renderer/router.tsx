@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createHashRouter } from 'react-router-dom';
 import IndexPage from './pages/index';
 import MainPage from './pages/main/index';
 import AuthLayout from './pages/auth/layout';
@@ -8,7 +8,7 @@ import SettingsPage from './pages/settings/index';
 import TermsPage from './pages/terms/index';
 import PrivacyPage from './pages/privacy/index';
 
-export const router = createBrowserRouter([
+export const router = createHashRouter([
   {
     path: '/',
     element: <IndexPage />,

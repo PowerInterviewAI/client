@@ -42,4 +42,3 @@ export function useAudioInputDevices() {
 export function useAudioOutputDevices() {
   return useAudioDevices('audiooutput', 'Output');
 }
-

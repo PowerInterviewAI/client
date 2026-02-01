@@ -2,6 +2,7 @@ import Loading from '@/components/loading';
 import { useAppStateStore } from '@/hooks/use-app-state-store';
 import { useEffect } from 'react';
 import { useNavigate, Outlet, Link } from 'react-router-dom';
+import logoSvg from '/logo.svg';
 
 export default function AuthLayout() {
   const appState = useAppStateStore((state) => state.appState);
@@ -21,7 +22,7 @@ export default function AuthLayout() {
       <div className="flex-1 flex items-center justify-center bg-background">
         <div className="w-full max-w-md mx-auto p-6">
           <div className="flex flex-col items-center mb-6">
-            <img src="/logo.svg" alt="Logo" width={48} height={48} />
+            <img src={logoSvg} alt="Logo" width={48} height={48} />
             <h1 className="mt-4 text-2xl font-bold">Power Interview</h1>
           </div>
 

@@ -10,7 +10,7 @@ interface ConfigStore {
   config: Config | undefined;
   isLoading: boolean;
   error: Error | null;
-  
+
   // Actions
   loadConfig: () => Promise<void>;
   setConfig: (config: Config | undefined) => void;
@@ -40,7 +40,7 @@ export const useConfigStore = create<ConfigStore>((set, get) => ({
 
   updateConfig: async (partial) => {
     const currentConfig = get().config;
-    
+
     // Optimistic update
     const newConfig = currentConfig ? { ...currentConfig, ...partial } : undefined;
     set({ config: newConfig });

@@ -72,6 +72,11 @@
     "appId": "ai.power-interview",
     "productName": "Power Interview",
     "copyright": "Copyright ©2026 Power Interview",
+    "files": [
+      "electron-dist/**/*",
+      "dist/**/*",
+      "package.json"
+    ],
     "directories": {
       "buildResources": "build",
       "output": "../dist"

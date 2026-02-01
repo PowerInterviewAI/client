@@ -14,18 +14,14 @@ interface StoreSchema {
 const store = new ElectronStore<StoreSchema>();
 
 // Import modules
-import { startEngine, getCurrentPort, stopEngine } from './engine.js';
 import { setWindowBounds, setWindowReference } from './window-controls.js';
 import { registerGlobalHotkeys, unregisterHotkeys } from './hotkeys.js';
 import * as windowControls from './window-controls.js';
 
-// Import new services and API
+// Import services
 import { configService } from './services/index.js';
-import { createApi } from './api/index.js';
 
 let win: BrowserWindow | null = null;
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-let api: ReturnType<typeof createApi> | null = null;
 
 // Ensure the application name is set (used by native dialogs/title fallbacks)
 try {
@@ -62,7 +58,12 @@ if (!gotLock) {
 // CREATE WINDOW
 // -------------------------------------------------------------
 async function createWindow() {
-  const savedBounds = (store.get('windowBounds') as { x?: number; y?: number; width?: number; height?: number }) || {
+  const savedBounds = (store.get('windowBounds') as {
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+  }) || {
     width: 1024,
     height: 640,
   };
@@ -110,17 +111,11 @@ async function createWindow() {
     win.loadURL('http://localhost:5173');
     win.webContents.openDevTools();
   } else {
-    if (app.isPackaged) {
-      try {
-        const port = await startEngine(win);
-        win.loadURL(`http://localhost:${port}/main`);
-      } catch (error) {
-        console.error('Failed to start engine:', error);
-        // Window will close via app.quit() in startEngine error handler
-      }
-    } else {
-      win.loadFile(path.join(__dirname, '../dist/index.html'));
-    }
+    // Use app.getAppPath() for conventional path resolution
+    // This works correctly whether the app is packaged or not
+    const distPath = path.join(app.getAppPath(), 'dist', 'index.html');
+    console.log('Loading from:', distPath);
+    win.loadFile(distPath);
   }
 }
 
@@ -139,17 +134,9 @@ app.whenReady().then(async () => {
 
   // Register hotkeys
   registerGlobalHotkeys();
-
-  // Initialize API client with engine port
-  const port = getCurrentPort();
-  if (port) {
-    api = createApi(`http://localhost:${port}`);
-    console.log(`API client initialized on port ${port}`);
-  }
 });
 
 app.on('will-quit', () => {
-  stopEngine();
   unregisterHotkeys();
 
   // Configuration auto-saves on changes, no need to save again on quit

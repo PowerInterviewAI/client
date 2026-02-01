@@ -3,7 +3,7 @@ import { type AppState } from '@/types/app-state';
 
 interface AppStateStore {
   appState: AppState | null;
-  
+
   // Actions
   setAppState: (appState: AppState | null) => void;
   updateAppState: (partial: Partial<AppState>) => void;
