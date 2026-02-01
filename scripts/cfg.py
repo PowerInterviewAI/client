@@ -10,6 +10,7 @@ class Config:
 
     # Agent build configuration
     AGENTS_BUILD_DIR = BUILD_DIR / "agents"
+    AGENTS_DIST_DIR = AGENTS_BUILD_DIR / "dist"
 
 
 config = Config()

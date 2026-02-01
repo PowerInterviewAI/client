@@ -12,7 +12,7 @@ def build_asr_agent() -> None:
     asr_main = cfg.AGENTS_DIR / "asr" / "main.py"
     # Use separate build directory for ASR agent to avoid conflicts
     build_dir = cfg.AGENTS_BUILD_DIR / "asr.build"
-    dist_dir = cfg.AGENTS_BUILD_DIR  # Shared output directory for all agents
+    dist_dir = cfg.AGENTS_DIST_DIR  # Shared output directory for all agents
     output_name = "asr_agent.exe"
 
     if not asr_main.exists():

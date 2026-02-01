@@ -12,7 +12,7 @@ def build_vcam_agent() -> None:
     vcam_main = cfg.AGENTS_DIR / "vcam" / "main.py"
     # Use separate build directory for VCam agent to avoid conflicts
     build_dir = cfg.AGENTS_BUILD_DIR / "vcam.build"
-    dist_dir = cfg.AGENTS_BUILD_DIR  # Shared output directory for all agents
+    dist_dir = cfg.AGENTS_DIST_DIR  # Shared output directory for all agents
     output_name = "vcam_agent.exe"
 
     if not vcam_main.exists():

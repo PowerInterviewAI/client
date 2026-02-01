@@ -117,7 +117,7 @@
     ],
     "extraFiles": [
       {
-        "from": "../build/agents/",
+        "from": "../build/agents/dist/",
         "to": "agents",
         "filter": [
           "**/*",

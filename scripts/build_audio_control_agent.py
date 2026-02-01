@@ -12,7 +12,7 @@ def build_audio_control_agent() -> None:
     audio_main = cfg.AGENTS_DIR / "audio_control" / "main.py"
     # Use separate build directory for Audio Control agent to avoid conflicts
     build_dir = cfg.AGENTS_BUILD_DIR / "audio_control.build"
-    dist_dir = cfg.AGENTS_BUILD_DIR  # Shared output directory for all agents
+    dist_dir = cfg.AGENTS_DIST_DIR  # Shared output directory for all agents
     output_name = "audio_control_agent.exe"
 
     if not audio_main.exists():
