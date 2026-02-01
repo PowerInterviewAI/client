@@ -19,7 +19,12 @@ import { setWindowBounds, setWindowReference } from './window-controls.js';
 import { registerGlobalHotkeys, unregisterHotkeys } from './hotkeys.js';
 import * as windowControls from './window-controls.js';
 
+// Import new services and API
+import { configService, transcriptService } from './services/index.js';
+import { createApi } from './api/index.js';
+
 let win: BrowserWindow | null = null;
+let api: ReturnType<typeof createApi> | null = null;
 
 // Ensure the application name is set (used by native dialogs/title fallbacks)
 try {
@@ -122,13 +127,28 @@ async function createWindow() {
 // APP LIFECYCLE
 // -------------------------------------------------------------
 app.whenReady().then(async () => {
+  // Initialize services
+  await configService.load();
+  
+  // Create window
   await createWindow();
+  
+  // Register hotkeys
   registerGlobalHotkeys();
+  
+  // Initialize API client with engine port
+  const port = getCurrentPort();
+  if (port) {
+    api = createApi(`http://localhost:${port}`);
+    console.log(`API client initialized on port ${port}`);
+  }
 });
 
 app.on('will-quit', () => {
   stopEngine();
   unregisterHotkeys();
+  
+  // Configuration auto-saves on changes, no need to save again on quit
 });
 
 app.on('window-all-closed', () => {

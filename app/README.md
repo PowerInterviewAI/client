@@ -53,7 +53,12 @@ app/
 │   ├── preload.cts    # IPC bridge (CommonJS)
 │   ├── engine.ts      # Backend management
 │   ├── hotkeys.ts     # Global shortcuts
-│   └── window-controls.ts  # Window positioning & stealth
+│   ├── window-controls.ts  # Window positioning & stealth
+│   ├── config/        # Configuration modules (app, auth, ASR, LLM, video)
+│   ├── utils/         # Utility functions (datetime, UUID, random, env)
+│   ├── types/         # TypeScript type definitions (app-state, auth, ASR, WebRTC, errors)
+│   ├── services/      # Business logic services (config, transcript, audio, ASR, suggestions, WebRTC)
+│   └── api/           # HTTP client layer (auth, app-state endpoints)
 ├── src/               # React renderer process
 │   ├── pages/         # Route components
 │   ├── components/    # Reusable components
@@ -61,6 +66,8 @@ app/
 │   └── types/         # TypeScript definitions
 └── electron-dist/     # Compiled Electron code
 ```
+
+For detailed architecture documentation, see [electron/ARCHITECTURE.md](electron/ARCHITECTURE.md)
 
 ## Building
 
