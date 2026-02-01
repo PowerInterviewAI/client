@@ -5,6 +5,12 @@ declare global {
     // Hotkey scroll events
     onHotkeyScroll: (callback: (section: string, direction: 'up' | 'down') => void) => () => void;
     
+    // Configuration management
+    config: {
+      get: () => Promise<any>;
+      update: (updates: any) => Promise<any>;
+    };
+    
     // Window controls
     minimize: () => void;
     close: () => void;

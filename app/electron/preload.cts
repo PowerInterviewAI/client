@@ -12,6 +12,12 @@ const electronApi = {
     return () => ipcRenderer.removeListener('hotkey-scroll', handler);
   },
 
+  // Configuration management
+  config: {
+    get: () => ipcRenderer.invoke('config:get'),
+    update: (updates: any) => ipcRenderer.invoke('config:update', updates),
+  },
+
   // Window controls
   minimize: () => ipcRenderer.send('window-minimize'),
   close: () => ipcRenderer.send('window-close'),

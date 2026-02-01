@@ -130,6 +130,9 @@ app.whenReady().then(async () => {
   // Initialize services
   await configService.load();
   
+  // Register config IPC handlers (manages config internally)
+  configService.registerHandlers();
+  
   // Create window
   await createWindow();
   
