@@ -1,80 +1,377 @@
 /**
  * Transcription Service
- * Manages self and other party transcription
+ * Manages self and other party transcription using ASR agents
  */
 
+import { spawn, ChildProcess } from 'child_process';
+import * as zmq from 'zeromq';
+import { BrowserWindow } from 'electron';
+import path from 'path';
+import { configManager } from '../config/app.js';
+import { ConfigService } from './config.service.js';
+
+interface TranscriptMessage {
+  text: string;
+  isFinal: boolean;
+  speaker: 'user' | 'interviewer';
+  timestamp: Date;
+}
+
+interface AgentProcess {
+  process: ChildProcess;
+  socket: zmq.Subscriber | null;
+  port: number;
+  speaker: 'user' | 'interviewer';
+  restartCount: number;
+  isRestarting: boolean;
+}
+
+// Constants
+const SELF_ZMQ_PORT = 50002;
+const OTHER_ZMQ_PORT = 50003;
+const MAX_RESTART_COUNT = 5;
+const RESTART_DELAY_MS = 2000;
+
 class TranscriptionService {
-  private selfTranscriptionActive = false;
-  private otherTranscriptionActive = false;
+  private selfAgent: AgentProcess | null = null;
+  private otherAgent: AgentProcess | null = null;
+  private configService: ConfigService;
+
+  constructor() {
+    this.configService = ConfigService.getInstance();
+  }
 
   /**
    * Start self transcription (user's audio)
    */
   async startSelfTranscription(): Promise<void> {
-    if (this.selfTranscriptionActive) {
+    if (this.selfAgent) {
       console.log('Self transcription already active');
       return;
     }
 
     console.log('Starting self transcription...');
-    this.selfTranscriptionActive = true;
 
-    // TODO: Implement actual transcription logic
-    // - Setup audio capture
-    // - Initialize ASR service
-    // - Start processing audio stream
+    // Get audio device from config
+    const config = await this.configService.getConfig();
+    const audioDevice = config.audio_input_device_name || 'loopback';
+
+    try {
+      this.selfAgent = await this.startAgent(SELF_ZMQ_PORT, audioDevice, 'user');
+      console.log('Self transcription started successfully');
+    } catch (error) {
+      console.error('Failed to start self transcription:', error);
+      this.selfAgent = null;
+      throw error;
+    }
   }
 
   /**
    * Stop self transcription
    */
   async stopSelfTranscription(): Promise<void> {
-    if (!this.selfTranscriptionActive) {
+    if (!this.selfAgent) {
       console.log('Self transcription not active');
       return;
     }
 
     console.log('Stopping self transcription...');
-    this.selfTranscriptionActive = false;
-
-    // TODO: Implement cleanup logic
-    // - Stop audio capture
-    // - Clean up ASR resources
+    await this.stopAgent(this.selfAgent);
+    this.selfAgent = null;
+    console.log('Self transcription stopped');
   }
 
   /**
-   * Start other party transcription (remote audio)
+   * Start other party transcription (remote audio via loopback)
    */
   async startOtherTranscription(): Promise<void> {
-    if (this.otherTranscriptionActive) {
+    if (this.otherAgent) {
       console.log('Other transcription already active');
       return;
     }
 
     console.log('Starting other party transcription...');
-    this.otherTranscriptionActive = true;
 
-    // TODO: Implement actual transcription logic
-    // - Setup remote audio capture
-    // - Initialize ASR service
-    // - Start processing audio stream
+    try {
+      // Other party always uses loopback
+      this.otherAgent = await this.startAgent(OTHER_ZMQ_PORT, 'loopback', 'interviewer');
+      console.log('Other transcription started successfully');
+    } catch (error) {
+      console.error('Failed to start other transcription:', error);
+      this.otherAgent = null;
+      throw error;
+    }
   }
 
   /**
    * Stop other party transcription
    */
   async stopOtherTranscription(): Promise<void> {
-    if (!this.otherTranscriptionActive) {
+    if (!this.otherAgent) {
       console.log('Other transcription not active');
       return;
     }
 
     console.log('Stopping other party transcription...');
-    this.otherTranscriptionActive = false;
+    await this.stopAgent(this.otherAgent);
+    this.otherAgent = null;
+    console.log('Other transcription stopped');
+  }
 
-    // TODO: Implement cleanup logic
-    // - Stop remote audio capture
-    // - Clean up ASR resources
+  /**
+   * Start an ASR agent process
+   */
+  private async startAgent(
+    port: number,
+    audioSource: string,
+    speaker: 'user' | 'interviewer'
+  ): Promise<AgentProcess> {
+    // Get agent executable path
+    const { command, args: baseArgs } = this.getAgentCommand();
+    const serverUrl = configManager.get('serverUrl');
+    const wsUrl = `${serverUrl.replace('http', 'ws')}/api/asr/streaming`;
+
+    // Get session token from config
+    const config = await this.configService.getConfig();
+    const sessionToken = ''; // TODO: Get from auth service when available
+
+    console.log(`Starting ASR agent: ${command}`);
+    console.log(`Audio source: ${audioSource}, Port: ${port}, Speaker: ${speaker}`);
+
+    // Build arguments
+    const args = [...baseArgs, '--port', port.toString(), '--source', audioSource, '--url', wsUrl];
+
+    if (sessionToken) {
+      args.push('--token', sessionToken);
+    }
+
+    const proc = spawn(command, args, {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true,
+      shell: false,
+    });
+
+    // Log agent output
+    proc.stdout?.on('data', (data) => {
+      console.log(`[ASR ${speaker}]`, data.toString().trim());
+    });
+
+    proc.stderr?.on('data', (data) => {
+      console.error(`[ASR ${speaker} ERROR]`, data.toString().trim());
+    });
+
+    const agentProcess: AgentProcess = {
+      process: proc,
+      socket: null,
+      port,
+      speaker,
+      restartCount: 0,
+      isRestarting: false,
+    };
+
+    // Setup ZeroMQ subscriber
+    await this.setupZmqSubscriber(agentProcess);
+
+    // Handle process exit
+    proc.on('exit', (code, signal) => {
+      console.log(`ASR agent (${speaker}) exited: code=${code}, signal=${signal}`);
+      this.handleAgentExit(agentProcess);
+    });
+
+    proc.on('error', (error) => {
+      console.error(`ASR agent (${speaker}) process error:`, error);
+    });
+
+    return agentProcess;
+  }
+
+  /**
+   * Setup ZeroMQ subscriber for an agent
+   */
+  private async setupZmqSubscriber(agent: AgentProcess): Promise<void> {
+    try {
+      const sock = new zmq.Subscriber();
+      sock.connect(`tcp://localhost:${agent.port}`);
+      sock.subscribe(''); // Subscribe to all messages
+
+      agent.socket = sock;
+
+      // Start receiving messages
+      this.receiveMessages(agent);
+
+      console.log(`ZeroMQ subscriber connected on port ${agent.port}`);
+    } catch (error) {
+      console.error('Failed to setup ZeroMQ subscriber:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Receive messages from ZeroMQ socket
+   */
+  private async receiveMessages(agent: AgentProcess): Promise<void> {
+    if (!agent.socket) return;
+
+    try {
+      for await (const [msg] of agent.socket) {
+        const message = msg.toString();
+        console.log(`[ZMQ ${agent.speaker}] Received:`, message);
+
+        // Parse message format: "FINAL: text" or "PARTIAL: text"
+        const isFinal = message.startsWith('FINAL:');
+        const text = message.replace(/^(FINAL|PARTIAL):\s*/, '').trim();
+
+        if (text) {
+          const transcript: TranscriptMessage = {
+            text,
+            isFinal,
+            speaker: agent.speaker,
+            timestamp: new Date(),
+          };
+
+          // Send to renderer
+          this.sendTranscriptToRenderer(transcript);
+        }
+      }
+    } catch (error) {
+      if (agent.socket) {
+        console.error(`Error receiving ZMQ messages for ${agent.speaker}:`, error);
+      }
+    }
+  }
+
+  /**
+   * Send transcript to renderer process
+   */
+  private sendTranscriptToRenderer(transcript: TranscriptMessage): void {
+    const windows = BrowserWindow.getAllWindows();
+    if (windows.length > 0) {
+      windows[0].webContents.send('transcript-update', transcript);
+    }
+  }
+
+  /**
+   * Stop an agent process
+   */
+  private async stopAgent(agent: AgentProcess): Promise<void> {
+    // Close ZeroMQ socket
+    if (agent.socket) {
+      try {
+        agent.socket.close();
+        agent.socket = null;
+      } catch (error) {
+        console.error('Error closing ZeroMQ socket:', error);
+      }
+    }
+
+    // Kill the process
+    if (agent.process && !agent.process.killed) {
+      try {
+        agent.process.kill('SIGTERM');
+
+        // Wait for graceful shutdown, then force kill if needed
+        await new Promise<void>((resolve) => {
+          const timeout = setTimeout(() => {
+            if (!agent.process.killed) {
+              console.log('Force killing agent process...');
+              agent.process.kill('SIGKILL');
+            }
+            resolve();
+          }, 5000);
+
+          agent.process.once('exit', () => {
+            clearTimeout(timeout);
+            resolve();
+          });
+        });
+      } catch (error) {
+        console.error('Error stopping agent process:', error);
+      }
+    }
+  }
+
+  /**
+   * Handle agent process exit
+   */
+  private async handleAgentExit(agent: AgentProcess): Promise<void> {
+    // Close socket
+    if (agent.socket) {
+      try {
+        agent.socket.close();
+        agent.socket = null;
+      } catch (error) {
+        console.error('Error closing socket on exit:', error);
+      }
+    }
+
+    // Check if we should restart
+    if (!agent.isRestarting && agent.restartCount < MAX_RESTART_COUNT) {
+      console.log(
+        `Agent ${agent.speaker} will restart (attempt ${agent.restartCount + 1}/${MAX_RESTART_COUNT})`
+      );
+      agent.isRestarting = true;
+      agent.restartCount++;
+
+      // Wait before restarting
+      await new Promise((resolve) => setTimeout(resolve, RESTART_DELAY_MS));
+
+      try {
+        // Determine audio source based on speaker
+        const config = await this.configService.getConfig();
+        const audioSource =
+          agent.speaker === 'user' ? config.audio_input_device_name || 'loopback' : 'loopback';
+
+        // Start new agent
+        const newAgent = await this.startAgent(agent.port, audioSource, agent.speaker);
+        newAgent.restartCount = agent.restartCount;
+
+        // Update reference
+        if (agent.speaker === 'user') {
+          this.selfAgent = newAgent;
+        } else {
+          this.otherAgent = newAgent;
+        }
+
+        console.log(`Agent ${agent.speaker} restarted successfully`);
+      } catch (error) {
+        console.error(`Failed to restart agent ${agent.speaker}:`, error);
+        agent.isRestarting = false;
+      }
+    } else if (agent.restartCount >= MAX_RESTART_COUNT) {
+      console.error(`Agent ${agent.speaker} exceeded max restart attempts`);
+      // Notify renderer about failure
+      const windows = BrowserWindow.getAllWindows();
+      if (windows.length > 0) {
+        windows[0].webContents.send('transcription-error', {
+          speaker: agent.speaker,
+          error: 'Agent crashed and exceeded max restart attempts',
+        });
+      }
+    }
+  }
+
+  /**
+   * Get the command and args to run the ASR agent
+   */
+  private getAgentCommand(): { command: string; args: string[] } {
+    // In development, use Python script
+    if (process.env.NODE_ENV === 'development') {
+      const projectRoot = path.join(process.cwd(), '..');
+      const scriptPath = path.join(projectRoot, 'agents', 'asr', 'main.py');
+      return {
+        command: 'python',
+        args: [scriptPath],
+      };
+    }
+
+    // In production, use built executable
+    // All agents are in the same agents folder with different names
+    const buildDir = path.join(process.resourcesPath, 'agents');
+    const exeName = process.platform === 'win32' ? 'asr_agent.exe' : 'asr_agent';
+    return {
+      command: path.join(buildDir, exeName),
+      args: [],
+    };
   }
 
   /**
@@ -82,8 +379,10 @@ class TranscriptionService {
    */
   getStatus() {
     return {
-      selfTranscriptionActive: this.selfTranscriptionActive,
-      otherTranscriptionActive: this.otherTranscriptionActive,
+      selfTranscriptionActive: this.selfAgent !== null,
+      otherTranscriptionActive: this.otherAgent !== null,
+      selfRestartCount: this.selfAgent?.restartCount ?? 0,
+      otherRestartCount: this.otherAgent?.restartCount ?? 0,
     };
   }
 

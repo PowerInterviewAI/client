@@ -1,5 +1,6 @@
 """Build VCam Agent executable using Nuitka."""
 
+import shutil
 import sys
 
 from scripts.cfg import config as cfg
@@ -9,7 +10,9 @@ from scripts.proc import run
 def build_vcam_agent() -> None:
     """Build VCam Agent with Nuitka."""
     vcam_main = cfg.AGENTS_DIR / "vcam" / "main.py"
-    output_dir = cfg.AGENTS_BUILD_DIR
+    # Use separate build directory for VCam agent to avoid conflicts
+    build_dir = cfg.AGENTS_BUILD_DIR / "vcam.build"
+    dist_dir = cfg.AGENTS_BUILD_DIR  # Shared output directory for all agents
     output_name = "vcam_agent.exe"
 
     if not vcam_main.exists():
@@ -19,14 +22,14 @@ def build_vcam_agent() -> None:
     print("==== Building VCam Agent ====")  # noqa: T201
 
     # Create output directory
-    output_dir.mkdir(parents=True, exist_ok=True)
+    build_dir.mkdir(parents=True, exist_ok=True)
 
     nuitka_cmd = (
         f"python -m nuitka {vcam_main} "
         "--standalone "
         "--include-package=agents.vcam "
         "--follow-imports "
-        f"--output-dir={output_dir} "
+        f"--output-dir={build_dir} "
         f"--output-filename={output_name} "
         "--assume-yes-for-downloads "
         "--windows-console-mode=attach "
@@ -34,9 +37,21 @@ def build_vcam_agent() -> None:
 
     run(nuitka_cmd)
 
-    built_exe = output_dir / output_name
+    # Nuitka creates main.dist inside build_dir
+    built_dist = build_dir / "main.dist"
+    built_exe = built_dist / output_name
+
     if built_exe.exists():
-        print(f"✅ VCam Agent built: {built_exe}")  # noqa: T201
+        # Merge contents from main.dist to shared dist_dir
+
+        # Ensure dist_dir exists
+        dist_dir.mkdir(parents=True, exist_ok=True)
+
+        # Copy all files, merging with existing content (Python 3.8+)
+        shutil.copytree(built_dist, dist_dir, dirs_exist_ok=True)
+
+        final_exe = dist_dir / output_name
+        print(f"✅ VCam Agent built: {final_exe}")  # noqa: T201
     else:
         print(f"❌ Build failed - executable not found: {built_exe}")  # noqa: T201
         sys.exit(1)

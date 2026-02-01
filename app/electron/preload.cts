@@ -25,6 +25,18 @@ const electronApi = {
     startOther: () => ipcRenderer.invoke('transcription:start-other'),
     stopOther: () => ipcRenderer.invoke('transcription:stop-other'),
     getStatus: () => ipcRenderer.invoke('transcription:get-status'),
+    // Listen for transcript updates
+    onTranscriptUpdate: (callback: (transcript: any) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, transcript: any) => callback(transcript);
+      ipcRenderer.on('transcript-update', handler);
+      return () => ipcRenderer.removeListener('transcript-update', handler);
+    },
+    // Listen for transcription errors
+    onTranscriptionError: (callback: (error: any) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, error: any) => callback(error);
+      ipcRenderer.on('transcription-error', handler);
+      return () => ipcRenderer.removeListener('transcription-error', handler);
+    },
   },
 
   // VCam bridge management
