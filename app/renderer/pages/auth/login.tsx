@@ -2,16 +2,21 @@ import { InputPassword } from '@/components/input-password';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { useConfigQuery } from '@/hooks/use-config';
+import { useConfigStore } from '@/hooks/use-config-store';
 import useAuth from '@/hooks/use-auth';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 export default function LoginPage() {
   const { login, loading, error, setError } = useAuth();
-  const { data: config } = useConfigQuery();
+  const { config, loadConfig } = useConfigStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  // Load config on mount
+  useEffect(() => {
+    loadConfig();
+  }, [loadConfig]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();

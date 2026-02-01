@@ -29,7 +29,7 @@ type StateConfig = {
 export default function ControlPanel({ onProfileClick, onSignOut }: ControlPanelProps) {
   const isStealth = useIsStealthMode();
   const { runningState, startAssistant, stopAssistant } = useAssistantState();
-  const { config, updatePartialConfig } = useConfigStore();
+  const { config, updateConfig } = useConfigStore();
   const { isDark, toggleTheme } = useThemeStore();
 
   const videoDevices = useVideoDevices();

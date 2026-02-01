@@ -28,7 +28,7 @@ export function AudioOptions({
   getDisabled,
 }: AudioOptionsProps) {
   const { runningState } = useAssistantState();
-  const { config, updatePartialConfig } = useConfigStore();
+  const { config, updateConfig } = useConfigStore();
   const usableAudioInputDevices = audioInputDevices.filter((d) => {
     if (d.name.toLowerCase().includes('virtual')) return false;
     return true;
@@ -73,7 +73,7 @@ export function AudioOptions({
             <label className="text-xs text-muted-foreground mb-1 block">Microphone</label>
             <Select
               value={config?.audio_input_device_name}
-              onValueChange={(v) => updatePartialConfig({ audio_input_device_name: v })}
+              onValueChange={(v) => updateConfig({ audio_input_device_name: v })}
             >
               <SelectTrigger className="h-8 w-full text-xs">
                 <SelectValue placeholder="Select microphone" />

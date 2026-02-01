@@ -8,7 +8,6 @@ import TranscriptPanel from '@/components/transcript-panel';
 import { VideoPanel, type VideoPanelHandle } from '@/components/video-panel';
 import { useAppState } from '@/hooks/app-state';
 import { useStartAssistant, useStopAssistant } from '@/hooks/assistant';
-import { useConfigQuery, useUpdateConfig } from '@/hooks/use-config';
 import useAuth from '@/hooks/use-auth';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { useConfigStore } from '@/hooks/use-config-store';
@@ -25,7 +24,12 @@ export default function MainPage() {
   const navigate = useNavigate();
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const { config, setConfig, updatePartialConfig } = useConfigStore();
+  const {
+    config,
+    isLoading: configLoading,
+    loadConfig,
+    updateConfig: updateConfigStore,
+  } = useConfigStore();
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const [replySuggestions, setReplySuggestions] = useState<ReplySuggestion[]>([]);
   const [codeSuggestions, setCodeSuggestions] = useState<CodeSuggestion[]>([]);
@@ -34,8 +38,12 @@ export default function MainPage() {
   const [suggestionHeight, setSuggestionHeight] = useState<number | null>(null);
 
   // Queries
-  const { data: configFetched } = useConfigQuery();
   const { data: appState, error: appStateError } = useAppState(100);
+
+  // Load config on mount
+  useEffect(() => {
+    loadConfig();
+  }, [loadConfig]);
 
   const hasReplySuggestions = replySuggestions.length > 0;
   const hasCodeSuggestions = codeSuggestions.length > 0;
@@ -116,9 +124,6 @@ export default function MainPage() {
     computeAvailable();
   }, [appState?.assistant_state, appState, computeAvailable]);
 
-  // Mutations
-  const updateConfigMutation = useUpdateConfig();
-
   // Theme from store
   const { theme, isDark, toggleTheme } = useThemeStore();
 
@@ -126,17 +131,6 @@ export default function MainPage() {
   const handleSignOut = async () => {
     await logout();
   };
-
-  const updateConfig = (cfg: Partial<Config>) => {
-    updatePartialConfig(cfg);
-    updateConfigMutation.mutate(cfg);
-  };
-
-  useEffect(() => {
-    if (configFetched) {
-      setConfig(configFetched);
-    }
-  }, [configFetched]);
   useEffect(() => {
     if (appState?.transcripts && appState?.transcripts !== transcripts) {
       setTranscripts(appState?.transcripts);
@@ -163,8 +157,8 @@ export default function MainPage() {
     }
   }, [appState?.is_logged_in, navigate]);
 
-  // Show loading if app state is not loaded yet
-  if (!appState && !appStateError) {
+  // Show loading if config or app state is not loaded yet
+  if (configLoading || (!appState && !appStateError)) {
     return <Loading disclaimer="Loading your configuration…" />;
   }
 

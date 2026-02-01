@@ -14,7 +14,6 @@ import {
 } from './ui/dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { useConfigStore } from '@/hooks/use-config-store';
-import { useUpdateConfig } from '@/hooks/use-config';
 
 interface ConfigurationDialogProps {
   isOpen: boolean;
@@ -22,8 +21,7 @@ interface ConfigurationDialogProps {
 }
 
 export default function ConfigurationDialog({ isOpen, onOpenChange }: ConfigurationDialogProps) {
-  const { config, updatePartialConfig } = useConfigStore();
-  const updateConfigMutation = useUpdateConfig();
+  const { config, updateConfig } = useConfigStore();
 
   const [photo, setPhoto] = useState('');
   const [name, setName] = useState('');
@@ -39,16 +37,19 @@ export default function ConfigurationDialog({ isOpen, onOpenChange }: Configurat
     }
   }, [isOpen, config?.interview_conf]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const interviewConf = {
       photo: photo,
       username: name,
       profile_data: profileData,
       job_description: jobDescription,
     };
-    updatePartialConfig({ interview_conf: interviewConf });
-    updateConfigMutation.mutate({ interview_conf: interviewConf });
-    onOpenChange(false);
+    try {
+      await updateConfig({ interview_conf: interviewConf });
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Failed to save configuration:', error);
+    }
   };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

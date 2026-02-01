@@ -32,7 +32,7 @@ export function VideoOptions({
   getDisabled,
 }: VideoOptionsProps) {
   const { runningState } = useAssistantState();
-  const { config, updatePartialConfig } = useConfigStore();
+  const { config, updateConfig } = useConfigStore();
   const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
   const previewStreamRef = useRef<MediaStream | null>(null);
@@ -51,14 +51,14 @@ export function VideoOptions({
   useEffect(() => {
     // Disable face swap if required devices are not found
     if (!obsCameraExists && config?.face_swap) {
-      updatePartialConfig({ face_swap: false });
+      updateConfig({ face_swap: false });
       toast.error('OBS Virtual Camera not found — disabling Face Swap');
     }
     if (!vbInputExists && config?.face_swap) {
-      updatePartialConfig({ face_swap: false });
+      updateConfig({ face_swap: false });
       toast.error('VB-Audio Virtual Cable not found — disabling Face Swap');
     }
-  }, [obsCameraExists, vbInputExists, config?.face_swap, updatePartialConfig]);
+  }, [obsCameraExists, vbInputExists, config?.face_swap, updateConfig]);
 
   const usableVideoDevices = videoDevices.filter((d) => {
     if (d.label.toLowerCase().startsWith(OBS_CAMERA_PREFIX.toLowerCase())) return false;
@@ -155,7 +155,7 @@ export function VideoOptions({
                   return;
                 }
                 toast.success(config?.face_swap ? 'Face Swap disabled' : 'Face Swap enabled');
-                updatePartialConfig({ face_swap: !config?.face_swap });
+                updateConfig({ face_swap: !config?.face_swap });
               }}
             >
               <UserLock className="h-4 w-4" />
@@ -229,7 +229,7 @@ export function VideoOptions({
                   <label className="text-xs text-muted-foreground mb-1 block">Camera Device</label>
                   <Select
                     value={`${config?.camera_device_name}`}
-                    onValueChange={(v) => updatePartialConfig({ camera_device_name: v })}
+                    onValueChange={(v) => updateConfig({ camera_device_name: v })}
                   >
                     <SelectTrigger className="h-8 w-full text-xs">
                       <SelectValue placeholder="Select camera" />
@@ -251,7 +251,7 @@ export function VideoOptions({
                     value={`${config?.video_width}x${config?.video_height}`}
                     onValueChange={(v) => {
                       const [w, h] = v.split('x').map(Number);
-                      updatePartialConfig({ video_width: w, video_height: h });
+                      updateConfig({ video_width: w, video_height: h });
                     }}
                   >
                     <SelectTrigger className="h-8 w-full text-xs">
@@ -275,7 +275,7 @@ export function VideoOptions({
                     size="sm"
                     className="w-16"
                     onClick={() =>
-                      updatePartialConfig({ enable_face_enhance: !config?.enable_face_enhance })
+                      updateConfig({ enable_face_enhance: !config?.enable_face_enhance })
                     }
                   >
                     {config?.enable_face_enhance ? 'On' : 'Off'}
@@ -290,9 +290,7 @@ export function VideoOptions({
                   <Input
                     type="number"
                     value={config?.audio_delay_ms ?? ''}
-                    onChange={(e) =>
-                      updatePartialConfig({ audio_delay_ms: Number(e.target.value) || 0 })
-                    }
+                    onChange={(e) => updateConfig({ audio_delay_ms: Number(e.target.value) || 0 })}
                     className="w-full h-8 px-2 text-xs border rounded-md bg-background"
                     min={0}
                     step={10}
