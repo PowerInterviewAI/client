@@ -27,3 +27,4 @@ tzlocal==5.3.1
 uuid7==0.1.0
 uvicorn==0.40.0
 websockets==15.0.1
+zmq==
