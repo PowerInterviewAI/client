@@ -21,8 +21,11 @@ def main() -> None:
     try:
         # Build all agents
         print("\n📦 Building Agents...\n")  # noqa: T201
+        print("\n⚡ Building ASR Agent...\n")  # noqa: T201
         build_asr_agent()
+        print("\n⚡ Building VCam Agent...\n")  # noqa: T201
         build_vcam_agent()
+        print("\n⚡ Building Audio Control Agent...\n")  # noqa: T201
         build_audio_control_agent()
 
         # Build Electron app
