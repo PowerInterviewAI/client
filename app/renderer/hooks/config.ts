@@ -1,41 +1,33 @@
-import axiosClient from '@/lib/axiosClient';
 import { type Config } from '@/types/config';
-import { type APIError } from '@/types/error';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-// Check if running in Electron environment
-const isElectron = () => {
-  return typeof window !== 'undefined' && window.electronAPI?.config;
+// Helper to get Electron API
+const getElectron = () => {
+  return typeof window !== 'undefined' ? window.electronAPI : undefined;
 };
 
 export const useConfigQuery = () =>
-  useQuery<Config, APIError>({
+  useQuery<Config, Error>({
     queryKey: ['config'],
     queryFn: async () => {
-      // Use Electron IPC if available
-      if (isElectron()) {
-        return window.electronAPI!.config.get();
+      const electron = getElectron();
+      if (!electron?.config) {
+        throw new Error('Electron API not available');
       }
-      
-      // Fallback to HTTP API
-      const { data } = await axiosClient.get('/app/get-config');
-      return data;
+      return electron.config.get();
     },
   });
 
 export const useUpdateConfig = () => {
   const qc = useQueryClient();
 
-  return useMutation<Config, APIError, Partial<Config>>({
+  return useMutation<Config, Error, Partial<Config>>({
     mutationFn: async (payload) => {
-      // Use Electron IPC if available
-      if (isElectron()) {
-        return window.electronAPI!.config.update(payload);
+      const electron = getElectron();
+      if (!electron?.config) {
+        throw new Error('Electron API not available');
       }
-      
-      // Fallback to HTTP API
-      const { data } = await axiosClient.put('/app/update-config', payload);
-      return data;
+      return electron.config.update(payload);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['config'] }),
   });
