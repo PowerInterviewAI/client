@@ -2,7 +2,7 @@ import { InputPassword } from '@/components/input-password';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { useConfigQuery } from '@/hooks/config';
+import { useConfigQuery } from '@/hooks/use-config';
 import useAuth from '@/hooks/use-auth';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';

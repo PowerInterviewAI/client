@@ -2,14 +2,16 @@ import { Card } from '@/components/ui/card';
 import { Speaker, type Transcript } from '@/types/transcript';
 import { useEffect, useRef, useState } from 'react';
 import { Checkbox } from './ui/checkbox';
+import { useConfigStore } from '@/hooks/use-config-store';
 
 interface TranscriptionPanelProps {
   transcripts: Transcript[];
-  username: string;
   style?: React.CSSProperties;
 }
 
-export default function TranscriptPanel({ transcripts, username, style }: TranscriptionPanelProps) {
+export default function TranscriptPanel({ transcripts, style }: TranscriptionPanelProps) {
+  const { config } = useConfigStore();
+  const username = config?.interview_conf?.username ?? '';
   const containerRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);

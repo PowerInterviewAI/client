@@ -12,6 +12,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAssistantState } from '@/hooks/use-assistant-state';
 import { useVideoDevices } from '@/hooks/video-devices';
+import { useConfigStore } from '@/hooks/use-config-store';
 import { RunningState } from '@/types/appState';
 import { type AudioDevice } from '@/types/audioDevice';
 import { type Config } from '@/types/config';
@@ -20,21 +21,18 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 interface VideoOptionsProps {
-  config?: Config;
-  updateConfig: (config: Partial<Config>) => void;
   videoDeviceNotFound: boolean;
   audioOutputDevices: AudioDevice[];
   getDisabled: (state: RunningState, disableOnRunning?: boolean) => boolean;
 }
 
 export function VideoOptions({
-  config,
-  updateConfig,
   videoDeviceNotFound,
   audioOutputDevices,
   getDisabled,
 }: VideoOptionsProps) {
   const { runningState } = useAssistantState();
+  const { config, updatePartialConfig } = useConfigStore();
   const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
   const previewStreamRef = useRef<MediaStream | null>(null);
@@ -53,14 +51,14 @@ export function VideoOptions({
   useEffect(() => {
     // Disable face swap if required devices are not found
     if (!obsCameraExists && config?.face_swap) {
-      updateConfig({ face_swap: false });
+      updatePartialConfig({ face_swap: false });
       toast.error('OBS Virtual Camera not found — disabling Face Swap');
     }
     if (!vbInputExists && config?.face_swap) {
-      updateConfig({ face_swap: false });
-      toast.error('VB-Audio Input device not found — disabling Face Swap');
+      updatePartialConfig({ face_swap: false });
+      toast.error('VB-Audio Virtual Cable not found — disabling Face Swap');
     }
-  }, [obsCameraExists, vbInputExists, config?.face_swap, updateConfig]);
+  }, [obsCameraExists, vbInputExists, config?.face_swap, updatePartialConfig]);
 
   const usableVideoDevices = videoDevices.filter((d) => {
     if (d.label.toLowerCase().startsWith(OBS_CAMERA_PREFIX.toLowerCase())) return false;
@@ -157,7 +155,7 @@ export function VideoOptions({
                   return;
                 }
                 toast.success(config?.face_swap ? 'Face Swap disabled' : 'Face Swap enabled');
-                updateConfig({ face_swap: !config?.face_swap });
+                updatePartialConfig({ face_swap: !config?.face_swap });
               }}
             >
               <UserLock className="h-4 w-4" />
@@ -231,7 +229,7 @@ export function VideoOptions({
                   <label className="text-xs text-muted-foreground mb-1 block">Camera Device</label>
                   <Select
                     value={`${config?.camera_device_name}`}
-                    onValueChange={(v) => updateConfig({ camera_device_name: v })}
+                    onValueChange={(v) => updatePartialConfig({ camera_device_name: v })}
                   >
                     <SelectTrigger className="h-8 w-full text-xs">
                       <SelectValue placeholder="Select camera" />
@@ -253,7 +251,7 @@ export function VideoOptions({
                     value={`${config?.video_width}x${config?.video_height}`}
                     onValueChange={(v) => {
                       const [w, h] = v.split('x').map(Number);
-                      updateConfig({ video_width: w, video_height: h });
+                      updatePartialConfig({ video_width: w, video_height: h });
                     }}
                   >
                     <SelectTrigger className="h-8 w-full text-xs">
@@ -277,7 +275,7 @@ export function VideoOptions({
                     size="sm"
                     className="w-16"
                     onClick={() =>
-                      updateConfig({ enable_face_enhance: !config?.enable_face_enhance })
+                      updatePartialConfig({ enable_face_enhance: !config?.enable_face_enhance })
                     }
                   >
                     {config?.enable_face_enhance ? 'On' : 'Off'}
@@ -292,7 +290,9 @@ export function VideoOptions({
                   <Input
                     type="number"
                     value={config?.audio_delay_ms ?? ''}
-                    onChange={(e) => updateConfig({ audio_delay_ms: Number(e.target.value) || 0 })}
+                    onChange={(e) =>
+                      updatePartialConfig({ audio_delay_ms: Number(e.target.value) || 0 })
+                    }
                     className="w-full h-8 px-2 text-xs border rounded-md bg-background"
                     min={0}
                     step={10}

@@ -3,15 +3,16 @@ import ConfigurationDialog from '@/components/configuration-dialog';
 import ControlPanel from '@/components/control-panel';
 import HotkeysPanel from '@/components/hotkeys-panel';
 import Loading from '@/components/loading';
-import { useTheme } from '@/components/providers';
 import ReplySuggestionsPanel from '@/components/reply-suggestions-panel';
 import TranscriptPanel from '@/components/transcript-panel';
 import { VideoPanel, type VideoPanelHandle } from '@/components/video-panel';
 import { useAppState } from '@/hooks/app-state';
 import { useStartAssistant, useStopAssistant } from '@/hooks/assistant';
-import { useConfigQuery, useUpdateConfig } from '@/hooks/config';
+import { useConfigQuery, useUpdateConfig } from '@/hooks/use-config';
 import useAuth from '@/hooks/use-auth';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
+import { useConfigStore } from '@/hooks/use-config-store';
+import { useThemeStore } from '@/hooks/use-theme-store';
 import { RunningState } from '@/types/appState';
 import { type Config } from '@/types/config';
 import { type CodeSuggestion, type ReplySuggestion } from '@/types/suggestion';
@@ -24,7 +25,7 @@ export default function MainPage() {
   const navigate = useNavigate();
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [config, setConfig] = useState<Config>();
+  const { config, setConfig, updatePartialConfig } = useConfigStore();
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const [replySuggestions, setReplySuggestions] = useState<ReplySuggestion[]>([]);
   const [codeSuggestions, setCodeSuggestions] = useState<CodeSuggestion[]>([]);
@@ -118,8 +119,8 @@ export default function MainPage() {
   // Mutations
   const updateConfigMutation = useUpdateConfig();
 
-  // Theme handled by ThemeProvider via context
-  const { theme, toggleTheme } = useTheme();
+  // Theme from store
+  const { theme, isDark, toggleTheme } = useThemeStore();
 
   // Sign out handling
   const handleSignOut = async () => {
@@ -127,8 +128,7 @@ export default function MainPage() {
   };
 
   const updateConfig = (cfg: Partial<Config>) => {
-    const newConfig = { ...config, ...cfg } as Config;
-    setConfig(newConfig);
+    updatePartialConfig(cfg);
     updateConfigMutation.mutate(cfg);
   };
 
@@ -204,18 +204,12 @@ export default function MainPage() {
                   ? RunningState.STOPPED
                   : (appState?.assistant_state ?? RunningState.IDLE)
               }
-              photo={config?.interview_conf?.photo ?? ''}
-              cameraDeviceName={config?.camera_device_name ?? ''}
-              videoWidth={config?.video_width ?? 640}
-              videoHeight={config?.video_height ?? 480}
-              enableFaceEnhance={config?.enable_face_enhance ?? false}
             />
           </div>
 
           {/* Transcription Panel - Fill remaining space with scroll */}
           {(!hideTranscriptPanel || !hideVideoPanel) && (
             <TranscriptPanel
-              username={config?.interview_conf?.username ?? ''}
               transcripts={transcripts}
               style={(transcriptHeight ?? 0) > 0 ? { height: `${transcriptHeight}px` } : undefined}
             />
@@ -245,21 +239,9 @@ export default function MainPage() {
         runningState={appState?.assistant_state ?? RunningState.IDLE}
         onProfileClick={() => setIsProfileOpen(true)}
         onSignOut={handleSignOut}
-        onThemeToggle={toggleTheme}
-        isDark={theme === 'dark'}
-        config={config}
-        updateConfig={updateConfig}
       />
 
-      <ConfigurationDialog
-        isOpen={isProfileOpen}
-        onOpenChange={setIsProfileOpen}
-        initialPhoto={config?.interview_conf?.photo ?? ''}
-        initialName={config?.interview_conf?.username ?? ''}
-        initialProfileData={config?.interview_conf?.profile_data ?? ''}
-        initialJobDescription={config?.interview_conf?.job_description ?? ''}
-        updateConfig={updateConfig}
-      />
+      <ConfigurationDialog isOpen={isProfileOpen} onOpenChange={setIsProfileOpen} />
     </div>
   );
 }

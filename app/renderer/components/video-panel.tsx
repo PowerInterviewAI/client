@@ -5,15 +5,10 @@ import { type OfferRequest, type WebRTCOptions } from '@/types/webrtc';
 import { UserCircle2 } from 'lucide-react';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { useConfigStore } from '@/hooks/use-config-store';
 
 interface VideoPanelProps {
   runningState: RunningState;
-  // Video control options - Face swap is always enabled when video control is active
-  photo: string;
-  cameraDeviceName: string;
-  videoWidth: number;
-  videoHeight: number;
-  enableFaceEnhance: boolean;
   // Optional: streaming fps for websocket
   fps?: number;
   jpegQuality?: number; // 0.0 - 1.0
@@ -25,20 +20,15 @@ export interface VideoPanelHandle {
 }
 
 export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
-  (
-    {
-      runningState,
-      photo,
-      cameraDeviceName,
-      videoWidth,
-      videoHeight,
-      enableFaceEnhance,
-      fps = 30,
-      jpegQuality = 0.8,
-    },
-    ref
-  ) => {
+  ({ runningState, fps = 30, jpegQuality = 0.8 }, ref) => {
+    const { config } = useConfigStore();
     const videoDevices = useVideoDevices();
+
+    const photo = config?.interview_conf?.photo ?? '';
+    const cameraDeviceName = config?.camera_device_name ?? '';
+    const videoWidth = config?.video_width ?? 640;
+    const videoHeight = config?.video_height ?? 480;
+    const enableFaceEnhance = config?.enable_face_enhance ?? false;
 
     const [videoMessage, setVideoMessage] = useState('Video Stream');
     const videoRef = useRef<HTMLVideoElement>(null);

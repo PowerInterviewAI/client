@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAssistantState } from '@/hooks/use-assistant-state';
+import { useConfigStore } from '@/hooks/use-config-store';
 import { RunningState } from '@/types/appState';
 import { type AudioDevice } from '@/types/audioDevice';
 import { type Config } from '@/types/config';
@@ -17,20 +18,17 @@ import { Mic } from 'lucide-react';
 
 interface AudioOptionsProps {
   audioInputDevices: AudioDevice[];
-  config?: Config;
-  updateConfig: (config: Partial<Config>) => void;
   audioInputDeviceNotFound: boolean;
   getDisabled: (state: RunningState, disableOnRunning?: boolean) => boolean;
 }
 
 export function AudioOptions({
   audioInputDevices,
-  config,
-  updateConfig,
   audioInputDeviceNotFound,
   getDisabled,
 }: AudioOptionsProps) {
   const { runningState } = useAssistantState();
+  const { config, updatePartialConfig } = useConfigStore();
   const usableAudioInputDevices = audioInputDevices.filter((d) => {
     if (d.name.toLowerCase().includes('virtual')) return false;
     return true;
@@ -75,7 +73,7 @@ export function AudioOptions({
             <label className="text-xs text-muted-foreground mb-1 block">Microphone</label>
             <Select
               value={config?.audio_input_device_name}
-              onValueChange={(v) => updateConfig({ audio_input_device_name: v })}
+              onValueChange={(v) => updatePartialConfig({ audio_input_device_name: v })}
             >
               <SelectTrigger className="h-8 w-full text-xs">
                 <SelectValue placeholder="Select microphone" />

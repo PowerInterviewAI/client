@@ -14,13 +14,12 @@ import { ChevronUp, Key, LogOut, Moon, SettingsIcon, Sun } from 'lucide-react';
 import { useState } from 'react';
 import { ChangePasswordDialog } from './change-password-dialog';
 import { useAssistantState } from '@/hooks/use-assistant-state';
+import { useThemeStore } from '@/hooks/use-theme-store';
 
 interface ProfileSectionProps {
   config?: Config;
   onProfileClick: () => void;
   onSignOut: () => void;
-  onThemeToggle: () => void;
-  isDark: boolean;
   getDisabled: (state: RunningState, disableOnRunning?: boolean) => boolean;
 }
 
@@ -28,11 +27,10 @@ export function ProfileSection({
   config,
   onProfileClick,
   onSignOut,
-  onThemeToggle,
-  isDark,
   getDisabled,
 }: ProfileSectionProps) {
   const { runningState } = useAssistantState();
+  const { isDark, toggleTheme } = useThemeStore();
   const { changePassword, loading, error, setError } = useAuth();
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isDocumentationOpen, setIsDocumentationOpen] = useState(false);
@@ -83,7 +81,7 @@ export function ProfileSection({
             <SettingsIcon className="mr-2 h-4 w-4" />
             Configuration
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => !disabled && onThemeToggle()}>
+          <DropdownMenuItem onClick={() => !disabled && toggleTheme()}>
             {isDark ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
             {isDark ? 'Light mode' : 'Dark mode'}
           </DropdownMenuItem>

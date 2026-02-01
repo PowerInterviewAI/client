@@ -10,16 +10,13 @@ import { VideoOptions } from './control-panel/video-options';
 import RunningIndicator from './running-indicator';
 import { useAudioInputDevices, useAudioOutputDevices } from '@/hooks/audio-devices';
 import { useAssistantState } from '@/hooks/use-assistant-state';
+import { useConfigStore } from '@/hooks/use-config-store';
+import { useThemeStore } from '@/hooks/use-theme-store';
 
 interface ControlPanelProps {
   runningState: RunningState;
   onProfileClick: () => void;
   onSignOut: () => void;
-  onThemeToggle: () => void;
-  isDark: boolean;
-
-  config?: Config;
-  updateConfig: (config: Partial<Config>) => void;
 }
 
 type StateConfig = {
@@ -29,17 +26,11 @@ type StateConfig = {
   label: string;
 };
 
-export default function ControlPanel({
-  onProfileClick,
-  onSignOut,
-  onThemeToggle,
-  isDark,
-
-  config,
-  updateConfig,
-}: ControlPanelProps) {
+export default function ControlPanel({ onProfileClick, onSignOut }: ControlPanelProps) {
   const isStealth = useIsStealthMode();
   const { runningState, startAssistant, stopAssistant } = useAssistantState();
+  const { config, updatePartialConfig } = useConfigStore();
+  const { isDark, toggleTheme } = useThemeStore();
 
   const videoDevices = useVideoDevices();
   const { data: audioInputDevices } = useAudioInputDevices(1000);
@@ -136,22 +127,16 @@ export default function ControlPanel({
         config={config}
         onProfileClick={onProfileClick}
         onSignOut={onSignOut}
-        onThemeToggle={onThemeToggle}
-        isDark={isDark}
         getDisabled={getDisabled}
       />
 
       <div className="flex flex-1 justify-center gap-2 items-center">
         <AudioOptions
           audioInputDevices={audioInputDevices ?? []}
-          config={config}
-          updateConfig={updateConfig}
           audioInputDeviceNotFound={audioInputDeviceNotFound}
           getDisabled={getDisabled}
         />
         <VideoOptions
-          config={config}
-          updateConfig={updateConfig}
           videoDeviceNotFound={videoDeviceNotFound}
           audioOutputDevices={audioOutputDevices ?? []}
           getDisabled={getDisabled}

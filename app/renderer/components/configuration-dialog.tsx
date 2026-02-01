@@ -13,49 +13,41 @@ import {
   DialogTitle,
 } from './ui/dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { useConfigStore } from '@/hooks/use-config-store';
+import { useUpdateConfig } from '@/hooks/use-config';
 
 interface ConfigurationDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  initialPhoto: string;
-  initialName: string;
-  initialProfileData: string;
-  initialJobDescription: string;
-  updateConfig: (config: Partial<Config>) => void;
 }
 
-export default function ConfigurationDialog({
-  isOpen,
-  onOpenChange,
-  initialPhoto,
-  initialName,
-  initialProfileData,
-  initialJobDescription,
-  updateConfig,
-}: ConfigurationDialogProps) {
-  const [photo, setPhoto] = useState(initialPhoto);
-  const [name, setName] = useState(initialName);
-  const [profileData, setProfileData] = useState(initialProfileData);
-  const [jobDescription, setJobDescription] = useState(initialJobDescription);
+export default function ConfigurationDialog({ isOpen, onOpenChange }: ConfigurationDialogProps) {
+  const { config, updatePartialConfig } = useConfigStore();
+  const updateConfigMutation = useUpdateConfig();
+
+  const [photo, setPhoto] = useState('');
+  const [name, setName] = useState('');
+  const [profileData, setProfileData] = useState('');
+  const [jobDescription, setJobDescription] = useState('');
 
   useEffect(() => {
-    if (isOpen) {
-      setPhoto(initialPhoto);
-      setName(initialName);
-      setProfileData(initialProfileData);
-      setJobDescription(initialJobDescription ?? '');
+    if (isOpen && config?.interview_conf) {
+      setPhoto(config.interview_conf.photo ?? '');
+      setName(config.interview_conf.username ?? '');
+      setProfileData(config.interview_conf.profile_data ?? '');
+      setJobDescription(config.interview_conf.job_description ?? '');
     }
-  }, [isOpen, initialPhoto, initialName, initialProfileData]);
+  }, [isOpen, config?.interview_conf]);
 
   const handleSave = () => {
-    updateConfig({
-      interview_conf: {
-        photo: photo,
-        username: name,
-        profile_data: profileData,
-        job_description: jobDescription,
-      },
-    });
+    const interviewConf = {
+      photo: photo,
+      username: name,
+      profile_data: profileData,
+      job_description: jobDescription,
+    };
+    updatePartialConfig({ interview_conf: interviewConf });
+    updateConfigMutation.mutate({ interview_conf: interviewConf });
     onOpenChange(false);
   };
 
