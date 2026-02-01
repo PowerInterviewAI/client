@@ -6,6 +6,7 @@ import queue
 import threading
 import time
 from datetime import datetime
+from typing import Any
 
 import cv2
 import numpy as np
@@ -36,22 +37,21 @@ class VCamAgent:
         self.stats_interval = stats_interval
 
         # Frame queue with max size to prevent memory overflow
-        self.frame_queue: queue.Queue = queue.Queue(maxsize=10)
-        self.last_frame: np.ndarray | None = None
+        self.frame_queue: queue.Queue[np.ndarray[Any, Any]] = queue.Queue(maxsize=10)
+        self.last_frame: np.ndarray[Any, Any] | None = None
 
         # Control flags
         self.running = False
         self.zmq_connected = False
 
         # Components
-        self.vcam: pyvirtualcam.Camera = None
-        self.zmq_context: zmq.Context = None
-        self.zmq_socket: zmq.Socket = None
+        self.vcam: pyvirtualcam.Camera | None = None
+        self.zmq_context: zmq.Context[Any] | None = None
+        self.zmq_socket: zmq.Socket[Any] | None = None
 
         # Threads
-        self.receiver_thread: threading.Thread = None
-        self.writer_thread: threading.Thread = None
-
+        self.receiver_thread: threading.Thread | None = None
+        self.writer_thread: threading.Thread | None = None
         # Statistics
         self.frames_received = 0
         self.frames_dropped = 0
@@ -59,7 +59,7 @@ class VCamAgent:
         self.last_received_count = 0
         self.last_written_count = 0
 
-    def create_black_frame(self) -> np.ndarray:
+    def create_black_frame(self) -> np.ndarray[Any, Any]:
         """Create a black frame with optional datetime overlay."""
         frame = np.zeros((self.height, self.width, 3), dtype=np.uint8)
 
@@ -135,7 +135,7 @@ class VCamAgent:
         reconnect_delay = 1.0
 
         while self.running:
-            if not self.zmq_connected:
+            if self.zmq_socket is None or not self.zmq_connected:
                 logger.warning("Attempting to reconnect to ZeroMQ...")
                 if not self.init_zmq():
                     time.sleep(reconnect_delay)
@@ -143,7 +143,7 @@ class VCamAgent:
 
             try:
                 # Receive frame data
-                data = self.zmq_socket.recv()
+                data = self.zmq_socket.recv()  # type: ignore  # noqa: PGH003
                 self.frames_received += 1
 
                 # Decode frame
