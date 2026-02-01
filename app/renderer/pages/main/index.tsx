@@ -10,6 +10,7 @@ import { useAppState } from '@/hooks/app-state';
 import useAuth from '@/hooks/use-auth';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { useConfigStore } from '@/hooks/use-config-store';
+import { useAssistantState } from '@/hooks/use-assistant-state';
 import { RunningState } from '@/types/app-state';
 import { type CodeSuggestion, type ReplySuggestion } from '@/types/suggestion';
 import { type Transcript } from '@/types/transcript';
@@ -22,6 +23,7 @@ export default function MainPage() {
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { config, isLoading: configLoading, loadConfig } = useConfigStore();
+  const { setVideoPanelRef } = useAssistantState();
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const [replySuggestions, setReplySuggestions] = useState<ReplySuggestion[]>([]);
   const [codeSuggestions, setCodeSuggestions] = useState<CodeSuggestion[]>([]);
@@ -31,6 +33,11 @@ export default function MainPage() {
 
   // Queries
   const { data: appState, error: appStateError } = useAppState(100);
+
+  // Register videoPanelRef with assistant state
+  useEffect(() => {
+    setVideoPanelRef(videoPanelRef as React.RefObject<VideoPanelHandle>);
+  }, [setVideoPanelRef]);
 
   // Load config on mount
   useEffect(() => {
