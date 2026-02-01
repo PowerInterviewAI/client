@@ -14,7 +14,7 @@ def main() -> None:
     start_ts = time.time()
     start_dt = datetime.now().astimezone()
     print(f"\n{'=' * 60}")  # noqa: T201
-    print(f"🚀 Building All Components")  # noqa: T201
+    print("🚀 Building All Components")  # noqa: T201
     print(f"Start time: {start_dt.strftime('%Y-%m-%d %H:%M:%S %Z')}")  # noqa: T201
     print(f"{'=' * 60}\n")  # noqa: T201
 

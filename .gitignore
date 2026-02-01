@@ -1,15 +1,16 @@
+# Python cache and artifacts
 /.ruff_cache
 /.mypy_cache
 /.pytest_cache
 __pycache__
 
+# Virtual environment
 /venv
-/ui/node_modules
-/ui_container/node_modules
-/engine/public
-/models
 
+# Build outputs
 /dist
-/ui_container/bin
+/build
 
+# Generated files
+/models
 /nuitka-crash-report.xml

@@ -1,7 +1,6 @@
 """Build Audio Control Agent executable using Nuitka."""
 
 import sys
-from pathlib import Path
 
 from scripts.cfg import config as cfg
 from scripts.proc import run
@@ -9,8 +8,8 @@ from scripts.proc import run
 
 def build_audio_control_agent() -> None:
     """Build Audio Control Agent with Nuitka."""
-    audio_main = cfg.PROJECT_ROOT / "audio_control_agent" / "main.py"
-    output_dir = cfg.PROJECT_ROOT / "build" / "agents" / "win-x64"
+    audio_main = cfg.AGENTS_DIR / "audio_control" / "main.py"
+    output_dir = cfg.AGENTS_BUILD_DIR
     output_name = "audio_control_agent.exe"
 
     if not audio_main.exists():
@@ -25,10 +24,10 @@ def build_audio_control_agent() -> None:
     nuitka_cmd = (
         f"python -m nuitka {audio_main} "
         "--standalone "
-        "--include-package=audio_control_agent "
-        "--include-package=shared "
+        "--include-package=agents.audio_control "
+        "--include-package=agents.shared "
         "--follow-imports "
-        f"--output-dir={output_dir.parent} "
+        f"--output-dir={output_dir} "
         f"--output-filename={output_name} "
         "--assume-yes-for-downloads "
         "--windows-console-mode=attach "

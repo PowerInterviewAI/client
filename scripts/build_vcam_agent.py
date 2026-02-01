@@ -1,7 +1,6 @@
 """Build VCam Agent executable using Nuitka."""
 
 import sys
-from pathlib import Path
 
 from scripts.cfg import config as cfg
 from scripts.proc import run
@@ -9,8 +8,8 @@ from scripts.proc import run
 
 def build_vcam_agent() -> None:
     """Build VCam Agent with Nuitka."""
-    vcam_main = cfg.PROJECT_ROOT / "vcam_agent" / "main.py"
-    output_dir = cfg.PROJECT_ROOT / "build" / "agents" / "win-x64"
+    vcam_main = cfg.AGENTS_DIR / "vcam" / "main.py"
+    output_dir = cfg.AGENTS_BUILD_DIR
     output_name = "vcam_agent.exe"
 
     if not vcam_main.exists():
@@ -25,9 +24,9 @@ def build_vcam_agent() -> None:
     nuitka_cmd = (
         f"python -m nuitka {vcam_main} "
         "--standalone "
-        "--include-package=vcam_agent "
+        "--include-package=agents.vcam "
         "--follow-imports "
-        f"--output-dir={output_dir.parent} "
+        f"--output-dir={output_dir} "
         f"--output-filename={output_name} "
         "--assume-yes-for-downloads "
         "--windows-console-mode=attach "

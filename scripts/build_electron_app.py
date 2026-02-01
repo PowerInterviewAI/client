@@ -1,7 +1,6 @@
 """Build Electron app (UI Container)."""
 
 import sys
-from pathlib import Path
 
 from scripts.cfg import config as cfg
 from scripts.proc import run

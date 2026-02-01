@@ -1,7 +1,6 @@
 """Build ASR Agent executable using Nuitka."""
 
 import sys
-from pathlib import Path
 
 from scripts.cfg import config as cfg
 from scripts.proc import run
@@ -9,8 +8,8 @@ from scripts.proc import run
 
 def build_asr_agent() -> None:
     """Build ASR Agent with Nuitka."""
-    asr_main = cfg.PROJECT_ROOT / "asr_agent" / "main.py"
-    output_dir = cfg.PROJECT_ROOT / "build" / "agents" / "win-x64"
+    asr_main = cfg.AGENTS_DIR / "asr" / "main.py"
+    output_dir = cfg.AGENTS_BUILD_DIR
     output_name = "asr_agent.exe"
 
     if not asr_main.exists():
@@ -25,10 +24,10 @@ def build_asr_agent() -> None:
     nuitka_cmd = (
         f"python -m nuitka {asr_main} "
         "--standalone "
-        "--include-package=asr_agent "
-        "--include-package=shared "
+        "--include-package=agents.asr "
+        "--include-package=agents.shared "
         "--follow-imports "
-        f"--output-dir={output_dir.parent} "
+        f"--output-dir={output_dir} "
         f"--output-filename={output_name} "
         "--assume-yes-for-downloads "
         "--windows-console-mode=attach "
