@@ -1,6 +1,6 @@
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { useVideoDevices } from '@/hooks/video-devices';
-import { RunningState } from '@/types/appState';
+import { RunningState } from '@/types/app-state';
 import { type Config } from '@/types/config';
 import { Ellipsis, Play, Square } from 'lucide-react';
 import { AudioOptions } from './control-panel/audio-options';

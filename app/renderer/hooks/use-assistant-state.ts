@@ -1,4 +1,4 @@
-import { RunningState } from '@/types/appState';
+import { RunningState } from '@/types/app-state';
 import { create } from 'zustand';
 
 interface AssistantState {

@@ -1,4 +1,4 @@
-import axiosClient from '@/lib/axiosClient';
+import axiosClient from '@/lib/axios-client';
 import axios from 'axios';
 import { useState } from 'react';
 

@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import useAuth from '@/hooks/use-auth';
-import { RunningState } from '@/types/appState';
+import { RunningState } from '@/types/app-state';
 import { type Config } from '@/types/config';
 import { ChevronUp, Key, LogOut, Moon, SettingsIcon, Sun } from 'lucide-react';
 import { useState } from 'react';

@@ -1,5 +1,5 @@
-import axiosClient from '@/lib/axiosClient';
-import { type AppState } from '@/types/appState';
+import axiosClient from '@/lib/axios-client';
+import { type AppState } from '@/types/app-state';
 import { type APIError } from '@/types/error';
 import { useQuery } from '@tanstack/react-query';
 

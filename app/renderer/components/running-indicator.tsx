@@ -1,4 +1,4 @@
-import { RunningState } from '@/types/appState';
+import { RunningState } from '@/types/app-state';
 
 type Props = {
   runningState: RunningState;

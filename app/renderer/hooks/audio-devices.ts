@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { type AudioDevice } from '@/types/audioDevice';
+import { type AudioDevice } from '@/types/audio-device';
 
 const getAudioDevices = async (kind: 'audioinput' | 'audiooutput'): Promise<AudioDevice[]> => {
   try {

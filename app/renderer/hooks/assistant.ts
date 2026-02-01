@@ -1,5 +1,5 @@
 import { type VideoPanelHandle } from '@/components/video-panel';
-import axiosClient from '@/lib/axiosClient';
+import axiosClient from '@/lib/axios-client';
 import { type Config } from '@/types/config';
 import { type APIError } from '@/types/error';
 import { useMutation } from '@tanstack/react-query';

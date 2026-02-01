@@ -11,8 +11,8 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAssistantState } from '@/hooks/use-assistant-state';
 import { useConfigStore } from '@/hooks/use-config-store';
-import { RunningState } from '@/types/appState';
-import { type AudioDevice } from '@/types/audioDevice';
+import { RunningState } from '@/types/app-state';
+import { type AudioDevice } from '@/types/audio-device';
 import { type Config } from '@/types/config';
 import { Mic } from 'lucide-react';
 

@@ -12,7 +12,7 @@ import useAuth from '@/hooks/use-auth';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { useConfigStore } from '@/hooks/use-config-store';
 import { useThemeStore } from '@/hooks/use-theme-store';
-import { RunningState } from '@/types/appState';
+import { RunningState } from '@/types/app-state';
 import { type Config } from '@/types/config';
 import { type CodeSuggestion, type ReplySuggestion } from '@/types/suggestion';
 import { type Transcript } from '@/types/transcript';
