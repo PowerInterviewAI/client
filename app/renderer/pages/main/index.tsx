@@ -7,13 +7,10 @@ import ReplySuggestionsPanel from '@/components/reply-suggestions-panel';
 import TranscriptPanel from '@/components/transcript-panel';
 import { VideoPanel, type VideoPanelHandle } from '@/components/video-panel';
 import { useAppState } from '@/hooks/app-state';
-import { useStartAssistant, useStopAssistant } from '@/hooks/assistant';
 import useAuth from '@/hooks/use-auth';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { useConfigStore } from '@/hooks/use-config-store';
-import { useThemeStore } from '@/hooks/use-theme-store';
 import { RunningState } from '@/types/app-state';
-import { type Config } from '@/types/config';
 import { type CodeSuggestion, type ReplySuggestion } from '@/types/suggestion';
 import { type Transcript } from '@/types/transcript';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
@@ -24,12 +21,7 @@ export default function MainPage() {
   const navigate = useNavigate();
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const {
-    config,
-    isLoading: configLoading,
-    loadConfig,
-    updateConfig: updateConfigStore,
-  } = useConfigStore();
+  const { config, isLoading: configLoading, loadConfig } = useConfigStore();
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const [replySuggestions, setReplySuggestions] = useState<ReplySuggestion[]>([]);
   const [codeSuggestions, setCodeSuggestions] = useState<CodeSuggestion[]>([]);
@@ -124,13 +116,11 @@ export default function MainPage() {
     computeAvailable();
   }, [appState?.assistant_state, appState, computeAvailable]);
 
-  // Theme from store
-  const { theme, isDark, toggleTheme } = useThemeStore();
-
   // Sign out handling
   const handleSignOut = async () => {
     await logout();
   };
+
   useEffect(() => {
     if (appState?.transcripts && appState?.transcripts !== transcripts) {
       setTranscripts(appState?.transcripts);
