@@ -6,7 +6,7 @@ import Loading from '@/components/loading';
 import ReplySuggestionsPanel from '@/components/reply-suggestions-panel';
 import TranscriptPanel from '@/components/transcript-panel';
 import { VideoPanel, type VideoPanelHandle } from '@/components/video-panel';
-import { useAppState } from '@/hooks/app-state';
+import { useAppStateStore } from '@/hooks/use-app-state-store';
 import useAuth from '@/hooks/use-auth';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { useConfigStore } from '@/hooks/use-config-store';
@@ -31,8 +31,8 @@ export default function MainPage() {
   const [transcriptHeight, setTranscriptHeight] = useState<number | null>(null);
   const [suggestionHeight, setSuggestionHeight] = useState<number | null>(null);
 
-  // Queries
-  const { data: appState, error: appStateError } = useAppState(100);
+  // App state from store
+  const appState = useAppStateStore((state) => state.appState);
 
   // Register videoPanelRef with assistant state
   useEffect(() => {
@@ -163,7 +163,7 @@ export default function MainPage() {
   }, [appState?.is_logged_in, navigate]);
 
   // Show loading if config or app state is not loaded yet
-  if (configLoading || (!appState && !appStateError)) {
+  if (configLoading || !appState) {
     return <Loading disclaimer="Loading your configuration…" />;
   }
 
@@ -198,11 +198,7 @@ export default function MainPage() {
           <div id="video-panel" className="h-45 w-full max-w-80 mx-auto" hidden={hideVideoPanel}>
             <VideoPanel
               ref={videoPanelRef}
-              runningState={
-                appStateError
-                  ? RunningState.STOPPED
-                  : (appState?.assistant_state ?? RunningState.IDLE)
-              }
+              runningState={appState?.assistant_state ?? RunningState.IDLE}
             />
           </div>
 
