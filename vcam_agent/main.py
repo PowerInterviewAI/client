@@ -10,7 +10,7 @@ from loguru import logger
 
 from vcam_agent.vcam_agent import VCamAgent
 
-SHOW_DATETIME: bool = True
+DEFAULT_ZMQ_PORT: int = 50001
 STATS_INTERVAL_SECONDS: int = 5
 
 
@@ -42,8 +42,8 @@ def main() -> int:
         "-p",
         "--port",
         type=int,
-        default=50001,
-        help="ZeroMQ port (default: 50001)",
+        default=DEFAULT_ZMQ_PORT,
+        help=f"ZeroMQ port (default: {DEFAULT_ZMQ_PORT})",
     )
     parser.add_argument(
         "-n",
