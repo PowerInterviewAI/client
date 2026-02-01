@@ -4,7 +4,7 @@ import { create } from 'zustand';
 interface AssistantState {
   runningState: RunningState;
   error: string | null;
-  
+
   // Actions
   startAssistant: () => Promise<void>;
   stopAssistant: () => Promise<void>;
@@ -24,7 +24,7 @@ export const useAssistantState = create<AssistantState>((set) => ({
   startAssistant: async () => {
     try {
       set({ runningState: RunningState.STARTING, error: null });
-      
+
       const electron = getElectron();
       if (!electron) {
         throw new Error('Electron API not available');
@@ -32,16 +32,16 @@ export const useAssistantState = create<AssistantState>((set) => ({
 
       // TODO: Call electron method to start assistant
       // await electron.assistant.start();
-      
+
       // Simulate async operation for now
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       set({ runningState: RunningState.RUNNING });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to start assistant';
-      set({ 
-        runningState: RunningState.IDLE, 
-        error: errorMessage 
+      set({
+        runningState: RunningState.IDLE,
+        error: errorMessage,
       });
       console.error('Start assistant error:', error);
       throw error;
@@ -51,7 +51,7 @@ export const useAssistantState = create<AssistantState>((set) => ({
   stopAssistant: async () => {
     try {
       set({ runningState: RunningState.STOPPING, error: null });
-      
+
       const electron = getElectron();
       if (!electron) {
         throw new Error('Electron API not available');
@@ -59,16 +59,16 @@ export const useAssistantState = create<AssistantState>((set) => ({
 
       // TODO: Call electron method to stop assistant
       // await electron.assistant.stop();
-      
+
       // Simulate async operation for now
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       set({ runningState: RunningState.STOPPED });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to stop assistant';
-      set({ 
-        runningState: RunningState.RUNNING, 
-        error: errorMessage 
+      set({
+        runningState: RunningState.RUNNING,
+        error: errorMessage,
       });
       console.error('Stop assistant error:', error);
       throw error;
