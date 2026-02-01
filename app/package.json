@@ -9,10 +9,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "clean": "node -e \"try{require('fs').rmSync('../dist',{recursive:true,force:true,maxRetries:3,retryDelay:100})}catch(e){}\"",
     "electron:build-main": "tsc -p tsconfig.electron.json",
     "electron:dev": "npm run electron:build-main && concurrently \"cross-env BROWSER=none npm run dev -- --port 5173 --strictPort\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
-    "electron:build": "npm run clean && npm run electron:build-main && npm run build && electron-builder",
+    "electron:build": "npm run electron:build-main && npm run build && electron-builder",
     "lint": "eslint .",
     "format": "prettier --write .",
     "start": "npm run electron:dev"
