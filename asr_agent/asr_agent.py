@@ -27,10 +27,12 @@ class ASRAgent:
         zmq_port: int,
         audio_source: str,
         backend_url: str,
+        session_token: str | None = None,
     ) -> None:
         self.zmq_port = zmq_port
         self.audio_source = audio_source
         self.backend_url = backend_url
+        self.session_token = session_token
 
         # Components
         self.audio_capture = AudioCapture(audio_source=audio_source)
@@ -59,6 +61,7 @@ class ASRAgent:
             audio_capture=self.audio_capture,
             on_partial=self._on_partial_transcript,
             on_final=self._on_final_transcript,
+            session_token=self.session_token,
         )
 
         # Run with automatic reconnection

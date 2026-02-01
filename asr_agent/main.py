@@ -41,6 +41,13 @@ def main() -> int:
         default=DEFAULT_BACKEND_URL,
         help=f"Backend websocket URL (default: {DEFAULT_BACKEND_URL})",
     )
+    parser.add_argument(
+        "-t",
+        "--token",
+        type=str,
+        default=None,
+        help="Authentication token for websocket (will be sent as cookie 'session_token=<token>')",
+    )
 
     args = parser.parse_args()
 
@@ -49,6 +56,7 @@ def main() -> int:
         zmq_port=args.port,
         audio_source=args.source,
         backend_url=args.url,
+        session_token=args.token,
     )
 
     # Setup signal handlers for graceful shutdown

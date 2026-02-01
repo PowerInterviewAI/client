@@ -30,11 +30,13 @@ class WebSocketASRClient:
         audio_capture: AudioCapture,
         on_partial: Callable[[str], None] | None = None,
         on_final: Callable[[str], None] | None = None,
+        session_token: str | None = None,
     ) -> None:
         self.backend_url = backend_url
         self.audio_capture = audio_capture
         self.on_partial = on_partial
         self.on_final = on_final
+        self.session_token = session_token
 
         # Connection state
         self.ws: ClientConnection | None = None
@@ -157,10 +159,16 @@ class WebSocketASRClient:
         logger.info(f"Connecting to backend websocket: {self.backend_url}")
 
         try:
+            # Prepare headers for authenticated connection if token provided
+            additional_headers: dict[str, str] = {}
+            if self.session_token:
+                additional_headers["cookie"] = f"session_token={self.session_token}"
+
             async with websockets.connect(
                 self.backend_url,
                 ping_timeout=None,
                 close_timeout=5,
+                additional_headers=additional_headers,
             ) as ws:
                 logger.info("Connected to backend websocket")
                 self.ws = ws
