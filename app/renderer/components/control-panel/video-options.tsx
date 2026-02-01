@@ -1,4 +1,3 @@
-
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -13,7 +12,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useVideoDevices } from '@/hooks/video-devices';
 import { RunningState } from '@/types/appState';
-import { type PyAudioDevice } from '@/types/audioDevice';
+import { type AudioDevice } from '@/types/audioDevice';
 import { type Config } from '@/types/config';
 import { Ellipsis, UserLock } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -24,7 +23,7 @@ interface VideoOptionsProps {
   config?: Config;
   updateConfig: (config: Partial<Config>) => void;
   videoDeviceNotFound: boolean;
-  audioOutputDevices: PyAudioDevice[];
+  audioOutputDevices: AudioDevice[];
   getDisabled: (state: RunningState, disableOnRunning?: boolean) => boolean;
 }
 
@@ -86,7 +85,7 @@ export function VideoOptions({
 
       // Find camera device id by name
       const videoDeviceId = videoDevices.find(
-        (d) => d.label === config?.camera_device_name,
+        (d) => d.label === config?.camera_device_name
       )?.deviceId;
 
       // Create media stream

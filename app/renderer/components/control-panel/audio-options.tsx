@@ -1,4 +1,3 @@
-
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -11,13 +10,13 @@ import {
 } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { RunningState } from '@/types/appState';
-import { type PyAudioDevice } from '@/types/audioDevice';
+import { type AudioDevice } from '@/types/audioDevice';
 import { type Config } from '@/types/config';
 import { Mic } from 'lucide-react';
 
 interface AudioOptionsProps {
   runningState: RunningState;
-  audioInputDevices: PyAudioDevice[];
+  audioInputDevices: AudioDevice[];
   config?: Config;
   updateConfig: (config: Partial<Config>) => void;
   audioInputDeviceNotFound: boolean;

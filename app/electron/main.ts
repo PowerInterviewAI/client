@@ -69,8 +69,8 @@ async function createWindow() {
   win = new BrowserWindow({
     title: 'Power Interview',
     ...savedBounds,
-    transparent: true,
-    frame: false,
+    // transparent: true,
+    // frame: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       nodeIntegration: false,
@@ -87,8 +87,8 @@ async function createWindow() {
   } catch (e) {
     console.warn('Failed to set application menu:', e);
   }
-  win.setMenuBarVisibility(false);
-  win.setAutoHideMenuBar(true);
+  // win.setMenuBarVisibility(false);
+  // win.setAutoHideMenuBar(true);
 
   // Enable content protection to prevent screen capture/recording
   win.setContentProtection(true);

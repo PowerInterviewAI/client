@@ -1,14 +1,4 @@
-export interface PyAudioDevice {
-  index: number;
-  structVersion: number;
+export interface AudioDevice {
   name: string;
-  hostApi: number;
-  maxInputChannels: number;
-  maxOutputChannels: number;
-  defaultLowInputLatency: number;
-  defaultLowOutputLatency: number;
-  defaultHighInputLatency: number;
-  defaultHighOutputLatency: number;
-  defaultSampleRate: number;
-  isLoopbackDevice: boolean;
+  index: number;
 }

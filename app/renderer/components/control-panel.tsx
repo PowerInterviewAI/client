@@ -1,7 +1,7 @@
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { useVideoDevices } from '@/hooks/video-devices';
 import { RunningState } from '@/types/appState';
-import { type PyAudioDevice } from '@/types/audioDevice';
+import { type AudioDevice } from '@/types/audioDevice';
 import { type Config } from '@/types/config';
 import { type APIError } from '@/types/error';
 import { type UseMutationResult } from '@tanstack/react-query';
@@ -14,8 +14,8 @@ import RunningIndicator from './running-indicator';
 
 interface ControlPanelProps {
   runningState: RunningState;
-  audioInputDevices: PyAudioDevice[];
-  audioOutputDevices: PyAudioDevice[];
+  audioInputDevices: AudioDevice[];
+  audioOutputDevices: AudioDevice[];
   startMutation: UseMutationResult<void, APIError, void, unknown>;
   stopMutation: UseMutationResult<void, APIError, void, unknown>;
 
