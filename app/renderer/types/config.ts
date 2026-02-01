@@ -14,6 +14,7 @@ export interface Config {
   language: Language;
 
   // Authentication
+  session_token: string;
   email: string;
   password: string;
 

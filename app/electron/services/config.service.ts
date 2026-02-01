@@ -16,6 +16,7 @@ export interface RuntimeConfig {
     job_description: string;
   };
   language: string;
+  session_token: string;
   email: string;
   password: string;
   audio_input_device_name: string;
@@ -36,6 +37,7 @@ const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
     job_description: '',
   },
   language: 'en',
+  session_token: '',
   email: '',
   password: '',
   audio_input_device_name: '',
