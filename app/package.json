@@ -116,7 +116,7 @@
     ],
     "extraFiles": [
       {
-        "from": "../build/agents/win-x64/",
+        "from": "../build/agents/",
         "to": "agents",
         "filter": [
           "**/*"
