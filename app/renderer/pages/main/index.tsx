@@ -33,6 +33,35 @@ export default function MainPage() {
 
   // App state from store
   const appState = useAppStateStore((state) => state.appState);
+  const addTranscript = useAppStateStore((state) => state.addTranscript);
+
+  // Listen for transcript updates from Electron
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.electronAPI?.transcription) return;
+
+    const unsubscribe = window.electronAPI.transcription.onTranscriptUpdate((transcript) => {
+      console.log('[Renderer] Received transcript:', transcript);
+      addTranscript(transcript);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [addTranscript]);
+
+  // Listen for transcription errors
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.electronAPI?.transcription) return;
+
+    const unsubscribe = window.electronAPI.transcription.onTranscriptionError((error) => {
+      console.error('[Renderer] Transcription error:', error);
+      // TODO: Show error notification to user
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   // Register videoPanelRef with assistant state
   useEffect(() => {

@@ -23,6 +23,16 @@ declare global {
         selfTranscriptionActive: boolean;
         otherTranscriptionActive: boolean;
       }>;
+      onTranscriptUpdate: (callback: (transcript: {
+        text: string;
+        isFinal: boolean;
+        speaker: 'user' | 'interviewer';
+        timestamp: Date;
+      }) => void) => () => void;
+      onTranscriptionError: (callback: (error: {
+        speaker: 'user' | 'interviewer';
+        error: string;
+      }) => void) => () => void;
     };
 
     // VCam bridge management
