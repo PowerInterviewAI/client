@@ -6,7 +6,7 @@
  */
 
 import { EventEmitter } from 'events';
-import { WebRtcConfig, PeerConnection } from '../types/webrtc.js';
+import { PeerConnection } from '../types/webrtc.js';
 
 export class WebRtcService extends EventEmitter {
   private static instance: WebRtcService;
@@ -27,7 +27,7 @@ export class WebRtcService extends EventEmitter {
    * Initialize WebRTC with STUN/TURN servers
    * SKELETON: Configure ICE servers
    */
-  async initialize(config?: Partial<WebRtcConfig>): Promise<void> {
+  async initialize(): Promise<void> {
     console.log('[WebRtcService] initialize - not implemented');
 
     // TODO: Configure ICE servers (STUN/TURN)
@@ -54,7 +54,7 @@ export class WebRtcService extends EventEmitter {
   /**
    * Add media stream to peer
    */
-  async addStream(peerId: string, stream: MediaStream): Promise<void> {
+  async addStream(peerId: string): Promise<void> {
     console.log(`[WebRtcService] addStream: ${peerId} - not implemented`);
 
     // TODO: Add tracks from stream to peer connection
@@ -63,7 +63,7 @@ export class WebRtcService extends EventEmitter {
   /**
    * Send data through data channel
    */
-  async sendData(peerId: string, data: string | ArrayBuffer): Promise<void> {
+  async sendData(peerId: string): Promise<void> {
     const peer = this.peers.get(peerId);
     if (!peer?.dataChannel) {
       throw new Error(`No data channel for peer ${peerId}`);

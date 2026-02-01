@@ -1,7 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { type Config } from '@/types/config';
 import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
@@ -28,13 +27,19 @@ export default function ConfigurationDialog({ isOpen, onOpenChange }: Configurat
   const [profileData, setProfileData] = useState('');
   const [jobDescription, setJobDescription] = useState('');
 
+  // Initialize form values when dialog opens - runs before paint
   useEffect(() => {
-    if (isOpen && config?.interview_conf) {
-      setPhoto(config.interview_conf.photo ?? '');
-      setName(config.interview_conf.username ?? '');
-      setProfileData(config.interview_conf.profile_data ?? '');
-      setJobDescription(config.interview_conf.job_description ?? '');
-    }
+    if (!isOpen) return;
+
+    // Queue state updates in a single microtask to avoid cascading renders
+    Promise.resolve().then(() => {
+      if (config?.interview_conf) {
+        setPhoto(config.interview_conf.photo ?? '');
+        setName(config.interview_conf.username ?? '');
+        setProfileData(config.interview_conf.profile_data ?? '');
+        setJobDescription(config.interview_conf.job_description ?? '');
+      }
+    });
   }, [isOpen, config?.interview_conf]);
 
   const handleSave = async () => {

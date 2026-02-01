@@ -1,7 +1,6 @@
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { useVideoDevices } from '@/hooks/video-devices';
 import { RunningState } from '@/types/app-state';
-import { type Config } from '@/types/config';
 import { Ellipsis, Play, Square } from 'lucide-react';
 import { AudioOptions } from './control-panel/audio-options';
 import { MainControls } from './control-panel/main-controls';
@@ -11,7 +10,6 @@ import RunningIndicator from './running-indicator';
 import { useAudioInputDevices, useAudioOutputDevices } from '@/hooks/audio-devices';
 import { useAssistantState } from '@/hooks/use-assistant-state';
 import { useConfigStore } from '@/hooks/use-config-store';
-import { useThemeStore } from '@/hooks/use-theme-store';
 
 interface ControlPanelProps {
   runningState: RunningState;
@@ -29,8 +27,7 @@ type StateConfig = {
 export default function ControlPanel({ onProfileClick, onSignOut }: ControlPanelProps) {
   const isStealth = useIsStealthMode();
   const { runningState, startAssistant, stopAssistant } = useAssistantState();
-  const { config, updateConfig } = useConfigStore();
-  const { isDark, toggleTheme } = useThemeStore();
+  const { config } = useConfigStore();
 
   const videoDevices = useVideoDevices();
   const { data: audioInputDevices } = useAudioInputDevices(1000);

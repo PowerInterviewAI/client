@@ -6,7 +6,7 @@
  */
 
 import { EventEmitter } from 'events';
-import { AsrResult, AsrOptions } from '../types/asr.js';
+import { AsrResult } from '../types/asr.js';
 import { asrConfig } from '../config/asr.js';
 
 export class AsrService extends EventEmitter {
@@ -28,7 +28,7 @@ export class AsrService extends EventEmitter {
    * Initialize ASR engine
    * SKELETON: Load Whisper or Vosk model
    */
-  async initialize(options?: AsrOptions): Promise<void> {
+  async initialize(): Promise<void> {
     console.log('[AsrService] initialize - not implemented');
     // TODO: Initialize ASR engine
     // - Load model from disk (models/ folder)
@@ -71,7 +71,7 @@ export class AsrService extends EventEmitter {
    * Transcribe audio buffer
    * SKELETON: Process single audio chunk
    */
-  async transcribe(audioBuffer: Buffer): Promise<AsrResult> {
+  async transcribe(): Promise<AsrResult> {
     console.log('[AsrService] transcribe - not implemented');
 
     // TODO: Process audio buffer through ASR

@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { HOTKEYS } from '@/lib/hotkeys';
-import React, { useMemo } from 'react';
+import React from 'react';
 
 interface DocumentationDialogProps {
   open: boolean;
@@ -16,29 +16,6 @@ interface DocumentationDialogProps {
 }
 
 export default function DocumentationDialog({ open, onOpenChange }: DocumentationDialogProps) {
-  const _stealthKey = useMemo(
-    () => HOTKEYS.find(([, short]) => /stealth/i.test(short))?.[0] ?? 'Ctrl+Shift+Q',
-    []
-  );
-  const _opacityKey = useMemo(
-    () => HOTKEYS.find(([, short]) => /opacity/i.test(short))?.[0] ?? 'Ctrl+Shift+D',
-    []
-  );
-  const _placeKey = useMemo(
-    () =>
-      HOTKEYS.find(([, short]) => /place window/i.test(short) || /place/i.test(short))?.[0] ??
-      'Ctrl+Shift+1-9',
-    []
-  );
-  const _moveKey = useMemo(
-    () => HOTKEYS.find(([, short]) => /move window/i.test(short))?.[0] ?? 'Ctrl+Alt+Shift+Arrow',
-    []
-  );
-  const _resizeKey = useMemo(
-    () => HOTKEYS.find(([, short]) => /resize/i.test(short))?.[0] ?? 'Ctrl+Win+Shift+Arrow',
-    []
-  );
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl w-full max-h-[80vh] flex flex-col">
@@ -53,7 +30,7 @@ export default function DocumentationDialog({ open, onOpenChange }: Documentatio
             {HOTKEYS.map(([k, d, l]) => (
               <React.Fragment key={`${k}-${d}`}>
                 <div className="col-span-1">
-                  <div className="px-2 py-1 rounded bg-muted text-[11px] font-semibold min-w-[90px]">
+                  <div className="px-2 py-1 rounded bg-muted text-[11px] font-semibold min-w-22.5">
                     {k}
                   </div>
                 </div>

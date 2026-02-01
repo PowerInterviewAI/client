@@ -27,11 +27,7 @@ export class CodeSuggestionService {
    * Generate code suggestion based on context
    * SKELETON: Implement LLM API call
    */
-  async generateSuggestion(context: {
-    question: string;
-    language?: string;
-    previousCode?: string;
-  }): Promise<Suggestion> {
+  async generateSuggestion(): Promise<Suggestion> {
     console.log('[CodeSuggestionService] generateSuggestion - not implemented');
 
     // TODO: Call LLM API (OpenAI, Anthropic, etc.)
@@ -53,10 +49,8 @@ export class CodeSuggestionService {
   /**
    * Generate multiple alternative suggestions
    */
-  async generateAlternatives(context: { question: string; count: number }): Promise<Suggestion[]> {
-    console.log(
-      `[CodeSuggestionService] generateAlternatives (${context.count}) - not implemented`
-    );
+  async generateAlternatives(): Promise<Suggestion[]> {
+    console.log('[CodeSuggestionService] generateAlternatives - not implemented');
 
     // TODO: Generate multiple suggestions with temperature variation
     return [];
@@ -65,7 +59,7 @@ export class CodeSuggestionService {
   /**
    * Refine existing code
    */
-  async refineCode(code: string, instructions: string): Promise<string> {
+  async refineCode(code: string): Promise<string> {
     console.log('[CodeSuggestionService] refineCode - not implemented');
 
     // TODO: Use LLM to improve/refactor code
@@ -75,7 +69,7 @@ export class CodeSuggestionService {
   /**
    * Explain code snippet
    */
-  async explainCode(code: string): Promise<string> {
+  async explainCode(): Promise<string> {
     console.log('[CodeSuggestionService] explainCode - not implemented');
 
     // TODO: Generate code explanation

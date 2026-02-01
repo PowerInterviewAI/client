@@ -1,10 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Toaster } from './ui/sonner';
 import { useThemeStore } from '@/hooks/use-theme-store';
 
 function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const { theme, setTheme, toggleTheme: toggleThemeStore } = useThemeStore();
+  const { theme, setTheme } = useThemeStore();
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
@@ -19,8 +19,11 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
       document.documentElement.classList.remove('dark');
     }
 
-    setTheme(initialTheme);
-    setInitialized(true);
+    // Queue state updates to avoid cascading renders
+    Promise.resolve().then(() => {
+      setTheme(initialTheme);
+      setInitialized(true);
+    });
   }, [setTheme]);
 
   useEffect(() => {

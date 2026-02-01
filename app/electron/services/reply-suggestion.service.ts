@@ -26,11 +26,7 @@ export class ReplySuggestionService {
    * Generate reply suggestion based on interviewer's question
    * SKELETON: Implement LLM API call
    */
-  async generateReply(context: {
-    question: string;
-    conversationHistory?: string[];
-    role?: string;
-  }): Promise<Suggestion> {
+  async generateReply(): Promise<Suggestion> {
     console.log('[ReplySuggestionService] generateReply - not implemented');
 
     // TODO: Call LLM API
@@ -51,7 +47,7 @@ export class ReplySuggestionService {
   /**
    * Generate STAR (Situation, Task, Action, Result) format response
    */
-  async generateSTAR(question: string): Promise<{
+  async generateSTAR(): Promise<{
     situation: string;
     task: string;
     action: string;
@@ -71,7 +67,7 @@ export class ReplySuggestionService {
   /**
    * Generate follow-up questions
    */
-  async generateFollowUpQuestions(topic: string): Promise<string[]> {
+  async generateFollowUpQuestions(): Promise<string[]> {
     console.log('[ReplySuggestionService] generateFollowUpQuestions - not implemented');
 
     // TODO: Generate relevant follow-up questions

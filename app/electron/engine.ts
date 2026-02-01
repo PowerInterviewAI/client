@@ -2,6 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import { spawn, ChildProcess } from 'child_process';
 import * as net from 'net';
+import * as http from 'http';
 import { app, BrowserWindow, dialog } from 'electron';
 
 // Global state
@@ -31,8 +32,6 @@ function findFreePort(start: number): Promise<number> {
  * Wait for the engine server to be ready by polling the URL
  */
 function waitForServer(url: string): Promise<void> {
-  const http = require('http');
-
   return new Promise((resolve) => {
     let attempts = 0;
 

@@ -5,12 +5,12 @@
 
 import { app } from 'electron';
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   data?: T;
   error?: {
     code: string;
     message: string;
-    details?: Record<string, any>;
+    details?: Record<string, unknown>;
   };
   status: number;
 }
@@ -44,7 +44,7 @@ export class ApiClient {
   /**
    * Make GET request
    */
-  async get<T>(path: string, params?: Record<string, any>): Promise<ApiResponse<T>> {
+  async get<T>(path: string, params?: Record<string, unknown>): Promise<ApiResponse<T>> {
     const url = this.buildUrl(path, params);
     return this.request<T>('GET', url);
   }
@@ -52,7 +52,7 @@ export class ApiClient {
   /**
    * Make POST request
    */
-  async post<T>(path: string, body?: any): Promise<ApiResponse<T>> {
+  async post<T>(path: string, body?: unknown): Promise<ApiResponse<T>> {
     const url = this.buildUrl(path);
     return this.request<T>('POST', url, body);
   }
@@ -60,7 +60,7 @@ export class ApiClient {
   /**
    * Make PUT request
    */
-  async put<T>(path: string, body?: any): Promise<ApiResponse<T>> {
+  async put<T>(path: string, body?: unknown): Promise<ApiResponse<T>> {
     const url = this.buildUrl(path);
     return this.request<T>('PUT', url, body);
   }
@@ -76,7 +76,7 @@ export class ApiClient {
   /**
    * Make HTTP request
    */
-  private async request<T>(method: string, url: string, body?: any): Promise<ApiResponse<T>> {
+  private async request<T>(method: string, url: string, body?: unknown): Promise<ApiResponse<T>> {
     try {
       const response = await fetch(url, {
         method,
@@ -101,12 +101,12 @@ export class ApiClient {
         status: response.status,
         data,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         status: 0,
         error: {
           code: 'NETWORK_ERROR',
-          message: error.message || 'Network request failed',
+          message: error instanceof Error ? error.message : 'Network request failed',
         },
       };
     }
@@ -115,7 +115,7 @@ export class ApiClient {
   /**
    * Build full URL with query parameters
    */
-  private buildUrl(path: string, params?: Record<string, any>): string {
+  private buildUrl(path: string, params?: Record<string, unknown>): string {
     const url = new URL(path, this.baseUrl);
 
     if (params) {

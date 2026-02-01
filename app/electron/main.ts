@@ -20,10 +20,11 @@ import { registerGlobalHotkeys, unregisterHotkeys } from './hotkeys.js';
 import * as windowControls from './window-controls.js';
 
 // Import new services and API
-import { configService, transcriptService } from './services/index.js';
+import { configService } from './services/index.js';
 import { createApi } from './api/index.js';
 
 let win: BrowserWindow | null = null;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let api: ReturnType<typeof createApi> | null = null;
 
 // Ensure the application name is set (used by native dialogs/title fallbacks)
@@ -61,7 +62,7 @@ if (!gotLock) {
 // CREATE WINDOW
 // -------------------------------------------------------------
 async function createWindow() {
-  const savedBounds = (store.get('windowBounds') as any) || {
+  const savedBounds = (store.get('windowBounds') as { x?: number; y?: number; width?: number; height?: number }) || {
     width: 1024,
     height: 640,
   };

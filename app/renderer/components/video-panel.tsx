@@ -316,6 +316,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       if (wsRef.current) {
         try {
           wsRef.current.close();
+          // eslint-disable-next-line no-empty
         } catch {}
         wsRef.current = null;
       }
@@ -324,6 +325,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       if (pcRef.current) {
         try {
           pcRef.current.close();
+          // eslint-disable-next-line no-empty
         } catch {}
         pcRef.current = null;
       }
@@ -353,6 +355,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
         runningState === RunningState.STOPPED ||
         runningState === RunningState.IDLE
       ) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         stopWebRTC();
       }
     }, [runningState]);

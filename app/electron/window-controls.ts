@@ -225,11 +225,12 @@ export function enableStealth(): void {
     try {
       // Use a high z-order level so the overlay remains above other windows
       win.setAlwaysOnTop(true, 'screen-saver');
-    } catch (e) {
+    } catch (e){
+      console.warn('setAlwaysOnTop with level failed:', e);
       // Fallback to basic always-on-top if level not supported
       try {
         win.setAlwaysOnTop(true);
-      } catch (e) {
+      } catch (e){
         console.warn('setAlwaysOnTop failed:', e);
       }
     }

@@ -15,7 +15,6 @@ import { useVideoDevices } from '@/hooks/video-devices';
 import { useConfigStore } from '@/hooks/use-config-store';
 import { RunningState } from '@/types/app-state';
 import { type AudioDevice } from '@/types/audio-device';
-import { type Config } from '@/types/config';
 import { Ellipsis, UserLock } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -74,6 +73,9 @@ export function VideoOptions({
       return;
     }
 
+    let cleanupStream: MediaStream | null = null;
+    const videoElement = videoPreviewRef.current;
+
     const startPreview = async () => {
       // Stop previous stream before starting a new one
       if (previewStreamRef.current) {
@@ -98,11 +100,12 @@ export function VideoOptions({
 
       try {
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        cleanupStream = stream;
         previewStreamRef.current = stream;
-        if (videoPreviewRef.current) {
-          videoPreviewRef.current.srcObject = stream;
+        if (videoElement) {
+          videoElement.srcObject = stream;
           // Some browsers need play() after setting srcObject
-          await videoPreviewRef.current.play().catch(() => {});
+          await videoElement.play().catch(() => {});
         }
       } catch (err) {
         toast.error('Unable to access camera');
@@ -114,12 +117,12 @@ export function VideoOptions({
 
     // Cleanup when dialog closes or dependencies change
     return () => {
-      if (previewStreamRef.current) {
-        previewStreamRef.current.getTracks().forEach((t) => t.stop());
+      if (cleanupStream) {
+        cleanupStream.getTracks().forEach((t) => t.stop());
         previewStreamRef.current = null;
       }
-      if (videoPreviewRef.current) {
-        videoPreviewRef.current.srcObject = null;
+      if (videoElement) {
+        videoElement.srcObject = null;
       }
     };
   }, [

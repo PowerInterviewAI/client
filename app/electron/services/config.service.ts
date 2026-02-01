@@ -54,7 +54,7 @@ interface StoredConfig {
     stealth?: boolean;
   };
   user?: {
-    preferences?: Record<string, any>;
+    preferences?: Record<string, unknown>;
   };
   runtime?: Partial<RuntimeConfig>;
 }
@@ -188,14 +188,14 @@ export class ConfigService {
   /**
    * Get user preferences
    */
-  getPreferences(): Record<string, any> {
+  getPreferences(): Record<string, unknown> {
     return this.store.get('user.preferences', {});
   }
 
   /**
    * Save user preferences
    */
-  savePreferences(preferences: Record<string, any>): void {
+  savePreferences(preferences: Record<string, unknown>): void {
     this.store.set('user.preferences', preferences);
   }
 

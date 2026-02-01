@@ -26,7 +26,7 @@ export class AudioRecordService extends EventEmitter {
    * Start recording audio
    * SKELETON: Implement with node-record-lpcm16 or similar
    */
-  async startRecording(deviceId?: string): Promise<void> {
+  async startRecording(): Promise<void> {
     if (this.isRecording) {
       throw new Error('Already recording');
     }

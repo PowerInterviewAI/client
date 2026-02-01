@@ -1,3 +1,5 @@
+import type { Config } from "./config";
+
 export {};
 
 declare global {
@@ -7,8 +9,8 @@ declare global {
 
     // Configuration management
     config: {
-      get: () => Promise<any>;
-      update: (updates: any) => Promise<any>;
+      get: () => Promise<Config>;
+      update: (updates: Partial<Config>) => Promise<Config>;
     };
 
     // Window controls

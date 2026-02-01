@@ -27,6 +27,7 @@ export default function LoginPage() {
   useEffect(() => {
     // Pre-fill email if available from config
     if (config?.email) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEmail(config.email);
     }
     if (config?.password) {

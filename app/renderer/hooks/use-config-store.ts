@@ -51,7 +51,7 @@ export const useConfigStore = create<ConfigStore>((set, get) => ({
         throw new Error('Electron API not available');
       }
       // Save to Electron
-      const savedConfig = await electron.config.update(partial);
+      const savedConfig = (await electron.config.update(partial)) as Config;
       set({ config: savedConfig });
     } catch (error) {
       // Rollback on error
