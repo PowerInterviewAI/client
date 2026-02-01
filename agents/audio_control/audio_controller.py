@@ -5,7 +5,7 @@ import numpy as np
 import sounddevice as sd
 from loguru import logger
 
-from shared.audio_device_service import AudioDeviceService
+from agents.shared.audio_device_service import AudioDeviceService
 
 
 class AudioController:

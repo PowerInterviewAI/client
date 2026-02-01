@@ -8,7 +8,7 @@ import sys
 
 from loguru import logger
 
-from agents.vcam_agent.vcam_agent import VCamAgent
+from agents.vcam.vcam_agent import VCamAgent
 
 DEFAULT_ZMQ_PORT: int = 50001
 STATS_INTERVAL_SECONDS: int = 5

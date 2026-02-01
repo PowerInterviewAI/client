@@ -5,7 +5,7 @@ from types import FrameType
 
 from loguru import logger
 
-from agents.audio_control_agent.audio_controller import AudioController
+from agents.audio_control.audio_controller import AudioController
 from agents.shared.audio_device_service import AudioDeviceService
 
 

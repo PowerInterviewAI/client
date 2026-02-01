@@ -9,7 +9,7 @@ import sys
 
 from loguru import logger
 
-from agents.asr_agent.asr_agent import ASRAgent
+from agents.asr.asr_agent import ASRAgent
 
 # Default configuration
 DEFAULT_ZMQ_PORT = 50002
