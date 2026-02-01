@@ -9,7 +9,6 @@ import TranscriptPanel from '@/components/transcript-panel';
 import { VideoPanel, type VideoPanelHandle } from '@/components/video-panel';
 import { useAppState } from '@/hooks/app-state';
 import { useStartAssistant, useStopAssistant } from '@/hooks/assistant';
-import { useAudioInputDevices, useAudioOutputDevices } from '@/hooks/audio-devices';
 import { useConfigQuery, useUpdateConfig } from '@/hooks/config';
 import useAuth from '@/hooks/use-auth';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
@@ -35,8 +34,6 @@ export default function MainPage() {
 
   // Queries
   const { data: configFetched } = useConfigQuery();
-  const { data: audioInputDevices } = useAudioInputDevices(1000);
-  const { data: audioOutputDevices } = useAudioOutputDevices(1000);
   const { data: appState, error: appStateError } = useAppState(100);
 
   const hasReplySuggestions = replySuggestions.length > 0;
@@ -250,8 +247,6 @@ export default function MainPage() {
         runningState={appState?.assistant_state ?? RunningState.IDLE}
         startMutation={startMutation}
         stopMutation={stopMutation}
-        audioInputDevices={audioInputDevices ?? []}
-        audioOutputDevices={audioOutputDevices ?? []}
         onProfileClick={() => setIsProfileOpen(true)}
         onSignOut={handleSignOut}
         onThemeToggle={toggleTheme}

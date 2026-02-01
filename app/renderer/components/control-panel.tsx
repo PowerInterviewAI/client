@@ -1,7 +1,6 @@
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { useVideoDevices } from '@/hooks/video-devices';
 import { RunningState } from '@/types/appState';
-import { type AudioDevice } from '@/types/audioDevice';
 import { type Config } from '@/types/config';
 import { type APIError } from '@/types/error';
 import { type UseMutationResult } from '@tanstack/react-query';
@@ -11,11 +10,10 @@ import { MainControls } from './control-panel/main-controls';
 import { ProfileSection } from './control-panel/profile-section';
 import { VideoOptions } from './control-panel/video-options';
 import RunningIndicator from './running-indicator';
+import { useAudioInputDevices, useAudioOutputDevices } from '@/hooks/audio-devices';
 
 interface ControlPanelProps {
   runningState: RunningState;
-  audioInputDevices: AudioDevice[];
-  audioOutputDevices: AudioDevice[];
   startMutation: UseMutationResult<void, APIError, void, unknown>;
   stopMutation: UseMutationResult<void, APIError, void, unknown>;
 
@@ -37,8 +35,6 @@ type StateConfig = {
 
 export default function ControlPanel({
   runningState,
-  audioInputDevices,
-  audioOutputDevices,
   startMutation,
   stopMutation,
 
@@ -53,6 +49,8 @@ export default function ControlPanel({
   const isStealth = useIsStealthMode();
 
   const videoDevices = useVideoDevices();
+  const { data: audioInputDevices } = useAudioInputDevices(1000);
+  const { data: audioOutputDevices } = useAudioOutputDevices(1000);
 
   if (isStealth) return null;
 
@@ -97,7 +95,7 @@ export default function ControlPanel({
   const { onClick, className, icon, label } = stateConfig[runningState];
 
   const audioInputDeviceNotFound =
-    audioInputDevices.find((d) => d.name === config?.audio_input_device_name) === undefined;
+    audioInputDevices?.find((d) => d.name === config?.audio_input_device_name) === undefined;
   const videoDeviceNotFound =
     videoDevices.find((d) => d.label === config?.camera_device_name) === undefined;
 
@@ -152,7 +150,7 @@ export default function ControlPanel({
       <div className="flex flex-1 justify-center gap-2 items-center">
         <AudioOptions
           runningState={runningState}
-          audioInputDevices={audioInputDevices}
+          audioInputDevices={audioInputDevices ?? []}
           config={config}
           updateConfig={updateConfig}
           audioInputDeviceNotFound={audioInputDeviceNotFound}
@@ -163,7 +161,7 @@ export default function ControlPanel({
           config={config}
           updateConfig={updateConfig}
           videoDeviceNotFound={videoDeviceNotFound}
-          audioOutputDevices={audioOutputDevices}
+          audioOutputDevices={audioOutputDevices ?? []}
           getDisabled={getDisabled}
         />
 
