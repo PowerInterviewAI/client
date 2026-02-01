@@ -1,6 +1,9 @@
 import argparse
+import os
 import signal
 import sys
+import threading
+import time
 from types import FrameType
 
 from loguru import logger
@@ -13,6 +16,20 @@ def signal_handler(_signum: int, _frame: FrameType | None) -> None:
     """Handle keyboard interrupt signal."""
     logger.info("Received interrupt signal. Shutting down gracefully...")
     sys.exit(0)
+
+
+def monitor_parent_process(parent_pid: int, processor: AudioController) -> None:
+    """Monitor parent process and exit if it dies."""
+    logger.info(f"Monitoring parent process PID: {parent_pid}")
+    while processor.running:
+        try:
+            # os.kill with signal 0 checks if process exists without sending a signal
+            os.kill(parent_pid, 0)
+        except (OSError, ProcessLookupError):
+            logger.warning(f"Parent process {parent_pid} no longer exists. Shutting down...")
+            processor.stop()
+            break
+        time.sleep(1.0)
 
 
 def main() -> None:
@@ -50,6 +67,12 @@ Examples:
         help="List all available audio devices and exit",
     )
 
+    parser.add_argument(
+        "--watch-parent",
+        action="store_true",
+        help="Monitor parent process and exit if it dies",
+    )
+
     args = parser.parse_args()
 
     # Setup signal handler for graceful shutdown
@@ -78,6 +101,18 @@ Examples:
 
         # Create and start processor
         processor = AudioController(args.input_device, args.delay)
+
+        # Start parent process monitor if requested
+        if args.watch_parent:
+            parent_pid = os.getppid()
+            monitor_thread = threading.Thread(
+                target=monitor_parent_process,
+                args=(parent_pid, processor),
+                daemon=True,
+                name="parent-monitor",
+            )
+            monitor_thread.start()
+
         processor.start()
 
     except KeyboardInterrupt:

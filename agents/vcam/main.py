@@ -3,8 +3,11 @@ Virtual Camera Agent - Main Entry Point
 """
 
 import argparse
+import os
 import signal
 import sys
+import threading
+import time
 
 from loguru import logger
 
@@ -12,6 +15,20 @@ from agents.vcam.vcam_agent import VCamAgent
 
 DEFAULT_ZMQ_PORT: int = 50001
 STATS_INTERVAL_SECONDS: int = 5
+
+
+def monitor_parent_process(parent_pid: int, agent: VCamAgent) -> None:
+    """Monitor parent process and exit if it dies."""
+    logger.info(f"Monitoring parent process PID: {parent_pid}")
+    while agent.running:
+        try:
+            # os.kill with signal 0 checks if process exists without sending a signal
+            os.kill(parent_pid, 0)
+        except (OSError, ProcessLookupError):
+            logger.warning(f"Parent process {parent_pid} no longer exists. Shutting down...")
+            agent.running = False
+            break
+        time.sleep(1.0)
 
 
 def main() -> int:
@@ -51,6 +68,11 @@ def main() -> int:
         action="store_true",
         help="Disable datetime overlay (default: False)",
     )
+    parser.add_argument(
+        "--watch-parent",
+        action="store_true",
+        help="Monitor parent process and exit if it dies",
+    )
 
     args = parser.parse_args()
 
@@ -71,6 +93,17 @@ def main() -> int:
 
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
+
+    # Start parent process monitor if requested
+    if args.watch_parent:
+        parent_pid = os.getppid()
+        monitor_thread = threading.Thread(
+            target=monitor_parent_process,
+            args=(parent_pid, agent),
+            daemon=True,
+            name="parent-monitor",
+        )
+        monitor_thread.start()
 
     return agent.run()
 

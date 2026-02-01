@@ -139,7 +139,16 @@ class TranscriptionService {
     console.log(`Audio source: ${audioSource}, Port: ${port}, Speaker: ${speaker}`);
 
     // Build arguments
-    const args = [...baseArgs, '--port', port.toString(), '--source', audioSource, '--url', wsUrl];
+    const args = [
+      ...baseArgs,
+      '--port',
+      port.toString(),
+      '--source',
+      audioSource,
+      '--url',
+      wsUrl,
+      '--watch-parent', // Enable parent process monitoring
+    ];
 
     if (sessionToken) {
       args.push('--token', sessionToken);
