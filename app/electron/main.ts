@@ -163,6 +163,56 @@ app.whenReady().then(async () => {
     return vcamBridgeService.getStatus();
   });
 
+  // Register app health check IPC handlers
+  ipcMain.handle('app:ping', async () => {
+    // Import AppApi dynamically to avoid circular dependencies
+    const { ApiClient } = await import('./api/client.js');
+    const { AppApi } = await import('./api/app.js');
+    const { configManager } = await import('./config/app.js');
+    
+    const serverUrl = configManager.get('serverUrl');
+    const client = new ApiClient(serverUrl);
+    const appApi = new AppApi(client);
+    
+    return appApi.ping();
+  });
+
+  ipcMain.handle('app:ping-client', async (_event, deviceInfo) => {
+    const { ApiClient } = await import('./api/client.js');
+    const { AppApi } = await import('./api/app.js');
+    const { configManager } = await import('./config/app.js');
+    
+    const serverUrl = configManager.get('serverUrl');
+    const client = new ApiClient(serverUrl);
+    const appApi = new AppApi(client);
+    
+    return appApi.pingClient(deviceInfo);
+  });
+
+  ipcMain.handle('app:ping-gpu-server', async () => {
+    const { ApiClient } = await import('./api/client.js');
+    const { AppApi } = await import('./api/app.js');
+    const { configManager } = await import('./config/app.js');
+    
+    const serverUrl = configManager.get('serverUrl');
+    const client = new ApiClient(serverUrl);
+    const appApi = new AppApi(client);
+    
+    return appApi.pingGpuServer();
+  });
+
+  ipcMain.handle('app:wakeup-gpu-server', async () => {
+    const { ApiClient } = await import('./api/client.js');
+    const { AppApi } = await import('./api/app.js');
+    const { configManager } = await import('./config/app.js');
+    
+    const serverUrl = configManager.get('serverUrl');
+    const client = new ApiClient(serverUrl);
+    const appApi = new AppApi(client);
+    
+    return appApi.wakeupGpuServer();
+  });
+
   // Create window
   await createWindow();
 

@@ -46,6 +46,14 @@ const electronApi = {
     getStatus: () => ipcRenderer.invoke('vcam:get-status'),
   },
 
+  // App state and health checks
+  app: {
+    ping: () => ipcRenderer.invoke('app:ping'),
+    pingClient: (deviceInfo: any) => ipcRenderer.invoke('app:ping-client', deviceInfo),
+    pingGpuServer: () => ipcRenderer.invoke('app:ping-gpu-server'),
+    wakeupGpuServer: () => ipcRenderer.invoke('app:wakeup-gpu-server'),
+  },
+
   // Window controls
   minimize: () => ipcRenderer.send('window-minimize'),
   close: () => ipcRenderer.send('window-close'),

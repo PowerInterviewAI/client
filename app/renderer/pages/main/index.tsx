@@ -11,6 +11,7 @@ import useAuth from '@/hooks/use-auth';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { useConfigStore } from '@/hooks/use-config-store';
 import { useAssistantState } from '@/hooks/use-assistant-state';
+import { useHealthCheck } from '@/hooks/use-health-check';
 import { RunningState } from '@/types/app-state';
 import { type CodeSuggestion, type ReplySuggestion } from '@/types/suggestion';
 import { type Transcript } from '@/types/transcript';
@@ -34,6 +35,9 @@ export default function MainPage() {
   // App state from store
   const appState = useAppStateStore((state) => state.appState);
   const addTranscript = useAppStateStore((state) => state.addTranscript);
+
+  // Start health checks
+  useHealthCheck();
 
   // Listen for transcript updates from Electron
   useEffect(() => {
