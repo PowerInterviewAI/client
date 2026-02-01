@@ -1,4 +1,3 @@
-
 import { HOTKEYS } from '@/lib/hotkeys';
 import { RunningState } from '@/types/appState';
 import { RunningIndicator } from './running-indicator';

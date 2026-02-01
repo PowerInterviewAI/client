@@ -6,7 +6,7 @@ import { contextBridge, ipcRenderer } from 'electron';
 const electronApi = {
   // Hotkey scroll events
   onHotkeyScroll: (callback: (section: string, direction: string) => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, section: string, direction: string) => 
+    const handler = (_event: Electron.IpcRendererEvent, section: string, direction: string) =>
       callback(section, direction);
     ipcRenderer.on('hotkey-scroll', handler);
     return () => ipcRenderer.removeListener('hotkey-scroll', handler);
@@ -23,7 +23,7 @@ const electronApi = {
   close: () => ipcRenderer.send('window-close'),
 
   // Edge resize support
-  resizeWindowDelta: (dx: number, dy: number, edge: string) => 
+  resizeWindowDelta: (dx: number, dy: number, edge: string) =>
     ipcRenderer.send('window-resize-delta', dx, dy, edge),
 
   // Stealth control helpers
@@ -64,7 +64,7 @@ ipcRenderer.on('stealth-changed', (_event, isStealth: boolean) => {
       console.warn('Failed to update stealth class:', e);
     }
   };
-  
+
   if (document.readyState === 'complete' || document.readyState === 'interactive') {
     apply();
   } else {

@@ -1,7 +1,7 @@
 /**
  * ASR (Automatic Speech Recognition) Service
  * Converts audio to text using Whisper/Vosk
- * 
+ *
  * SKELETON: Complex implementation requires ML model integration
  */
 
@@ -34,7 +34,7 @@ export class AsrService extends EventEmitter {
     // - Load model from disk (models/ folder)
     // - Configure language, sample rate
     // - Initialize decoder/recognizer
-    
+
     // Options: whisper.cpp, vosk-api, or cloud API
   }
 
@@ -48,7 +48,7 @@ export class AsrService extends EventEmitter {
 
     console.log('[AsrService] start recognition');
     this.isActive = true;
-    
+
     // TODO: Begin processing audio stream
     // - Connect to audio-record.service
     // - Feed audio chunks to ASR engine
@@ -73,7 +73,7 @@ export class AsrService extends EventEmitter {
    */
   async transcribe(audioBuffer: Buffer): Promise<AsrResult> {
     console.log('[AsrService] transcribe - not implemented');
-    
+
     // TODO: Process audio buffer through ASR
     // Return mock result for now
     return {

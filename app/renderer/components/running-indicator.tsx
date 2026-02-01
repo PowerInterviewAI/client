@@ -1,4 +1,3 @@
-
 import { RunningState } from '@/types/appState';
 
 type Props = {

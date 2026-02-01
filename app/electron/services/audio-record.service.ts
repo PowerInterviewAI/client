@@ -1,7 +1,7 @@
 /**
  * Audio Recording Service
  * Handles audio capture from microphone
- * 
+ *
  * SKELETON: Complex implementation requires audio streaming
  */
 
@@ -36,7 +36,7 @@ export class AudioRecordService extends EventEmitter {
     // - Use node-record-lpcm16 or portaudio
     // - Configure sample rate, channels, encoding
     // - Emit 'data' events with audio buffers
-    
+
     this.isRecording = true;
     this.emit('started');
   }
@@ -51,7 +51,7 @@ export class AudioRecordService extends EventEmitter {
 
     console.log('[AudioRecordService] stopRecording');
     // TODO: Stop audio stream
-    
+
     this.isRecording = false;
     this.emit('stopped');
   }

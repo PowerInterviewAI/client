@@ -1,4 +1,3 @@
-
 import { Card } from '@/components/ui/card';
 import { type ReplySuggestion, SuggestionState } from '@/types/suggestion';
 import { Loader2, PauseCircle, Zap } from 'lucide-react';
@@ -57,7 +56,7 @@ export default function ReplySuggestionsPanel({ suggestions = [], style }: Sugge
         lastHotkeyAtRef.current = now;
 
         container.scrollBy({ top, behavior });
-      },
+      }
     );
 
     return () => {

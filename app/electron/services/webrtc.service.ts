@@ -1,7 +1,7 @@
 /**
  * WebRTC Service
  * Handles peer-to-peer video/audio connections
- * 
+ *
  * SKELETON: Complex implementation requires signaling server
  */
 
@@ -29,7 +29,7 @@ export class WebRtcService extends EventEmitter {
    */
   async initialize(config?: Partial<WebRtcConfig>): Promise<void> {
     console.log('[WebRtcService] initialize - not implemented');
-    
+
     // TODO: Configure ICE servers (STUN/TURN)
     // - Default: Google STUN servers
     // - Optional: Custom TURN server for NAT traversal
@@ -41,13 +41,13 @@ export class WebRtcService extends EventEmitter {
    */
   async createPeerConnection(peerId: string): Promise<PeerConnection> {
     console.log(`[WebRtcService] createPeerConnection: ${peerId} - not implemented`);
-    
+
     // TODO: Create RTCPeerConnection
     // - Set up ICE candidate gathering
     // - Configure media streams
     // - Set up data channels
     // - Handle negotiation
-    
+
     throw new Error('Not implemented');
   }
 
@@ -56,7 +56,7 @@ export class WebRtcService extends EventEmitter {
    */
   async addStream(peerId: string, stream: MediaStream): Promise<void> {
     console.log(`[WebRtcService] addStream: ${peerId} - not implemented`);
-    
+
     // TODO: Add tracks from stream to peer connection
   }
 
@@ -86,7 +86,7 @@ export class WebRtcService extends EventEmitter {
     // - Close data channels
     // - Stop media streams
     // - Close RTCPeerConnection
-    
+
     this.peers.delete(peerId);
     this.emit('peer-closed', peerId);
   }

@@ -118,7 +118,7 @@ export class ConfigService {
   updateConfig(updates: Partial<RuntimeConfig>): RuntimeConfig {
     const current = this.getConfig();
     const updated = { ...current, ...updates };
-    
+
     // Deep merge interview_conf if it's being partially updated
     if (updates.interview_conf) {
       updated.interview_conf = {
@@ -126,7 +126,7 @@ export class ConfigService {
         ...updates.interview_conf,
       };
     }
-    
+
     this.store.set('runtime', updated);
     return updated;
   }

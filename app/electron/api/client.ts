@@ -76,11 +76,7 @@ export class ApiClient {
   /**
    * Make HTTP request
    */
-  private async request<T>(
-    method: string,
-    url: string,
-    body?: any
-  ): Promise<ApiResponse<T>> {
+  private async request<T>(method: string, url: string, body?: any): Promise<ApiResponse<T>> {
     try {
       const response = await fetch(url, {
         method,
@@ -121,7 +117,7 @@ export class ApiClient {
    */
   private buildUrl(path: string, params?: Record<string, any>): string {
     const url = new URL(path, this.baseUrl);
-    
+
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {

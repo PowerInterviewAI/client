@@ -1,4 +1,3 @@
-
 import { useCallback } from 'react';
 
 function cursorForEdge(edge: string) {

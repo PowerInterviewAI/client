@@ -129,16 +129,16 @@ async function createWindow() {
 app.whenReady().then(async () => {
   // Initialize services
   await configService.load();
-  
+
   // Register config IPC handlers (manages config internally)
   configService.registerHandlers();
-  
+
   // Create window
   await createWindow();
-  
+
   // Register hotkeys
   registerGlobalHotkeys();
-  
+
   // Initialize API client with engine port
   const port = getCurrentPort();
   if (port) {
@@ -150,7 +150,7 @@ app.whenReady().then(async () => {
 app.on('will-quit', () => {
   stopEngine();
   unregisterHotkeys();
-  
+
   // Configuration auto-saves on changes, no need to save again on quit
 });
 
@@ -215,7 +215,7 @@ ipcMain.on('window-toggle-opacity', () => {
 ipcMain.on('window-resize-delta', (_event, dx: number, dy: number, edge: string) => {
   try {
     if (!win || win.isDestroyed()) return;
-    
+
     const minWidth = 300;
     const minHeight = 200;
     const bounds = win.getBounds();

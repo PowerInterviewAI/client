@@ -20,9 +20,9 @@ try {
   console.warn('Failed to reset stealth state:', e);
 }
 
-export type WindowPosition = 
-  | 'top-left' 
-  | 'top-center' 
+export type WindowPosition =
+  | 'top-left'
+  | 'top-center'
   | 'top-right'
   | 'middle-left'
   | 'center'
@@ -52,7 +52,7 @@ export function setWindowReference(window: BrowserWindow): void {
  */
 export function setWindowBounds(bounds: WindowBounds): void {
   if (!win || win.isDestroyed()) return;
-  
+
   try {
     const MIN_WIDTH = 1024;
     const MIN_HEIGHT = 640;
@@ -86,11 +86,12 @@ export function setWindowBounds(bounds: WindowBounds): void {
  */
 export function moveWindowToCorner(corner: WindowPosition): void {
   if (!win || win.isDestroyed()) return;
-  
+
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
   const { width: winWidth, height: winHeight } = win.getBounds();
 
-  let x = 0, y = 0;
+  let x = 0,
+    y = 0;
 
   // Support 9 positions: top-left, top-center, top-right,
   // middle-left, center, middle-right,
@@ -218,7 +219,7 @@ export function resizeWindowByArrow(direction: ResizeDirection): void {
  */
 export function enableStealth(): void {
   if (!win || win.isDestroyed()) return;
-  
+
   try {
     // Ensure window stays always on top in stealth mode (use highest level)
     try {
@@ -245,7 +246,7 @@ export function enableStealth(): void {
     // Ignore mouse events so clicks pass through the window
     // forward: true ensures underlying windows still receive events
     win.setIgnoreMouseEvents(true, { forward: true });
-    
+
     // Make window non-focusable so it doesn't capture keyboard events
     win.setFocusable(false);
 
@@ -258,9 +259,9 @@ export function enableStealth(): void {
     } catch (e) {
       console.warn('Failed to save stealth state:', e);
     }
-    
+
     console.log('🕵️‍♀️ Stealth mode enabled');
-    
+
     try {
       if (win && !win.isDestroyed()) {
         win.webContents.send('stealth-changed', _stealth);
@@ -278,7 +279,7 @@ export function enableStealth(): void {
  */
 export function disableStealth(): void {
   if (!win || win.isDestroyed()) return;
-  
+
   try {
     win.setIgnoreMouseEvents(false);
     win.setFocusable(true);
@@ -295,9 +296,9 @@ export function disableStealth(): void {
     } catch (e) {
       console.warn('Failed to save stealth state:', e);
     }
-    
+
     console.log('🟢 Stealth mode disabled');
-    
+
     try {
       if (win && !win.isDestroyed()) {
         win.webContents.send('stealth-changed', _stealth);
@@ -326,7 +327,7 @@ export function toggleStealth(): void {
  */
 export function toggleOpacity(): void {
   if (!win || win.isDestroyed()) return;
-  
+
   if (!_stealth) {
     console.log('⚠️ Opacity toggle is only available in stealth mode');
     return;

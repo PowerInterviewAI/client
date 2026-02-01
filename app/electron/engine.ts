@@ -14,7 +14,7 @@ let restartTimestamps: number[] = [];
  * Find a free port starting from the given port number
  */
 function findFreePort(start: number): Promise<number> {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     function tryPort(port: number) {
       const server = net.createServer();
       server.once('error', () => tryPort(port + 1));
@@ -33,7 +33,7 @@ function findFreePort(start: number): Promise<number> {
 function waitForServer(url: string): Promise<void> {
   const http = require('http');
 
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     let attempts = 0;
 
     function check() {
@@ -60,7 +60,7 @@ export async function startEngine(win: BrowserWindow): Promise<number> {
   // Track restart rate to avoid loops
   const now = Date.now();
   restartTimestamps.push(now);
-  restartTimestamps = restartTimestamps.filter(t => now - t < 10000);
+  restartTimestamps = restartTimestamps.filter((t) => now - t < 10000);
 
   if (restartTimestamps.length > 5) {
     console.error('❌ Engine restarting too fast. Not restarting again.');
@@ -80,13 +80,13 @@ export async function startEngine(win: BrowserWindow): Promise<number> {
   if (!fs.existsSync(exePath)) {
     console.error(`❌ Engine executable not found at: ${exePath}`);
     isRestarting = false;
-    
+
     // Show error dialog to user
     dialog.showErrorBox(
       'Engine Not Found',
       `The Power Interview engine could not be found at:\n${exePath}\n\nPlease ensure the application is properly installed.`
     );
-    
+
     // Clean exit
     app.quit();
     throw new Error(`Engine not found: ${exePath}`);
@@ -94,29 +94,33 @@ export async function startEngine(win: BrowserWindow): Promise<number> {
 
   console.log(`🚀 Starting engine on port ${currentPort}`);
 
-  engine = spawn(exePath, ['--port', currentPort.toString(), '--watch-parent', 'true', '--reload', 'false'], {
-    detached: process.platform !== 'win32',
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
+  engine = spawn(
+    exePath,
+    ['--port', currentPort.toString(), '--watch-parent', 'true', '--reload', 'false'],
+    {
+      detached: process.platform !== 'win32',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    }
+  );
 
   // Handle spawn errors (e.g., permission denied, executable format error)
   engine.on('error', (err) => {
     console.error('❌ Failed to start engine:', err);
     isRestarting = false;
-    
+
     dialog.showErrorBox(
       'Engine Start Failed',
       `Failed to start the Power Interview engine:\n${err.message}\n\nThe application will now close.`
     );
-    
+
     app.quit();
   });
 
   if (engine.stdout) {
-    engine.stdout.on('data', d => console.log('[engine]', d.toString()));
+    engine.stdout.on('data', (d) => console.log('[engine]', d.toString()));
   }
   if (engine.stderr) {
-    engine.stderr.on('data', d => console.error('[engine ERR]', d.toString()));
+    engine.stderr.on('data', (d) => console.error('[engine ERR]', d.toString()));
   }
 
   engine.on('exit', async (code, signal) => {
@@ -154,7 +158,7 @@ export function stopEngine(): void {
   if (engine && !engine.killed) {
     console.log('🛑 Stopping engine process...');
     engine.kill('SIGTERM');
-    
+
     // Force kill after 5 seconds if still running
     setTimeout(() => {
       if (engine && !engine.killed) {

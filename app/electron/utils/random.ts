@@ -22,10 +22,13 @@ export class RandomUtil {
   /**
    * Generate random string of specified length
    */
-  static string(length: number, charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'): string {
+  static string(
+    length: number,
+    charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  ): string {
     const bytes = randomBytes(length);
     return Array.from(bytes)
-      .map(byte => charset[byte % charset.length])
+      .map((byte) => charset[byte % charset.length])
       .join('');
   }
 

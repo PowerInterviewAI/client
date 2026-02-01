@@ -1,4 +1,3 @@
-
 import { Card } from '@/components/ui/card';
 import { type CodeSuggestion, SuggestionState } from '@/types/suggestion';
 import { File, Loader2, PauseCircle } from 'lucide-react';
@@ -55,7 +54,7 @@ export default function CodeSuggestionsPanel({
         lastHotkeyAtRef.current = now;
 
         container.scrollBy({ top, behavior });
-      },
+      }
     );
 
     return () => {

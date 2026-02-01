@@ -7,7 +7,7 @@ import { type RefObject } from 'react';
 
 export const useStartAssistant = (
   videoPanelRef: RefObject<VideoPanelHandle | null>,
-  config?: Config,
+  config?: Config
 ) =>
   useMutation<void, APIError>({
     mutationFn: async () => {

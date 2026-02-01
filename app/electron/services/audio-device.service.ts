@@ -1,7 +1,7 @@
 /**
  * Audio Device Service
  * Manages audio input/output device enumeration and selection
- * 
+ *
  * SKELETON: Complex implementation requires native audio APIs
  */
 
@@ -30,7 +30,7 @@ export class AudioDeviceService {
     // TODO: Implement device enumeration
     // Use: navigator.mediaDevices.enumerateDevices() in renderer
     // Or: native addon for main process access
-    
+
     console.log('[AudioDeviceService] enumerateDevices called - not implemented');
     return this.devices;
   }
@@ -39,14 +39,14 @@ export class AudioDeviceService {
    * Get default audio input device
    */
   getDefaultInput(): DeviceInfo | undefined {
-    return this.devices.find(d => d.type === 'audio-input' && d.isDefault);
+    return this.devices.find((d) => d.type === 'audio-input' && d.isDefault);
   }
 
   /**
    * Get default audio output device
    */
   getDefaultOutput(): DeviceInfo | undefined {
-    return this.devices.find(d => d.type === 'audio-output' && d.isDefault);
+    return this.devices.find((d) => d.type === 'audio-output' && d.isDefault);
   }
 
   /**

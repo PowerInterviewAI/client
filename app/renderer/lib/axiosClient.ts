@@ -19,7 +19,7 @@ axiosClient.interceptors.response.use(
       console.warn('Unauthorized, please check your credentials.');
     }
     return Promise.reject(error);
-  },
+  }
 );
 
 export default axiosClient;

@@ -84,7 +84,7 @@ function headingFactory<L extends HeadingLevel>(level: L) {
       return React.createElement(
         Tag,
         { className: classStr, style: mergedStyle, ...props },
-        children,
+        children
       );
     };
 
@@ -113,7 +113,7 @@ const components: Components = {
       <pre
         className={cn(
           'rounded-md bg-muted/60 p-3 text-xs leading-relaxed font-mono whitespace-pre-wrap',
-          className,
+          className
         )}
         {...props}
       >

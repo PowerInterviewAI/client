@@ -9,15 +9,15 @@ export interface AppConfig {
   name: string;
   version: string;
   email: string;
-  
+
   // Feature flags
   isDebug: boolean;
   isTest: boolean;
-  
+
   // Server settings
   serverPort: number;
   serverUrl: string;
-  
+
   // Paths
   dataPath: string;
   logsPath: string;
@@ -41,19 +41,19 @@ class ConfigManager {
 
   private loadDefaults(): AppConfig {
     const isDev = process.env.NODE_ENV === 'development';
-    
+
     return {
       title: 'Power Interview',
       name: 'power-interview',
       version: '0.9.0',
       email: 'admin@power-interview.ai',
-      
+
       isDebug: isDev,
       isTest: process.env.NODE_ENV === 'test',
-      
+
       serverPort: 28080,
       serverUrl: 'http://localhost:28080',
-      
+
       dataPath: '', // Set by app
       logsPath: '', // Set by app
       modelsPath: '', // Set by app

@@ -1,7 +1,7 @@
 /**
  * Reply Suggestion Service
  * Generates natural language reply suggestions
- * 
+ *
  * SKELETON: Similar to code suggestions but for verbal responses
  */
 
@@ -32,18 +32,18 @@ export class ReplySuggestionService {
     role?: string;
   }): Promise<Suggestion> {
     console.log('[ReplySuggestionService] generateReply - not implemented');
-    
+
     // TODO: Call LLM API
     // - Build prompt with interview context
     // - Include conversation history
     // - Generate appropriate response for role/level
     // - Return structured suggestion
-    
+
     return {
       id: UuidUtil.generate(),
       type: 'reply',
       content: 'Reply suggestion will appear here',
-      confidence: 0.80,
+      confidence: 0.8,
       timestamp: new Date(),
     };
   }
@@ -58,7 +58,7 @@ export class ReplySuggestionService {
     result: string;
   }> {
     console.log('[ReplySuggestionService] generateSTAR - not implemented');
-    
+
     // TODO: Generate structured STAR response
     return {
       situation: '',
@@ -73,7 +73,7 @@ export class ReplySuggestionService {
    */
   async generateFollowUpQuestions(topic: string): Promise<string[]> {
     console.log('[ReplySuggestionService] generateFollowUpQuestions - not implemented');
-    
+
     // TODO: Generate relevant follow-up questions
     return [];
   }

@@ -1,7 +1,7 @@
 /**
  * Code Suggestion Service
  * Generates code suggestions using LLM
- * 
+ *
  * SKELETON: Requires LLM API integration (OpenAI/Anthropic)
  */
 
@@ -33,13 +33,13 @@ export class CodeSuggestionService {
     previousCode?: string;
   }): Promise<Suggestion> {
     console.log('[CodeSuggestionService] generateSuggestion - not implemented');
-    
+
     // TODO: Call LLM API (OpenAI, Anthropic, etc.)
     // - Build prompt with context
     // - Include language and previous code
     // - Parse response and extract code
     // - Return structured suggestion
-    
+
     // Mock response for now
     return {
       id: UuidUtil.generate(),
@@ -53,12 +53,11 @@ export class CodeSuggestionService {
   /**
    * Generate multiple alternative suggestions
    */
-  async generateAlternatives(context: {
-    question: string;
-    count: number;
-  }): Promise<Suggestion[]> {
-    console.log(`[CodeSuggestionService] generateAlternatives (${context.count}) - not implemented`);
-    
+  async generateAlternatives(context: { question: string; count: number }): Promise<Suggestion[]> {
+    console.log(
+      `[CodeSuggestionService] generateAlternatives (${context.count}) - not implemented`
+    );
+
     // TODO: Generate multiple suggestions with temperature variation
     return [];
   }
@@ -68,7 +67,7 @@ export class CodeSuggestionService {
    */
   async refineCode(code: string, instructions: string): Promise<string> {
     console.log('[CodeSuggestionService] refineCode - not implemented');
-    
+
     // TODO: Use LLM to improve/refactor code
     return code;
   }
@@ -78,7 +77,7 @@ export class CodeSuggestionService {
    */
   async explainCode(code: string): Promise<string> {
     console.log('[CodeSuggestionService] explainCode - not implemented');
-    
+
     // TODO: Generate code explanation
     return 'Code explanation will appear here';
   }
