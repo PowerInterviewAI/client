@@ -7,7 +7,7 @@ import { MainControls } from './control-panel/main-controls';
 import { ProfileSection } from './control-panel/profile-section';
 import { VideoOptions } from './control-panel/video-options';
 import RunningIndicator from './running-indicator';
-import { useAudioInputDevices, useAudioOutputDevices } from '@/hooks/audio-devices';
+import { useAudioInputDevices, useAudioOutputDevices } from '@/hooks/use-audio-devices';
 import { useAssistantState } from '@/hooks/use-assistant-state';
 import { useConfigStore } from '@/hooks/use-config-store';
 
