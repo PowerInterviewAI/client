@@ -2,7 +2,7 @@ import json
 
 from loguru import logger
 
-from engine.services.audio_device_service import AudioDeviceService
+from shared.audio_device_service import AudioDeviceService
 
 
 def test_vb_input_devices() -> None:

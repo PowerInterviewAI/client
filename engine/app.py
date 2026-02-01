@@ -18,7 +18,6 @@ from engine.schemas.ping_client import PingClientRequest
 from engine.schemas.summarize import GenerateSummarizeRequest
 from engine.schemas.transcript import Speaker, Transcript
 from engine.services.audio_control_service import AudioControlService
-from engine.services.audio_device_service import AudioDeviceService
 from engine.services.code_suggestion_service import CodeSuggestionService
 from engine.services.config_service import ConfigService
 from engine.services.device_service import DeviceService
@@ -28,6 +27,7 @@ from engine.services.transcript_service import Transcriber
 from engine.services.virtual_camera import VirtualCameraService
 from engine.services.web_client import WebClient
 from engine.utils.datetime import DatetimeUtil
+from shared.audio_device_service import AudioDeviceService
 
 
 class PowerInterviewApp:
