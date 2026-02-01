@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAssistantState } from '@/hooks/use-assistant-state';
-import { useVideoDevices } from '@/hooks/video-devices';
+import { useVideoDevices } from '@/hooks/use-video-devices';
 import { useConfigStore } from '@/hooks/use-config-store';
 import { RunningState } from '@/types/app-state';
 import { type AudioDevice } from '@/types/audio-device';
