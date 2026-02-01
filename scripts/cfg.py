@@ -5,7 +5,7 @@ class Config:
     PROJECT_ROOT = Path(__file__).resolve().parent.parent
     ENGINE_DIR = PROJECT_ROOT / "engine"
     UI_DIR = PROJECT_ROOT / "ui"
-    ELECTRON_DIR = PROJECT_ROOT / "ui_container"
+    ELECTRON_DIR = PROJECT_ROOT / "app"
 
     UI_EXPORT_DIR = ENGINE_DIR / "public"
 
