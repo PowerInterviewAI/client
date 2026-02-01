@@ -13,6 +13,25 @@ declare global {
       update: (updates: Partial<Config>) => Promise<Config>;
     };
 
+    // Transcription management
+    transcription: {
+      startSelf: () => Promise<void>;
+      stopSelf: () => Promise<void>;
+      startOther: () => Promise<void>;
+      stopOther: () => Promise<void>;
+      getStatus: () => Promise<{
+        selfTranscriptionActive: boolean;
+        otherTranscriptionActive: boolean;
+      }>;
+    };
+
+    // VCam bridge management
+    vcam: {
+      startBridge: () => Promise<void>;
+      stopBridge: () => Promise<void>;
+      getStatus: () => Promise<{ bridgeActive: boolean }>;
+    };
+
     // Window controls
     minimize: () => void;
     close: () => void;

@@ -19,7 +19,7 @@ import { registerGlobalHotkeys, unregisterHotkeys } from './hotkeys.js';
 import * as windowControls from './window-controls.js';
 
 // Import services
-import { configService } from './services/index.js';
+import { configService, transcriptionService, vcamBridgeService } from './services/index.js';
 
 let win: BrowserWindow | null = null;
 
@@ -129,6 +129,40 @@ app.whenReady().then(async () => {
   // Register config IPC handlers (manages config internally)
   configService.registerHandlers();
 
+  // Register transcription IPC handlers
+  ipcMain.handle('transcription:start-self', async () => {
+    await transcriptionService.startSelfTranscription();
+  });
+
+  ipcMain.handle('transcription:stop-self', async () => {
+    await transcriptionService.stopSelfTranscription();
+  });
+
+  ipcMain.handle('transcription:start-other', async () => {
+    await transcriptionService.startOtherTranscription();
+  });
+
+  ipcMain.handle('transcription:stop-other', async () => {
+    await transcriptionService.stopOtherTranscription();
+  });
+
+  ipcMain.handle('transcription:get-status', async () => {
+    return transcriptionService.getStatus();
+  });
+
+  // Register vcam bridge IPC handlers
+  ipcMain.handle('vcam:start-bridge', async () => {
+    await vcamBridgeService.startBridge();
+  });
+
+  ipcMain.handle('vcam:stop-bridge', async () => {
+    await vcamBridgeService.stopBridge();
+  });
+
+  ipcMain.handle('vcam:get-status', async () => {
+    return vcamBridgeService.getStatus();
+  });
+
   // Create window
   await createWindow();
 
@@ -136,7 +170,11 @@ app.whenReady().then(async () => {
   registerGlobalHotkeys();
 });
 
-app.on('will-quit', () => {
+app.on('will-quit', async () => {
+  // Stop all services
+  await transcriptionService.stopAll();
+  await vcamBridgeService.stopBridge();
+
   unregisterHotkeys();
 
   // Configuration auto-saves on changes, no need to save again on quit

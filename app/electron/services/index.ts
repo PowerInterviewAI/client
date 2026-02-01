@@ -9,3 +9,5 @@ export * from './transcript.service.js';
 export * from './code-suggestion.service.js';
 export * from './reply-suggestion.service.js';
 export * from './webrtc.service.js';
+export * from './transcription.service.js';
+export * from './vcam-bridge.service.js';

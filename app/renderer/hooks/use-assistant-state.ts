@@ -43,11 +43,12 @@ export const useAssistantState = create<AssistantState>((set, get) => ({
         await videoPanelRef.current.startWebRTC();
       }
 
-      // TODO: Call electron method to start assistant
-      // await electron.assistant.start();
+      // Start vcam bridge
+      await electron.vcam.startBridge();
 
-      // Simulate async operation for now
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Start transcription services
+      await electron.transcription.startSelf();
+      await electron.transcription.startOther();
 
       set({ runningState: RunningState.RUNNING });
     } catch (error) {
@@ -78,11 +79,12 @@ export const useAssistantState = create<AssistantState>((set, get) => ({
         videoPanelRef.current.stopWebRTC();
       }
 
-      // TODO: Call electron method to stop assistant
-      // await electron.assistant.stop();
+      // Stop transcription services
+      await electron.transcription.stopSelf();
+      await electron.transcription.stopOther();
 
-      // Simulate async operation for now
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Stop vcam bridge
+      await electron.vcam.stopBridge();
 
       set({ runningState: RunningState.STOPPED });
     } catch (error) {

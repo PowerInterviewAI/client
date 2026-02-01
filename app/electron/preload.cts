@@ -18,6 +18,22 @@ const electronApi = {
     update: (updates: any) => ipcRenderer.invoke('config:update', updates),
   },
 
+  // Transcription management
+  transcription: {
+    startSelf: () => ipcRenderer.invoke('transcription:start-self'),
+    stopSelf: () => ipcRenderer.invoke('transcription:stop-self'),
+    startOther: () => ipcRenderer.invoke('transcription:start-other'),
+    stopOther: () => ipcRenderer.invoke('transcription:stop-other'),
+    getStatus: () => ipcRenderer.invoke('transcription:get-status'),
+  },
+
+  // VCam bridge management
+  vcam: {
+    startBridge: () => ipcRenderer.invoke('vcam:start-bridge'),
+    stopBridge: () => ipcRenderer.invoke('vcam:stop-bridge'),
+    getStatus: () => ipcRenderer.invoke('vcam:get-status'),
+  },
+
   // Window controls
   minimize: () => ipcRenderer.send('window-minimize'),
   close: () => ipcRenderer.send('window-close'),
