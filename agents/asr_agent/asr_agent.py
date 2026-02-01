@@ -8,9 +8,9 @@ import time
 
 from loguru import logger
 
-from asr_agent.audio_capture import AudioCapture
-from asr_agent.websocket_client import WebSocketASRClient
-from asr_agent.zmq_publisher import ZMQPublisher
+from agents.asr_agent.audio_capture import AudioCapture
+from agents.asr_agent.websocket_client import WebSocketASRClient
+from agents.asr_agent.zmq_publisher import ZMQPublisher
 
 # Configuration constants
 STATS_INTERVAL_SECONDS = 10.0

@@ -5,8 +5,8 @@ from types import FrameType
 
 from loguru import logger
 
-from audio_control_agent.audio_controller import AudioController
-from shared.audio_device_service import AudioDeviceService
+from agents.audio_control_agent.audio_controller import AudioController
+from agents.shared.audio_device_service import AudioDeviceService
 
 
 def signal_handler(_signum: int, _frame: FrameType | None) -> None:

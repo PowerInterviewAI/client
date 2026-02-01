@@ -12,7 +12,7 @@ import websockets
 from loguru import logger
 from websockets import ClientConnection
 
-from asr_agent.audio_capture import AudioCapture
+from agents.asr_agent.audio_capture import AudioCapture
 
 # WebSocket configuration constants
 SILENCE_INTERVAL_SECONDS = 10.0
