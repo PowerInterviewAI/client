@@ -24,7 +24,7 @@ def build_electron_app() -> None:
 
     # Build the Electron app
     print("Building Electron app...")  # noqa: T201
-    run("npm run build", cwd=str(electron_dir))
+    run("npm run electron:build", cwd=str(electron_dir))
 
     print("✅ Electron app built successfully")  # noqa: T201
 

@@ -9,7 +9,7 @@ class Config:
     DIST_DIR = PROJECT_ROOT / "dist"
 
     # Agent build configuration
-    AGENTS_BUILD_DIR = BUILD_DIR / "agents" / "win-x64"
+    AGENTS_BUILD_DIR = BUILD_DIR / "agents"
 
 
 config = Config()
