@@ -18,33 +18,37 @@ def main() -> int:
     """Main entry point."""
     parser = argparse.ArgumentParser(description="Virtual Camera Agent - Receives frames via ZeroMQ")
     parser.add_argument(
+        "-w",
         "--width",
         type=int,
         default=1280,
         help="Frame width (default: 1280)",
     )
     parser.add_argument(
+        "-H",
         "--height",
         type=int,
         default=720,
         help="Frame height (default: 720)",
     )
     parser.add_argument(
+        "-f",
         "--fps",
         type=int,
         default=30,
         help="Frames per second (default: 30)",
     )
     parser.add_argument(
+        "-p",
         "--port",
         type=int,
         default=50001,
         help="ZeroMQ port (default: 50001)",
     )
     parser.add_argument(
+        "-n",
         "--no-datetime",
-        type=bool,
-        default=not SHOW_DATETIME,
+        action="store_true",
         help="Disable datetime overlay (default: False)",
     )
 
