@@ -2,8 +2,6 @@ import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { useVideoDevices } from '@/hooks/video-devices';
 import { RunningState } from '@/types/appState';
 import { type Config } from '@/types/config';
-import { type APIError } from '@/types/error';
-import { type UseMutationResult } from '@tanstack/react-query';
 import { Ellipsis, Play, Square } from 'lucide-react';
 import { AudioOptions } from './control-panel/audio-options';
 import { MainControls } from './control-panel/main-controls';
@@ -11,12 +9,10 @@ import { ProfileSection } from './control-panel/profile-section';
 import { VideoOptions } from './control-panel/video-options';
 import RunningIndicator from './running-indicator';
 import { useAudioInputDevices, useAudioOutputDevices } from '@/hooks/audio-devices';
+import { useAssistantState } from '@/hooks/use-assistant-state';
 
 interface ControlPanelProps {
   runningState: RunningState;
-  startMutation: UseMutationResult<void, APIError, void, unknown>;
-  stopMutation: UseMutationResult<void, APIError, void, unknown>;
-
   onProfileClick: () => void;
   onSignOut: () => void;
   onThemeToggle: () => void;
@@ -34,10 +30,6 @@ type StateConfig = {
 };
 
 export default function ControlPanel({
-  runningState,
-  startMutation,
-  stopMutation,
-
   onProfileClick,
   onSignOut,
   onThemeToggle,
@@ -47,6 +39,7 @@ export default function ControlPanel({
   updateConfig,
 }: ControlPanelProps) {
   const isStealth = useIsStealthMode();
+  const { runningState, startAssistant, stopAssistant } = useAssistantState();
 
   const videoDevices = useVideoDevices();
   const { data: audioInputDevices } = useAudioInputDevices(1000);
@@ -58,7 +51,7 @@ export default function ControlPanel({
     [RunningState.IDLE]: {
       onClick: () => {
         if (!checkCanStart()) return;
-        startMutation.mutate();
+        startAssistant();
       },
       className: 'bg-primary hover:bg-primary/90',
       icon: <Play className="h-3.5 w-3.5" />,
@@ -71,7 +64,9 @@ export default function ControlPanel({
       label: 'Starting...',
     },
     [RunningState.RUNNING]: {
-      onClick: () => stopMutation.mutate(),
+      onClick: () => {
+        stopAssistant();
+      },
       className: 'bg-destructive hover:bg-destructive/90',
       icon: <Square className="h-3.5 w-3.5" />,
       label: 'Stop',
@@ -85,7 +80,7 @@ export default function ControlPanel({
     [RunningState.STOPPED]: {
       onClick: () => {
         if (!checkCanStart()) return;
-        startMutation.mutate();
+        startAssistant();
       },
       className: 'bg-primary hover:bg-primary/90',
       icon: <Play className="h-3.5 w-3.5" />,

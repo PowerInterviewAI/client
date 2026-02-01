@@ -117,8 +117,6 @@ export default function MainPage() {
 
   // Mutations
   const updateConfigMutation = useUpdateConfig();
-  const startMutation = useStartAssistant(videoPanelRef, config);
-  const stopMutation = useStopAssistant(videoPanelRef);
 
   // Theme handled by ThemeProvider via context
   const { theme, toggleTheme } = useTheme();
@@ -245,8 +243,6 @@ export default function MainPage() {
 
       <ControlPanel
         runningState={appState?.assistant_state ?? RunningState.IDLE}
-        startMutation={startMutation}
-        stopMutation={stopMutation}
         onProfileClick={() => setIsProfileOpen(true)}
         onSignOut={handleSignOut}
         onThemeToggle={toggleTheme}
