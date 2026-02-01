@@ -1,7 +1,6 @@
 /.ruff_cache
 /.mypy_cache
 /.pytest_cache
-/.husky
 __pycache__
 
 /venv
