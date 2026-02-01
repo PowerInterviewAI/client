@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useAssistantState } from '@/hooks/use-assistant-state';
 import axiosClient from '@/lib/axiosClient';
 import { RunningState } from '@/types/appState';
 import { Download, Loader } from 'lucide-react';
@@ -7,7 +8,6 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 interface MainControlsProps {
-  runningState: RunningState;
   stateConfig: {
     onClick: () => void;
     className: string;
@@ -17,7 +17,8 @@ interface MainControlsProps {
   getDisabled: (state: RunningState, disableOnRunning?: boolean) => boolean;
 }
 
-export function MainControls({ runningState, stateConfig, getDisabled }: MainControlsProps) {
+export function MainControls({ stateConfig, getDisabled }: MainControlsProps) {
+  const { runningState } = useAssistantState();
   const { onClick, className, icon, label } = stateConfig;
   const [exportState, setExportState] = useState<RunningState>(RunningState.IDLE);
 

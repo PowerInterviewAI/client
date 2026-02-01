@@ -138,13 +138,11 @@ export default function ControlPanel({
         onSignOut={onSignOut}
         onThemeToggle={onThemeToggle}
         isDark={isDark}
-        runningState={runningState}
         getDisabled={getDisabled}
       />
 
       <div className="flex flex-1 justify-center gap-2 items-center">
         <AudioOptions
-          runningState={runningState}
           audioInputDevices={audioInputDevices ?? []}
           config={config}
           updateConfig={updateConfig}
@@ -152,7 +150,6 @@ export default function ControlPanel({
           getDisabled={getDisabled}
         />
         <VideoOptions
-          runningState={runningState}
           config={config}
           updateConfig={updateConfig}
           videoDeviceNotFound={videoDeviceNotFound}
@@ -160,11 +157,7 @@ export default function ControlPanel({
           getDisabled={getDisabled}
         />
 
-        <MainControls
-          runningState={runningState}
-          stateConfig={{ onClick, className, icon, label }}
-          getDisabled={getDisabled}
-        />
+        <MainControls stateConfig={{ onClick, className, icon, label }} getDisabled={getDisabled} />
       </div>
 
       <RunningIndicator runningState={runningState} />

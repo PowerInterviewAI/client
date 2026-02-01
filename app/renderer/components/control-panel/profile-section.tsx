@@ -13,6 +13,7 @@ import { type Config } from '@/types/config';
 import { ChevronUp, Key, LogOut, Moon, SettingsIcon, Sun } from 'lucide-react';
 import { useState } from 'react';
 import { ChangePasswordDialog } from './change-password-dialog';
+import { useAssistantState } from '@/hooks/use-assistant-state';
 
 interface ProfileSectionProps {
   config?: Config;
@@ -20,7 +21,6 @@ interface ProfileSectionProps {
   onSignOut: () => void;
   onThemeToggle: () => void;
   isDark: boolean;
-  runningState: RunningState;
   getDisabled: (state: RunningState, disableOnRunning?: boolean) => boolean;
 }
 
@@ -30,9 +30,9 @@ export function ProfileSection({
   onSignOut,
   onThemeToggle,
   isDark,
-  runningState,
   getDisabled,
 }: ProfileSectionProps) {
+  const { runningState } = useAssistantState();
   const { changePassword, loading, error, setError } = useAuth();
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isDocumentationOpen, setIsDocumentationOpen] = useState(false);

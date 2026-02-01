@@ -9,13 +9,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useAssistantState } from '@/hooks/use-assistant-state';
 import { RunningState } from '@/types/appState';
 import { type AudioDevice } from '@/types/audioDevice';
 import { type Config } from '@/types/config';
 import { Mic } from 'lucide-react';
 
 interface AudioOptionsProps {
-  runningState: RunningState;
   audioInputDevices: AudioDevice[];
   config?: Config;
   updateConfig: (config: Partial<Config>) => void;
@@ -24,13 +24,13 @@ interface AudioOptionsProps {
 }
 
 export function AudioOptions({
-  runningState,
   audioInputDevices,
   config,
   updateConfig,
   audioInputDeviceNotFound,
   getDisabled,
 }: AudioOptionsProps) {
+  const { runningState } = useAssistantState();
   const usableAudioInputDevices = audioInputDevices.filter((d) => {
     if (d.name.toLowerCase().includes('virtual')) return false;
     return true;

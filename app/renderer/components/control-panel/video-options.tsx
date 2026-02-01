@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useAssistantState } from '@/hooks/use-assistant-state';
 import { useVideoDevices } from '@/hooks/video-devices';
 import { RunningState } from '@/types/appState';
 import { type AudioDevice } from '@/types/audioDevice';
@@ -19,7 +20,6 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 interface VideoOptionsProps {
-  runningState: RunningState;
   config?: Config;
   updateConfig: (config: Partial<Config>) => void;
   videoDeviceNotFound: boolean;
@@ -28,13 +28,13 @@ interface VideoOptionsProps {
 }
 
 export function VideoOptions({
-  runningState,
   config,
   updateConfig,
   videoDeviceNotFound,
   audioOutputDevices,
   getDisabled,
 }: VideoOptionsProps) {
+  const { runningState } = useAssistantState();
   const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
   const previewStreamRef = useRef<MediaStream | null>(null);
