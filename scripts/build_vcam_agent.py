@@ -38,7 +38,7 @@ def build_vcam_agent() -> None:
     if built_exe.exists():
         print(f"✅ VCam Agent built: {built_exe}")  # noqa: T201
     else:
-        print("❌ Build failed - executable not found")  # noqa: T201
+        print(f"❌ Build failed - executable not found: {built_exe}")  # noqa: T201
         sys.exit(1)
 
 
