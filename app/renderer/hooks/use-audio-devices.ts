@@ -1,35 +1,45 @@
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import { type AudioDevice } from '@/types/audio-device';
 
-const getAudioDevices = async (kind: 'audioinput' | 'audiooutput'): Promise<AudioDevice[]> => {
-  try {
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    return devices
-      .filter((device) => device.kind === kind)
-      .filter((device) => {
-        const label = device.label.toLowerCase();
-        return !label.includes('default') && !label.includes('communications');
-      })
-      .map((device, index) => ({
-        name: device.label || `${kind === 'audioinput' ? 'Input' : 'Output'} Device ${index + 1}`,
-        index,
-      }));
-  } catch (error) {
-    console.error('Error enumerating devices:', error);
-    return [];
-  }
-};
+function useAudioDevices(kind: 'audioinput' | 'audiooutput', deviceType: string) {
+  const [devices, setDevices] = useState<AudioDevice[]>([]);
 
-export const useAudioInputDevices = (refetchInterval?: number) =>
-  useQuery<AudioDevice[], Error>({
-    queryKey: ['audioInputDevices'],
-    queryFn: () => getAudioDevices('audioinput'),
-    refetchInterval: refetchInterval,
-  });
+  useEffect(() => {
+    async function fetchDevices() {
+      try {
+        const allDevices = await navigator.mediaDevices.enumerateDevices();
+        const filtered = allDevices
+          .filter((device) => device.kind === kind)
+          .filter((device) => {
+            const label = device.label.toLowerCase();
+            return !label.includes('default') && !label.includes('communications');
+          })
+          .map((device, index) => ({
+            name: device.label || `${deviceType} Device ${index + 1}`,
+            index,
+          }));
+        setDevices(filtered);
+      } catch (error) {
+        console.error(`Error enumerating ${kind} devices:`, error);
+      }
+    }
 
-export const useAudioOutputDevices = (refetchInterval?: number) =>
-  useQuery<AudioDevice[], Error>({
-    queryKey: ['audioOutputDevices'],
-    queryFn: () => getAudioDevices('audiooutput'),
-    refetchInterval: refetchInterval,
-  });
+    fetchDevices();
+    navigator.mediaDevices.addEventListener('devicechange', fetchDevices);
+
+    return () => {
+      navigator.mediaDevices.removeEventListener('devicechange', fetchDevices);
+    };
+  }, [kind, deviceType]);
+
+  return devices;
+}
+
+export function useAudioInputDevices() {
+  return useAudioDevices('audioinput', 'Input');
+}
+
+export function useAudioOutputDevices() {
+  return useAudioDevices('audiooutput', 'Output');
+}
+

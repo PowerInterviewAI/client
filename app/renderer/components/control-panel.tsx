@@ -30,8 +30,8 @@ export default function ControlPanel({ onProfileClick, onSignOut }: ControlPanel
   const { config } = useConfigStore();
 
   const videoDevices = useVideoDevices();
-  const { data: audioInputDevices } = useAudioInputDevices(1000);
-  const { data: audioOutputDevices } = useAudioOutputDevices(1000);
+  const audioInputDevices = useAudioInputDevices();
+  const audioOutputDevices = useAudioOutputDevices();
 
   if (isStealth) return null;
 
