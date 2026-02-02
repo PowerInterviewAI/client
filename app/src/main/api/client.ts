@@ -23,8 +23,7 @@ export class ApiClient {
     if (!baseUrl) {
       throw new Error('ApiClient: baseUrl is required');
     }
-    this.baseUrl = baseUrl;
-    console.log('[ApiClient] Initialized with baseUrl:', baseUrl);
+    this.baseUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/'; // Ensure baseUrl ends with slash
     this.headers = {
       'Content-Type': 'application/json',
       'User-Agent': `PowerInterview/${app.getVersion()}`,
@@ -121,7 +120,8 @@ export class ApiClient {
    */
   private buildUrl(path: string, params?: Record<string, unknown>): string {
     try {
-      const url = new URL(path, this.baseUrl);
+      const cleanPath = path.replace(/^\/+/, ''); // Ensure no leading slash on path
+      const url = new URL(cleanPath, this.baseUrl);
 
       if (params) {
         Object.entries(params).forEach(([key, value]) => {
