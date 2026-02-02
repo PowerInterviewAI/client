@@ -5,22 +5,22 @@
 
 export * from './client.js';
 export * from './auth.js';
-export * from './app.js';
+export * from './health-check.js';
 
 import { ApiClient } from './client.js';
 import { AuthApi } from './auth.js';
-import { AppApi } from './app.js';
+import { HealthCheckApi } from './health-check.js';
 
 /**
  * Main API instance
  */
 export class Api {
   public auth: AuthApi;
-  public app: AppApi;
+  public healthCheck: HealthCheckApi;
 
   constructor(private client: ApiClient) {
     this.auth = new AuthApi(client);
-    this.app = new AppApi(client);
+    this.healthCheck = new HealthCheckApi(client);
   }
 
   /**

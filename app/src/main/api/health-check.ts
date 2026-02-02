@@ -1,27 +1,11 @@
 /**
- * App State API
- * Get/update application state
+ * Health Check API
  */
 
 import { ApiClient, ApiResponse } from './client.js';
-import { AppState } from '../types/app-state.js';
 
-export class AppApi {
+export class HealthCheckApi {
   constructor(private client: ApiClient) {}
-
-  /**
-   * Get current app state
-   */
-  async getState(): Promise<ApiResponse<AppState>> {
-    return this.client.get<AppState>('/app/state');
-  }
-
-  /**
-   * Update app state
-   */
-  async updateState(updates: Partial<AppState>): Promise<ApiResponse<AppState>> {
-    return this.client.post<AppState>('/app/state', updates);
-  }
 
   /**
    * Health check / ping

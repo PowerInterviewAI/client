@@ -4,9 +4,15 @@
  */
 
 import { ApiClient } from '../api/client.js';
-import { AppApi } from '../api/app.js';
+import { HealthCheckApi } from '../api/health-check.js';
 import { configManager } from '../config/app.js';
-import { AppState, Transcript, ReplySuggestion, CodeSuggestion, Speaker } from '../types/app-state.js';
+import {
+  AppState,
+  Transcript,
+  ReplySuggestion,
+  CodeSuggestion,
+  Speaker,
+} from '../types/app-state.js';
 
 const SUCCESS_INTERVAL = 60 * 1000; // 1 minute
 const FAILURE_INTERVAL = 1000; // 1 second
@@ -144,15 +150,15 @@ export class HealthCheckService {
 
     try {
       const serverUrl = configManager.get('serverUrl');
-      const client = new ApiClient(serverUrl);
-      const appApi = new AppApi(client);
+
+      const healthCheckApi = new HealthCheckApi(new ApiClient(serverUrl + '/health-check'));
 
       // 1. Check backend /ping
-      const pingResult = await appApi.ping();
+      const pingResult = await healthCheckApi.ping();
       backendLive = !pingResult.error && pingResult.data != null;
-      console.log('[HealthCheckService] Backend ping result:', { 
-        backendLive, 
-        error: pingResult.error 
+      console.log('[HealthCheckService] Backend ping result:', {
+        backendLive,
+        error: pingResult.error,
       });
 
       if (backendLive) {
@@ -163,16 +169,16 @@ export class HealthCheckService {
           is_assistant_running: this.appState.assistant_state === 'running',
         };
 
-        await appApi.pingClient(deviceInfo);
+        await healthCheckApi.pingClient(deviceInfo);
 
         // 3. Check GPU server
-        const gpuPingResult = await appApi.pingGpuServer();
+        const gpuPingResult = await healthCheckApi.pingGpuServer();
         gpuServerLive = !gpuPingResult.error && gpuPingResult.data != null;
 
         // 4. Wake up GPU if not alive
         if (!gpuServerLive) {
           console.log('[HealthCheckService] Waking up GPU server');
-          await appApi.wakeupGpuServer();
+          await healthCheckApi.wakeupGpuServer();
         }
       }
     } catch (error) {
@@ -190,11 +196,11 @@ export class HealthCheckService {
 
     // Schedule next check based on results
     const nextInterval = backendLive ? SUCCESS_INTERVAL : FAILURE_INTERVAL;
-    
+
     if (this.intervalHandle) {
       clearInterval(this.intervalHandle);
     }
-    
+
     this.intervalHandle = setInterval(() => this.performHealthChecks(), nextInterval);
   }
 }

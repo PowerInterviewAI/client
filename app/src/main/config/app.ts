@@ -3,25 +3,11 @@
  * Central configuration for the Power Interview desktop app
  */
 
+import { EnvUtil } from '../utils/env.js';
+
 export interface AppConfig {
-  // App metadata
-  title: string;
-  name: string;
-  version: string;
-  email: string;
-
-  // Feature flags
-  isDebug: boolean;
-  isTest: boolean;
-
   // Server settings
-  serverPort: number;
   serverUrl: string;
-
-  // Paths
-  dataPath: string;
-  logsPath: string;
-  modelsPath: string;
 }
 
 class ConfigManager {
@@ -40,24 +26,12 @@ class ConfigManager {
   }
 
   private loadDefaults(): AppConfig {
-    const isDev = process.env.NODE_ENV === 'development';
-    const apiBaseUrl = process.env.API_BASE_URL || 'http://localhost:28080';
+    const apiBaseUrl = EnvUtil.isDev()
+      ? 'http://localhost:8000/api'
+      : 'https://power-interview-backend.onrender.com';
 
     return {
-      title: 'Power Interview',
-      name: 'power-interview',
-      version: '0.9.0',
-      email: 'admin@power-interview.ai',
-
-      isDebug: isDev,
-      isTest: process.env.NODE_ENV === 'test',
-
-      serverPort: 28080,
       serverUrl: apiBaseUrl,
-
-      dataPath: '', // Set by app
-      logsPath: '', // Set by app
-      modelsPath: '', // Set by app
     };
   }
 

@@ -14,9 +14,8 @@ interface StoreSchema {
 const store = new ElectronStore<StoreSchema>();
 
 // Import modules
-import { setWindowBounds, setWindowReference } from './services/window-control-service.js';
+import { setWindowReference } from './services/window-control-service.js';
 import { registerGlobalHotkeys, unregisterHotkeys } from './hotkeys.js';
-import * as windowControls from './services/window-control-service.js';
 
 // Import services
 import {
