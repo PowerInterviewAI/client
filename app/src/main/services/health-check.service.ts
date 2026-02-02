@@ -29,13 +29,13 @@ export class HealthCheckService {
       isStealth: false,
       isRecording: false,
       devices: [],
-      is_backend_live: false,
-      is_gpu_server_live: false,
-      is_logged_in: false,
-      assistant_state: 'idle',
+      isBackendLive: false,
+      isGpuServerLive: false,
+      isLoggedIn: false,
+      assistantState: 'idle',
       transcripts: [],
-      suggestions: [],
-      code_suggestions: [],
+      replySuggestions: [],
+      codeSuggestions: [],
     };
   }
 
@@ -102,7 +102,7 @@ export class HealthCheckService {
   addReplySuggestion(suggestion: ReplySuggestion): void {
     this.appState = {
       ...this.appState,
-      suggestions: [...this.appState.suggestions, suggestion],
+      replySuggestions: [...this.appState.replySuggestions, suggestion],
     };
   }
 
@@ -112,7 +112,7 @@ export class HealthCheckService {
   addCodeSuggestion(suggestion: CodeSuggestion): void {
     this.appState = {
       ...this.appState,
-      code_suggestions: [...this.appState.code_suggestions, suggestion],
+      codeSuggestions: [...this.appState.codeSuggestions, suggestion],
     };
   }
 
@@ -132,8 +132,8 @@ export class HealthCheckService {
   clearSuggestions(): void {
     this.appState = {
       ...this.appState,
-      suggestions: [],
-      code_suggestions: [],
+      replySuggestions: [],
+      codeSuggestions: [],
     };
   }
 
@@ -164,9 +164,9 @@ export class HealthCheckService {
       if (backendLive) {
         // 2. Ping client to backend with device info
         const deviceInfo = {
-          device_id: this.appState.is_logged_in ? 'user-device' : 'anonymous',
-          is_gpu_alive: this.appState.is_gpu_server_live,
-          is_assistant_running: this.appState.assistant_state === 'running',
+          device_id: this.appState.isLoggedIn ? 'user-device' : 'anonymous',
+          is_gpu_alive: this.appState.isGpuServerLive,
+          is_assistant_running: this.appState.assistantState === 'running',
         };
 
         await healthCheckApi.pingClient(deviceInfo);
@@ -188,8 +188,8 @@ export class HealthCheckService {
     // Update app state with results
     this.appState = {
       ...this.appState,
-      is_backend_live: backendLive,
-      is_gpu_server_live: gpuServerLive,
+      isBackendLive: backendLive,
+      isGpuServerLive: gpuServerLive,
     };
 
     this.isChecking = false;

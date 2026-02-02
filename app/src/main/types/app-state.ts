@@ -42,13 +42,13 @@ export interface AppState {
   isRecording: boolean;
   currentSession?: Session;
   devices: DeviceInfo[];
-  is_backend_live: boolean;
-  is_gpu_server_live: boolean;
-  is_logged_in: boolean;
-  assistant_state: 'idle' | 'starting' | 'running' | 'stopping' | 'stopped';
+  isBackendLive: boolean;
+  isGpuServerLive: boolean;
+  isLoggedIn: boolean;
+  assistantState: 'idle' | 'starting' | 'running' | 'stopping';
   transcripts: Transcript[];
-  suggestions: ReplySuggestion[];
-  code_suggestions: CodeSuggestion[];
+  replySuggestions: ReplySuggestion[];
+  codeSuggestions: CodeSuggestion[];
 }
 
 export interface Session {
