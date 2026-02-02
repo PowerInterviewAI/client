@@ -78,34 +78,6 @@ declare global {
       getStatus: () => Promise<{ bridgeActive: boolean }>;
     };
 
-    // App health checks
-    app: {
-      ping: () => Promise<{
-        status: number;
-        data?: { status: string; timestamp: string };
-        error?: { code: string; message: string };
-      }>;
-      pingClient: (deviceInfo: {
-        device_id: string;
-        is_gpu_alive: boolean;
-        is_assistant_running: boolean;
-      }) => Promise<{
-        status: number;
-        data?: { status: string };
-        error?: { code: string; message: string };
-      }>;
-      pingGpuServer: () => Promise<{
-        status: number;
-        data?: { status: string; alive: boolean };
-        error?: { code: string; message: string };
-      }>;
-      wakeupGpuServer: () => Promise<{
-        status: number;
-        data?: { status: string };
-        error?: { code: string; message: string };
-      }>;
-    };
-
     // Window controls
     minimize: () => void;
     close: () => void;
