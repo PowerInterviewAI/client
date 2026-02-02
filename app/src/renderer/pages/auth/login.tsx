@@ -18,6 +18,24 @@ export default function LoginPage() {
     loadConfig();
   }, [loadConfig]);
 
+  // Load saved credentials from Electron store
+  useEffect(() => {
+    const loadSavedCredentials = async () => {
+      if (window.electronAPI?.auth) {
+        try {
+          const savedCreds = await window.electronAPI.auth.getCredentials();
+          if (savedCreds) {
+            setEmail(savedCreds.email || '');
+            setPassword(savedCreds.password || '');
+          }
+        } catch (error) {
+          console.error('Failed to load saved credentials:', error);
+        }
+      }
+    };
+    void loadSavedCredentials();
+  }, []);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -25,9 +43,8 @@ export default function LoginPage() {
   };
 
   useEffect(() => {
-    // Pre-fill email if available from config
+    // Pre-fill email from config (fallback if Electron API not available)
     if (config?.email) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEmail(config.email);
     }
     if (config?.password) {

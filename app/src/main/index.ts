@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import ElectronStore from 'electron-store';
@@ -19,7 +19,20 @@ import { registerGlobalHotkeys, unregisterHotkeys } from './hotkeys.js';
 import * as windowControls from './window-controls.js';
 
 // Import services
-import { configService, transcriptionService, vcamBridgeService, healthCheckService } from './services/index.js';
+import {
+  configService,
+  transcriptionService,
+  vcamBridgeService,
+  healthCheckService,
+} from './services/index.js';
+
+// Import IPC handlers
+import {
+  registerAppStateHandlers,
+  registerWindowHandlers,
+  registerHealthCheckHandlers,
+} from './ipc/index.js';
+import { registerAuthHandlers } from './ipc/auth.js';
 
 let win: BrowserWindow | null = null;
 
@@ -124,133 +137,23 @@ async function createWindow() {
 // -------------------------------------------------------------
 app.whenReady().then(async () => {
   // Initialize services
-  await configService.load();
+  configService.load();
 
-  // Register config IPC handlers (manages config internally)
-  configService.registerHandlers();
-
-  // Register transcription IPC handlers
-  ipcMain.handle('transcription:start-self', async () => {
-    await transcriptionService.startSelfTranscription();
-  });
-
-  ipcMain.handle('transcription:stop-self', async () => {
-    await transcriptionService.stopSelfTranscription();
-  });
-
-  ipcMain.handle('transcription:start-other', async () => {
-    await transcriptionService.startOtherTranscription();
-  });
-
-  ipcMain.handle('transcription:stop-other', async () => {
-    await transcriptionService.stopOtherTranscription();
-  });
-
-  ipcMain.handle('transcription:get-status', async () => {
-    return transcriptionService.getStatus();
-  });
-
-  // Register vcam bridge IPC handlers
-  ipcMain.handle('vcam:start-bridge', async () => {
-    await vcamBridgeService.startBridge();
-  });
-
-  ipcMain.handle('vcam:stop-bridge', async () => {
-    await vcamBridgeService.stopBridge();
-  });
-
-  ipcMain.handle('vcam:get-status', async () => {
-    return vcamBridgeService.getStatus();
-  });
-
-  // Register app state IPC handlers
-  ipcMain.handle('app:get-state', async () => {
-    return healthCheckService.getAppState();
-  });
-
-  ipcMain.handle('app:update-state', async (_event, updates) => {
-    healthCheckService.updateAppState(updates);
-    return healthCheckService.getAppState();
-  });
-
-  ipcMain.handle('app:add-transcript', async (_event, transcript) => {
-    healthCheckService.addTranscript(transcript);
-    return healthCheckService.getAppState();
-  });
-
-  ipcMain.handle('app:add-reply-suggestion', async (_event, suggestion) => {
-    healthCheckService.addReplySuggestion(suggestion);
-    return healthCheckService.getAppState();
-  });
-
-  ipcMain.handle('app:add-code-suggestion', async (_event, suggestion) => {
-    healthCheckService.addCodeSuggestion(suggestion);
-    return healthCheckService.getAppState();
-  });
-
-  ipcMain.handle('app:clear-transcripts', async () => {
-    healthCheckService.clearTranscripts();
-    return healthCheckService.getAppState();
-  });
-
-  ipcMain.handle('app:clear-suggestions', async () => {
-    healthCheckService.clearSuggestions();
-    return healthCheckService.getAppState();
-  });
-
-  // Register app health check IPC handlers (deprecated - kept for compatibility)
-  ipcMain.handle('app:ping', async () => {
-    // Import AppApi dynamically to avoid circular dependencies
-    const { ApiClient } = await import('./api/client.js');
-    const { AppApi } = await import('./api/app.js');
-    const { configManager } = await import('./config/app.js');
-    
-    const serverUrl = configManager.get('serverUrl');
-    console.log('[IPC:app:ping] serverUrl from config:', serverUrl);
-    const client = new ApiClient(serverUrl);
-    const appApi = new AppApi(client);
-    
-    return appApi.ping();
-  });
-
-  ipcMain.handle('app:ping-client', async (_event, deviceInfo) => {
-    const { ApiClient } = await import('./api/client.js');
-    const { AppApi } = await import('./api/app.js');
-    const { configManager } = await import('./config/app.js');
-    
-    const serverUrl = configManager.get('serverUrl');
-    const client = new ApiClient(serverUrl);
-    const appApi = new AppApi(client);
-    
-    return appApi.pingClient(deviceInfo);
-  });
-
-  ipcMain.handle('app:ping-gpu-server', async () => {
-    const { ApiClient } = await import('./api/client.js');
-    const { AppApi } = await import('./api/app.js');
-    const { configManager } = await import('./config/app.js');
-    
-    const serverUrl = configManager.get('serverUrl');
-    const client = new ApiClient(serverUrl);
-    const appApi = new AppApi(client);
-    
-    return appApi.pingGpuServer();
-  });
-
-  ipcMain.handle('app:wakeup-gpu-server', async () => {
-    const { ApiClient } = await import('./api/client.js');
-    const { AppApi } = await import('./api/app.js');
-    const { configManager } = await import('./config/app.js');
-    
-    const serverUrl = configManager.get('serverUrl');
-    const client = new ApiClient(serverUrl);
-    const appApi = new AppApi(client);
-    
-    return appApi.wakeupGpuServer();
-  });
+  // Register all IPC handlers
+  await configService.registerHandlers();
+  await transcriptionService.registerHandlers();
+  await vcamBridgeService.registerHandlers();
+  registerAppStateHandlers();
+  registerHealthCheckHandlers();
+  registerAuthHandlers();
 
   // Create window
   await createWindow();
+
+  // Register window-specific IPC handlers
+  if (win) {
+    registerWindowHandlers(win);
+  }
 
   // Start health check service
   healthCheckService.start();

@@ -5,7 +5,7 @@
 
 import { spawn, ChildProcess } from 'child_process';
 import * as zmq from 'zeromq';
-import { BrowserWindow } from 'electron';
+import { BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { configManager } from '../config/app.js';
 import { ConfigService } from './config.service.js';
@@ -131,9 +131,8 @@ class TranscriptionService {
     const serverUrl = configManager.get('serverUrl');
     const wsUrl = `${serverUrl.replace('http', 'ws')}/api/asr/streaming`;
 
-    // Get session token from config
-    const config = await this.configService.getConfig();
-    const sessionToken = ''; // TODO: Get from auth service when available
+    // Get session token (will be added when auth service is available)
+    const sessionToken = ''; // TODO: Get from auth service
 
     console.log(`Starting ASR agent: ${command}`);
     console.log(`Audio source: ${audioSource}, Port: ${port}, Speaker: ${speaker}`);
@@ -400,6 +399,28 @@ class TranscriptionService {
    */
   async stopAll(): Promise<void> {
     await Promise.all([this.stopSelfTranscription(), this.stopOtherTranscription()]);
+  }
+
+  async registerHandlers(): Promise<void> {
+    ipcMain.handle('transcription:start-self', async () => {
+      await this.startSelfTranscription();
+    });
+
+    ipcMain.handle('transcription:stop-self', async () => {
+      await this.stopSelfTranscription();
+    });
+
+    ipcMain.handle('transcription:start-other', async () => {
+      await this.startOtherTranscription();
+    });
+
+    ipcMain.handle('transcription:stop-other', async () => {
+      await this.stopOtherTranscription();
+    });
+
+    ipcMain.handle('transcription:get-status', async () => {
+      return this.getStatus();
+    });
   }
 }
 

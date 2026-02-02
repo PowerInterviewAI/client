@@ -4,7 +4,7 @@
   "version": "0.9.0",
   "description": "AI-powered interview preparation assistant",
   "author": "Power Interview",
-  "main": "electron-dist/main.js",
+  "main": "electron-dist/index.js",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -40,8 +40,7 @@
     "remark-gfm": "^4.0.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
-    "zeromq": "^6.5.0",
-    "zustand": "^5.0.11"
+    "zeromq": "^6.5.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

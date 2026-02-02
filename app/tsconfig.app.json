@@ -25,8 +25,8 @@
 
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./renderer/*"]
+      "@/*": ["./src/renderer/*"]
     }
   },
-  "include": ["renderer"]
+  "include": ["src/renderer"]
 }

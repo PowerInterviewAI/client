@@ -6,7 +6,7 @@ import Loading from '@/components/loading';
 import ReplySuggestionsPanel from '@/components/reply-suggestions-panel';
 import TranscriptPanel from '@/components/transcript-panel';
 import { VideoPanel, type VideoPanelHandle } from '@/components/video-panel';
-import { useAppStateStore } from '@/hooks/use-app-state-store';
+import { useAppState } from '@/hooks/use-app-state';
 import useAuth from '@/hooks/use-auth';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { useConfigStore } from '@/hooks/use-config-store';
@@ -31,9 +31,8 @@ export default function MainPage() {
   const [transcriptHeight, setTranscriptHeight] = useState<number | null>(null);
   const [suggestionHeight, setSuggestionHeight] = useState<number | null>(null);
 
-  // App state from store
-  const appState = useAppStateStore((state) => state.appState);
-  const addTranscript = useAppStateStore((state) => state.addTranscript);
+  // App state from context
+  const { appState, addTranscript } = useAppState();
 
   // Listen for transcript updates from Electron
   useEffect(() => {
@@ -117,7 +116,6 @@ export default function MainPage() {
   useLayoutEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     computeAvailable();
     window.addEventListener('resize', computeAvailable, { passive: true });
 
@@ -128,7 +126,6 @@ export default function MainPage() {
 
   // Recompute when panels mount/unmount
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     computeAvailable();
   }, [
     hasCodeSuggestions,
@@ -141,19 +138,16 @@ export default function MainPage() {
 
   // Recompute when stealth mode toggles
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     computeAvailable();
   }, [isStealth, computeAvailable]);
 
   // Recompute when face swap setting toggles
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     computeAvailable();
   }, [config?.face_swap, computeAvailable]);
 
   // Recompute when assistant running state or appState becomes available
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     computeAvailable();
   }, [appState?.assistant_state, appState, computeAvailable]);
 
@@ -164,19 +158,16 @@ export default function MainPage() {
 
   useEffect(() => {
     if (appState?.transcripts && appState?.transcripts !== transcripts) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTranscripts(appState?.transcripts);
     }
   }, [appState?.transcripts, transcripts]);
   useEffect(() => {
     if (appState?.suggestions && appState?.suggestions !== replySuggestions) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setReplySuggestions(appState?.suggestions);
     }
   }, [appState?.suggestions, replySuggestions]);
   useEffect(() => {
     if (appState?.code_suggestions && appState?.code_suggestions !== codeSuggestions) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCodeSuggestions(appState?.code_suggestions);
     }
   }, [appState?.code_suggestions, codeSuggestions]);

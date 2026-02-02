@@ -46,13 +46,25 @@ const electronApi = {
     getStatus: () => ipcRenderer.invoke('vcam:get-status'),
   },
 
+  // Authentication management
+  auth: {
+    getCredentials: () => ipcRenderer.invoke('auth:getCredentials'),
+    saveCredentials: (email: string, password: string, token?: string) =>
+      ipcRenderer.invoke('auth:saveCredentials', email, password, token),
+    updateToken: (token: string) => ipcRenderer.invoke('auth:updateToken', token),
+    clearCredentials: () => ipcRenderer.invoke('auth:clearCredentials'),
+    hasCredentials: () => ipcRenderer.invoke('auth:hasCredentials'),
+  },
+
   // App state management
   appState: {
     get: () => ipcRenderer.invoke('app:get-state'),
     update: (updates: any) => ipcRenderer.invoke('app:update-state', updates),
     addTranscript: (transcript: any) => ipcRenderer.invoke('app:add-transcript', transcript),
-    addReplySuggestion: (suggestion: any) => ipcRenderer.invoke('app:add-reply-suggestion', suggestion),
-    addCodeSuggestion: (suggestion: any) => ipcRenderer.invoke('app:add-code-suggestion', suggestion),
+    addReplySuggestion: (suggestion: any) =>
+      ipcRenderer.invoke('app:add-reply-suggestion', suggestion),
+    addCodeSuggestion: (suggestion: any) =>
+      ipcRenderer.invoke('app:add-code-suggestion', suggestion),
     clearTranscripts: () => ipcRenderer.invoke('app:clear-transcripts'),
     clearSuggestions: () => ipcRenderer.invoke('app:clear-suggestions'),
   },

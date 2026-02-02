@@ -84,7 +84,7 @@ export class ConfigService {
   /**
    * Register IPC handlers for frontend hooks
    */
-  registerHandlers(): void {
+  async registerHandlers(): Promise<void> {
     // Handle config queries
     ipcMain.handle('config:get', async () => {
       try {

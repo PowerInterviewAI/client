@@ -6,7 +6,7 @@
     "lib": ["ES2022", "DOM"],
     "moduleResolution": "node16",
     "outDir": "./electron-dist",
-    "rootDir": "./electron",
+    "rootDir": "./src/main",
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
@@ -15,6 +15,6 @@
     "resolveJsonModule": true,
     "types": ["node"]
   },
-  "include": ["electron/**/*"],
+  "include": ["src/main/**/*"],
   "exclude": ["node_modules", "dist", "electron-dist"]
 }

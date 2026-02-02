@@ -20,7 +20,14 @@ export default function useAuth() {
     setLoading(true);
     setError(null);
     try {
-      await axiosClient.post('/auth/login', { email, password });
+      const response = await axiosClient.post('/auth/login', { email, password });
+      const token = response.data?.token;
+
+      // Save credentials to electron store
+      if (window.electronAPI?.auth) {
+        await window.electronAPI.auth.saveCredentials(email, password, token);
+      }
+
       window.location.href = '/main';
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
@@ -35,6 +42,12 @@ export default function useAuth() {
     setError(null);
     try {
       await axiosClient.post('/auth/signup', { email, password });
+
+      // Save credentials to electron store for future login
+      if (window.electronAPI?.auth) {
+        await window.electronAPI.auth.saveCredentials(email, password);
+      }
+
       // After signup, go to login page
       window.location.href = '/auth/login';
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -51,6 +64,12 @@ export default function useAuth() {
     setError(null);
     try {
       await axiosClient.get('/auth/logout');
+
+      // Clear credentials from electron store
+      if (window.electronAPI?.auth) {
+        await window.electronAPI.auth.clearCredentials();
+      }
+
       window.location.href = '/auth/login';
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

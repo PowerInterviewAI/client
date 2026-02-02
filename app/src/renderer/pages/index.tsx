@@ -1,10 +1,10 @@
 import Loading from '@/components/loading';
-import { useAppStateStore } from '@/hooks/use-app-state-store';
+import { useAppState } from '@/hooks/use-app-state';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export default function IndexPage() {
-  const appState = useAppStateStore((state) => state.appState);
+  const { appState } = useAppState();
   const navigate = useNavigate();
 
   useEffect(() => {

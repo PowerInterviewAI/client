@@ -355,7 +355,6 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
         runningState === RunningState.STOPPED ||
         runningState === RunningState.IDLE
       ) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         stopWebRTC();
       }
     }, [runningState]);

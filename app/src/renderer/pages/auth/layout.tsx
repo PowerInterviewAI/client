@@ -1,11 +1,11 @@
 import Loading from '@/components/loading';
-import { useAppStateStore } from '@/hooks/use-app-state-store';
+import { useAppState } from '@/hooks/use-app-state';
 import { useEffect } from 'react';
 import { useNavigate, Outlet, Link } from 'react-router-dom';
 import logoSvg from '/logo.svg';
 
 export default function AuthLayout() {
-  const appState = useAppStateStore((state) => state.appState);
+  const { appState } = useAppState();
   const navigate = useNavigate();
 
   useEffect(() => {
