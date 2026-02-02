@@ -18,7 +18,7 @@ export class AuthApi extends ApiClient {
    * Logout current session
    */
   async logout(): Promise<ApiResponse<void>> {
-    return this.post<void>('/auth/logout');
+    return this.get<void>('/auth/logout');
   }
 
   /**

@@ -9,11 +9,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 interface ChangePasswordDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onChangePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  onChangePassword: (currentPassword: string, newPassword: string) => Promise<boolean>;
   loading: boolean;
   error: string | null;
 }
@@ -31,11 +32,11 @@ export function ChangePasswordDialog({
 
   const handleSubmit = async () => {
     try {
-      await onChangePassword(currentPassword, newPassword);
-      // Clear form on success
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
+      if (await onChangePassword(currentPassword, newPassword)) {
+        toast.success('Password changed successfully');
+      } else {
+        toast.error('Failed to change password');
+      }
     } catch (err) {
       // Error is handled by parent component
       console.error('Password change failed:', err);
@@ -54,7 +55,7 @@ export function ChangePasswordDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-106.25">
         <DialogHeader>
           <DialogTitle>Change Password</DialogTitle>
           <DialogDescription>Enter your current password and choose a new one.</DialogDescription>

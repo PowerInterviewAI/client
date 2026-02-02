@@ -73,13 +73,15 @@ export default function useAuth() {
   };
 
   // Change the authenticated user's password via the bridge API.
-  const changePassword = async (currentPassword: string, newPassword: string) => {
+  const changePassword = async (currentPassword: string, newPassword: string): Promise<boolean> => {
+    let res = true;
     try {
       setLoading(true);
       setError(null);
 
       const result = await window.electronAPI?.auth.changePassword(currentPassword, newPassword);
       if (!result?.success) {
+        res = false;
         const errMsg = result?.error || 'Change password failed';
         setError(errMsg);
         throw new Error(errMsg);
@@ -87,6 +89,7 @@ export default function useAuth() {
     } finally {
       setLoading(false);
     }
+    return res;
   };
 
   // Return stable object for consumers; `setError` is exposed so callers

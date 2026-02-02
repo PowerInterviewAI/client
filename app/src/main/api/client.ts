@@ -5,6 +5,7 @@
 
 import { app } from 'electron';
 import { EnvUtil } from '../utils/env.js';
+import { configStore } from '../store/config-store.js';
 
 export interface ApiResponse<T = unknown> {
   data?: T;
@@ -83,6 +84,11 @@ export class ApiClient {
    */
   private async request<T>(method: string, url: string, body?: unknown): Promise<ApiResponse<T>> {
     try {
+      const session_token = configStore.getConfig().session_token;
+      if (session_token) {
+        this.setAuthToken(session_token);
+      }
+
       const response = await fetch(url, {
         method,
         headers: this.headers,

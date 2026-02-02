@@ -1,5 +1,6 @@
 import { AuthApi } from '../api/auth.js';
 import { configStore } from '../store/config-store.js';
+import { appStateService } from './app-state.service.js';
 
 /**
  * AuthService
@@ -52,6 +53,9 @@ export class AuthService {
         configStore.updateConfig({ email, password });
         configStore.updateConfig({ session_token: response.data?.session_token });
 
+        // update app state to logged in
+        appStateService.updateState({ isLoggedIn: true });
+
         return { success: true };
       } catch {
         return { success: false, error: 'Login failed' };
@@ -73,6 +77,10 @@ export class AuthService {
       return { success: true };
     } catch {
       return { success: false, error: 'Logout failed' };
+    } finally {
+      // clear session token and update app state
+      configStore.updateConfig({ session_token: '' });
+      appStateService.updateState({ isLoggedIn: false });
     }
   }
 
@@ -92,6 +100,10 @@ export class AuthService {
       if (response.error) {
         return { success: false, error: response.error.message || 'Change password failed' };
       }
+
+      // Update stored password in config store
+      configStore.updateConfig({ password: newPassword });
+
       return { success: true };
     } catch {
       return { success: false, error: 'Change password failed' };

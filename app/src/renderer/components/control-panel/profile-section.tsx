@@ -12,9 +12,10 @@ import { RunningState } from '@/types/app-state';
 import { type Config } from '@/types/config';
 import { ChevronUp, Key, LogOut, Moon, SettingsIcon, Sun } from 'lucide-react';
 import { useState } from 'react';
-import { ChangePasswordDialog } from './change-password-dialog';
 import { useAssistantState } from '@/hooks/use-assistant-state';
 import { useThemeStore } from '@/hooks/use-theme-store';
+import { toast } from 'sonner';
+import { ChangePasswordDialog } from '../change-password-dialog';
 
 interface ProfileSectionProps {
   config?: Config;
@@ -37,14 +38,20 @@ export function ProfileSection({
 
   const disabled = getDisabled(runningState, true);
 
-  const handleChangePassword = async (currentPassword: string, newPassword: string) => {
+  const handleChangePassword = async (
+    currentPassword: string,
+    newPassword: string
+  ): Promise<boolean> => {
+    let res = false;
     try {
-      await changePassword(currentPassword, newPassword);
-      setIsChangePasswordOpen(false);
+      if (await changePassword(currentPassword, newPassword)) {
+        res = true;
+      }
     } catch (err) {
       // Error is handled by the useAuth hook
       console.error('Password change failed:', err);
     }
+    return res;
   };
 
   return (
