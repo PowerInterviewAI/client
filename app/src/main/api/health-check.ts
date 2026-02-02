@@ -8,32 +8,31 @@ export class HealthCheckApi extends ApiClient {
   /**
    * Health check / ping
    */
-  async ping(): Promise<ApiResponse<{ status: string; timestamp: string }>> {
+  async ping(): Promise<ApiResponse<string>> {
     return this.get('/health-check/ping');
   }
 
   /**
    * Ping client to backend with device info
    */
-  async pingClient(deviceInfo: {
-    device_id: string;
+  async pingClient(pingPayload: {
     is_gpu_alive: boolean;
     is_assistant_running: boolean;
-  }): Promise<ApiResponse<{ status: string }>> {
-    return this.post('/health-check/ping-client', deviceInfo);
+  }): Promise<ApiResponse<string>> {
+    return this.post('/health-check/ping-client', pingPayload);
   }
 
   /**
    * Ping GPU server
    */
-  async pingGpuServer(): Promise<ApiResponse<{ status: string; alive: boolean }>> {
+  async pingGpuServer(): Promise<ApiResponse<string>> {
     return this.get('/health-check/ping-gpu-server');
   }
 
   /**
    * Wake up GPU server
    */
-  async wakeupGpuServer(): Promise<ApiResponse<{ status: string }>> {
+  async wakeupGpuServer(): Promise<ApiResponse<void>> {
     return this.post('/health-check/wakeup-gpu-server', {});
   }
 }

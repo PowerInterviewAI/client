@@ -26,11 +26,7 @@ import {
 } from './services/index.js';
 
 // Import IPC handlers
-import {
-  registerAppStateHandlers,
-  registerWindowHandlers,
-  registerHealthCheckHandlers,
-} from './ipc/index.js';
+import { registerAppStateHandlers, registerWindowHandlers } from './ipc/index.js';
 import { registerAuthHandlers } from './ipc/auth.js';
 
 let win: BrowserWindow | null = null;
@@ -143,7 +139,6 @@ app.whenReady().then(async () => {
   await transcriptionService.registerHandlers();
   await vcamBridgeService.registerHandlers();
   registerAppStateHandlers();
-  registerHealthCheckHandlers();
   registerAuthHandlers();
 
   // Create window
