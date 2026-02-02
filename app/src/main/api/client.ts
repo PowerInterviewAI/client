@@ -23,7 +23,7 @@ export class ApiClient {
 
   constructor() {
     const baseUrl = EnvUtil.isDev()
-      ? 'http://localhost:8000/api'
+      ? 'http://localhost:8000'
       : 'https://power-interview-backend.onrender.com';
 
     this.baseUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/'; // Ensure baseUrl ends with slash

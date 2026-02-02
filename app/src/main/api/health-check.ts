@@ -9,7 +9,7 @@ export class HealthCheckApi extends ApiClient {
    * Health check / ping
    */
   async ping(): Promise<ApiResponse<string>> {
-    return this.get('/health-check/ping');
+    return this.get('/api/health-check/ping');
   }
 
   /**
@@ -19,20 +19,20 @@ export class HealthCheckApi extends ApiClient {
     is_gpu_alive: boolean;
     is_assistant_running: boolean;
   }): Promise<ApiResponse<string>> {
-    return this.post('/health-check/ping-client', pingPayload);
+    return this.post('/api/health-check/ping-client', pingPayload);
   }
 
   /**
    * Ping GPU server
    */
   async pingGpuServer(): Promise<ApiResponse<string>> {
-    return this.get('/health-check/ping-gpu-server');
+    return this.get('/api/health-check/ping-gpu-server');
   }
 
   /**
    * Wake up GPU server
    */
   async wakeupGpuServer(): Promise<ApiResponse<void>> {
-    return this.post('/health-check/wakeup-gpu-server', {});
+    return this.post('/api/health-check/wakeup-gpu-server', {});
   }
 }

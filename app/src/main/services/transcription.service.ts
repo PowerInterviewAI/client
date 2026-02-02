@@ -8,7 +8,7 @@ import * as zmq from 'zeromq';
 import { BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { configManager } from '../config/app.js';
-import { ConfigStore } from '../store/config-store.js';
+import { configStore, ConfigStore } from '../store/config-store.js';
 import { EnvUtil } from '../utils/env.js';
 
 interface TranscriptMessage {
@@ -25,6 +25,7 @@ interface AgentProcess {
   speaker: 'user' | 'interviewer';
   restartCount: number;
   isRestarting: boolean;
+  shouldRestart?: boolean;
 }
 
 // Constants
@@ -132,8 +133,8 @@ class TranscriptionService {
     const serverUrl = configManager.get('serverUrl');
     const wsUrl = `${serverUrl.replace('http', 'ws')}/api/asr/streaming`;
 
-    // Get session token (will be added when auth service is available)
-    const sessionToken = ''; // TODO: Get from auth service
+    // Get session token
+    const sessionToken = configStore.getConfig().session_token;
 
     console.log(`Starting ASR agent: ${command}`);
     console.log(`Audio source: ${audioSource}, Port: ${port}, Speaker: ${speaker}`);
@@ -176,6 +177,7 @@ class TranscriptionService {
       speaker,
       restartCount: 0,
       isRestarting: false,
+      shouldRestart: true,
     };
 
     // Setup ZeroMQ subscriber
@@ -263,6 +265,9 @@ class TranscriptionService {
    * Stop an agent process
    */
   private async stopAgent(agent: AgentProcess): Promise<void> {
+    // Prevent automatic restart when stopping intentionally
+    agent.shouldRestart = false;
+
     // Close ZeroMQ socket
     if (agent.socket) {
       try {
@@ -313,7 +318,13 @@ class TranscriptionService {
       }
     }
 
-    // Check if we should restart
+    // Check if we should restart (skip if stopped intentionally)
+    if (agent.shouldRestart === false) {
+      console.log(`Agent ${agent.speaker} exit was intentional; not restarting`);
+      return;
+    }
+
+    // Check restart conditions
     if (!agent.isRestarting && agent.restartCount < MAX_RESTART_COUNT) {
       console.log(
         `Agent ${agent.speaker} will restart (attempt ${agent.restartCount + 1}/${MAX_RESTART_COUNT})`
@@ -377,18 +388,6 @@ class TranscriptionService {
   }
 
   /**
-   * Get current status
-   */
-  getStatus() {
-    return {
-      selfTranscriptionActive: this.selfAgent !== null,
-      otherTranscriptionActive: this.otherAgent !== null,
-      selfRestartCount: this.selfAgent?.restartCount ?? 0,
-      otherRestartCount: this.otherAgent?.restartCount ?? 0,
-    };
-  }
-
-  /**
    * Stop all transcription services
    */
   async stopAll(): Promise<void> {
@@ -410,10 +409,6 @@ class TranscriptionService {
 
     ipcMain.handle('transcription:stop-other', async () => {
       await this.stopOtherTranscription();
-    });
-
-    ipcMain.handle('transcription:get-status', async () => {
-      return this.getStatus();
     });
   }
 }

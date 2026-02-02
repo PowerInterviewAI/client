@@ -27,7 +27,7 @@ class ConfigManager {
 
   private loadDefaults(): AppConfig {
     const apiBaseUrl = EnvUtil.isDev()
-      ? 'http://localhost:8000/api'
+      ? 'http://localhost:8000'
       : 'https://power-interview-backend.onrender.com';
 
     return {
