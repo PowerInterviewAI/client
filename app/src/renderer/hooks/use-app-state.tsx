@@ -9,13 +9,6 @@ import { type AppState } from '@/types/app-state';
 
 interface AppStateContextType {
   appState: AppState | null;
-  refreshState: () => Promise<void>;
-  addTranscript: (transcript: {
-    text: string;
-    isFinal: boolean;
-    speaker: 'user' | 'interviewer';
-    timestamp: Date;
-  }) => Promise<void>;
   updateAppState: (updates: Partial<AppState>) => Promise<void>;
 }
 
@@ -144,10 +137,6 @@ export const useAppState = (): AppStateContextType => {
     };
   }, []);
 
-  const refreshState = useCallback(async () => {
-    await manager.refreshState();
-  }, []);
-
   const addTranscript = useCallback(
     async (transcript: {
       text: string;
@@ -164,8 +153,5 @@ export const useAppState = (): AppStateContextType => {
     await manager.updateAppState(updates);
   }, []);
 
-  return useMemo(
-    () => ({ appState, refreshState, addTranscript, updateAppState }),
-    [appState, refreshState, addTranscript, updateAppState]
-  );
+  return useMemo(() => ({ appState, updateAppState }), [appState, updateAppState]);
 };

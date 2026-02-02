@@ -10,6 +10,7 @@ import path from 'path';
 import { configManager } from '../config/app.js';
 import { configStore, ConfigStore } from '../store/config-store.js';
 import { EnvUtil } from '../utils/env.js';
+import { appStateService } from './app-state.service.js';
 
 interface TranscriptMessage {
   text: string;
@@ -167,7 +168,7 @@ class TranscriptionService {
     });
 
     proc.stderr?.on('data', (data) => {
-      console.error(`[ASR ${speaker} ERROR]`, data.toString().trim());
+      console.error(`[ASR ${speaker}]`, data.toString().trim());
     });
 
     const agentProcess: AgentProcess = {
@@ -241,23 +242,13 @@ class TranscriptionService {
           };
 
           // Send to renderer
-          this.sendTranscriptToRenderer(transcript);
+          appStateService.addTranscript(transcript);
         }
       }
     } catch (error) {
       if (agent.socket) {
         console.error(`Error receiving ZMQ messages for ${agent.speaker}:`, error);
       }
-    }
-  }
-
-  /**
-   * Send transcript to renderer process
-   */
-  private sendTranscriptToRenderer(transcript: TranscriptMessage): void {
-    const windows = BrowserWindow.getAllWindows();
-    if (windows.length > 0) {
-      windows[0].webContents.send('transcript-update', transcript);
     }
   }
 

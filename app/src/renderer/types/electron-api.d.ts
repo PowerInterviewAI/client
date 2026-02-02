@@ -39,21 +39,6 @@ declare global {
       stopSelf: () => Promise<void>;
       startOther: () => Promise<void>;
       stopOther: () => Promise<void>;
-      getStatus: () => Promise<{
-        selfTranscriptionActive: boolean;
-        otherTranscriptionActive: boolean;
-      }>;
-      onTranscriptUpdate: (
-        callback: (transcript: {
-          text: string;
-          isFinal: boolean;
-          speaker: 'user' | 'interviewer';
-          timestamp: Date;
-        }) => void
-      ) => () => void;
-      onTranscriptionError: (
-        callback: (error: { speaker: 'user' | 'interviewer'; error: string }) => void
-      ) => () => void;
     };
 
     // Authentication management
@@ -75,7 +60,6 @@ declare global {
     vcam: {
       startBridge: () => Promise<void>;
       stopBridge: () => Promise<void>;
-      getStatus: () => Promise<{ bridgeActive: boolean }>;
     };
 
     // Window controls
