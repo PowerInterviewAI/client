@@ -9,23 +9,25 @@ import { configManager } from '../config/app.js';
 import { appStateService } from './app-state.service.js';
 
 const SUCCESS_INTERVAL = 60 * 1000; // 1 minute
-const CLIENT_INTERVAL = 60 * 1000; // client ping interval
-const GPU_INTERVAL = 60 * 1000; // gpu ping interval
-const FAILURE_INTERVAL = 1000; // 1 second
+const FAILURE_INTERVAL = 1 * 1000; // 1 second
 
 export class HealthCheckService {
-  private backendInterval: NodeJS.Timeout | null = null;
-  private clientInterval: NodeJS.Timeout | null = null;
-  private gpuInterval: NodeJS.Timeout | null = null;
   private isCheckingBackend = false;
   private isCheckingClient = false;
   private isCheckingGpu = false;
+
+  private running = false;
+  private backendTimer: NodeJS.Timeout | null = null;
+  private clientTimer: NodeJS.Timeout | null = null;
+  private gpuTimer: NodeJS.Timeout | null = null;
 
   /**
    * Start health check monitoring
    */
   start(): void {
     console.log('[HealthCheckService] Starting health check service');
+    if (this.running) return;
+    this.running = true;
     this.startBackendLoop();
     this.startClientLoop();
     this.startGpuLoop();
@@ -36,20 +38,27 @@ export class HealthCheckService {
    */
   stop(): void {
     console.log('[HealthCheckService] Stopping health check service');
-    if (this.backendInterval) {
-      clearInterval(this.backendInterval);
-      this.backendInterval = null;
+    this.running = false;
+
+    if (this.backendTimer) {
+      clearTimeout(this.backendTimer);
+      this.backendTimer = null;
     }
-    if (this.clientInterval) {
-      clearInterval(this.clientInterval);
-      this.clientInterval = null;
+    if (this.clientTimer) {
+      clearTimeout(this.clientTimer);
+      this.clientTimer = null;
     }
-    if (this.gpuInterval) {
-      clearInterval(this.gpuInterval);
-      this.gpuInterval = null;
+    if (this.gpuTimer) {
+      clearTimeout(this.gpuTimer);
+      this.gpuTimer = null;
     }
+
+    this.isCheckingBackend = false;
+    this.isCheckingClient = false;
+    this.isCheckingGpu = false;
   }
 
+  /** Get HealthCheckApi instance */
   private getApi(): HealthCheckApi {
     const serverUrl = configManager.get('serverUrl');
     return new HealthCheckApi(serverUrl);
@@ -58,7 +67,7 @@ export class HealthCheckService {
   /** Backend ping loop */
   private async startBackendLoop(): Promise<void> {
     const runCheck = async () => {
-      if (this.isCheckingBackend) return;
+      if (!this.running || this.isCheckingBackend) return;
       this.isCheckingBackend = true;
 
       let backendLive = false;
@@ -79,22 +88,23 @@ export class HealthCheckService {
       appStateService.updateState({ isBackendLive: backendLive });
 
       this.isCheckingBackend = false;
+
+      if (!this.running) return;
+      const next = backendLive ? SUCCESS_INTERVAL : FAILURE_INTERVAL;
+      this.backendTimer = setTimeout(() => runCheck(), next);
     };
 
     // run immediately
     await runCheck();
-
-    // schedule interval depending on backend state (first tick uses SUCCESS_INTERVAL/FAILURE_INTERVAL)
-    this.backendInterval = setInterval(async () => {
-      await runCheck();
-    }, SUCCESS_INTERVAL);
   }
 
   /** Client ping loop */
   private async startClientLoop(): Promise<void> {
     const runCheck = async () => {
-      if (this.isCheckingClient) return;
+      if (!this.running || this.isCheckingClient) return;
       this.isCheckingClient = true;
+
+      let nextInterval = SUCCESS_INTERVAL;
 
       try {
         const healthCheckApi = this.getApi();
@@ -109,20 +119,23 @@ export class HealthCheckService {
         await healthCheckApi.pingClient(deviceInfo);
       } catch (error) {
         console.error('[HealthCheckService] Client ping error:', error);
+        nextInterval = FAILURE_INTERVAL;
       }
 
       this.isCheckingClient = false;
+
+      if (!this.running) return;
+      this.clientTimer = setTimeout(() => runCheck(), nextInterval);
     };
 
     // run immediately
     await runCheck();
-    this.clientInterval = setInterval(() => runCheck(), CLIENT_INTERVAL);
   }
 
   /** GPU ping loop, triggers wakeup if needed */
   private async startGpuLoop(): Promise<void> {
     const runCheck = async () => {
-      if (this.isCheckingGpu) return;
+      if (!this.running || this.isCheckingGpu) return;
       this.isCheckingGpu = true;
 
       let gpuServerLive = false;
@@ -142,11 +155,14 @@ export class HealthCheckService {
 
       appStateService.updateState({ isGpuServerLive: gpuServerLive });
       this.isCheckingGpu = false;
+
+      if (!this.running) return;
+      const next = gpuServerLive ? SUCCESS_INTERVAL : FAILURE_INTERVAL;
+      this.gpuTimer = setTimeout(() => runCheck(), next);
     };
 
     // run immediately
     await runCheck();
-    this.gpuInterval = setInterval(() => runCheck(), GPU_INTERVAL);
   }
 }
 
