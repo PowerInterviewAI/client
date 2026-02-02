@@ -337,7 +337,7 @@ class TranscriptionService {
 
       try {
         // Determine audio source based on speaker
-        const config = await this.configService.getConfig();
+        const config = this.configService.getConfig();
         const audioSource =
           agent.speaker === 'user' ? config.audio_input_device_name || 'loopback' : 'loopback';
 

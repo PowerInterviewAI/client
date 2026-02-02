@@ -14,7 +14,6 @@ import { ChevronUp, Key, LogOut, Moon, SettingsIcon, Sun } from 'lucide-react';
 import { useState } from 'react';
 import { useAssistantState } from '@/hooks/use-assistant-state';
 import { useThemeStore } from '@/hooks/use-theme-store';
-import { toast } from 'sonner';
 import { ChangePasswordDialog } from '../change-password-dialog';
 
 interface ProfileSectionProps {
