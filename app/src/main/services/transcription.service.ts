@@ -9,6 +9,7 @@ import { BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { configManager } from '../config/app.js';
 import { ConfigStore } from '../store/config-store.js';
+import { EnvUtil } from '../utils/env.js';
 
 interface TranscriptMessage {
   text: string;
@@ -362,19 +363,12 @@ class TranscriptionService {
    * Get the command and args to run the ASR agent
    */
   private getAgentCommand(): { command: string; args: string[] } {
-    // In development, use Python script
-    if (process.env.NODE_ENV === 'development') {
-      const projectRoot = path.join(process.cwd(), '..');
-      const scriptPath = path.join(projectRoot, 'agents', 'asr', 'main.py');
-      return {
-        command: 'python',
-        args: [scriptPath],
-      };
-    }
-
     // In production, use built executable
-    // All agents are in the same agents folder with different names
-    const buildDir = path.join(process.resourcesPath, 'agents');
+    let buildDir = path.join(process.resourcesPath, 'agents');
+    // In development, use local build
+    if (EnvUtil.isDev()) {
+      buildDir = path.join(process.cwd(), '..', 'build', 'agents', 'dist');
+    }
     const exeName = process.platform === 'win32' ? 'asr_agent.exe' : 'asr_agent';
     return {
       command: path.join(buildDir, exeName),
