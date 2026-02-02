@@ -1,4 +1,5 @@
 import type { Config } from './config';
+import type { AppState } from './app-state';
 
 export {};
 
@@ -11,6 +12,12 @@ declare global {
     config: {
       get: () => Promise<Config>;
       update: (updates: Partial<Config>) => Promise<Config>;
+    };
+
+    // App state management
+    appState: {
+      get: () => Promise<AppState>;
+      update: (updates: Partial<AppState>) => Promise<AppState>;
     };
 
     // Transcription management
@@ -44,14 +51,14 @@ declare global {
 
     // App health checks
     app: {
-      ping: () => Promise<{ success: boolean; data?: { status: string; timestamp: string }; error?: string }>;
+      ping: () => Promise<{ status: number; data?: { status: string; timestamp: string }; error?: { code: string; message: string } }>;
       pingClient: (deviceInfo: {
         device_id: string;
         is_gpu_alive: boolean;
         is_assistant_running: boolean;
-      }) => Promise<{ success: boolean; data?: { status: string }; error?: string }>;
-      pingGpuServer: () => Promise<{ success: boolean; data?: { status: string; alive: boolean }; error?: string }>;
-      wakeupGpuServer: () => Promise<{ success: boolean; data?: { status: string }; error?: string }>;
+      }) => Promise<{ status: number; data?: { status: string }; error?: { code: string; message: string } }>;
+      pingGpuServer: () => Promise<{ status: number; data?: { status: string; alive: boolean }; error?: { code: string; message: string } }>;
+      wakeupGpuServer: () => Promise<{ status: number; data?: { status: string }; error?: { code: string; message: string } }>;
     };
 
     // Window controls

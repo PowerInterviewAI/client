@@ -46,7 +46,13 @@ const electronApi = {
     getStatus: () => ipcRenderer.invoke('vcam:get-status'),
   },
 
-  // App state and health checks
+  // App state management
+  appState: {
+    get: () => ipcRenderer.invoke('app:get-state'),
+    update: (updates: any) => ipcRenderer.invoke('app:update-state', updates),
+  },
+
+  // App state and health checks (deprecated - kept for compatibility)
   app: {
     ping: () => ipcRenderer.invoke('app:ping'),
     pingClient: (deviceInfo: any) => ipcRenderer.invoke('app:ping-client', deviceInfo),

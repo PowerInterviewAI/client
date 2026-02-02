@@ -41,6 +41,7 @@ class ConfigManager {
 
   private loadDefaults(): AppConfig {
     const isDev = process.env.NODE_ENV === 'development';
+    const apiBaseUrl = process.env.API_BASE_URL || 'http://localhost:28080';
 
     return {
       title: 'Power Interview',
@@ -52,7 +53,7 @@ class ConfigManager {
       isTest: process.env.NODE_ENV === 'test',
 
       serverPort: 28080,
-      serverUrl: 'http://localhost:28080',
+      serverUrl: apiBaseUrl,
 
       dataPath: '', // Set by app
       logsPath: '', // Set by app

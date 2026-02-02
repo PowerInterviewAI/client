@@ -20,7 +20,11 @@ export class ApiClient {
   private headers: Record<string, string> = {};
 
   constructor(baseUrl: string) {
+    if (!baseUrl) {
+      throw new Error('ApiClient: baseUrl is required');
+    }
     this.baseUrl = baseUrl;
+    console.log('[ApiClient] Initialized with baseUrl:', baseUrl);
     this.headers = {
       'Content-Type': 'application/json',
       'User-Agent': `PowerInterview/${app.getVersion()}`,
@@ -116,16 +120,21 @@ export class ApiClient {
    * Build full URL with query parameters
    */
   private buildUrl(path: string, params?: Record<string, unknown>): string {
-    const url = new URL(path, this.baseUrl);
+    try {
+      const url = new URL(path, this.baseUrl);
 
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          url.searchParams.append(key, String(value));
-        }
-      });
+      if (params) {
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            url.searchParams.append(key, String(value));
+          }
+        });
+      }
+
+      return url.toString();
+    } catch (error) {
+      console.error('[ApiClient] Failed to build URL:', { baseUrl: this.baseUrl, path, error });
+      throw new Error(`Invalid URL: baseUrl="${this.baseUrl}", path="${path}"`);
     }
-
-    return url.toString();
   }
 }

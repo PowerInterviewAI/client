@@ -1,90 +1,52 @@
 import { useEffect, useRef } from 'react';
 import { useAppStateStore } from './use-app-state-store';
+import { RunningState } from '@/types/app-state';
 
-const SUCCESS_INTERVAL = 60 * 1000; // 1 minute
-const FAILURE_INTERVAL = 1000; // 1 second
+const POLL_INTERVAL = 1000; // 1 second
 
 /**
- * Health check hook - monitors backend and GPU server availability
+ * Health check hook - polls app state from Electron main process
  * 
- * Performs periodic checks:
- * - Backend /ping endpoint
- * - Client to backend /ping-client with device info
- * - GPU server /ping-gpu-server
- * - GPU wakeup /wakeup-gpu-server if needed
- * 
- * Updates app state with is_backend_live and is_gpu_server_live.
- * Uses 1 minute interval on success, 1 second on failure.
+ * The actual health check logic (backend ping, GPU server checks, etc.)
+ * runs in the Electron main process. This hook simply polls the state
+ * and updates the React store.
  */
 export function useHealthCheck() {
-  const updateAppState = useAppStateStore((state) => state.updateAppState);
+  const setAppState = useAppStateStore((state) => state.setAppState);
   const appState = useAppStateStore((state) => state.appState);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const isCheckingRef = useRef(false);
 
   useEffect(() => {
-    const performHealthChecks = async () => {
-      // Prevent overlapping checks
-      if (isCheckingRef.current) return;
-      isCheckingRef.current = true;
-
-      let backendLive = false;
-      let gpuServerLive = false;
-
+    const pollAppState = async () => {
       try {
-        if (!window.electronAPI?.app) {
+        if (!window.electronAPI?.appState) {
           console.warn('[HealthCheck] Electron API not available');
-          isCheckingRef.current = false;
           return;
         }
 
-        // 1. Check backend /ping
-        const pingResult = await window.electronAPI.app.ping();
-        backendLive = pingResult.success;
-
-        if (backendLive) {
-          // 2. Ping client to backend with device info
-          const deviceInfo = {
-            device_id: appState?.is_logged_in ? 'user-device' : 'anonymous',
-            is_gpu_alive: appState?.is_gpu_server_live ?? false,
-            is_assistant_running: appState?.assistant_state === 'running',
-          };
-
-          await window.electronAPI.app.pingClient(deviceInfo);
-
-          // 3. Check GPU server
-          const gpuPingResult = await window.electronAPI.app.pingGpuServer();
-          gpuServerLive = gpuPingResult.success;
-
-          // 4. Wake up GPU if not alive
-          if (!gpuServerLive) {
-            await window.electronAPI.app.wakeupGpuServer();
-          }
-        }
+        const electronAppState = await window.electronAPI.appState.get();
+        
+        // Update the React store with health check results from Electron
+        // Keep existing appState values for fields not managed by Electron
+        setAppState({
+          is_logged_in: appState?.is_logged_in ?? null,
+          assistant_state: appState?.assistant_state ?? RunningState.IDLE,
+          transcripts: appState?.transcripts ?? [],
+          suggestions: appState?.suggestions ?? [],
+          code_suggestions: appState?.code_suggestions ?? [],
+          is_backend_live: electronAppState.is_backend_live,
+          is_gpu_server_live: electronAppState.is_gpu_server_live,
+        });
       } catch (error) {
-        console.error('[HealthCheck] Error performing health checks:', error);
+        console.error('[HealthCheck] Error polling app state:', error);
       }
-
-      // Update app state with results
-      updateAppState({
-        is_backend_live: backendLive,
-        is_gpu_server_live: gpuServerLive,
-      });
-
-      isCheckingRef.current = false;
-
-      // Schedule next check based on results
-      const nextInterval = backendLive ? SUCCESS_INTERVAL : FAILURE_INTERVAL;
-      
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-      
-      intervalRef.current = setInterval(performHealthChecks, nextInterval);
     };
 
-    // Start health checks immediately
-    performHealthChecks();
+    // Start polling immediately
+    pollAppState();
+
+    // Set up interval
+    intervalRef.current = setInterval(pollAppState, POLL_INTERVAL);
 
     // Cleanup on unmount
     return () => {
@@ -92,7 +54,5 @@ export function useHealthCheck() {
         clearInterval(intervalRef.current);
       }
     };
-  }, []); // Run once on mount
-
-  return null;
+  }, [setAppState, appState]); // Include dependencies
 }

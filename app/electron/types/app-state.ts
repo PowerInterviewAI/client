@@ -8,6 +8,10 @@ export interface AppState {
   isRecording: boolean;
   currentSession?: Session;
   devices: DeviceInfo[];
+  is_backend_live: boolean;
+  is_gpu_server_live: boolean;
+  is_logged_in: boolean;
+  assistant_state: 'idle' | 'starting' | 'running' | 'stopping' | 'stopped';
 }
 
 export interface Session {

@@ -1,0 +1,135 @@
+/**
+ * Health Check Service
+ * Monitors backend and GPU server availability and updates app state
+ */
+
+import { ApiClient } from '../api/client.js';
+import { AppApi } from '../api/app.js';
+import { configManager } from '../config/app.js';
+import { AppState } from '../types/app-state.js';
+
+const SUCCESS_INTERVAL = 60 * 1000; // 1 minute
+const FAILURE_INTERVAL = 1000; // 1 second
+
+export class HealthCheckService {
+  private intervalHandle: NodeJS.Timeout | null = null;
+  private isChecking: boolean = false;
+  private appState: AppState;
+
+  constructor() {
+    // Initialize app state with defaults
+    this.appState = {
+      isRunning: false,
+      isStealth: false,
+      isRecording: false,
+      devices: [],
+      is_backend_live: false,
+      is_gpu_server_live: false,
+      is_logged_in: false,
+      assistant_state: 'idle',
+    };
+  }
+
+  /**
+   * Start health check monitoring
+   */
+  start(): void {
+    console.log('[HealthCheckService] Starting health check service');
+    this.performHealthChecks();
+  }
+
+  /**
+   * Stop health check monitoring
+   */
+  stop(): void {
+    console.log('[HealthCheckService] Stopping health check service');
+    if (this.intervalHandle) {
+      clearInterval(this.intervalHandle);
+      this.intervalHandle = null;
+    }
+  }
+
+  /**
+   * Get current app state
+   */
+  getAppState(): AppState {
+    return { ...this.appState };
+  }
+
+  /**
+   * Update app state (for external updates from main process)
+   */
+  updateAppState(updates: Partial<AppState>): void {
+    this.appState = { ...this.appState, ...updates };
+  }
+
+  /**
+   * Perform health checks and update app state
+   */
+  private async performHealthChecks(): Promise<void> {
+    // Prevent overlapping checks
+    if (this.isChecking) return;
+    this.isChecking = true;
+
+    let backendLive = false;
+    let gpuServerLive = false;
+
+    try {
+      const serverUrl = configManager.get('serverUrl');
+      const client = new ApiClient(serverUrl);
+      const appApi = new AppApi(client);
+
+      // 1. Check backend /ping
+      const pingResult = await appApi.ping();
+      backendLive = !pingResult.error && pingResult.data != null;
+      console.log('[HealthCheckService] Backend ping result:', { 
+        backendLive, 
+        error: pingResult.error 
+      });
+
+      if (backendLive) {
+        // 2. Ping client to backend with device info
+        const deviceInfo = {
+          device_id: this.appState.is_logged_in ? 'user-device' : 'anonymous',
+          is_gpu_alive: this.appState.is_gpu_server_live,
+          is_assistant_running: this.appState.assistant_state === 'running',
+        };
+
+        await appApi.pingClient(deviceInfo);
+
+        // 3. Check GPU server
+        const gpuPingResult = await appApi.pingGpuServer();
+        gpuServerLive = !gpuPingResult.error && gpuPingResult.data != null;
+
+        // 4. Wake up GPU if not alive
+        if (!gpuServerLive) {
+          console.log('[HealthCheckService] Waking up GPU server');
+          await appApi.wakeupGpuServer();
+        }
+      }
+    } catch (error) {
+      console.error('[HealthCheckService] Error performing health checks:', error);
+    }
+
+    // Update app state with results
+    this.appState = {
+      ...this.appState,
+      is_backend_live: backendLive,
+      is_gpu_server_live: gpuServerLive,
+    };
+
+    this.isChecking = false;
+
+    // Schedule next check based on results
+    const nextInterval = backendLive ? SUCCESS_INTERVAL : FAILURE_INTERVAL;
+    
+    if (this.intervalHandle) {
+      clearInterval(this.intervalHandle);
+    }
+    
+    this.intervalHandle = setInterval(() => this.performHealthChecks(), nextInterval);
+  }
+}
+
+// Singleton instance
+export const healthCheckService = new HealthCheckService();

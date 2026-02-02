@@ -27,7 +27,7 @@ export class AppApi {
    * Health check / ping
    */
   async ping(): Promise<ApiResponse<{ status: string; timestamp: string }>> {
-    return this.client.get('/app/ping');
+    return this.client.get('/ping');
   }
 
   /**

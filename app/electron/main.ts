@@ -19,7 +19,7 @@ import { registerGlobalHotkeys, unregisterHotkeys } from './hotkeys.js';
 import * as windowControls from './window-controls.js';
 
 // Import services
-import { configService, transcriptionService, vcamBridgeService } from './services/index.js';
+import { configService, transcriptionService, vcamBridgeService, healthCheckService } from './services/index.js';
 
 let win: BrowserWindow | null = null;
 
@@ -84,13 +84,13 @@ async function createWindow() {
   });
 
   // Remove the default application menu and hide the menu bar
-  try {
+  /*try {
     Menu.setApplicationMenu(null);
   } catch (e) {
     console.warn('Failed to set application menu:', e);
   }
-  // win.setMenuBarVisibility(false);
-  // win.setAutoHideMenuBar(true);
+  win.setMenuBarVisibility(false);
+  win.setAutoHideMenuBar(true);//*/
 
   // Enable content protection to prevent screen capture/recording
   win.setContentProtection(true);
@@ -163,7 +163,17 @@ app.whenReady().then(async () => {
     return vcamBridgeService.getStatus();
   });
 
-  // Register app health check IPC handlers
+  // Register app state IPC handlers
+  ipcMain.handle('app:get-state', async () => {
+    return healthCheckService.getAppState();
+  });
+
+  ipcMain.handle('app:update-state', async (_event, updates) => {
+    healthCheckService.updateAppState(updates);
+    return healthCheckService.getAppState();
+  });
+
+  // Register app health check IPC handlers (deprecated - kept for compatibility)
   ipcMain.handle('app:ping', async () => {
     // Import AppApi dynamically to avoid circular dependencies
     const { ApiClient } = await import('./api/client.js');
@@ -171,6 +181,7 @@ app.whenReady().then(async () => {
     const { configManager } = await import('./config/app.js');
     
     const serverUrl = configManager.get('serverUrl');
+    console.log('[IPC:app:ping] serverUrl from config:', serverUrl);
     const client = new ApiClient(serverUrl);
     const appApi = new AppApi(client);
     
@@ -216,6 +227,9 @@ app.whenReady().then(async () => {
   // Create window
   await createWindow();
 
+  // Start health check service
+  healthCheckService.start();
+
   // Register hotkeys
   registerGlobalHotkeys();
 });
@@ -224,6 +238,7 @@ app.on('will-quit', async () => {
   // Stop all services
   await transcriptionService.stopAll();
   await vcamBridgeService.stopBridge();
+  healthCheckService.stop();
 
   unregisterHotkeys();
 

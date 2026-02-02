@@ -1,8 +1,12 @@
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import Titlebar from './titlebar';
 import WindowResizer from './window-resizer';
+import { useHealthCheck } from '@/hooks/use-health-check';
 
 export default function MainFrame({ children }: { children: React.ReactNode }) {
+  // Start health checks
+  useHealthCheck();
+
   const isStealth = useIsStealthMode();
   return (
     <main
