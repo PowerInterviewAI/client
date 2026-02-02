@@ -2,21 +2,21 @@
  * Authentication Types
  */
 
-export interface AuthSession {
-  token: string;
-  userId: string;
+export interface SignupRequest {
+  username: string;
   email: string;
-  createdAt: Date;
-  expiresAt: Date;
+  password: string;
 }
-
-export interface AuthCredentials {
+export interface LoginRequest {
   email: string;
   password: string;
 }
 
 export interface AuthToken {
-  accessToken: string;
-  refreshToken?: string;
-  expiresIn: number;
+  session_token: string;
+}
+
+export interface ChangePasswordRequest {
+  current_password: string;
+  new_password: string;
 }

@@ -11,7 +11,7 @@ export interface ApiResponse<T = unknown> {
   error?: {
     code: string;
     message: string;
-    details?: Record<string, unknown>;
+    data?: Record<string, unknown>;
   };
   status: number;
 }
@@ -89,22 +89,29 @@ export class ApiClient {
         body: body ? JSON.stringify(body) : undefined,
       });
 
-      const data = await response.json().catch(() => ({}));
+      const respBody = await response.json().catch(() => ({}));
+      console.log('[ApiClient] Request result:', {
+        method,
+        url,
+        status: response.status,
+        data: respBody,
+      });
 
       if (!response.ok) {
+        const detail = respBody.detail;
         return {
           status: response.status,
           error: {
-            code: data.code || 'HTTP_ERROR',
-            message: data.message || response.statusText,
-            details: data.details,
+            code: detail?.error_code || 'HTTP_ERROR',
+            message: detail?.message || response.statusText,
+            data: detail?.data,
           },
         };
       }
 
       return {
         status: response.status,
-        data,
+        data: respBody,
       };
     } catch (error: unknown) {
       return {
@@ -123,6 +130,7 @@ export class ApiClient {
   private buildUrl(path: string, params?: Record<string, unknown>): string {
     try {
       const cleanPath = path.replace(/^\/+/, ''); // Ensure no leading slash on path
+
       const url = new URL(cleanPath, this.baseUrl);
 
       if (params) {

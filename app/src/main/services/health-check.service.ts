@@ -3,9 +3,7 @@
  * Monitors backend and GPU server availability and updates app state
  */
 
-import { ApiClient } from '../api/client.js';
 import { HealthCheckApi } from '../api/health-check.js';
-import { configManager } from '../config/app.js';
 import { appStateService } from './app-state.service.js';
 import { safeSleep } from '../utils/sleep.js';
 
@@ -14,6 +12,7 @@ const FAILURE_INTERVAL = 1 * 1000; // 1 second
 
 export class HealthCheckService {
   private running = false;
+  private client = new HealthCheckApi();
 
   /**
    * Start health check monitoring
@@ -35,20 +34,13 @@ export class HealthCheckService {
     this.running = false;
   }
 
-  /** Get HealthCheckApi instance */
-  private getApi(): HealthCheckApi {
-    return new HealthCheckApi();
-  }
-  // use safeSleep util for cancellable/abortable sleeps
-
   /** Backend ping loop */
   private startBackendLoop(): void {
     (async () => {
       while (this.running) {
         let backendLive = false;
         try {
-          const healthCheckApi = this.getApi();
-          const pingResult = await healthCheckApi.ping();
+          const pingResult = await this.client.ping();
 
           backendLive = !pingResult.error && pingResult.data != null;
           console.log('[HealthCheckService] Backend ping result:', {
@@ -71,11 +63,15 @@ export class HealthCheckService {
   private startClientLoop(): void {
     (async () => {
       while (this.running) {
+        // only ping if logged in
+        if (!appStateService.getState().isLoggedIn) {
+          await safeSleep(FAILURE_INTERVAL);
+          continue;
+        }
+
         let nextInterval = SUCCESS_INTERVAL;
 
         try {
-          const healthCheckApi = this.getApi();
-
           const currentState = appStateService.getState();
           const deviceInfo = {
             device_id: currentState.isLoggedIn ? 'user-device' : 'anonymous',
@@ -83,7 +79,7 @@ export class HealthCheckService {
             is_assistant_running: currentState.assistantState === 'running',
           };
 
-          await healthCheckApi.pingClient(deviceInfo);
+          await this.client.pingClient(deviceInfo);
         } catch (error) {
           console.error('[HealthCheckService] Client ping error:', error);
           nextInterval = FAILURE_INTERVAL;
@@ -98,16 +94,22 @@ export class HealthCheckService {
   private startGpuLoop(): void {
     (async () => {
       while (this.running) {
+        // only check GPU if logged in
+        if (!appStateService.getState().isLoggedIn) {
+          await safeSleep(FAILURE_INTERVAL);
+          continue;
+        }
+
         let gpuServerLive = false;
         try {
-          const healthCheckApi = this.getApi();
-
-          const gpuPingResult = await healthCheckApi.pingGpuServer();
+          // ping GPU server
+          const gpuPingResult = await this.client.pingGpuServer();
           gpuServerLive = !gpuPingResult.error && gpuPingResult.data != null;
 
+          // attempt wakeup if GPU not live
           if (!gpuServerLive) {
             console.log('[HealthCheckService] GPU not live, attempting wakeup');
-            await healthCheckApi.wakeupGpuServer();
+            await this.client.wakeupGpuServer();
           }
         } catch (error) {
           console.error('[HealthCheckService] GPU ping/wakeup error:', error);

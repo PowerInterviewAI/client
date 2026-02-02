@@ -4,35 +4,32 @@
  */
 
 import { ipcMain } from 'electron';
-import { configStore } from '../store/config-store.js';
+import { authService } from '../services/auth.service.js';
 
 export function registerAuthHandlers() {
-  // Get saved credentials
-  ipcMain.handle('auth:getCredentials', () => {
-    return {
-      email: configStore.getConfig().email,
-      password: configStore.getConfig().password,
-    };
-  });
-
-  // Save credentials after successful login/signup
+  // Signup
   ipcMain.handle(
-    'auth:saveCredentials',
-    (_event, email: string, password: string, token?: string) => {
-      configStore.updateConfig({ email, password, session_token: token });
-      return { success: true };
+    'auth:signup',
+    async (_event, username: string, email: string, password: string) => {
+      return authService.signup(username, email, password);
     }
   );
 
-  // Update token
-  ipcMain.handle('auth:updateToken', (_event, token: string) => {
-    configStore.updateConfig({ session_token: token });
-    return { success: true };
+  // Login
+  ipcMain.handle('auth:login', async (_event, email: string, password: string) => {
+    return authService.login(email, password);
   });
 
-  // Clear credentials on logout
-  ipcMain.handle('auth:clearCredentials', () => {
-    configStore.updateConfig({ email: '', password: '', session_token: '' });
-    return { success: true };
+  // Logout
+  ipcMain.handle('auth:logout', async () => {
+    return authService.logout();
   });
+
+  // Change password
+  ipcMain.handle(
+    'auth:change-password',
+    async (_event, currentPassword: string, newPassword: string) => {
+      return authService.changePassword(currentPassword, newPassword);
+    }
+  );
 }

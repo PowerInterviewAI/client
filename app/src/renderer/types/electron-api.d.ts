@@ -58,8 +58,12 @@ declare global {
 
     // Authentication management
     auth: {
+      signup: (
+        username: string,
+        email: string,
+        password: string
+      ) => Promise<{ success: boolean; error?: string }>;
       login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-      signup: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
       logout: () => Promise<{ success: boolean; error?: string }>;
       changePassword: (
         oldPassword: string,

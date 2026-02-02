@@ -4,14 +4,14 @@
  */
 
 import { ApiClient, ApiResponse } from './client.js';
-import { AuthToken, AuthCredentials } from '../types/auth.js';
+import { AuthToken, ChangePasswordRequest, LoginRequest, SignupRequest } from '../types/auth.js';
 
 export class AuthApi extends ApiClient {
   /**
    * Login with credentials
    */
-  async login(credentials: AuthCredentials): Promise<ApiResponse<AuthToken>> {
-    return this.post<AuthToken>('/auth/login', credentials);
+  async login(credentials: LoginRequest): Promise<ApiResponse<AuthToken>> {
+    return this.post('/auth/login', credentials);
   }
 
   /**
@@ -22,9 +22,16 @@ export class AuthApi extends ApiClient {
   }
 
   /**
-   * Register new user
+   * Signup new user
    */
-  async register(data: AuthCredentials & { name: string }): Promise<ApiResponse<AuthToken>> {
-    return this.post<AuthToken>('/auth/register', data);
+  async signup(data: SignupRequest): Promise<ApiResponse<AuthToken>> {
+    return this.post('/auth/signup', data);
+  }
+
+  /**
+   * Change user password
+   */
+  async changePassword(data: ChangePasswordRequest): Promise<ApiResponse<void>> {
+    return this.post<void>('/auth/change-password', data);
   }
 }

@@ -48,12 +48,12 @@ const electronApi = {
 
   // Authentication management
   auth: {
-    getCredentials: () => ipcRenderer.invoke('auth:getCredentials'),
-    saveCredentials: (email: string, password: string, token?: string) =>
-      ipcRenderer.invoke('auth:saveCredentials', email, password, token),
-    updateToken: (token: string) => ipcRenderer.invoke('auth:updateToken', token),
-    clearCredentials: () => ipcRenderer.invoke('auth:clearCredentials'),
-    hasCredentials: () => ipcRenderer.invoke('auth:hasCredentials'),
+    signup: (username: string, email: string, password: string) =>
+      ipcRenderer.invoke('auth:signup', username, email, password),
+    login: (email: string, password: string) => ipcRenderer.invoke('auth:login', email, password),
+    logout: () => ipcRenderer.invoke('auth:logout'),
+    changePassword: (currentPassword: string, newPassword: string) =>
+      ipcRenderer.invoke('auth:change-password', currentPassword, newPassword),
   },
 
   // App state management
@@ -74,14 +74,6 @@ const electronApi = {
     const handler = (_event: Electron.IpcRendererEvent, state: any) => callback(state);
     ipcRenderer.on('app-state-updated', handler);
     return () => ipcRenderer.removeListener('app-state-updated', handler);
-  },
-
-  // App state and health checks (deprecated - kept for compatibility)
-  app: {
-    ping: () => ipcRenderer.invoke('app:ping'),
-    pingClient: (deviceInfo: any) => ipcRenderer.invoke('app:ping-client', deviceInfo),
-    pingGpuServer: () => ipcRenderer.invoke('app:ping-gpu-server'),
-    wakeupGpuServer: () => ipcRenderer.invoke('app:wakeup-gpu-server'),
   },
 
   // Window controls

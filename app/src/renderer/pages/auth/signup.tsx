@@ -5,9 +5,12 @@ import { Input } from '@/components/ui/input';
 import useAuth from '@/hooks/use-auth';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export default function SignupPage() {
   const { signup, loading, error, setError } = useAuth();
+
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
@@ -20,7 +23,15 @@ export default function SignupPage() {
       return;
     }
 
-    await signup(email.trim(), password);
+    if (await signup(username.trim(), email.trim(), password)) {
+      toast.success('Signup successful! Please login.');
+      // redirect to login page
+      setTimeout(() => {
+        window.location.href = '/auth/login';
+      }, 2000);
+    } else {
+      toast.error('Signup failed. Please try again.');
+    }
   };
 
   return (
@@ -31,6 +42,16 @@ export default function SignupPage() {
       </CardHeader>
       <CardContent>
         <form onSubmit={submit} className="space-y-4">
+          <div>
+            <label className="text-sm block mb-1">Username</label>
+            <Input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
+          </div>
+
           <div>
             <label className="text-sm block mb-1">Email</label>
             <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
