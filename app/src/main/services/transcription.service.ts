@@ -8,7 +8,7 @@ import * as zmq from 'zeromq';
 import { BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { configManager } from '../config/app.js';
-import { ConfigService } from '../store/config-store.js';
+import { ConfigStore } from '../store/config-store.js';
 
 interface TranscriptMessage {
   text: string;
@@ -35,10 +35,10 @@ const RESTART_DELAY_MS = 2000;
 class TranscriptionService {
   private selfAgent: AgentProcess | null = null;
   private otherAgent: AgentProcess | null = null;
-  private configService: ConfigService;
+  private configService: ConfigStore;
 
   constructor() {
-    this.configService = ConfigService.getInstance();
+    this.configService = ConfigStore.getInstance();
   }
 
   /**

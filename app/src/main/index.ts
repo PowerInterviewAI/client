@@ -19,7 +19,7 @@ import { registerGlobalHotkeys, unregisterHotkeys } from './hotkeys.js';
 
 // Import services
 import {
-  configService,
+  configStore,
   transcriptionService,
   vcamBridgeService,
   healthCheckService,
@@ -136,10 +136,10 @@ async function createWindow() {
 // -------------------------------------------------------------
 app.whenReady().then(async () => {
   // Initialize services
-  configService.load();
+  configStore.load();
 
   // Register all IPC handlers
-  await configService.registerHandlers();
+  await configStore.registerHandlers();
   await transcriptionService.registerHandlers();
   await vcamBridgeService.registerHandlers();
   registerAppStateHandlers();

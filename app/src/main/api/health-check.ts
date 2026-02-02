@@ -5,7 +5,13 @@
 import { ApiClient, ApiResponse } from './client.js';
 
 export class HealthCheckApi {
-  constructor(private client: ApiClient) {}
+  private client: ApiClient;
+  private baseUrl: string;
+
+  constructor(baseUrl: string) {
+    this.baseUrl = baseUrl + (baseUrl.endsWith('/') ? '' : '/') + 'health-check';
+    this.client = new ApiClient(this.baseUrl);
+  }
 
   /**
    * Health check / ping

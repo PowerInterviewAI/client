@@ -3,47 +3,47 @@
  */
 
 import { ipcMain } from 'electron';
-import { healthCheckService } from '../services/health-check.service.js';
+import { appStateService } from '../services/app-state.service.js';
 
 export function registerAppStateHandlers(): void {
   // Get current app state
   ipcMain.handle('app:get-state', async () => {
-    return healthCheckService.getAppState();
+    return appStateService.getState();
   });
 
   // Update app state
   ipcMain.handle('app:update-state', async (_event, updates) => {
-    healthCheckService.updateAppState(updates);
-    return healthCheckService.getAppState();
+    appStateService.updateState(updates);
+    return appStateService.getState();
   });
 
   // Add transcript
   ipcMain.handle('app:add-transcript', async (_event, transcript) => {
-    healthCheckService.addTranscript(transcript);
-    return healthCheckService.getAppState();
+    appStateService.addTranscript(transcript);
+    return appStateService.getState();
   });
 
   // Add reply suggestion
   ipcMain.handle('app:add-reply-suggestion', async (_event, suggestion) => {
-    healthCheckService.addReplySuggestion(suggestion);
-    return healthCheckService.getAppState();
+    appStateService.addReplySuggestion(suggestion);
+    return appStateService.getState();
   });
 
   // Add code suggestion
   ipcMain.handle('app:add-code-suggestion', async (_event, suggestion) => {
-    healthCheckService.addCodeSuggestion(suggestion);
-    return healthCheckService.getAppState();
+    appStateService.addCodeSuggestion(suggestion);
+    return appStateService.getState();
   });
 
   // Clear transcripts
   ipcMain.handle('app:clear-transcripts', async () => {
-    healthCheckService.clearTranscripts();
-    return healthCheckService.getAppState();
+    appStateService.clearTranscripts();
+    return appStateService.getState();
   });
 
   // Clear suggestions
   ipcMain.handle('app:clear-suggestions', async () => {
-    healthCheckService.clearSuggestions();
-    return healthCheckService.getAppState();
+    appStateService.clearSuggestions();
+    return appStateService.getState();
   });
 }

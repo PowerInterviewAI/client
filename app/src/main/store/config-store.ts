@@ -61,9 +61,9 @@ interface StoredConfig {
   runtime?: Partial<RuntimeConfig>;
 }
 
-export class ConfigService {
+export class ConfigStore {
   private store: ElectronStore<StoredConfig>;
-  private static instance: ConfigService;
+  private static instance: ConfigStore;
 
   private constructor() {
     this.store = new ElectronStore<StoredConfig>({
@@ -74,11 +74,11 @@ export class ConfigService {
     });
   }
 
-  static getInstance(): ConfigService {
-    if (!ConfigService.instance) {
-      ConfigService.instance = new ConfigService();
+  static getInstance(): ConfigStore {
+    if (!ConfigStore.instance) {
+      ConfigStore.instance = new ConfigStore();
     }
-    return ConfigService.instance;
+    return ConfigStore.instance;
   }
 
   /**
@@ -217,4 +217,4 @@ export class ConfigService {
   }
 }
 
-export const configService = ConfigService.getInstance();
+export const configStore = ConfigStore.getInstance();
