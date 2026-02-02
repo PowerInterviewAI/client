@@ -6,7 +6,7 @@
 import { ApiClient } from '../api/client.js';
 import { AppApi } from '../api/app.js';
 import { configManager } from '../config/app.js';
-import { AppState } from '../types/app-state.js';
+import { AppState, Transcript, ReplySuggestion, CodeSuggestion, Speaker } from '../types/app-state.js';
 
 const SUCCESS_INTERVAL = 60 * 1000; // 1 minute
 const FAILURE_INTERVAL = 1000; // 1 second
@@ -27,6 +27,9 @@ export class HealthCheckService {
       is_gpu_server_live: false,
       is_logged_in: false,
       assistant_state: 'idle',
+      transcripts: [],
+      suggestions: [],
+      code_suggestions: [],
     };
   }
 
@@ -61,6 +64,71 @@ export class HealthCheckService {
    */
   updateAppState(updates: Partial<AppState>): void {
     this.appState = { ...this.appState, ...updates };
+  }
+
+  /**
+   * Add a transcript to the app state
+   */
+  addTranscript(transcript: {
+    text: string;
+    isFinal: boolean;
+    speaker: 'user' | 'interviewer';
+    timestamp: Date;
+  }): void {
+    // Only add if it's a final transcript (not partial)
+    if (!transcript.isFinal) return;
+
+    const newTranscript: Transcript = {
+      text: transcript.text,
+      speaker: transcript.speaker === 'user' ? Speaker.SELF : Speaker.OTHER,
+      timestamp: transcript.timestamp.getTime(),
+    };
+
+    this.appState = {
+      ...this.appState,
+      transcripts: [...this.appState.transcripts, newTranscript],
+    };
+  }
+
+  /**
+   * Add a reply suggestion to the app state
+   */
+  addReplySuggestion(suggestion: ReplySuggestion): void {
+    this.appState = {
+      ...this.appState,
+      suggestions: [...this.appState.suggestions, suggestion],
+    };
+  }
+
+  /**
+   * Add a code suggestion to the app state
+   */
+  addCodeSuggestion(suggestion: CodeSuggestion): void {
+    this.appState = {
+      ...this.appState,
+      code_suggestions: [...this.appState.code_suggestions, suggestion],
+    };
+  }
+
+  /**
+   * Clear all transcripts
+   */
+  clearTranscripts(): void {
+    this.appState = {
+      ...this.appState,
+      transcripts: [],
+    };
+  }
+
+  /**
+   * Clear all suggestions
+   */
+  clearSuggestions(): void {
+    this.appState = {
+      ...this.appState,
+      suggestions: [],
+      code_suggestions: [],
+    };
   }
 
   /**

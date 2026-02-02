@@ -21,31 +21,54 @@ export const useAppStateStore = create<AppStateStore>((set, get) => ({
 
   setAppState: (appState) => set({ appState }),
 
-  updateAppState: (partial) => {
+  updateAppState: async (partial) => {
     const current = get().appState;
     if (current) {
+      // Update local state immediately for responsiveness
       set({ appState: { ...current, ...partial } });
+      
+      // Sync to Electron in background
+      if (window.electronAPI?.appState) {
+        try {
+          const updatedState = await window.electronAPI.appState.update(partial);
+          // Update with server response to ensure consistency
+          set({ appState: updatedState });
+        } catch (error) {
+          console.error('[AppStateStore] Error syncing to Electron:', error);
+        }
+      }
     }
   },
 
-  addTranscript: (transcript) => {
-    const current = get().appState;
-    if (!current) return;
+  addTranscript: async (transcript) => {
+    // Sync to Electron first (it will handle the logic)
+    if (window.electronAPI?.appState) {
+      try {
+        const updatedState = await window.electronAPI.appState.addTranscript(transcript);
+        set({ appState: updatedState });
+      } catch (error) {
+        console.error('[AppStateStore] Error adding transcript to Electron:', error);
+      }
+    } else {
+      // Fallback to local-only update if Electron API not available
+      const current = get().appState;
+      if (!current) return;
 
-    const newTranscript: Transcript = {
-      text: transcript.text,
-      speaker: transcript.speaker === 'user' ? Speaker.SELF : Speaker.OTHER,
-      timestamp: transcript.timestamp.getTime(),
-    };
+      const newTranscript: Transcript = {
+        text: transcript.text,
+        speaker: transcript.speaker === 'user' ? Speaker.SELF : Speaker.OTHER,
+        timestamp: transcript.timestamp.getTime(),
+      };
 
-    // Only add if it's a final transcript (not partial)
-    if (transcript.isFinal) {
-      set({
-        appState: {
-          ...current,
-          transcripts: [...current.transcripts, newTranscript],
-        },
-      });
+      // Only add if it's a final transcript (not partial)
+      if (transcript.isFinal) {
+        set({
+          appState: {
+            ...current,
+            transcripts: [...current.transcripts, newTranscript],
+          },
+        });
+      }
     }
   },
 }));

@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import { useAppStateStore } from './use-app-state-store';
-import { RunningState } from '@/types/app-state';
 
 const POLL_INTERVAL = 1000; // 1 second
 
@@ -10,10 +9,11 @@ const POLL_INTERVAL = 1000; // 1 second
  * The actual health check logic (backend ping, GPU server checks, etc.)
  * runs in the Electron main process. This hook simply polls the state
  * and updates the React store.
+ * 
+ * Also initializes the React store with persisted state from Electron on mount.
  */
 export function useHealthCheck() {
   const setAppState = useAppStateStore((state) => state.setAppState);
-  const appState = useAppStateStore((state) => state.appState);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -26,14 +26,13 @@ export function useHealthCheck() {
 
         const electronAppState = await window.electronAPI.appState.get();
         
-        // Update the React store with health check results from Electron
-        // Keep existing appState values for fields not managed by Electron
+        // Map Electron AppState (mixed case) to renderer AppState (snake_case)
         setAppState({
-          is_logged_in: appState?.is_logged_in ?? null,
-          assistant_state: appState?.assistant_state ?? RunningState.IDLE,
-          transcripts: appState?.transcripts ?? [],
-          suggestions: appState?.suggestions ?? [],
-          code_suggestions: appState?.code_suggestions ?? [],
+          is_logged_in: electronAppState.is_logged_in,
+          assistant_state: electronAppState.assistant_state,
+          transcripts: electronAppState.transcripts,
+          suggestions: electronAppState.suggestions,
+          code_suggestions: electronAppState.code_suggestions,
           is_backend_live: electronAppState.is_backend_live,
           is_gpu_server_live: electronAppState.is_gpu_server_live,
         });
@@ -42,10 +41,10 @@ export function useHealthCheck() {
       }
     };
 
-    // Start polling immediately
+    // Initialize state immediately from Electron on mount
     pollAppState();
 
-    // Set up interval
+    // Set up interval to keep polling
     intervalRef.current = setInterval(pollAppState, POLL_INTERVAL);
 
     // Cleanup on unmount
@@ -54,5 +53,5 @@ export function useHealthCheck() {
         clearInterval(intervalRef.current);
       }
     };
-  }, [setAppState, appState]); // Include dependencies
+  }, [setAppState]); // Only depend on setAppState to avoid infinite loops
 }

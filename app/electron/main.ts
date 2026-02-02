@@ -173,6 +173,31 @@ app.whenReady().then(async () => {
     return healthCheckService.getAppState();
   });
 
+  ipcMain.handle('app:add-transcript', async (_event, transcript) => {
+    healthCheckService.addTranscript(transcript);
+    return healthCheckService.getAppState();
+  });
+
+  ipcMain.handle('app:add-reply-suggestion', async (_event, suggestion) => {
+    healthCheckService.addReplySuggestion(suggestion);
+    return healthCheckService.getAppState();
+  });
+
+  ipcMain.handle('app:add-code-suggestion', async (_event, suggestion) => {
+    healthCheckService.addCodeSuggestion(suggestion);
+    return healthCheckService.getAppState();
+  });
+
+  ipcMain.handle('app:clear-transcripts', async () => {
+    healthCheckService.clearTranscripts();
+    return healthCheckService.getAppState();
+  });
+
+  ipcMain.handle('app:clear-suggestions', async () => {
+    healthCheckService.clearSuggestions();
+    return healthCheckService.getAppState();
+  });
+
   // Register app health check IPC handlers (deprecated - kept for compatibility)
   ipcMain.handle('app:ping', async () => {
     // Import AppApi dynamically to avoid circular dependencies
