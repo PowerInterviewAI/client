@@ -22,10 +22,16 @@ export default function useAuth() {
     try {
       const response = await axiosClient.post('/auth/login', { email, password });
       const token = response.data?.token;
+      console.log('Login successful, redirecting to main page');
 
       // Save credentials to electron store
       if (window.electronAPI?.auth) {
         await window.electronAPI.auth.saveCredentials(email, password, token);
+      }
+
+      // Update app state to mark user as logged in
+      if (window.electronAPI?.appState) {
+        await window.electronAPI.appState.update({ isLoggedIn: true });
       }
 
       window.location.href = '/main';
@@ -68,6 +74,11 @@ export default function useAuth() {
       // Clear credentials from electron store
       if (window.electronAPI?.auth) {
         await window.electronAPI.auth.clearCredentials();
+      }
+
+      // Update app state to mark user as logged out
+      if (window.electronAPI?.appState) {
+        await window.electronAPI.appState.update({ isLoggedIn: false });
       }
 
       window.location.href = '/auth/login';

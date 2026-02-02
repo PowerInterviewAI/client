@@ -36,7 +36,7 @@ export default function LoginPage() {
     void loadSavedCredentials();
   }, []);
 
-  const submit = async (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     await login(email.trim(), password);

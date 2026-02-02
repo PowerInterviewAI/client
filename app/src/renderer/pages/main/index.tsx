@@ -18,6 +18,8 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { useNavigate } from 'react-router-dom';
 
 export default function MainPage() {
+  console.log('Rendering MainPage');
+
   const { logout } = useAuth();
   const navigate = useNavigate();
 
@@ -33,6 +35,8 @@ export default function MainPage() {
 
   // App state from context
   const { appState, addTranscript } = useAppState();
+
+  console.log('MainPage appState:', appState);
 
   // Listen for transcript updates from Electron
   useEffect(() => {
