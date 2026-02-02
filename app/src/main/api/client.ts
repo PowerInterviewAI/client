@@ -4,6 +4,7 @@
  */
 
 import { app } from 'electron';
+import { EnvUtil } from '../utils/env.js';
 
 export interface ApiResponse<T = unknown> {
   data?: T;
@@ -16,13 +17,14 @@ export interface ApiResponse<T = unknown> {
 }
 
 export class ApiClient {
-  private baseUrl: string;
+  private baseUrl: string = '';
   private headers: Record<string, string> = {};
 
-  constructor(baseUrl: string) {
-    if (!baseUrl) {
-      throw new Error('ApiClient: baseUrl is required');
-    }
+  constructor() {
+    const baseUrl = EnvUtil.isDev()
+      ? 'http://localhost:8000/api'
+      : 'https://power-interview-backend.onrender.com';
+
     this.baseUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/'; // Ensure baseUrl ends with slash
     this.headers = {
       'Content-Type': 'application/json',

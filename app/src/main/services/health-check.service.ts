@@ -37,8 +37,7 @@ export class HealthCheckService {
 
   /** Get HealthCheckApi instance */
   private getApi(): HealthCheckApi {
-    const serverUrl = configManager.get('serverUrl');
-    return new HealthCheckApi(serverUrl);
+    return new HealthCheckApi();
   }
   // use safeSleep util for cancellable/abortable sleeps
 

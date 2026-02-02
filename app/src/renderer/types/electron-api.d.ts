@@ -58,20 +58,13 @@ declare global {
 
     // Authentication management
     auth: {
-      getCredentials: () => Promise<{
-        email: string;
-        password: string;
-        token?: string;
-        lastLoginAt?: string;
-      } | null>;
-      saveCredentials: (
-        email: string,
-        password: string,
-        token?: string
-      ) => Promise<{ success: boolean }>;
-      updateToken: (token: string) => Promise<{ success: boolean }>;
-      clearCredentials: () => Promise<{ success: boolean }>;
-      hasCredentials: () => Promise<boolean>;
+      login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+      signup: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+      logout: () => Promise<{ success: boolean; error?: string }>;
+      changePassword: (
+        oldPassword: string,
+        newPassword: string
+      ) => Promise<{ success: boolean; error?: string }>;
     };
 
     // VCam bridge management

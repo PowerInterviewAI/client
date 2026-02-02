@@ -4,7 +4,7 @@
  * All state is stored in Electron and accessed via IPC
  */
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { type AppState } from '@/types/app-state';
 
 interface AppStateContextType {

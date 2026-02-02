@@ -23,10 +23,10 @@ export default function LoginPage() {
     const loadSavedCredentials = async () => {
       if (window.electronAPI?.auth) {
         try {
-          const savedCreds = await window.electronAPI.auth.getCredentials();
-          if (savedCreds) {
-            setEmail(savedCreds.email || '');
-            setPassword(savedCreds.password || '');
+          const conf = await window.electronAPI.config.get();
+          if (conf) {
+            setEmail(conf.email || '');
+            setPassword(conf.password || '');
           }
         } catch (error) {
           console.error('Failed to load saved credentials:', error);
