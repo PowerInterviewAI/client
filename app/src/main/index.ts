@@ -14,9 +14,9 @@ interface StoreSchema {
 const store = new ElectronStore<StoreSchema>();
 
 // Import modules
-import { setWindowBounds, setWindowReference } from './window-controls.js';
+import { setWindowBounds, setWindowReference } from './services/window-control-service.js';
 import { registerGlobalHotkeys, unregisterHotkeys } from './hotkeys.js';
-import * as windowControls from './window-controls.js';
+import * as windowControls from './services/window-control-service.js';
 
 // Import services
 import {
@@ -169,8 +169,6 @@ app.on('will-quit', async () => {
   healthCheckService.stop();
 
   unregisterHotkeys();
-
-  // Configuration auto-saves on changes, no need to save again on quit
 });
 
 app.on('window-all-closed', () => {
@@ -182,82 +180,5 @@ app.on('window-all-closed', () => {
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
-  }
-});
-
-// -------------------------------------------------------------
-// IPC HANDLERS FOR WINDOW CONTROLS
-// -------------------------------------------------------------
-ipcMain.on('window-minimize', () => {
-  if (win && !win.isDestroyed()) {
-    win.minimize();
-  }
-});
-
-ipcMain.on('window-close', () => {
-  if (win && !win.isDestroyed()) {
-    win.close();
-  }
-});
-
-// Stealth controls: allow renderer to set or toggle stealth via IPC
-ipcMain.on('set-stealth', (_event, isStealth: boolean) => {
-  try {
-    if (isStealth) {
-      windowControls.enableStealth();
-    } else {
-      windowControls.disableStealth();
-    }
-  } catch (err) {
-    console.warn('set-stealth handler error:', err);
-  }
-});
-
-ipcMain.on('window-toggle-stealth', () => {
-  try {
-    windowControls.toggleStealth();
-  } catch (err) {
-    console.warn('window-toggle-stealth handler error:', err);
-  }
-});
-
-// Renderer can request an opacity toggle (useful for UI buttons)
-ipcMain.on('window-toggle-opacity', () => {
-  try {
-    windowControls.toggleOpacity();
-  } catch (err) {
-    console.warn('window-toggle-opacity handler error:', err);
-  }
-});
-
-// Handle incremental resize deltas from renderer (edge dragging)
-ipcMain.on('window-resize-delta', (_event, dx: number, dy: number, edge: string) => {
-  try {
-    if (!win || win.isDestroyed()) return;
-
-    const minWidth = 300;
-    const minHeight = 200;
-    const bounds = win.getBounds();
-    const nb = { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height };
-
-    // Only handle right/bottom/bottom-right resizes (left/top grips disabled)
-    if (edge.includes('right')) {
-      nb.width += dx;
-    }
-    if (edge.includes('bottom')) {
-      nb.height += dy;
-    }
-
-    // enforce minimums
-    if (nb.width < minWidth) {
-      nb.width = minWidth;
-    }
-    if (nb.height < minHeight) {
-      nb.height = minHeight;
-    }
-
-    setWindowBounds(nb);
-  } catch (err) {
-    console.warn('window-resize-delta handler error:', err);
   }
 });
