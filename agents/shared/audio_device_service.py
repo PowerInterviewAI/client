@@ -218,7 +218,7 @@ class AudioDeviceService:
         try:
             audio_devices = cls.get_audio_devices()
             for device in audio_devices:
-                if device["name"] == name:
+                if name.startswith(device["name"]):
                     return int(device["index"])
         except Exception as ex:
             logger.error(f"Failed to get device index by name: {name} {ex}")
