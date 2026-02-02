@@ -8,7 +8,7 @@ import * as zmq from 'zeromq';
 import { BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { configManager } from '../config/app.js';
-import { ConfigService } from './config.service.js';
+import { ConfigService } from '../store/config-store.js';
 
 interface TranscriptMessage {
   text: string;
