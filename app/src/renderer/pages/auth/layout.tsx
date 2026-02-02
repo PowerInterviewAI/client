@@ -9,15 +9,14 @@ export default function AuthLayout() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log('AuthLayout appState:', appState?.is_logged_in);
     // Redirect to main page if already logged in
-    if (appState?.is_logged_in === true) {
+    if (appState?.isLoggedIn === true) {
       navigate('/main', { replace: true });
     }
-  }, [appState?.is_logged_in, navigate]);
+  }, [appState?.isLoggedIn, navigate]);
 
   // Show loading state while checking backend status
-  if (appState?.is_logged_in === false) {
+  if (appState?.isLoggedIn === false) {
     return (
       <div className="flex-1 flex items-center justify-center bg-background">
         <div className="w-full max-w-md mx-auto p-6">

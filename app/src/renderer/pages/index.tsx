@@ -9,14 +9,14 @@ export default function IndexPage() {
 
   useEffect(() => {
     // Redirect to main page if backend is live and logged in
-    if (appState?.is_logged_in === null) {
+    if (appState?.isLoggedIn === null) {
       return;
-    } else if (appState?.is_logged_in) {
+    } else if (appState?.isLoggedIn) {
       navigate('/main', { replace: true });
     } else {
       navigate('/auth/login', { replace: true });
     }
-  }, [appState?.is_backend_live, appState?.is_logged_in, navigate]);
+  }, [appState?.isBackendLive, appState?.isLoggedIn, navigate]);
 
   // Optionally, render a loading state while checking
   return <Loading disclaimer="Initializing context for your device…" />;

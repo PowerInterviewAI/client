@@ -48,6 +48,13 @@ export function setWindowReference(window: BrowserWindow): void {
 }
 
 /**
+ * Retrieve the current main BrowserWindow reference (may be null)
+ */
+export function getWindowReference(): BrowserWindow | null {
+  return win;
+}
+
+/**
  * Set window bounds with minimum size enforcement
  */
 export function setWindowBounds(bounds: WindowBounds): void {

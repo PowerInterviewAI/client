@@ -30,6 +30,9 @@ declare global {
       clearSuggestions: () => Promise<AppState>;
     };
 
+    // Pushed app-state updates from main process
+    onAppStateUpdated: (callback: (state: AppState) => void) => () => void;
+
     // Transcription management
     transcription: {
       startSelf: () => Promise<void>;

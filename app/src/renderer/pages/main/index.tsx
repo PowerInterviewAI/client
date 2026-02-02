@@ -149,7 +149,7 @@ export default function MainPage() {
   // Recompute when assistant running state or appState becomes available
   useEffect(() => {
     computeAvailable();
-  }, [appState?.assistant_state, appState, computeAvailable]);
+  }, [appState?.assistantState, appState, computeAvailable]);
 
   // Sign out handling
   const handleSignOut = async () => {
@@ -162,25 +162,25 @@ export default function MainPage() {
     }
   }, [appState?.transcripts, transcripts]);
   useEffect(() => {
-    if (appState?.suggestions && appState?.suggestions !== replySuggestions) {
-      setReplySuggestions(appState?.suggestions);
+    if (appState?.replySuggestions && appState?.replySuggestions !== replySuggestions) {
+      setReplySuggestions(appState?.replySuggestions);
     }
-  }, [appState?.suggestions, replySuggestions]);
+  }, [appState?.replySuggestions, replySuggestions]);
   useEffect(() => {
-    if (appState?.code_suggestions && appState?.code_suggestions !== codeSuggestions) {
-      setCodeSuggestions(appState?.code_suggestions);
+    if (appState?.codeSuggestions && appState?.codeSuggestions !== codeSuggestions) {
+      setCodeSuggestions(appState?.codeSuggestions);
     }
-  }, [appState?.code_suggestions, codeSuggestions]);
+  }, [appState?.codeSuggestions, codeSuggestions]);
 
   // Redirect to login if not logged in
   const _redirectedToLogin = useRef(false);
 
   useEffect(() => {
-    if (appState?.is_logged_in === false && !_redirectedToLogin.current) {
+    if (appState?.isLoggedIn === false && !_redirectedToLogin.current) {
       _redirectedToLogin.current = true;
       navigate('/auth/login', { replace: true });
     }
-  }, [appState?.is_logged_in, navigate]);
+  }, [appState?.isLoggedIn, navigate]);
 
   // Show loading if config or app state is not loaded yet
   if (configLoading || !appState) {
@@ -188,17 +188,17 @@ export default function MainPage() {
   }
 
   // Show loading if backend is not live
-  if (appState && !appState.is_backend_live) {
+  if (appState && !appState.isBackendLive) {
     return <Loading disclaimer="Initializing context for your device…" />;
   }
 
   // Show loading if not logged in (fallback)
-  if (appState?.is_logged_in === false) {
+  if (appState?.isLoggedIn === false) {
     return <Loading disclaimer="Redirecting to login…" />;
   }
 
   // Show loading if GPU server is not live
-  if (appState?.is_gpu_server_live === false) {
+  if (appState?.isGpuServerLive === false) {
     return (
       <Loading disclaimer="Initializing AI processing resources… Please allow up to 5 minutes for completion." />
     );
@@ -206,7 +206,7 @@ export default function MainPage() {
 
   return (
     <div className="flex-1 flex flex-col w-full bg-background p-1 space-y-1">
-      {isStealth && <HotkeysPanel runningState={appState?.assistant_state ?? RunningState.IDLE} />}
+      {isStealth && <HotkeysPanel runningState={appState?.assistantState ?? RunningState.IDLE} />}
 
       <div className="flex-1 flex overflow-y-hidden gap-1">
         {/* Left Column: Video + Transcription */}
@@ -218,7 +218,7 @@ export default function MainPage() {
           <div id="video-panel" className="h-45 w-full max-w-80 mx-auto" hidden={hideVideoPanel}>
             <VideoPanel
               ref={videoPanelRef}
-              runningState={appState?.assistant_state ?? RunningState.IDLE}
+              runningState={appState?.assistantState ?? RunningState.IDLE}
             />
           </div>
 
@@ -251,7 +251,7 @@ export default function MainPage() {
       </div>
 
       <ControlPanel
-        runningState={appState?.assistant_state ?? RunningState.IDLE}
+        runningState={appState?.assistantState ?? RunningState.IDLE}
         onProfileClick={() => setIsProfileOpen(true)}
         onSignOut={handleSignOut}
       />

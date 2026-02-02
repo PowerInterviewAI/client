@@ -69,6 +69,13 @@ const electronApi = {
     clearSuggestions: () => ipcRenderer.invoke('app:clear-suggestions'),
   },
 
+  // Listen for pushed app state updates from main
+  onAppStateUpdated: (callback: (state: any) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, state: any) => callback(state);
+    ipcRenderer.on('app-state-updated', handler);
+    return () => ipcRenderer.removeListener('app-state-updated', handler);
+  },
+
   // App state and health checks (deprecated - kept for compatibility)
   app: {
     ping: () => ipcRenderer.invoke('app:ping'),

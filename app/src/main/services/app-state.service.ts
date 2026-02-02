@@ -4,6 +4,7 @@
  */
 
 import { AppState, Transcript, ReplySuggestion, CodeSuggestion } from '../types/app-state.js';
+import { getWindowReference } from './window-control-service.js';
 
 const DEFAULT_STATE: AppState = {
   isRunning: false,
@@ -32,7 +33,17 @@ export class AppStateService {
 
   updateState(updates: Partial<AppState>): AppState {
     this.state = { ...this.state, ...updates };
-    return this.getState();
+    const s = this.getState();
+    // broadcast update to renderer if window available
+    try {
+      const win = getWindowReference();
+      if (win && !win.isDestroyed()) {
+        win.webContents.send('app-state-updated', s);
+      }
+    } catch (e) {
+      console.warn('Failed to broadcast app state update:', e);
+    }
+    return s;
   }
 
   addTranscript(t: {
@@ -48,22 +59,63 @@ export class AppStateService {
       timestamp: t.timestamp.getTime(),
     } as unknown as Transcript;
     this.state = { ...this.state, transcripts: [...this.state.transcripts, entry] };
+    // broadcast update
+    try {
+      const win = getWindowReference();
+      if (win && !win.isDestroyed()) {
+        win.webContents.send('app-state-updated', this.getState());
+      }
+    } catch (e) {
+      console.warn('Failed to broadcast app state transcript:', e);
+    }
   }
 
   addReplySuggestion(s: ReplySuggestion): void {
     this.state = { ...this.state, replySuggestions: [...this.state.replySuggestions, s] };
+    try {
+      const win = getWindowReference();
+      if (win && !win.isDestroyed()) {
+        win.webContents.send('app-state-updated', this.getState());
+      }
+    } catch (e) {
+      console.warn('Failed to broadcast reply suggestion:', e);
+    }
   }
 
   addCodeSuggestion(s: CodeSuggestion): void {
     this.state = { ...this.state, codeSuggestions: [...this.state.codeSuggestions, s] };
+    try {
+      const win = getWindowReference();
+      if (win && !win.isDestroyed()) {
+        win.webContents.send('app-state-updated', this.getState());
+      }
+    } catch (e) {
+      console.warn('Failed to broadcast code suggestion:', e);
+    }
   }
 
   clearTranscripts(): void {
     this.state = { ...this.state, transcripts: [] };
+    try {
+      const win = getWindowReference();
+      if (win && !win.isDestroyed()) {
+        win.webContents.send('app-state-updated', this.getState());
+      }
+    } catch (e) {
+      console.warn('Failed to broadcast clear transcripts:', e);
+    }
   }
 
   clearSuggestions(): void {
     this.state = { ...this.state, replySuggestions: [], codeSuggestions: [] };
+    try {
+      const win = getWindowReference();
+      if (win && !win.isDestroyed()) {
+        win.webContents.send('app-state-updated', this.getState());
+      }
+    } catch (e) {
+      console.warn('Failed to broadcast clear suggestions:', e);
+    }
   }
 }
 
