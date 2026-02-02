@@ -12,5 +12,4 @@ __pycache__
 /build
 
 # Generated files
-/models
 /nuitka-crash-report.xml
