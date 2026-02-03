@@ -105,15 +105,6 @@
       "shortcutName": "Power Interview",
       "artifactName": "PowerInterview-Setup-${version}.exe"
     },
-    "extraResources": [
-      {
-        "from": "resources/",
-        "to": "resources",
-        "filter": [
-          "**/*"
-        ]
-      }
-    ],
     "extraFiles": [
       {
         "from": "../build/agents/dist/",
