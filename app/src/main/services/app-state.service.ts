@@ -60,6 +60,7 @@ export class AppStateService {
       text: t.text,
       speaker: t.speaker === 'user' ? 'self' : 'other',
       timestamp: t.timestamp.getTime(),
+      isFinal: t.isFinal,
     } as Transcript;
 
     // Find last transcript for speaker. If found script is not final, replace it, else append
@@ -71,7 +72,7 @@ export class AppStateService {
       return -1;
     })();
 
-    if (lastIndex >= 0 && !t.isFinal) {
+    if (lastIndex >= 0 && !transcripts[lastIndex].isFinal) {
       // Replace last
       transcripts[lastIndex] = entry;
     } else {

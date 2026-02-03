@@ -20,6 +20,7 @@ export interface Transcript {
   timestamp: number;
   text: string;
   speaker: Speaker;
+  isFinal: boolean;
 }
 
 export interface ReplySuggestion {
