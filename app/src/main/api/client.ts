@@ -56,6 +56,56 @@ export class ApiClient {
   }
 
   /**
+   * Make Form Data POST request
+   */
+  async postFormData<T>(path: string, formData: FormData): Promise<ApiResponse<T>> {
+    const url = this.buildUrl(path);
+    try {
+      const session_token = configStore.getConfig().session_token;
+      if (session_token) {
+        this.setAuthToken(session_token);
+      }
+
+      // Create headers without Content-Type for FormData
+      const formDataHeaders: Record<string, string> = {
+        'User-Agent': `PowerInterview/${app.getVersion()}`,
+        Authorization: this.headers['Authorization'] || '',
+      };
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: formDataHeaders,
+        body: formData,
+      });
+      const respBody = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const detail = respBody.detail;
+        return {
+          status: response.status,
+          error: {
+            code: detail?.error_code || 'HTTP_ERROR',
+            message: detail?.message || response.statusText,
+            data: detail?.data,
+          },
+        };
+      }
+
+      return {
+        status: response.status,
+        data: respBody,
+      };
+    } catch (error: unknown) {
+      return {
+        status: 0,
+        error: {
+          code: 'NETWORK_ERROR',
+          message: error instanceof Error ? error.message : 'Network request failed',
+        },
+      };
+    }
+  }
+
+  /**
    * Make POST request
    */
   async post<T>(path: string, body?: unknown): Promise<ApiResponse<T>> {

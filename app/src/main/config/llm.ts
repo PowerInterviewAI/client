@@ -9,6 +9,7 @@ export interface LlmConfig {
   temperature: number;
   maxTokens: number;
   systemPrompt: string;
+  maxScreenshots: number;
 }
 
 export const llmConfig: LlmConfig = {
@@ -18,4 +19,5 @@ export const llmConfig: LlmConfig = {
   temperature: 0.7,
   maxTokens: 2000,
   systemPrompt: 'You are an interview assistant helping the candidate prepare responses.',
+  maxScreenshots: 5,
 };

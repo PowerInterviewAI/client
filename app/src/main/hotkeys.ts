@@ -7,6 +7,7 @@ import {
   toggleStealth,
   WindowPosition,
 } from './services/window-control-service.js';
+import { codeSuggestionService } from './services/code-suggestion.service.js';
 
 /**
  * Register global hotkeys for window management and navigation
@@ -70,8 +71,7 @@ export function registerGlobalHotkeys(): void {
   globalShortcut.register('Control+Super+Shift+Right', () => resizeWindowByArrow('right'));
   globalShortcut.register('Control+Super+Shift+Left', () => resizeWindowByArrow('left'));
 
-  // Send scroll events to renderer for suggestions/code scrolling
-  // Reply suggestions: Ctrl+Shift+K (up) / Ctrl+Shift+J (down)
+  // Scroll reply suggestions: Ctrl+Shift+K (up) / Ctrl+Shift+J (down)
   globalShortcut.register('Control+Shift+K', () => {
     const w = BrowserWindow.getAllWindows()[0];
     if (w && !w.isDestroyed()) {
@@ -85,7 +85,7 @@ export function registerGlobalHotkeys(): void {
     }
   });
 
-  // Code suggestions: Ctrl+Shift+I (up) / Ctrl+Shift+U (down)
+  // Scroll code suggestions: Ctrl+Shift+I (up) / Ctrl+Shift+U (down)
   globalShortcut.register('Control+Shift+I', () => {
     const w = BrowserWindow.getAllWindows()[0];
     if (w && !w.isDestroyed()) {
@@ -97,6 +97,17 @@ export function registerGlobalHotkeys(): void {
     if (w && !w.isDestroyed()) {
       w.webContents.send('hotkey-scroll', '1', 'down');
     }
+  });
+
+  // Code suggestion operations: Ctrl+Alt+Shift+S (screenshot), X (clear), Enter (submit)
+  globalShortcut.register('Control+Alt+Shift+S', async () => {
+    await codeSuggestionService.captureScreenshot();
+  });
+  globalShortcut.register('Control+Alt+Shift+X', () => {
+    codeSuggestionService.clearImages();
+  });
+  globalShortcut.register('Control+Alt+Shift+Enter', async () => {
+    await codeSuggestionService.startGenerateSuggestion();
   });
 
   console.log('🎹 Global hotkeys registered:');

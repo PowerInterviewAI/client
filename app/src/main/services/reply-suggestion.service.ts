@@ -20,8 +20,10 @@ interface GenerateReplySuggestionRequest {
 }
 
 class ReplySuggestionService {
+  private readonly NO_SUGGESTION = 'NO_SUGGESTION_NEEDED';
+
+  private apiClient: ApiClient = new ApiClient();
   private suggestions: Map<number, ReplySuggestion> = new Map();
-  private isGenerating: boolean = false;
   private abortMap: Map<string, boolean> = new Map();
 
   /**
@@ -35,7 +37,7 @@ class ReplySuggestionService {
   }
 
   private apendSuggestion(timestamp: number, suggestion: ReplySuggestion): void {
-    if (suggestion.answer.length > 0 && 'NO_SUGGESTION_NEEDED'.startsWith(suggestion.answer)) {
+    if (suggestion.answer.length > 0 && this.NO_SUGGESTION.startsWith(suggestion.answer)) {
       this.suggestions.delete(timestamp);
     } else {
       this.suggestions.set(timestamp, suggestion);
@@ -58,7 +60,7 @@ class ReplySuggestionService {
       state: SuggestionState.PENDING,
     };
 
-    // Add to local storage
+    // Append initial suggestion
     this.apendSuggestion(timestamp, suggestion);
 
     // Update app state immediately
@@ -75,8 +77,7 @@ class ReplySuggestionService {
         transcripts: transcripts,
       };
 
-      const apiClient = new ApiClient();
-      const response = await apiClient.postStream('/api/llm/reply-suggestion', requestBody);
+      const response = await this.apiClient.postStream('/api/llm/reply-suggestion', requestBody);
 
       if (!response) {
         throw new Error('No response from reply suggestion API');
@@ -156,17 +157,10 @@ class ReplySuggestionService {
     // Cancel current task if running
     this.stopRunningTasks();
 
-    // Create new abort controller
-    this.isGenerating = true;
-
     // Start the background task
-    try {
-      const taskId = UuidUtil.generate();
-      this.abortMap.set(taskId, false);
-      this.generateSuggestion(taskId, filteredTranscripts);
-    } finally {
-      this.isGenerating = false;
-    }
+    const taskId = UuidUtil.generate();
+    this.abortMap.set(taskId, false);
+    this.generateSuggestion(taskId, filteredTranscripts);
   }
 
   /**
@@ -176,13 +170,6 @@ class ReplySuggestionService {
     this.abortMap.forEach((_value, key) => {
       this.abortMap.set(key, true);
     });
-  }
-
-  /**
-   * Check if currently generating
-   */
-  isCurrentlyGenerating(): boolean {
-    return this.isGenerating;
   }
 }
 
