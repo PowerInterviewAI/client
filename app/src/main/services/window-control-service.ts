@@ -268,7 +268,7 @@ export function enableStealth(): void {
       console.warn('Failed to save stealth state:', e);
     }
 
-    console.log('🕵️‍♀️ Stealth mode enabled');
+    console.log('Stealth mode enabled');
 
     try {
       if (win && !win.isDestroyed()) {
@@ -305,7 +305,7 @@ export function disableStealth(): void {
       console.warn('Failed to save stealth state:', e);
     }
 
-    console.log('🟢 Stealth mode disabled');
+    console.log('Stealth mode disabled');
 
     try {
       if (win && !win.isDestroyed()) {
