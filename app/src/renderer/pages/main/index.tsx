@@ -152,7 +152,9 @@ export default function MainPage() {
   useEffect(() => {
     if (appState?.isLoggedIn === false && !_redirectedToLogin.current) {
       _redirectedToLogin.current = true;
-      navigate('/auth/login', { replace: true });
+      setTimeout(() => {
+        navigate('/auth/login', { replace: true });
+      }, 500);
     }
   }, [appState?.isLoggedIn, navigate]);
 
@@ -167,12 +169,7 @@ export default function MainPage() {
   }
 
   // Show loading if config or app state is not loaded yet
-  if (configLoading || !appState) {
-    return <Loading disclaimer="Loading…" />;
-  }
-
-  // Show loading if backend is not live
-  if (appState && !appState.isBackendLive) {
+  if (configLoading || !appState || (appState && !appState.isBackendLive)) {
     return <Loading disclaimer="Loading…" />;
   }
 
