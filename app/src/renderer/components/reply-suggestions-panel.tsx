@@ -122,13 +122,13 @@ export default function ReplySuggestionsPanel({ suggestions = [], style }: Sugge
                   </div>
 
                   {(s.state === SuggestionState.LOADING || s.state === SuggestionState.SUCCESS) && (
-                    <div className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
+                    <div className="text-sm font-semibold text-foreground/90 leading-relaxed whitespace-pre-wrap">
                       🪄 {s.answer}
                     </div>
                   )}
 
                   {s.state === SuggestionState.STOPPED && (
-                    <div className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
+                    <div className="text-sm font-semibold text-foreground/90 leading-relaxed whitespace-pre-wrap">
                       🪄 {s.answer} ...
                     </div>
                   )}
