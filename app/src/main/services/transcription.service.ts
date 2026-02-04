@@ -12,6 +12,7 @@ import { configStore } from '../store/config-store.js';
 import { EnvUtil } from '../utils/env.js';
 import { appStateService } from './app-state.service.js';
 import { Speaker, Transcript } from '../types/app-state.js';
+import { replySuggestionService } from './reply-suggestion.service.js';
 
 interface AgentProcess {
   process: ChildProcess;
@@ -283,6 +284,12 @@ class TranscriptionService {
             }
           }
 
+          // Generate reply suggestions
+          if (transcript.speaker === Speaker.OTHER && transcript.isFinal) {
+            await replySuggestionService.startGenerateSuggestion(cleaned);
+          }
+
+          // Update application state
           appStateService.updateState({ transcripts: cleaned });
         }
       }

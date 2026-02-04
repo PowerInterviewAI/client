@@ -64,6 +64,14 @@ export class ApiClient {
   }
 
   /**
+   * Make POST request for streaming response
+   */
+  async postStream(path: string, body?: unknown): Promise<ReadableStream<Uint8Array> | null> {
+    const url = this.buildUrl(path);
+    return this.requestStream('POST', url, body);
+  }
+
+  /**
    * Make PUT request
    */
   async put<T>(path: string, body?: unknown): Promise<ApiResponse<T>> {
@@ -127,6 +135,43 @@ export class ApiClient {
           message: error instanceof Error ? error.message : 'Network request failed',
         },
       };
+    }
+  }
+
+  /**
+   * Make HTTP request for streaming response
+   */
+  async requestStream(
+    method: string,
+    url: string,
+    body?: unknown
+  ): Promise<ReadableStream<Uint8Array> | null> {
+    try {
+      const session_token = configStore.getConfig().session_token;
+      if (session_token) {
+        this.setAuthToken(session_token);
+      }
+
+      const response = await fetch(url, {
+        method,
+        headers: this.headers,
+        body: body ? JSON.stringify(body) : undefined,
+      });
+
+      if (!response.ok || !response.body) {
+        console.error('[ApiClient] Streaming request failed:', {
+          method,
+          url,
+          status: response.status,
+          statusText: response.statusText,
+        });
+        return null;
+      }
+
+      return response.body;
+    } catch (error) {
+      console.error('[ApiClient] Streaming request error:', { method, url, error });
+      return null;
     }
   }
 

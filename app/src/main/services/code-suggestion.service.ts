@@ -5,8 +5,7 @@
  * SKELETON: Requires LLM API integration (OpenAI/Anthropic)
  */
 
-import { Suggestion } from '../types/app-state.js';
-import { UuidUtil } from '../utils/uuid.js';
+import { CodeSuggestion, SuggestionState } from '../types/app-state.js';
 import { llmConfig } from '../config/llm.js';
 
 export class CodeSuggestionService {
@@ -27,7 +26,7 @@ export class CodeSuggestionService {
    * Generate code suggestion based on context
    * SKELETON: Implement LLM API call
    */
-  async generateSuggestion(): Promise<Suggestion> {
+  async generateSuggestion(): Promise<CodeSuggestion> {
     console.log('[CodeSuggestionService] generateSuggestion - not implemented');
 
     // TODO: Call LLM API (OpenAI, Anthropic, etc.)
@@ -38,18 +37,17 @@ export class CodeSuggestionService {
 
     // Mock response for now
     return {
-      id: UuidUtil.generate(),
-      type: 'code',
-      content: '// Code suggestion will appear here',
-      confidence: 0.85,
-      timestamp: new Date(),
+      timestamp: Date.now(),
+      image_urls: [],
+      suggestion_content: '// Code suggestion will appear here',
+      state: SuggestionState.SUCCESS,
     };
   }
 
   /**
    * Generate multiple alternative suggestions
    */
-  async generateAlternatives(): Promise<Suggestion[]> {
+  async generateAlternatives(): Promise<CodeSuggestion[]> {
     console.log('[CodeSuggestionService] generateAlternatives - not implemented');
 
     // TODO: Generate multiple suggestions with temperature variation

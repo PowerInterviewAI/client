@@ -57,7 +57,7 @@ export interface Session {
   startedAt: Date;
   endedAt?: Date;
   transcript: TranscriptEntry[];
-  suggestions: Suggestion[];
+  suggestions: ReplySuggestion[];
 }
 
 export interface TranscriptEntry {
@@ -66,14 +66,6 @@ export interface TranscriptEntry {
   text: string;
   speaker: 'user' | 'interviewer' | 'system';
   confidence?: number;
-}
-
-export interface Suggestion {
-  id: string;
-  type: 'code' | 'reply' | 'general';
-  content: string;
-  confidence: number;
-  timestamp: Date;
 }
 
 export interface DeviceInfo {
