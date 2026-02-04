@@ -51,16 +51,16 @@ export class HealthCheckService {
         let backendLive = false;
         try {
           const pingResult = await this.client.ping();
-
-          backendLive = !pingResult.error && pingResult.data != null;
-          console.log('[HealthCheckService] Backend ping result:', {
-            backendLive,
-            error: pingResult.error,
-          });
+          backendLive = pingResult.status === 200;
         } catch (error) {
           console.error('[HealthCheckService] Backend ping error:', error);
         }
 
+        if (!backendLive) {
+          console.log('[HealthCheckService] Backend not live');
+        }
+
+        // Update app state
         appStateService.updateState({ isBackendLive: backendLive });
 
         const next = backendLive ? SUCCESS_INTERVAL : FAILURE_INTERVAL;
