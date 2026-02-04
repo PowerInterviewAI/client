@@ -17,5 +17,5 @@ export default function IndexPage() {
   }, [appState?.isBackendLive, appState?.isLoggedIn, navigate]);
 
   // Optionally, render a loading state while checking
-  return <Loading disclaimer="Initializing context for your device…" />;
+  return <Loading disclaimer="Loading…" />;
 }

@@ -168,19 +168,17 @@ export default function MainPage() {
 
   // Show loading if config or app state is not loaded yet
   if (configLoading || !appState) {
-    return <Loading disclaimer="Loading your configuration…" />;
+    return <Loading disclaimer="Loading…" />;
   }
 
   // Show loading if backend is not live
   if (appState && !appState.isBackendLive) {
-    return <Loading disclaimer="Initializing context for your device…" />;
+    return <Loading disclaimer="Loading…" />;
   }
 
   if (appState?.isGpuServerLive === false) {
     // Show loading if GPU server is not live
-    return (
-      <Loading disclaimer="Initializing AI processing resources… Please allow up to 5 minutes for completion." />
-    );
+    return <Loading disclaimer="Initializing AI resources… This may take several minutes." />;
   }
 
   return (

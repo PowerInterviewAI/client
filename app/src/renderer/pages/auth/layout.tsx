@@ -42,6 +42,6 @@ export default function AuthLayout() {
       </div>
     );
   } else {
-    return <Loading disclaimer="Initializing context for your device…" />;
+    return <Loading disclaimer="Loading…" />;
   }
 }
