@@ -42,6 +42,9 @@ class ReplySuggestionService {
     } else {
       this.suggestions.set(timestamp, suggestion);
     }
+    appStateService.updateState({
+      replySuggestions: Array.from(this.suggestions.values()),
+    });
   }
 
   /**
@@ -62,11 +65,6 @@ class ReplySuggestionService {
 
     // Append initial suggestion
     this.apendSuggestion(timestamp, suggestion);
-
-    // Update app state immediately
-    appStateService.updateState({
-      replySuggestions: Array.from(this.suggestions.values()),
-    });
 
     try {
       const conf = configStore.getConfig();
@@ -94,9 +92,6 @@ class ReplySuggestionService {
             console.log('Suggestion generation aborted by user request');
             suggestion.state = SuggestionState.STOPPED;
             this.apendSuggestion(timestamp, suggestion);
-            appStateService.updateState({
-              replySuggestions: Array.from(this.suggestions.values()),
-            });
             return;
           }
 
@@ -109,9 +104,6 @@ class ReplySuggestionService {
 
             // Update the suggestion
             this.apendSuggestion(timestamp, suggestion);
-            appStateService.updateState({
-              replySuggestions: Array.from(this.suggestions.values()),
-            });
           }
         }
 
@@ -119,9 +111,6 @@ class ReplySuggestionService {
         if (suggestion.state === SuggestionState.LOADING) {
           suggestion.state = SuggestionState.SUCCESS;
           this.apendSuggestion(timestamp, suggestion);
-          appStateService.updateState({
-            replySuggestions: Array.from(this.suggestions.values()),
-          });
         }
       } finally {
         reader.releaseLock();
@@ -131,9 +120,6 @@ class ReplySuggestionService {
       suggestion.state = SuggestionState.ERROR;
 
       this.apendSuggestion(timestamp, suggestion);
-      appStateService.updateState({
-        replySuggestions: Array.from(this.suggestions.values()),
-      });
     }
   }
 

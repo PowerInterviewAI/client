@@ -9,6 +9,7 @@ import { DateTimeUtil } from '../utils/datetime.js';
 import { UuidUtil } from '../utils/uuid.js';
 import sharp from 'sharp';
 import screenshot from 'screenshot-desktop';
+import { appStateService } from './app-state.service.js';
 
 interface GenerateCodeSuggestionRequest {
   user_prompt?: string;
@@ -30,17 +31,29 @@ export class CodeSuggestionService {
   /**
    * Get all suggestions with pending prompt if images are uploaded
    */
-  getSuggestions(): CodeSuggestion[] {
-    const suggestionsArray = Array.from(this.suggestions.values());
+  getSuggestions(isUploading: boolean = false, includePrompt: boolean = true): CodeSuggestion[] {
+    let suggestionsArray = Array.from(this.suggestions.values());
 
-    if (this.uploadedImageNames.length > 0) {
+    if (!includePrompt) {
+      return suggestionsArray;
+    }
+
+    if (isUploading) {
+      const pendingPrompt: CodeSuggestion = {
+        timestamp: DateTimeUtil.now(),
+        image_urls: [...this.uploadedImageNames.map((name) => this.getBackendImageUrl(name)), null],
+        suggestion_content: '',
+        state: SuggestionState.UPLOADING,
+      };
+      suggestionsArray = [...suggestionsArray, pendingPrompt];
+    } else if (this.uploadedImageNames.length > 0) {
       const pendingPrompt: CodeSuggestion = {
         timestamp: DateTimeUtil.now(),
         image_urls: this.uploadedImageNames.map((name) => this.getBackendImageUrl(name)),
         suggestion_content: '',
         state: SuggestionState.IDLE,
       };
-      return [...suggestionsArray, pendingPrompt];
+      suggestionsArray = [...suggestionsArray, pendingPrompt];
     }
 
     return suggestionsArray;
@@ -51,6 +64,7 @@ export class CodeSuggestionService {
    */
   clearImages(): void {
     this.uploadedImageNames = [];
+    appStateService.updateState({ codeSuggestions: this.getSuggestions() });
   }
 
   /**
@@ -63,6 +77,11 @@ export class CodeSuggestionService {
       console.warn('[CodeSuggestionService]', message);
       throw new Error(message);
     }
+
+    // Update app state
+    appStateService.updateState({
+      codeSuggestions: this.getSuggestions(true),
+    });
 
     // Capture screenshot from main window
     const imageBytes = await this.captureScreenshotAsGrayscale();
@@ -79,6 +98,9 @@ export class CodeSuggestionService {
         throw new Error(`Upload failed: ${response.error?.message || 'No filename returned'}`);
       }
       this.uploadedImageNames.push(response.data);
+
+      // Update app state
+      appStateService.updateState({ codeSuggestions: this.getSuggestions() });
     } catch (error) {
       console.error('[CodeSuggestionService] Failed to upload image:', error);
       throw error;
@@ -128,6 +150,11 @@ export class CodeSuggestionService {
     return parts.join('\n');
   }
 
+  private setSuggestion(timestamp: number, suggestion: CodeSuggestion): void {
+    this.suggestions.set(timestamp, suggestion);
+    appStateService.updateState({ codeSuggestions: this.getSuggestions(false, false) });
+  }
+
   /**
    * Generate code suggestion and stream response
    */
@@ -147,8 +174,7 @@ export class CodeSuggestionService {
       suggestion_content: '',
       state: SuggestionState.PENDING,
     };
-
-    this.suggestions.set(timestamp, suggestion);
+    this.setSuggestion(timestamp, suggestion);
 
     // Clear uploaded images (they're now part of the request)
     this.uploadedImageNames = [];
@@ -164,7 +190,7 @@ export class CodeSuggestionService {
 
       // Update state to loading
       suggestion.state = SuggestionState.LOADING;
-      this.suggestions.set(timestamp, { ...suggestion });
+      this.setSuggestion(timestamp, suggestion);
 
       try {
         while (true) {
@@ -178,7 +204,7 @@ export class CodeSuggestionService {
 
             console.info('[CodeSuggestionService] Code suggestion generation stopped by user');
             suggestion.state = SuggestionState.STOPPED;
-            this.suggestions.set(timestamp, { ...suggestion });
+            this.setSuggestion(timestamp, suggestion);
             return;
           }
 
@@ -186,14 +212,14 @@ export class CodeSuggestionService {
             const chunk = decoder.decode(value, { stream: true });
             suggestion.suggestion_content += chunk;
             suggestion.state = SuggestionState.LOADING;
-            this.suggestions.set(timestamp, { ...suggestion });
+            this.setSuggestion(timestamp, suggestion);
           }
         }
 
         // Mark as successful if not stopped
         if (suggestion.state === SuggestionState.LOADING) {
           suggestion.state = SuggestionState.SUCCESS;
-          this.suggestions.set(timestamp, { ...suggestion });
+          this.setSuggestion(timestamp, suggestion);
         }
       } finally {
         reader.releaseLock();
@@ -201,7 +227,7 @@ export class CodeSuggestionService {
     } catch (error) {
       console.error('[CodeSuggestionService] Failed to generate code suggestion:', error);
       suggestion.state = SuggestionState.ERROR;
-      this.suggestions.set(timestamp, { ...suggestion });
+      this.setSuggestion(timestamp, suggestion);
     }
   }
 
@@ -209,7 +235,7 @@ export class CodeSuggestionService {
    * Get backend image URL
    */
   private getBackendImageUrl(imageName: string): string {
-    return `/api/llm/get-image/${imageName}`;
+    return `${ApiClient.BACKEND_URL}/api/llm/get-image/${imageName}`;
   }
 
   /**
@@ -307,6 +333,8 @@ export class CodeSuggestionService {
     this.stopRunningTasks();
     this.suggestions.clear();
     this.uploadedImageNames = [];
+    // Update app state
+    appStateService.updateState({ codeSuggestions: [] });
   }
 }
 

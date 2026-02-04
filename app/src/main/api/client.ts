@@ -18,14 +18,15 @@ export interface ApiResponse<T = unknown> {
 }
 
 export class ApiClient {
-  private baseUrl: string = '';
+  static readonly BACKEND_URL: string = EnvUtil.isDev()
+    ? 'http://localhost:8000'
+    : 'https://power-interview-backend.onrender.com';
+
+  private baseUrl: string;
   private headers: Record<string, string> = {};
 
   constructor() {
-    const baseUrl = EnvUtil.isDev()
-      ? 'http://localhost:8000'
-      : 'https://power-interview-backend.onrender.com';
-
+    const baseUrl = ApiClient.BACKEND_URL;
     this.baseUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/'; // Ensure baseUrl ends with slash
     this.headers = {
       'Content-Type': 'application/json',

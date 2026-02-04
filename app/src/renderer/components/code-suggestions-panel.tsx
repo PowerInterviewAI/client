@@ -110,14 +110,23 @@ export default function CodeSuggestionsPanel({
                   {s.image_urls && s.image_urls.length > 0 ? (
                     <div className="flex items-center gap-2">
                       <div className="flex gap-2 overflow-x-auto">
-                        {s.image_urls.map((url, i) => (
-                          <img
-                            key={i}
-                            src={url}
-                            className="h-12 w-16 object-cover rounded-md"
-                            alt={`thumb-${i}`}
-                          />
-                        ))}
+                        {s.image_urls.map((url, i) =>
+                          url ? (
+                            <img
+                              key={i}
+                              src={url}
+                              className="h-12 w-16 object-cover rounded-md border border-border bg-muted"
+                              alt={`thumb-${i}`}
+                            />
+                          ) : (
+                            <div
+                              key={i}
+                              className="h-12 w-16 flex items-center justify-center rounded-md bg-muted"
+                            >
+                              <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />
+                            </div>
+                          )
+                        )}
                       </div>
                       {(s.state === SuggestionState.PENDING ||
                         s.state === SuggestionState.LOADING) && (

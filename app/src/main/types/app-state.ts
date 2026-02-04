@@ -9,6 +9,7 @@ export enum Speaker {
 
 export enum SuggestionState {
   IDLE = 'idle',
+  UPLOADING = 'uploading',
   PENDING = 'pending',
   LOADING = 'loading',
   SUCCESS = 'success',
@@ -32,7 +33,7 @@ export interface ReplySuggestion {
 
 export interface CodeSuggestion {
   timestamp: number;
-  image_urls: string[];
+  image_urls: (string | null)[];
   suggestion_content: string;
   state: SuggestionState;
 }
