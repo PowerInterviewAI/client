@@ -156,6 +156,16 @@ export default function MainPage() {
     }
   }, [appState?.isLoggedIn, navigate]);
 
+  // Show loading if not logged in (fallback)
+  if (appState?.isLoggedIn === false) {
+    return <Loading disclaimer="Redirecting to login…" />;
+  }
+
+  // Show loading if auth status is unknown
+  if (appState?.isLoggedIn === null) {
+    return <Loading disclaimer="Checking authentication status…" />;
+  }
+
   // Show loading if config or app state is not loaded yet
   if (configLoading || !appState) {
     return <Loading disclaimer="Loading your configuration…" />;
@@ -166,13 +176,8 @@ export default function MainPage() {
     return <Loading disclaimer="Initializing context for your device…" />;
   }
 
-  // Show loading if not logged in (fallback)
-  if (appState?.isLoggedIn === false) {
-    return <Loading disclaimer="Redirecting to login…" />;
-  }
-
-  // Show loading if GPU server is not live
   if (appState?.isGpuServerLive === false) {
+    // Show loading if GPU server is not live
     return (
       <Loading disclaimer="Initializing AI processing resources… Please allow up to 5 minutes for completion." />
     );

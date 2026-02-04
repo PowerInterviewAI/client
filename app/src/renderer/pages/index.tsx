@@ -9,12 +9,10 @@ export default function IndexPage() {
 
   useEffect(() => {
     // Redirect to main page if backend is live and logged in
-    if (appState?.isLoggedIn === null) {
-      return;
-    } else if (appState?.isLoggedIn) {
-      navigate('/main', { replace: true });
-    } else {
+    if (appState?.isLoggedIn === false) {
       navigate('/auth/login', { replace: true });
+    } else {
+      navigate('/main', { replace: true });
     }
   }, [appState?.isBackendLive, appState?.isLoggedIn, navigate]);
 

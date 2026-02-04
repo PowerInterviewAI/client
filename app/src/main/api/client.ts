@@ -104,13 +104,6 @@ export class ApiClient {
       });
 
       const respBody = await response.json().catch(() => ({}));
-      console.log('[ApiClient] Request result:', {
-        method,
-        url,
-        status: response.status,
-        data: respBody,
-      });
-
       if (!response.ok) {
         const detail = respBody.detail;
         return {
@@ -157,7 +150,6 @@ export class ApiClient {
         headers: this.headers,
         body: body ? JSON.stringify(body) : undefined,
       });
-
       if (!response.ok || !response.body) {
         console.error('[ApiClient] Streaming request failed:', {
           method,

@@ -24,8 +24,8 @@ export class HealthCheckService {
 
     appStateService.updateState({ isLoggedIn: null });
     try {
-      await this.client.pingClient();
-      appStateService.updateState({ isLoggedIn: true });
+      const res = await this.client.pingClient();
+      appStateService.updateState({ isLoggedIn: res.status === 200 });
     } catch (error) {
       console.error('[HealthCheckService] Initial client ping error:', error);
       appStateService.updateState({ isLoggedIn: false });
@@ -73,7 +73,7 @@ export class HealthCheckService {
   private startClientLoop(): void {
     (async () => {
       while (this.running) {
-        // only ping if logged in
+        // skip if not logged in
         if (!appStateService.getState().isLoggedIn) {
           await safeSleep(FAILURE_INTERVAL);
           continue;
@@ -97,7 +97,7 @@ export class HealthCheckService {
   private startGpuLoop(): void {
     (async () => {
       while (this.running) {
-        // only check GPU if logged in
+        // skip if not logged in
         if (!appStateService.getState().isLoggedIn) {
           await safeSleep(FAILURE_INTERVAL);
           continue;
@@ -107,7 +107,7 @@ export class HealthCheckService {
         try {
           // ping GPU server
           const gpuPingResult = await this.client.pingGpuServer();
-          gpuServerLive = !gpuPingResult.error && gpuPingResult.data != null;
+          gpuServerLive = gpuPingResult.status === 200;
 
           // attempt wakeup if GPU not live
           if (!gpuServerLive) {

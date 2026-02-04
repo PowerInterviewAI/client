@@ -2,7 +2,6 @@
  * Health Check API
  */
 
-import { appStateService } from '../services/app-state.service.js';
 import { ApiClient, ApiResponse } from './client.js';
 
 export class HealthCheckApi extends ApiClient {
@@ -35,6 +34,6 @@ export class HealthCheckApi extends ApiClient {
    * Wake up GPU server
    */
   async wakeupGpuServer(): Promise<ApiResponse<void>> {
-    return this.post('/api/health-check/wakeup-gpu-server', {});
+    return this.get('/api/health-check/wakeup-gpu-server', {});
   }
 }
