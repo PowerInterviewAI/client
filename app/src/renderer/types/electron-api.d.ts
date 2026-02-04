@@ -35,10 +35,8 @@ declare global {
 
     // Transcription management
     transcription: {
-      startSelf: () => Promise<void>;
-      stopSelf: () => Promise<void>;
-      startOther: () => Promise<void>;
-      stopOther: () => Promise<void>;
+      start: () => Promise<void>;
+      stop: () => Promise<void>;
     };
 
     // Authentication management

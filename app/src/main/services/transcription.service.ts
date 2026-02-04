@@ -11,19 +11,13 @@ import { configManager } from '../config/app.js';
 import { configStore, ConfigStore } from '../store/config-store.js';
 import { EnvUtil } from '../utils/env.js';
 import { appStateService } from './app-state.service.js';
-
-interface TranscriptMessage {
-  text: string;
-  isFinal: boolean;
-  speaker: 'user' | 'interviewer';
-  timestamp: Date;
-}
+import { Speaker, Transcript } from '../types/app-state.js';
 
 interface AgentProcess {
   process: ChildProcess;
   socket: zmq.Subscriber | null;
   port: number;
-  speaker: 'user' | 'interviewer';
+  speaker: Speaker;
   restartCount: number;
   isRestarting: boolean;
   shouldRestart?: boolean;
@@ -38,11 +32,11 @@ const RESTART_DELAY_MS = 2000;
 class TranscriptionService {
   private selfAgent: AgentProcess | null = null;
   private otherAgent: AgentProcess | null = null;
-  private configService: ConfigStore;
 
-  constructor() {
-    this.configService = ConfigStore.getInstance();
-  }
+  private selfTranscripts: Transcript[] = [];
+  private selfPartialTranscript: Transcript | null = null;
+  private otherTranscripts: Transcript[] = [];
+  private otherPartialTranscript: Transcript | null = null;
 
   /**
    * Start self transcription (user's audio)
@@ -56,11 +50,11 @@ class TranscriptionService {
     console.log('Starting self transcription...');
 
     // Get audio device from config
-    const config = await this.configService.getConfig();
+    const config = configStore.getConfig();
     const audioDevice = config.audio_input_device_name || 'loopback';
 
     try {
-      this.selfAgent = await this.startAgent(SELF_ZMQ_PORT, audioDevice, 'user');
+      this.selfAgent = await this.startAgent(SELF_ZMQ_PORT, audioDevice, Speaker.SELF);
       console.log('Self transcription started successfully');
     } catch (error) {
       console.error('Failed to start self transcription:', error);
@@ -97,7 +91,7 @@ class TranscriptionService {
 
     try {
       // Other party always uses loopback
-      this.otherAgent = await this.startAgent(OTHER_ZMQ_PORT, 'loopback', 'interviewer');
+      this.otherAgent = await this.startAgent(OTHER_ZMQ_PORT, 'loopback', Speaker.OTHER);
       console.log('Other transcription started successfully');
     } catch (error) {
       console.error('Failed to start other transcription:', error);
@@ -127,7 +121,7 @@ class TranscriptionService {
   private async startAgent(
     port: number,
     audioSource: string,
-    speaker: 'user' | 'interviewer'
+    speaker: Speaker
   ): Promise<AgentProcess> {
     // Get agent executable path
     const { command, args: baseArgs } = this.getAgentCommand();
@@ -234,15 +228,62 @@ class TranscriptionService {
         const text = message.replace(/^(FINAL|PARTIAL):\s*/, '').trim();
 
         if (text) {
-          const transcript: TranscriptMessage = {
+          const transcript: Transcript = {
             text,
             isFinal,
             speaker: agent.speaker,
-            timestamp: new Date(),
+            timestamp: new Date().getTime(),
           };
 
-          // Send to renderer
-          appStateService.addTranscript(transcript);
+          if (transcript.speaker === Speaker.SELF) {
+            if (isFinal) {
+              transcript.timestamp = this.selfPartialTranscript?.timestamp ?? transcript.timestamp;
+              this.selfTranscripts.push(transcript);
+              this.selfPartialTranscript = null;
+            } else {
+              if (this.selfPartialTranscript) {
+                this.selfPartialTranscript.text = transcript.text;
+              } else {
+                this.selfPartialTranscript = transcript;
+              }
+            }
+          } else {
+            if (isFinal) {
+              transcript.timestamp = this.otherPartialTranscript?.timestamp ?? transcript.timestamp;
+              this.otherTranscripts.push(transcript);
+              this.otherPartialTranscript = null;
+            } else {
+              if (this.otherPartialTranscript) {
+                this.otherPartialTranscript.text = transcript.text;
+              } else {
+                this.otherPartialTranscript = transcript;
+              }
+            }
+          }
+
+          // Merge transcripts and update app state
+          let allTranscripts = [...this.selfTranscripts, ...this.otherTranscripts];
+          if (this.selfPartialTranscript) {
+            allTranscripts.push(this.selfPartialTranscript);
+          }
+          if (this.otherPartialTranscript) {
+            allTranscripts.push(this.otherPartialTranscript);
+          }
+          allTranscripts = allTranscripts.filter(Boolean).sort((a, b) => a.timestamp - b.timestamp);
+
+          // Clean up consecutive transcripts from same speaker
+          let cleaned: Transcript[] = [];
+          for (const t of allTranscripts) {
+            const lastIndex = cleaned.length - 1;
+            const lastCleaned = cleaned[lastIndex];
+            if (lastIndex >= 0 && lastCleaned.speaker === t.speaker) {
+              lastCleaned.text += ' ' + t.text;
+            } else {
+              cleaned.push({ ...t });
+            }
+          }
+
+          appStateService.updateState({ transcripts: cleaned });
         }
       }
     } catch (error) {
@@ -328,16 +369,18 @@ class TranscriptionService {
 
       try {
         // Determine audio source based on speaker
-        const config = this.configService.getConfig();
+        const config = configStore.getConfig();
         const audioSource =
-          agent.speaker === 'user' ? config.audio_input_device_name || 'loopback' : 'loopback';
+          agent.speaker === Speaker.SELF
+            ? config.audio_input_device_name || 'loopback'
+            : 'loopback';
 
         // Start new agent
         const newAgent = await this.startAgent(agent.port, audioSource, agent.speaker);
         newAgent.restartCount = agent.restartCount;
 
         // Update reference
-        if (agent.speaker === 'user') {
+        if (agent.speaker === Speaker.SELF) {
           this.selfAgent = newAgent;
         } else {
           this.otherAgent = newAgent;
@@ -385,20 +428,26 @@ class TranscriptionService {
     await Promise.all([this.stopSelfTranscription(), this.stopOtherTranscription()]);
   }
 
+  /**
+   * Clear all stored transcripts and partial transcripts
+   */
+  clear(): void {
+    this.selfTranscripts = [];
+    this.selfPartialTranscript = null;
+    this.otherTranscripts = [];
+    this.otherPartialTranscript = null;
+    appStateService.updateState({ transcripts: [] });
+  }
+
   async registerHandlers(): Promise<void> {
-    ipcMain.handle('transcription:start-self', async () => {
+    ipcMain.handle('transcription:start', async () => {
+      this.clear();
       await this.startSelfTranscription();
-    });
-
-    ipcMain.handle('transcription:stop-self', async () => {
-      await this.stopSelfTranscription();
-    });
-
-    ipcMain.handle('transcription:start-other', async () => {
       await this.startOtherTranscription();
     });
 
-    ipcMain.handle('transcription:stop-other', async () => {
+    ipcMain.handle('transcription:stop', async () => {
+      await this.stopSelfTranscription();
       await this.stopOtherTranscription();
     });
   }

@@ -50,42 +50,6 @@ export class AppStateService {
     }
   }
 
-  addTranscript(t: {
-    text: string;
-    isFinal: boolean;
-    speaker: 'user' | 'interviewer';
-    timestamp: Date;
-  }): void {
-    const entry: Transcript = {
-      text: t.text,
-      speaker: t.speaker === 'user' ? 'self' : 'other',
-      timestamp: t.timestamp.getTime(),
-      isFinal: t.isFinal,
-    } as Transcript;
-
-    // Find last transcript for speaker. If found script is not final, replace it, else append
-    const transcripts = [...this.state.transcripts];
-    const lastIndex = (() => {
-      for (let i = transcripts.length - 1; i >= 0; i--) {
-        if (transcripts[i].speaker === entry.speaker) return i;
-      }
-      return -1;
-    })();
-
-    if (lastIndex >= 0 && !transcripts[lastIndex].isFinal) {
-      // Replace last
-      transcripts[lastIndex] = entry;
-    } else {
-      // Append new
-      transcripts.push(entry);
-    }
-
-    this.state = { ...this.state, transcripts };
-
-    // broadcast update
-    this.notifyRenderer();
-  }
-
   addReplySuggestion(s: ReplySuggestion): void {
     this.state = { ...this.state, replySuggestions: [...this.state.replySuggestions, s] };
     this.notifyRenderer();

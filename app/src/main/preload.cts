@@ -20,10 +20,8 @@ const electronApi = {
 
   // Transcription management
   transcription: {
-    startSelf: () => ipcRenderer.invoke('transcription:start-self'),
-    stopSelf: () => ipcRenderer.invoke('transcription:stop-self'),
-    startOther: () => ipcRenderer.invoke('transcription:start-other'),
-    stopOther: () => ipcRenderer.invoke('transcription:stop-other'),
+    start: () => ipcRenderer.invoke('transcription:start'),
+    stop: () => ipcRenderer.invoke('transcription:stop'),
   },
 
   // VCam bridge management

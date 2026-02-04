@@ -17,12 +17,6 @@ export function registerAppStateHandlers(): void {
     return appStateService.getState();
   });
 
-  // Add transcript
-  ipcMain.handle('app:add-transcript', async (_event, transcript) => {
-    appStateService.addTranscript(transcript);
-    return appStateService.getState();
-  });
-
   // Add reply suggestion
   ipcMain.handle('app:add-reply-suggestion', async (_event, suggestion) => {
     appStateService.addReplySuggestion(suggestion);
