@@ -178,7 +178,7 @@ export default function MainPage() {
 
   if (appState?.isGpuServerLive === false) {
     // Show loading if GPU server is not live
-    return <Loading disclaimer="Initializing AI resources… This may take several minutes." />;
+    return <Loading disclaimer="Initializing AI resources… This may take several minutes" />;
   }
 
   return (
