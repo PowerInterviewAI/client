@@ -18,10 +18,6 @@ declare global {
     appState: {
       get: () => Promise<AppState>;
       update: (updates: Partial<AppState>) => Promise<AppState>;
-      addReplySuggestion: (suggestion: ReplySuggestion) => Promise<AppState>;
-      addCodeSuggestion: (suggestion: CodeSuggestion) => Promise<AppState>;
-      clearTranscripts: () => Promise<AppState>;
-      clearSuggestions: () => Promise<AppState>;
     };
 
     // Pushed app-state updates from main process
@@ -29,8 +25,19 @@ declare global {
 
     // Transcription management
     transcription: {
+      clear: () => Promise<void>;
       start: () => Promise<void>;
       stop: () => Promise<void>;
+    };
+
+    // Reply suggestion management
+    replySuggestion: {
+      clear: () => Promise<void>;
+    };
+
+    // Code suggestion management
+    codeSuggestion: {
+      clear: () => Promise<void>;
     };
 
     // Authentication management

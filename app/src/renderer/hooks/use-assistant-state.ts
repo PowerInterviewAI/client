@@ -35,6 +35,11 @@ export const useAssistantState = create<AssistantState>((set, get) => ({
         throw new Error('Electron API not available');
       }
 
+      // Clear previous history
+      await electron.transcription.clear();
+      await electron.replySuggestion.clear();
+      await electron.codeSuggestion.clear();
+
       const config = useConfigStore.getState().config;
       const { videoPanelRef } = get();
 

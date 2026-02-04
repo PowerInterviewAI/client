@@ -18,16 +18,20 @@ import { setWindowReference } from './services/window-control-service.js';
 import { registerGlobalHotkeys, unregisterHotkeys } from './hotkeys.js';
 
 // Import services
-import {
-  configStore,
-  transcriptionService,
-  vcamBridgeService,
-  healthCheckService,
-} from './services/index.js';
+import { configStore } from './store/config-store.js';
+import { transcriptService } from './services/transcript.service.js';
+import { healthCheckService } from './services/health-check.service.js';
+import { vcamBridgeService } from './services/vcam-bridge.service.js';
 
 // Import IPC handlers
-import { registerAppStateHandlers, registerWindowHandlers } from './ipc/index.js';
+import { registerWindowHandlers } from './ipc/window.js';
 import { registerAuthHandlers } from './ipc/auth.js';
+import { registerReplySuggestionHandlers } from './ipc/reply-suggestion.js';
+import { registerTranscriptHandlers } from './ipc/transcript.js';
+import { registerVcamBridgeHandlers } from './ipc/vcam-bridge.js';
+import { registerConfigHandlers } from './ipc/config.js';
+import { registerAppStateHandlers } from './ipc/app-state.js';
+import { registerCodeSuggestionHandlers } from './ipc/code-suggestion.js';
 
 let win: BrowserWindow | null = null;
 
@@ -135,11 +139,13 @@ app.whenReady().then(async () => {
   configStore.load();
 
   // Register all IPC handlers
-  await configStore.registerHandlers();
-  await transcriptionService.registerHandlers();
-  await vcamBridgeService.registerHandlers();
+  registerConfigHandlers();
   registerAppStateHandlers();
   registerAuthHandlers();
+  registerTranscriptHandlers();
+  registerReplySuggestionHandlers();
+  registerCodeSuggestionHandlers();
+  registerVcamBridgeHandlers();
 
   // Create window
   await createWindow();
@@ -158,7 +164,7 @@ app.whenReady().then(async () => {
 
 app.on('will-quit', async () => {
   // Stop all services
-  await transcriptionService.stopAll();
+  await transcriptService.stopAll();
   await vcamBridgeService.stopBridge();
   healthCheckService.stop();
 

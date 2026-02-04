@@ -7,6 +7,7 @@
 
 import { CodeSuggestion, SuggestionState } from '../types/app-state.js';
 import { llmConfig } from '../config/llm.js';
+import { appStateService } from './app-state.service.js';
 
 export class CodeSuggestionService {
   private static instance: CodeSuggestionService;
@@ -79,6 +80,14 @@ export class CodeSuggestionService {
    */
   isConfigured(): boolean {
     return Boolean(llmConfig.apiKey);
+  }
+
+  /**
+   * Clear suggestions
+   */
+  clear(): void {
+    console.log('[CodeSuggestionService] clear - no internal state to clear');
+    appStateService.updateState({ codeSuggestions: [] });
   }
 }
 

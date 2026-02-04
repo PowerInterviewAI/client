@@ -5,7 +5,7 @@
 
 import { spawn, ChildProcess } from 'child_process';
 import * as zmq from 'zeromq';
-import { BrowserWindow, ipcMain } from 'electron';
+import { BrowserWindow } from 'electron';
 import path from 'path';
 import { configManager } from '../config/app.js';
 import { configStore } from '../store/config-store.js';
@@ -30,7 +30,7 @@ const OTHER_ZMQ_PORT = 50003;
 const MAX_RESTART_COUNT = 5;
 const RESTART_DELAY_MS = 2000;
 
-class TranscriptionService {
+class TranscriptService {
   private selfAgent: AgentProcess | null = null;
   private otherAgent: AgentProcess | null = null;
 
@@ -445,19 +445,6 @@ class TranscriptionService {
     this.otherPartialTranscript = null;
     appStateService.updateState({ transcripts: [] });
   }
-
-  async registerHandlers(): Promise<void> {
-    ipcMain.handle('transcription:start', async () => {
-      this.clear();
-      await this.startSelfTranscription();
-      await this.startOtherTranscription();
-    });
-
-    ipcMain.handle('transcription:stop', async () => {
-      await this.stopSelfTranscription();
-      await this.stopOtherTranscription();
-    });
-  }
 }
 
-export const transcriptionService = new TranscriptionService();
+export const transcriptService = new TranscriptService();

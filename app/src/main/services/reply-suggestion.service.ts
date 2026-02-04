@@ -27,11 +27,19 @@ class ReplySuggestionService {
   /**
    * Clear all suggestions and stop current task
    */
-  clearSuggestions(): void {
+  clear(): void {
     this.stopRunningTasks();
     this.suggestions.clear();
     // Update app state
     appStateService.updateState({ replySuggestions: [] });
+  }
+
+  private apendSuggestion(timestamp: number, suggestion: ReplySuggestion): void {
+    if (suggestion.answer.length > 0 && 'NO_SUGGESTION_NEEDED'.startsWith(suggestion.answer)) {
+      this.suggestions.delete(timestamp);
+    } else {
+      this.suggestions.set(timestamp, suggestion);
+    }
   }
 
   /**
@@ -51,7 +59,7 @@ class ReplySuggestionService {
     };
 
     // Add to local storage
-    this.suggestions.set(timestamp, suggestion);
+    this.apendSuggestion(timestamp, suggestion);
 
     // Update app state immediately
     appStateService.updateState({
@@ -84,7 +92,7 @@ class ReplySuggestionService {
 
             console.log('Suggestion generation aborted by user request');
             suggestion.state = SuggestionState.STOPPED;
-            this.suggestions.set(timestamp, suggestion);
+            this.apendSuggestion(timestamp, suggestion);
             appStateService.updateState({
               replySuggestions: Array.from(this.suggestions.values()),
             });
@@ -99,7 +107,7 @@ class ReplySuggestionService {
             suggestion.state = SuggestionState.LOADING;
 
             // Update the suggestion
-            this.suggestions.set(timestamp, suggestion);
+            this.apendSuggestion(timestamp, suggestion);
             appStateService.updateState({
               replySuggestions: Array.from(this.suggestions.values()),
             });
@@ -109,7 +117,7 @@ class ReplySuggestionService {
         // Mark as successful if not stopped
         if (suggestion.state === SuggestionState.LOADING) {
           suggestion.state = SuggestionState.SUCCESS;
-          this.suggestions.set(timestamp, suggestion);
+          this.apendSuggestion(timestamp, suggestion);
           appStateService.updateState({
             replySuggestions: Array.from(this.suggestions.values()),
           });
@@ -121,7 +129,7 @@ class ReplySuggestionService {
       console.error('Failed to generate suggestion');
       suggestion.state = SuggestionState.ERROR;
 
-      this.suggestions.set(timestamp, suggestion);
+      this.apendSuggestion(timestamp, suggestion);
       appStateService.updateState({
         replySuggestions: Array.from(this.suggestions.values()),
       });

@@ -3,8 +3,6 @@
  * Manages virtual camera bridge for screen sharing
  */
 
-import { ipcMain } from 'electron';
-
 class VCamBridgeService {
   private bridgeActive = false;
 
@@ -51,20 +49,6 @@ class VCamBridgeService {
     return {
       bridgeActive: this.bridgeActive,
     };
-  }
-
-  async registerHandlers(): Promise<void> {
-    ipcMain.handle('vcam:start-bridge', async () => {
-      await vcamBridgeService.startBridge();
-    });
-
-    ipcMain.handle('vcam:stop-bridge', async () => {
-      await vcamBridgeService.stopBridge();
-    });
-
-    ipcMain.handle('vcam:get-status', async () => {
-      return vcamBridgeService.getStatus();
-    });
   }
 }
 

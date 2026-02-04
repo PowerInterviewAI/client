@@ -1,5 +1,6 @@
 // Tell TypeScript to compile this file as CommonJS despite package.json "type": "module"
 // This is the standard approach for Electron preload scripts
+import { clear } from 'console';
 import { contextBridge, ipcRenderer } from 'electron';
 
 // Build the API object once so it can be exposed under multiple names
@@ -20,8 +21,19 @@ const electronApi = {
 
   // Transcription management
   transcription: {
+    clear: () => ipcRenderer.invoke('transcription:clear'),
     start: () => ipcRenderer.invoke('transcription:start'),
     stop: () => ipcRenderer.invoke('transcription:stop'),
+  },
+
+  // Reply suggestion management
+  replySuggestion: {
+    clear: () => ipcRenderer.invoke('reply-suggestion:clear'),
+  },
+
+  // Code suggestion management
+  codeSuggestion: {
+    clear: () => ipcRenderer.invoke('code-suggestion:clear'),
   },
 
   // VCam bridge management
@@ -44,12 +56,6 @@ const electronApi = {
   appState: {
     get: () => ipcRenderer.invoke('app:get-state'),
     update: (updates: any) => ipcRenderer.invoke('app:update-state', updates),
-    addReplySuggestion: (suggestion: any) =>
-      ipcRenderer.invoke('app:add-reply-suggestion', suggestion),
-    addCodeSuggestion: (suggestion: any) =>
-      ipcRenderer.invoke('app:add-code-suggestion', suggestion),
-    clearTranscripts: () => ipcRenderer.invoke('app:clear-transcripts'),
-    clearSuggestions: () => ipcRenderer.invoke('app:clear-suggestions'),
   },
 
   // Listen for pushed app state updates from main

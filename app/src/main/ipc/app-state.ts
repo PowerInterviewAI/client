@@ -16,28 +16,4 @@ export function registerAppStateHandlers(): void {
     appStateService.updateState(updates);
     return appStateService.getState();
   });
-
-  // Add reply suggestion
-  ipcMain.handle('app:add-reply-suggestion', async (_event, suggestion) => {
-    appStateService.addReplySuggestion(suggestion);
-    return appStateService.getState();
-  });
-
-  // Add code suggestion
-  ipcMain.handle('app:add-code-suggestion', async (_event, suggestion) => {
-    appStateService.addCodeSuggestion(suggestion);
-    return appStateService.getState();
-  });
-
-  // Clear transcripts
-  ipcMain.handle('app:clear-transcripts', async () => {
-    appStateService.clearTranscripts();
-    return appStateService.getState();
-  });
-
-  // Clear suggestions
-  ipcMain.handle('app:clear-suggestions', async () => {
-    appStateService.clearSuggestions();
-    return appStateService.getState();
-  });
 }
