@@ -49,7 +49,7 @@ export const useAssistantState = create<AssistantState>((set, get) => ({
       }
 
       // Start vcam bridge
-      await electron.vcam.startBridge();
+      await electron.vcamBridge.start();
 
       // Start transcription services
       await electron.transcription.start();
@@ -87,7 +87,7 @@ export const useAssistantState = create<AssistantState>((set, get) => ({
       await electron.transcription.stop();
 
       // Stop vcam bridge
-      await electron.vcam.stopBridge();
+      await electron.vcamBridge.stop();
 
       set({ runningState: RunningState.STOPPED });
     } catch (error) {

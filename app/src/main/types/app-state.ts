@@ -45,7 +45,7 @@ export interface AppState {
   devices: DeviceInfo[];
   isBackendLive: boolean;
   isGpuServerLive: boolean;
-  isLoggedIn: boolean;
+  isLoggedIn: boolean | null;
   assistantState: 'idle' | 'starting' | 'running' | 'stopping';
   transcripts: Transcript[];
   replySuggestions: ReplySuggestion[];

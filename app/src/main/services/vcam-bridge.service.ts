@@ -9,7 +9,7 @@ class VCamBridgeService {
   /**
    * Start virtual camera bridge
    */
-  async startBridge(): Promise<void> {
+  async start(): Promise<void> {
     if (this.bridgeActive) {
       console.log('VCam bridge already active');
       return;
@@ -27,7 +27,7 @@ class VCamBridgeService {
   /**
    * Stop virtual camera bridge
    */
-  async stopBridge(): Promise<void> {
+  async stop(): Promise<void> {
     if (!this.bridgeActive) {
       console.log('VCam bridge not active');
       return;

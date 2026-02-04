@@ -2,6 +2,7 @@
  * Health Check API
  */
 
+import { appStateService } from '../services/app-state.service.js';
 import { ApiClient, ApiResponse } from './client.js';
 
 export class HealthCheckApi extends ApiClient {
@@ -15,11 +16,12 @@ export class HealthCheckApi extends ApiClient {
   /**
    * Ping client to backend with device info
    */
-  async pingClient(pingPayload: {
-    is_gpu_alive: boolean;
-    is_assistant_running: boolean;
-  }): Promise<ApiResponse<string>> {
-    return this.post('/api/health-check/ping-client', pingPayload);
+  async pingClient(): Promise<ApiResponse<string>> {
+    const payload = {
+      is_gpu_alive: false,
+      is_assistant_running: false,
+    };
+    return this.post('/api/health-check/ping-client', payload);
   }
 
   /**

@@ -17,10 +17,20 @@ export class HealthCheckService {
   /**
    * Start health check monitoring
    */
-  start(): void {
+  async start(): Promise<void> {
     console.log('[HealthCheckService] Starting health check service');
     if (this.running) return;
     this.running = true;
+
+    appStateService.updateState({ isLoggedIn: null });
+    try {
+      await this.client.pingClient();
+      appStateService.updateState({ isLoggedIn: true });
+    } catch (error) {
+      console.error('[HealthCheckService] Initial client ping error:', error);
+      appStateService.updateState({ isLoggedIn: false });
+    }
+
     this.startBackendLoop();
     this.startClientLoop();
     this.startGpuLoop();
@@ -72,14 +82,7 @@ export class HealthCheckService {
         let nextInterval = SUCCESS_INTERVAL;
 
         try {
-          const currentState = appStateService.getState();
-          const deviceInfo = {
-            device_id: currentState.isLoggedIn ? 'user-device' : 'anonymous',
-            is_gpu_alive: currentState.isGpuServerLive,
-            is_assistant_running: currentState.assistantState === 'running',
-          };
-
-          await this.client.pingClient(deviceInfo);
+          await this.client.pingClient();
         } catch (error) {
           console.error('[HealthCheckService] Client ping error:', error);
           nextInterval = FAILURE_INTERVAL;

@@ -56,9 +56,9 @@ declare global {
     };
 
     // VCam bridge management
-    vcam: {
-      startBridge: () => Promise<void>;
-      stopBridge: () => Promise<void>;
+    vcamBridge: {
+      start: () => Promise<void>;
+      stop: () => Promise<void>;
     };
 
     // Window controls

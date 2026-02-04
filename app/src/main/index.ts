@@ -156,7 +156,7 @@ app.whenReady().then(async () => {
   }
 
   // Start health check service
-  healthCheckService.start();
+  await healthCheckService.start();
 
   // Register hotkeys
   registerGlobalHotkeys();
@@ -164,8 +164,8 @@ app.whenReady().then(async () => {
 
 app.on('will-quit', async () => {
   // Stop all services
-  await transcriptService.stopAll();
-  await vcamBridgeService.stopBridge();
+  await transcriptService.stop();
+  await vcamBridgeService.stop();
   healthCheckService.stop();
 
   unregisterHotkeys();

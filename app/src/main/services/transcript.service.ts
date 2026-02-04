@@ -42,7 +42,7 @@ class TranscriptService {
   /**
    * Start self transcription (user's audio)
    */
-  async startSelfTranscription(): Promise<void> {
+  private async startSelfTranscription(): Promise<void> {
     if (this.selfAgent) {
       console.log('Self transcription already active');
       return;
@@ -67,7 +67,7 @@ class TranscriptService {
   /**
    * Stop self transcription
    */
-  async stopSelfTranscription(): Promise<void> {
+  private async stopSelfTranscription(): Promise<void> {
     if (!this.selfAgent) {
       console.log('Self transcription not active');
       return;
@@ -82,7 +82,7 @@ class TranscriptService {
   /**
    * Start other party transcription (remote audio via loopback)
    */
-  async startOtherTranscription(): Promise<void> {
+  private async startOtherTranscription(): Promise<void> {
     if (this.otherAgent) {
       console.log('Other transcription already active');
       return;
@@ -104,7 +104,7 @@ class TranscriptService {
   /**
    * Stop other party transcription
    */
-  async stopOtherTranscription(): Promise<void> {
+  private async stopOtherTranscription(): Promise<void> {
     if (!this.otherAgent) {
       console.log('Other transcription not active');
       return;
@@ -429,9 +429,16 @@ class TranscriptService {
   }
 
   /**
+   * Start all transcription services
+   */
+  async start(): Promise<void> {
+    await Promise.all([this.startSelfTranscription(), this.startOtherTranscription()]);
+  }
+
+  /**
    * Stop all transcription services
    */
-  async stopAll(): Promise<void> {
+  async stop(): Promise<void> {
     await Promise.all([this.stopSelfTranscription(), this.stopOtherTranscription()]);
   }
 

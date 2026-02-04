@@ -6,11 +6,9 @@ export function registerTranscriptHandlers() {
     transcriptService.clear();
   });
   ipcMain.handle('transcription:start', async () => {
-    await transcriptService.startSelfTranscription();
-    await transcriptService.startOtherTranscription();
+    await transcriptService.start();
   });
   ipcMain.handle('transcription:stop', async () => {
-    await transcriptService.stopSelfTranscription();
-    await transcriptService.stopOtherTranscription();
+    await transcriptService.stop();
   });
 }
