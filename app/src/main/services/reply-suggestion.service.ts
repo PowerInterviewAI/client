@@ -10,6 +10,7 @@ import { DateTimeUtil } from '../utils/datetime.js';
 import { ApiClient } from '../api/client.js';
 import { configStore } from '../store/config-store.js';
 import { appStateService } from './app-state.service.js';
+import { UuidUtil } from '../utils/uuid.js';
 
 interface GenerateReplySuggestionRequest {
   username: string;
@@ -20,14 +21,14 @@ interface GenerateReplySuggestionRequest {
 
 class ReplySuggestionService {
   private suggestions: Map<number, ReplySuggestion> = new Map();
-  private currentAbortController: AbortController | null = null;
   private isGenerating: boolean = false;
+  private abortMap: Map<string, boolean> = new Map();
 
   /**
    * Clear all suggestions and stop current task
    */
   clearSuggestions(): void {
-    this.stopCurrentTask();
+    this.stopRunningTasks();
     this.suggestions.clear();
     // Update app state
     appStateService.updateState({ replySuggestions: [] });
@@ -36,7 +37,7 @@ class ReplySuggestionService {
   /**
    * Generate suggestion synchronously (main worker method)
    */
-  private async generateSuggestion(transcripts: Transcript[]): Promise<void> {
+  private async generateSuggestion(taskId: string, transcripts: Transcript[]): Promise<void> {
     if (!transcripts || transcripts.length === 0) {
       return;
     }
@@ -78,8 +79,10 @@ class ReplySuggestionService {
       try {
         while (true) {
           // Check if stopped
-          if (this.currentAbortController?.signal.aborted) {
-            console.log('Suggestion generation stopped by user');
+          if (this.abortMap.get(taskId)) {
+            this.abortMap.delete(taskId);
+
+            console.log('Suggestion generation aborted by user request');
             suggestion.state = SuggestionState.STOPPED;
             this.suggestions.set(timestamp, suggestion);
             appStateService.updateState({
@@ -143,28 +146,28 @@ class ReplySuggestionService {
     }
 
     // Cancel current task if running
-    this.stopCurrentTask();
+    this.stopRunningTasks();
 
     // Create new abort controller
-    this.currentAbortController = new AbortController();
     this.isGenerating = true;
 
     // Start the background task
     try {
-      this.generateSuggestion(filteredTranscripts);
+      const taskId = UuidUtil.generate();
+      this.abortMap.set(taskId, false);
+      this.generateSuggestion(taskId, filteredTranscripts);
     } finally {
       this.isGenerating = false;
-      this.currentAbortController = null;
     }
   }
 
   /**
    * Stop current task safely
    */
-  stopCurrentTask(): void {
-    if (this.currentAbortController && this.isGenerating) {
-      this.currentAbortController.abort();
-    }
+  stopRunningTasks(): void {
+    this.abortMap.forEach((_value, key) => {
+      this.abortMap.set(key, true);
+    });
   }
 
   /**

@@ -110,13 +110,15 @@ export default function ReplySuggestionsPanel({ suggestions = [], style }: Sugge
               >
                 {idx === suggestions.length - 1 &&
                 (s.state === SuggestionState.PENDING || s.state === SuggestionState.LOADING) ? (
-                  <Loader2 className="h-4 w-4 mt-0.5 text-accent shrink-0 animate-spin" />
+                  <Loader2 className="h-4 w-4 mt-px text-accent shrink-0 animate-spin" />
+                ) : s.state === SuggestionState.STOPPED ? (
+                  <PauseCircle className="h-4 w-4 mt-px text-muted-foreground shrink-0" />
                 ) : (
-                  <Zap className="h-4 w-4 mt-0.5 text-accent shrink-0" />
+                  <Zap className="h-4 w-4 mt-px text-accent shrink-0" />
                 )}
                 <div>
                   <div className="text-xs text-muted-foreground mb-2">
-                    <strong>Interviewer:</strong> {s.last_question}
+                    <strong></strong> {s.last_question}
                   </div>
 
                   {(s.state === SuggestionState.LOADING || s.state === SuggestionState.SUCCESS) && (
@@ -126,9 +128,8 @@ export default function ReplySuggestionsPanel({ suggestions = [], style }: Sugge
                   )}
 
                   {s.state === SuggestionState.STOPPED && (
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                      <PauseCircle className="h-4 w-4" />
-                      <span>Suggestion canceled</span>
+                    <div className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
+                      🪄 {s.answer} ...
                     </div>
                   )}
 
