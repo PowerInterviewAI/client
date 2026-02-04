@@ -27,7 +27,7 @@ export default function CodeSuggestionsPanel({
   const scrollToLatest = (behavior: ScrollBehavior = 'smooth') => {
     const last = lastItemRef.current;
     if (!last) return;
-    last.scrollIntoView({ behavior, block: 'start', inline: 'nearest' });
+    last.scrollIntoView({ behavior, block: 'end', inline: 'nearest' });
   };
 
   useEffect(() => {

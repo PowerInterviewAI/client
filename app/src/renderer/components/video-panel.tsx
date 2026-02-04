@@ -1,5 +1,4 @@
 import { useVideoDevices } from '@/hooks/use-video-devices';
-import axiosClient from '@/lib/axios-client';
 import { RunningState } from '@/types/app-state';
 import { type OfferRequest, type WebRTCOptions } from '@/types/webrtc';
 import { UserCircle2 } from 'lucide-react';

@@ -2,14 +2,16 @@ import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { useVideoDevices } from '@/hooks/use-video-devices';
 import { RunningState } from '@/types/app-state';
 import { Ellipsis, Play, Square } from 'lucide-react';
-import { AudioOptions } from './control-panel/audio-options';
-import { MainControls } from './control-panel/main-controls';
-import { ProfileSection } from './control-panel/profile-section';
-import { VideoOptions } from './control-panel/video-options';
+import { AudioGroup } from './control-panel/audio-group';
+import { MainGroup } from './control-panel/main-group';
+import { ProfileGroup } from './control-panel/profile-group';
+import { VideoGroup } from './control-panel/video-group';
+import { ToolsGroup } from './control-panel/tools-group';
 import RunningIndicator from './running-indicator';
 import { useAudioInputDevices, useAudioOutputDevices } from '@/hooks/use-audio-devices';
 import { useAssistantState } from '@/hooks/use-assistant-state';
 import { useConfigStore } from '@/hooks/use-config-store';
+import { Separator } from '@/components/ui/separator';
 
 interface ControlPanelProps {
   runningState: RunningState;
@@ -120,7 +122,7 @@ export default function ControlPanel({ onProfileClick, onSignOut }: ControlPanel
       id="control-panel"
       className="flex items-center justify-between gap-2 p-1 border border-border rounded-lg bg-card"
     >
-      <ProfileSection
+      <ProfileGroup
         config={config}
         onProfileClick={onProfileClick}
         onSignOut={onSignOut}
@@ -128,18 +130,18 @@ export default function ControlPanel({ onProfileClick, onSignOut }: ControlPanel
       />
 
       <div className="flex flex-1 justify-center gap-2 items-center">
-        <AudioOptions
+        <AudioGroup
           audioInputDevices={audioInputDevices ?? []}
           audioInputDeviceNotFound={audioInputDeviceNotFound}
           getDisabled={getDisabled}
         />
-        <VideoOptions
+        <VideoGroup
           videoDeviceNotFound={videoDeviceNotFound}
           audioOutputDevices={audioOutputDevices ?? []}
           getDisabled={getDisabled}
         />
-
-        <MainControls stateConfig={{ onClick, className, icon, label }} getDisabled={getDisabled} />
+        <MainGroup stateConfig={{ onClick, className, icon, label }} getDisabled={getDisabled} />
+        <ToolsGroup getDisabled={getDisabled} />
       </div>
 
       <RunningIndicator runningState={runningState} />

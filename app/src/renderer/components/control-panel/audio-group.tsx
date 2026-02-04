@@ -15,17 +15,17 @@ import { RunningState } from '@/types/app-state';
 import { type AudioDevice } from '@/types/audio-device';
 import { Mic } from 'lucide-react';
 
-interface AudioOptionsProps {
+interface AudioGroupProps {
   audioInputDevices: AudioDevice[];
   audioInputDeviceNotFound: boolean;
   getDisabled: (state: RunningState, disableOnRunning?: boolean) => boolean;
 }
 
-export function AudioOptions({
+export function AudioGroup({
   audioInputDevices,
   audioInputDeviceNotFound,
   getDisabled,
-}: AudioOptionsProps) {
+}: AudioGroupProps) {
   const { runningState } = useAssistantState();
   const { config, updateConfig } = useConfigStore();
   const usableAudioInputDevices = audioInputDevices.filter((d) => {

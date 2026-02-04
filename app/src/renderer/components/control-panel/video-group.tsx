@@ -19,17 +19,17 @@ import { Ellipsis, UserLock } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-interface VideoOptionsProps {
+interface VideoGroupProps {
   videoDeviceNotFound: boolean;
   audioOutputDevices: AudioDevice[];
   getDisabled: (state: RunningState, disableOnRunning?: boolean) => boolean;
 }
 
-export function VideoOptions({
+export function VideoGroup({
   videoDeviceNotFound,
   audioOutputDevices,
   getDisabled,
-}: VideoOptionsProps) {
+}: VideoGroupProps) {
   const { runningState } = useAssistantState();
   const { config, updateConfig } = useConfigStore();
   const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);

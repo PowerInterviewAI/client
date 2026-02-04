@@ -61,6 +61,11 @@ declare global {
       stop: () => Promise<void>;
     };
 
+    // Tools management
+    tools: {
+      exportTranscript: () => Promise<string>;
+    };
+
     // Window controls
     minimize: () => void;
     close: () => void;

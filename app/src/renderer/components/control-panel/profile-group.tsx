@@ -16,19 +16,19 @@ import { useAssistantState } from '@/hooks/use-assistant-state';
 import { useThemeStore } from '@/hooks/use-theme-store';
 import { ChangePasswordDialog } from '../change-password-dialog';
 
-interface ProfileSectionProps {
+interface ProfileGroupProps {
   config?: Config;
   onProfileClick: () => void;
   onSignOut: () => void;
   getDisabled: (state: RunningState, disableOnRunning?: boolean) => boolean;
 }
 
-export function ProfileSection({
+export function ProfileGroup({
   config,
   onProfileClick,
   onSignOut,
   getDisabled,
-}: ProfileSectionProps) {
+}: ProfileGroupProps) {
   const { runningState } = useAssistantState();
   const { isDark, toggleTheme } = useThemeStore();
   const { changePassword, loading, error, setError } = useAuth();
