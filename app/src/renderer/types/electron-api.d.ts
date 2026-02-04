@@ -18,12 +18,6 @@ declare global {
     appState: {
       get: () => Promise<AppState>;
       update: (updates: Partial<AppState>) => Promise<AppState>;
-      addTranscript: (transcript: {
-        text: string;
-        isFinal: boolean;
-        speaker: 'user' | 'interviewer';
-        timestamp: Date;
-      }) => Promise<AppState>;
       addReplySuggestion: (suggestion: ReplySuggestion) => Promise<AppState>;
       addCodeSuggestion: (suggestion: CodeSuggestion) => Promise<AppState>;
       clearTranscripts: () => Promise<AppState>;

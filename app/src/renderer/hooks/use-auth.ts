@@ -36,22 +36,22 @@ export default function useAuth() {
   // Sign up a new user. Returns boolean for convenience and still
   // sets `error`/throws on failure so callers can surface messages.
   const signup = async (username: string, email: string, password: string): Promise<boolean> => {
-    let ret = true;
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      setError(null);
-
       const result = await window.electronAPI?.auth.signup(username, email, password);
       if (!result?.success) {
-        ret = false;
-
         const errMsg = result?.error || 'Signup failed';
         setError(errMsg);
-        throw new Error(errMsg);
+        return false;
       }
+      return true;
+    } catch (err) {
+      console.error('signup error:', err);
+      setError('Signup failed');
+      return false;
     } finally {
       setLoading(false);
-      return ret;
     }
   };
 
@@ -74,22 +74,23 @@ export default function useAuth() {
 
   // Change the authenticated user's password via the bridge API.
   const changePassword = async (currentPassword: string, newPassword: string): Promise<boolean> => {
-    let res = true;
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      setError(null);
-
       const result = await window.electronAPI?.auth.changePassword(currentPassword, newPassword);
       if (!result?.success) {
-        res = false;
         const errMsg = result?.error || 'Change password failed';
         setError(errMsg);
-        throw new Error(errMsg);
+        return false;
       }
+      return true;
+    } catch (err) {
+      console.error('changePassword error:', err);
+      setError('Change password failed');
+      return false;
     } finally {
       setLoading(false);
     }
-    return res;
   };
 
   // Return stable object for consumers; `setError` is exposed so callers

@@ -44,7 +44,6 @@ const electronApi = {
   appState: {
     get: () => ipcRenderer.invoke('app:get-state'),
     update: (updates: any) => ipcRenderer.invoke('app:update-state', updates),
-    addTranscript: (transcript: any) => ipcRenderer.invoke('app:add-transcript', transcript),
     addReplySuggestion: (suggestion: any) =>
       ipcRenderer.invoke('app:add-reply-suggestion', suggestion),
     addCodeSuggestion: (suggestion: any) =>

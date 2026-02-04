@@ -8,7 +8,7 @@ import * as zmq from 'zeromq';
 import { BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { configManager } from '../config/app.js';
-import { configStore, ConfigStore } from '../store/config-store.js';
+import { configStore } from '../store/config-store.js';
 import { EnvUtil } from '../utils/env.js';
 import { appStateService } from './app-state.service.js';
 import { Speaker, Transcript } from '../types/app-state.js';
@@ -272,7 +272,7 @@ class TranscriptionService {
           allTranscripts = allTranscripts.filter(Boolean).sort((a, b) => a.timestamp - b.timestamp);
 
           // Clean up consecutive transcripts from same speaker
-          let cleaned: Transcript[] = [];
+          const cleaned: Transcript[] = [];
           for (const t of allTranscripts) {
             const lastIndex = cleaned.length - 1;
             const lastCleaned = cleaned[lastIndex];

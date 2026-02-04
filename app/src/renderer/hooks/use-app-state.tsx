@@ -14,6 +14,7 @@ interface AppStateContextType {
 
 // Singleton manager persisted across HMR to provide a single source of truth
 const GLOBAL_KEY = '__APP_STATE_MANAGER__';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const globalAny = globalThis as any;
 
 type Subscriber = (s: AppState | null) => void;
@@ -25,6 +26,7 @@ class AppStateManager {
   unsubscribeIPC: (() => void) | null = null;
   initialized = false;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   normalize(raw: any): AppState | null {
     if (!raw) return null;
     return {
@@ -48,6 +50,7 @@ class AppStateManager {
     await this.refreshState();
 
     if (window.electronAPI?.onAppStateUpdated) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this.unsubscribeIPC = window.electronAPI.onAppStateUpdated((raw: any) => {
         this.state = this.normalize(raw);
         this.emit();
@@ -65,22 +68,6 @@ class AppStateManager {
       this.emit();
     } catch (err) {
       console.error('[AppStateManager] refreshState failed', err);
-    }
-  }
-
-  async addTranscript(transcript: {
-    text: string;
-    isFinal: boolean;
-    speaker: 'user' | 'interviewer';
-    timestamp: Date;
-  }) {
-    try {
-      if (!window.electronAPI?.appState) return;
-      const raw = await window.electronAPI.appState.addTranscript(transcript);
-      this.state = this.normalize(raw);
-      this.emit();
-    } catch (err) {
-      console.error('[AppStateManager] addTranscript failed', err);
     }
   }
 
@@ -136,18 +123,6 @@ export const useAppState = (): AppStateContextType => {
       unsub();
     };
   }, []);
-
-  const addTranscript = useCallback(
-    async (transcript: {
-      text: string;
-      isFinal: boolean;
-      speaker: 'user' | 'interviewer';
-      timestamp: Date;
-    }) => {
-      await manager.addTranscript(transcript);
-    },
-    []
-  );
 
   const updateAppState = useCallback(async (updates: Partial<AppState>) => {
     await manager.updateAppState(updates);

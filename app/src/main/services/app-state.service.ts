@@ -3,7 +3,7 @@
  * Central manager for application runtime state shared across main process
  */
 
-import { AppState, Transcript, ReplySuggestion, CodeSuggestion } from '../types/app-state.js';
+import { AppState, ReplySuggestion, CodeSuggestion } from '../types/app-state.js';
 import { getWindowReference } from './window-control-service.js';
 
 const DEFAULT_STATE: AppState = {
