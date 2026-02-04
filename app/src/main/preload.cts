@@ -37,9 +37,9 @@ const electronApi = {
   },
 
   // VCam bridge management
-  vcam: {
-    startBridge: () => ipcRenderer.invoke('vcam:start-bridge'),
-    stopBridge: () => ipcRenderer.invoke('vcam:stop-bridge'),
+  vcamBridge: {
+    start: () => ipcRenderer.invoke('vcam-bridge:start'),
+    stop: () => ipcRenderer.invoke('vcam-bridge:stop'),
   },
 
   // Authentication management
