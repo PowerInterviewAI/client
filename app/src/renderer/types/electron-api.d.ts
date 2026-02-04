@@ -14,6 +14,21 @@ declare global {
       update: (updates: Partial<Config>) => Promise<Config>;
     };
 
+    // Authentication management
+    auth: {
+      signup: (
+        username: string,
+        email: string,
+        password: string
+      ) => Promise<{ success: boolean; error?: string }>;
+      login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+      logout: () => Promise<{ success: boolean; error?: string }>;
+      changePassword: (
+        oldPassword: string,
+        newPassword: string
+      ) => Promise<{ success: boolean; error?: string }>;
+    };
+
     // App state management
     appState: {
       get: () => Promise<AppState>;
@@ -38,21 +53,6 @@ declare global {
     // Code suggestion management
     codeSuggestion: {
       clear: () => Promise<void>;
-    };
-
-    // Authentication management
-    auth: {
-      signup: (
-        username: string,
-        email: string,
-        password: string
-      ) => Promise<{ success: boolean; error?: string }>;
-      login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-      logout: () => Promise<{ success: boolean; error?: string }>;
-      changePassword: (
-        oldPassword: string,
-        newPassword: string
-      ) => Promise<{ success: boolean; error?: string }>;
     };
 
     // VCam bridge management

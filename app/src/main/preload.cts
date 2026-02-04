@@ -19,29 +19,6 @@ const electronApi = {
     update: (updates: any) => ipcRenderer.invoke('config:update', updates),
   },
 
-  // Transcription management
-  transcription: {
-    clear: () => ipcRenderer.invoke('transcription:clear'),
-    start: () => ipcRenderer.invoke('transcription:start'),
-    stop: () => ipcRenderer.invoke('transcription:stop'),
-  },
-
-  // Reply suggestion management
-  replySuggestion: {
-    clear: () => ipcRenderer.invoke('reply-suggestion:clear'),
-  },
-
-  // Code suggestion management
-  codeSuggestion: {
-    clear: () => ipcRenderer.invoke('code-suggestion:clear'),
-  },
-
-  // VCam bridge management
-  vcamBridge: {
-    start: () => ipcRenderer.invoke('vcam-bridge:start'),
-    stop: () => ipcRenderer.invoke('vcam-bridge:stop'),
-  },
-
   // Authentication management
   auth: {
     signup: (username: string, email: string, password: string) =>
@@ -63,6 +40,29 @@ const electronApi = {
     const handler = (_event: Electron.IpcRendererEvent, state: any) => callback(state);
     ipcRenderer.on('app-state-updated', handler);
     return () => ipcRenderer.removeListener('app-state-updated', handler);
+  },
+
+  // Transcription management
+  transcription: {
+    clear: () => ipcRenderer.invoke('transcription:clear'),
+    start: () => ipcRenderer.invoke('transcription:start'),
+    stop: () => ipcRenderer.invoke('transcription:stop'),
+  },
+
+  // Reply suggestion management
+  replySuggestion: {
+    clear: () => ipcRenderer.invoke('reply-suggestion:clear'),
+  },
+
+  // Code suggestion management
+  codeSuggestion: {
+    clear: () => ipcRenderer.invoke('code-suggestion:clear'),
+  },
+
+  // VCam bridge management
+  vcamBridge: {
+    start: () => ipcRenderer.invoke('vcam-bridge:start'),
+    stop: () => ipcRenderer.invoke('vcam-bridge:stop'),
   },
 
   // Window controls
