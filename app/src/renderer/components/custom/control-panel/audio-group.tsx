@@ -38,9 +38,9 @@ export function AudioGroup({
 
   return (
     <div className="flex items-center">
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className="relative">
+      <div className="relative">
+        <Tooltip>
+          <TooltipTrigger asChild>
             <Button
               variant="secondary"
               size="icon"
@@ -50,20 +50,20 @@ export function AudioGroup({
             >
               <Mic className="h-4 w-4" />
             </Button>
-            {audioInputDeviceNotFound && (
-              <Badge
-                variant="destructive"
-                className="absolute -bottom-1 -right-1 h-4 min-w-4 rounded-full px-1 flex items-center justify-center text-[10px] border"
-              >
-                !
-              </Badge>
-            )}
-          </div>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>Audio options</p>
-        </TooltipContent>
-      </Tooltip>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Audio options</p>
+          </TooltipContent>
+        </Tooltip>
+        {audioInputDeviceNotFound && (
+          <Badge
+            variant="destructive"
+            className="absolute -bottom-1 -right-1 h-4 min-w-4 rounded-full px-1 flex items-center justify-center text-[10px] border"
+          >
+            !
+          </Badge>
+        )}
+      </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="flex flex-col w-72 p-4">
