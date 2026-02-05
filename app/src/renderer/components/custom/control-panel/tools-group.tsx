@@ -1,4 +1,4 @@
-import { Download, Loader } from 'lucide-react';
+import { Loader, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -34,11 +34,7 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
           className="h-8 w-8 text-xs rounded-xl cursor-pointer"
           disabled={getDisabled(runningState) || exporting}
         >
-          {exporting ? (
-            <Loader className="h-4 w-4 animate-spin" />
-          ) : (
-            <Download className="h-4 w-4" />
-          )}
+          {exporting ? <Loader className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
         </Button>
       </TooltipTrigger>
       <TooltipContent>

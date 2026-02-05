@@ -63,7 +63,7 @@ export class CodeSuggestionService {
   /**
    * Clear uploaded images
    */
-  clearImages(): void {
+  async clearImages(): Promise<void> {
     this.uploadedImageNames = [];
     appStateService.updateState({ codeSuggestions: this.getSuggestions() });
   }

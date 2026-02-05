@@ -104,8 +104,8 @@ export function registerGlobalHotkeys(): void {
   globalShortcut.register('Control+Alt+Shift+S', async () => {
     await codeSuggestionService.captureScreenshot();
   });
-  globalShortcut.register('Control+Alt+Shift+X', () => {
-    codeSuggestionService.clearImages();
+  globalShortcut.register('Control+Alt+Shift+X', async () => {
+    await codeSuggestionService.clearImages();
   });
   globalShortcut.register('Control+Alt+Shift+Enter', async () => {
     await codeSuggestionService.startGenerateSuggestion();
