@@ -1,5 +1,5 @@
 import { Loader2, PauseCircle, Zap } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { Card } from '@/components/ui/card';
 import { type ReplySuggestion, SuggestionState } from '@/types/suggestion';
@@ -11,7 +11,7 @@ interface SuggestionsPanelProps {
   style?: React.CSSProperties;
 }
 
-export default function ReplySuggestionsPanel({ suggestions = [], style }: SuggestionsPanelProps) {
+function ReplySuggestionsPanel({ suggestions = [], style }: SuggestionsPanelProps) {
   const hasItems = suggestions.length > 0;
 
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -22,6 +22,15 @@ export default function ReplySuggestionsPanel({ suggestions = [], style }: Sugge
 
   const [autoScroll, setAutoScroll] = useState(true);
 
+  // Track previous length, state, and content to detect actual changes
+  const prevLengthRef = useRef<number>(suggestions.length);
+  const prevLastStateRef = useRef<SuggestionState | null>(
+    suggestions.length > 0 ? suggestions[suggestions.length - 1].state : null
+  );
+  const prevLastContentRef = useRef<string>(
+    suggestions.length > 0 ? suggestions[suggestions.length - 1].answer : ''
+  );
+
   // helper: scroll last item into view at the bottom of container (conventional for newest)
   const scrollToLatest = (behavior: ScrollBehavior = 'smooth') => {
     const last = lastItemRef.current;
@@ -31,11 +40,35 @@ export default function ReplySuggestionsPanel({ suggestions = [], style }: Sugge
 
   // auto-scroll when suggestions change
   useEffect(() => {
-    if (autoScroll) {
-      // small delay can help if DOM hasn't fully laid out (optional)
-      // but usually immediate call works because spacer is synced above
+    if (!autoScroll) return;
+
+    const currentLength = suggestions.length;
+    const lastSuggestion = suggestions[currentLength - 1];
+    const currentLastState = lastSuggestion?.state ?? null;
+    const currentLastContent = lastSuggestion?.answer ?? '';
+
+    // Only scroll when:
+    // 1. A new item is added (length increased)
+    // 2. The last item transitioned to SUCCESS (generation completed)
+    // 3. The last item's content changed while LOADING (generation in progress)
+    const lengthChanged = currentLength !== prevLengthRef.current;
+    const becameSuccess =
+      lastSuggestion &&
+      prevLastStateRef.current !== SuggestionState.SUCCESS &&
+      currentLastState === SuggestionState.SUCCESS;
+    const contentChangedWhileLoading =
+      lastSuggestion &&
+      currentLastState === SuggestionState.LOADING &&
+      currentLastContent !== prevLastContentRef.current;
+
+    if (lengthChanged || becameSuccess || contentChangedWhileLoading) {
       scrollToLatest('smooth');
     }
+
+    // Update refs for next comparison
+    prevLengthRef.current = currentLength;
+    prevLastStateRef.current = currentLastState;
+    prevLastContentRef.current = currentLastContent;
   }, [suggestions, autoScroll]);
 
   // Listen for hotkey scroll events from Electron main process
@@ -157,3 +190,5 @@ export default function ReplySuggestionsPanel({ suggestions = [], style }: Sugge
     </Card>
   );
 }
+
+export default React.memo(ReplySuggestionsPanel);

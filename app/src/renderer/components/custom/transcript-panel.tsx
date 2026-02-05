@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { Card } from '@/components/ui/card';
 import { useConfigStore } from '@/hooks/use-config-store';
@@ -11,7 +11,7 @@ interface TranscriptionPanelProps {
   style?: React.CSSProperties;
 }
 
-export default function TranscriptPanel({ transcripts, style }: TranscriptionPanelProps) {
+function TranscriptPanel({ transcripts, style }: TranscriptionPanelProps) {
   const { config } = useConfigStore();
   const username = config?.interview_conf?.username ?? '';
   const containerRef = useRef<HTMLDivElement>(null);
@@ -72,3 +72,5 @@ export default function TranscriptPanel({ transcripts, style }: TranscriptionPan
     </Card>
   );
 }
+
+export default React.memo(TranscriptPanel);

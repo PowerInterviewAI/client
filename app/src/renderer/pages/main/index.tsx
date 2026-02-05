@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import CodeSuggestionsPanel from '@/components/custom/code-suggestions-panel';
@@ -131,21 +131,29 @@ export default function MainPage() {
     await logout();
   };
 
+  // Memoized styles to prevent unnecessary re-renders
+  const transcriptStyle = useMemo(
+    () => ((transcriptHeight ?? 0) > 0 ? { height: `${transcriptHeight}px` } : undefined),
+    [transcriptHeight]
+  );
+  const suggestionStyle = useMemo(() => ({ height: `${suggestionHeight}px` }), [suggestionHeight]);
+
+  // Sync app state to local state - remove local state from deps to avoid infinite loops
   useEffect(() => {
-    if (appState?.transcripts && appState?.transcripts !== transcripts) {
-      setTranscripts(appState?.transcripts);
+    if (appState?.transcripts && appState.transcripts !== transcripts) {
+      setTranscripts(appState.transcripts);
     }
-  }, [appState?.transcripts, transcripts]);
+  }, [appState?.transcripts]);
   useEffect(() => {
-    if (appState?.replySuggestions && appState?.replySuggestions !== replySuggestions) {
-      setReplySuggestions(appState?.replySuggestions);
+    if (appState?.replySuggestions && appState.replySuggestions !== replySuggestions) {
+      setReplySuggestions(appState.replySuggestions);
     }
-  }, [appState?.replySuggestions, replySuggestions]);
+  }, [appState?.replySuggestions]);
   useEffect(() => {
-    if (appState?.codeSuggestions && appState?.codeSuggestions !== codeSuggestions) {
-      setCodeSuggestions(appState?.codeSuggestions);
+    if (appState?.codeSuggestions && appState.codeSuggestions !== codeSuggestions) {
+      setCodeSuggestions(appState.codeSuggestions);
     }
-  }, [appState?.codeSuggestions, codeSuggestions]);
+  }, [appState?.codeSuggestions]);
 
   // Redirect to login if not logged in
   const _redirectedToLogin = useRef(false);
@@ -199,10 +207,7 @@ export default function MainPage() {
 
           {/* Transcription Panel - Fill remaining space with scroll */}
           {(!hideTranscriptPanel || !hideVideoPanel) && (
-            <TranscriptPanel
-              transcripts={transcripts}
-              style={(transcriptHeight ?? 0) > 0 ? { height: `${transcriptHeight}px` } : undefined}
-            />
+            <TranscriptPanel transcripts={transcripts} style={transcriptStyle} />
           )}
         </div>
 
@@ -210,16 +215,10 @@ export default function MainPage() {
         {(hasReplySuggestions || hasCodeSuggestions) && (
           <div className="flex-1 flex flex-col gap-1 h-full overflow-auto">
             {hasCodeSuggestions && (
-              <CodeSuggestionsPanel
-                codeSuggestions={codeSuggestions}
-                style={{ height: `${suggestionHeight}px` }}
-              />
+              <CodeSuggestionsPanel codeSuggestions={codeSuggestions} style={suggestionStyle} />
             )}
             {hasReplySuggestions && (
-              <ReplySuggestionsPanel
-                suggestions={replySuggestions}
-                style={{ height: `${suggestionHeight}px` }}
-              />
+              <ReplySuggestionsPanel suggestions={replySuggestions} style={suggestionStyle} />
             )}
           </div>
         )}

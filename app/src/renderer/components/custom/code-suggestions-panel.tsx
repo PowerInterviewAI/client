@@ -1,5 +1,5 @@
 import { File, Loader2, PauseCircle } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { Card } from '@/components/ui/card';
 import { type CodeSuggestion, SuggestionState } from '@/types/suggestion';
@@ -12,10 +12,7 @@ interface CodeSuggestionsPanelProps {
   style?: React.CSSProperties;
 }
 
-export default function CodeSuggestionsPanel({
-  codeSuggestions = [],
-  style,
-}: CodeSuggestionsPanelProps) {
+function CodeSuggestionsPanel({ codeSuggestions = [], style }: CodeSuggestionsPanelProps) {
   const hasItems = codeSuggestions.length > 0;
 
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -26,14 +23,51 @@ export default function CodeSuggestionsPanel({
   const lastHotkeyAtRef = useRef<number>(0);
   const HOTKEY_SMOOTH_THRESHOLD = 150; // ms
 
+  // Track previous length, state, and content to detect actual changes
+  const prevLengthRef = useRef<number>(codeSuggestions.length);
+  const prevLastStateRef = useRef<SuggestionState | null>(
+    codeSuggestions.length > 0 ? codeSuggestions[codeSuggestions.length - 1].state : null
+  );
+  const prevLastContentRef = useRef<string>(
+    codeSuggestions.length > 0 ? codeSuggestions[codeSuggestions.length - 1].suggestion_content : ''
+  );
+
   const scrollToLatest = (behavior: ScrollBehavior = 'smooth') => {
-    const last = lastItemRef.current;
-    if (!last) return;
-    last.scrollIntoView({ behavior, block: 'end', inline: 'nearest' });
+    const container = containerRef.current;
+    if (!container) return;
+    container.scrollTo({ top: container.scrollHeight, behavior });
   };
 
   useEffect(() => {
-    if (autoScroll) scrollToLatest('smooth');
+    if (!autoScroll) return;
+
+    const currentLength = codeSuggestions.length;
+    const lastSuggestion = codeSuggestions[currentLength - 1];
+    const currentLastState = lastSuggestion?.state ?? null;
+    const currentLastContent = lastSuggestion?.suggestion_content ?? '';
+
+    // Only scroll when:
+    // 1. A new item is added (length increased)
+    // 2. The last item transitioned to SUCCESS (generation completed)
+    // 3. The last item's content changed while LOADING (generation in progress)
+    const lengthChanged = currentLength !== prevLengthRef.current;
+    const becameSuccess =
+      lastSuggestion &&
+      prevLastStateRef.current !== SuggestionState.SUCCESS &&
+      currentLastState === SuggestionState.SUCCESS;
+    const contentChangedWhileLoading =
+      lastSuggestion &&
+      currentLastState === SuggestionState.LOADING &&
+      currentLastContent !== prevLastContentRef.current;
+
+    if (lengthChanged || becameSuccess || contentChangedWhileLoading) {
+      scrollToLatest('smooth');
+    }
+
+    // Update refs for next comparison
+    prevLengthRef.current = currentLength;
+    prevLastStateRef.current = currentLastState;
+    prevLastContentRef.current = currentLastContent;
   }, [codeSuggestions, autoScroll]);
 
   // Listen for hotkey scroll events from Electron main process
@@ -186,3 +220,5 @@ export default function CodeSuggestionsPanel({
     </Card>
   );
 }
+
+export default React.memo(CodeSuggestionsPanel);
