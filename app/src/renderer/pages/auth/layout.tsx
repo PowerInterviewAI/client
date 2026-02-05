@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Link,Outlet, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useNavigate } from 'react-router-dom';
 
 import logoSvg from '/logo.svg';
 import Loading from '@/components/custom/loading';

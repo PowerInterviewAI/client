@@ -3,7 +3,7 @@
  * Manages self and other party transcription using ASR agents
  */
 
-import { ChildProcess,spawn } from 'child_process';
+import { ChildProcess, spawn } from 'child_process';
 import { BrowserWindow } from 'electron';
 import path from 'path';
 import * as zmq from 'zeromq';
@@ -232,10 +232,11 @@ class TranscriptService {
 
         if (text) {
           const transcript: Transcript = {
+            timestamp: new Date().getTime(),
             text,
             isFinal,
             speaker: agent.speaker,
-            timestamp: new Date().getTime(),
+            endTimestamp: new Date().getTime(),
           };
 
           if (transcript.speaker === Speaker.SELF) {
@@ -246,6 +247,7 @@ class TranscriptService {
             } else {
               if (this.selfPartialTranscript) {
                 this.selfPartialTranscript.text = transcript.text;
+                this.selfPartialTranscript.endTimestamp = transcript.endTimestamp;
               } else {
                 this.selfPartialTranscript = transcript;
               }
@@ -258,6 +260,7 @@ class TranscriptService {
             } else {
               if (this.otherPartialTranscript) {
                 this.otherPartialTranscript.text = transcript.text;
+                this.otherPartialTranscript.endTimestamp = transcript.endTimestamp;
               } else {
                 this.otherPartialTranscript = transcript;
               }
@@ -278,11 +281,19 @@ class TranscriptService {
           const cleaned: Transcript[] = [];
           for (const t of allTranscripts) {
             const lastIndex = cleaned.length - 1;
+
+            // If same speaker and gap is small, merge into last transcript
+            if (lastIndex < 0) {
+              cleaned.push({ ...t });
+              continue;
+            }
+
+            // Check if we can merge with last cleaned transcript
             const lastCleaned = cleaned[lastIndex];
             if (
               lastIndex >= 0 &&
               lastCleaned.speaker === t.speaker &&
-              t.timestamp - lastCleaned.timestamp <= INTER_TRANSCRIPT_GAP_MS
+              t.timestamp - lastCleaned.endTimestamp <= INTER_TRANSCRIPT_GAP_MS
             ) {
               lastCleaned.text += ' ' + t.text;
             } else {

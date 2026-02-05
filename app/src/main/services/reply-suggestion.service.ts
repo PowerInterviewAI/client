@@ -7,7 +7,7 @@
 
 import { ApiClient } from '../api/client.js';
 import { configStore } from '../store/config-store.js';
-import { ReplySuggestion, Speaker,SuggestionState, Transcript } from '../types/app-state.js';
+import { ReplySuggestion, Speaker, SuggestionState, Transcript } from '../types/app-state.js';
 import { DateTimeUtil } from '../utils/datetime.js';
 import { UuidUtil } from '../utils/uuid.js';
 import { appStateService } from './app-state.service.js';

@@ -22,6 +22,7 @@ export interface Transcript {
   text: string;
   speaker: Speaker;
   isFinal: boolean;
+  endTimestamp: number;
 }
 
 export interface ReplySuggestion {
