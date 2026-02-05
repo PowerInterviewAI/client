@@ -4,6 +4,7 @@
  */
 
 import ElectronStore from 'electron-store';
+
 import { AppConfig, configManager } from '../config/app.js';
 
 // Runtime configuration (matches Config type in frontend)

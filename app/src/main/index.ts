@@ -1,7 +1,7 @@
 import { app, BrowserWindow } from 'electron';
+import ElectronStore from 'electron-store';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import ElectronStore from 'electron-store';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,25 +14,23 @@ interface StoreSchema {
 const store = new ElectronStore<StoreSchema>();
 
 // Import modules
-import { setWindowReference } from './services/window-control-service.js';
 import { registerGlobalHotkeys, unregisterHotkeys } from './hotkeys.js';
-
-// Import services
-import { configStore } from './store/config-store.js';
-import { transcriptService } from './services/transcript.service.js';
-import { healthCheckService } from './services/health-check.service.js';
-import { vcamBridgeService } from './services/vcam-bridge.service.js';
-
-// Import IPC handlers
-import { registerWindowHandlers } from './ipc/window.js';
+import { registerAppStateHandlers } from './ipc/app-state.js';
 import { registerAuthHandlers } from './ipc/auth.js';
+import { registerCodeSuggestionHandlers } from './ipc/code-suggestion.js';
+import { registerConfigHandlers } from './ipc/config.js';
 import { registerReplySuggestionHandlers } from './ipc/reply-suggestion.js';
+import { registerToolsHandlers } from './ipc/tools.js';
 import { registerTranscriptHandlers } from './ipc/transcript.js';
 import { registerVcamBridgeHandlers } from './ipc/vcam-bridge.js';
-import { registerConfigHandlers } from './ipc/config.js';
-import { registerAppStateHandlers } from './ipc/app-state.js';
-import { registerCodeSuggestionHandlers } from './ipc/code-suggestion.js';
-import { registerToolsHandlers } from './ipc/tools.js';
+// Import IPC handlers
+import { registerWindowHandlers } from './ipc/window.js';
+import { healthCheckService } from './services/health-check.service.js';
+import { transcriptService } from './services/transcript.service.js';
+import { vcamBridgeService } from './services/vcam-bridge.service.js';
+import { setWindowReference } from './services/window-control-service.js';
+// Import services
+import { configStore } from './store/config-store.js';
 
 let win: BrowserWindow | null = null;
 

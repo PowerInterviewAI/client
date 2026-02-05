@@ -1,8 +1,9 @@
+import { useState } from 'react';
+
+import faviconSvg from '/favicon.svg';
 import DocumentationDialog from '@/components/custom/documentation-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
-import { useState } from 'react';
-import faviconSvg from '/favicon.svg';
 
 export default function Titlebar() {
   const isStealth = useIsStealthMode();

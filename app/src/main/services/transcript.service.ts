@@ -3,15 +3,16 @@
  * Manages self and other party transcription using ASR agents
  */
 
-import { spawn, ChildProcess } from 'child_process';
-import * as zmq from 'zeromq';
+import { ChildProcess,spawn } from 'child_process';
 import { BrowserWindow } from 'electron';
 import path from 'path';
+import * as zmq from 'zeromq';
+
 import { configManager } from '../config/app.js';
 import { configStore } from '../store/config-store.js';
+import { Speaker, Transcript } from '../types/app-state.js';
 import { EnvUtil } from '../utils/env.js';
 import { appStateService } from './app-state.service.js';
-import { Speaker, Transcript } from '../types/app-state.js';
 import { replySuggestionService } from './reply-suggestion.service.js';
 
 interface AgentProcess {

@@ -3,8 +3,8 @@
  * Handles user authentication
  */
 
-import { ApiClient, ApiResponse } from './client.js';
 import { AuthToken, ChangePasswordRequest, LoginRequest, SignupRequest } from '../types/auth.js';
+import { ApiClient, ApiResponse } from './client.js';
 
 export class AuthApi extends ApiClient {
   /**

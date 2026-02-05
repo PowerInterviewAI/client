@@ -1,10 +1,11 @@
-import { useVideoDevices } from '@/hooks/use-video-devices';
-import { RunningState } from '@/types/app-state';
-import { type OfferRequest, type WebRTCOptions } from '@/types/webrtc';
 import { UserCircle2 } from 'lucide-react';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { toast } from 'sonner';
+
 import { useConfigStore } from '@/hooks/use-config-store';
+import { useVideoDevices } from '@/hooks/use-video-devices';
+import { RunningState } from '@/types/app-state';
+import { type OfferRequest, type WebRTCOptions } from '@/types/webrtc';
 
 interface VideoPanelProps {
   runningState: RunningState;

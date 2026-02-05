@@ -1,8 +1,10 @@
-import { RunningState } from '@/types/app-state';
 import { create } from 'zustand';
+
 import { type VideoPanelHandle } from '@/components/custom/video-panel';
-import { useConfigStore } from './use-config-store';
 import { getElectron } from '@/lib/utils';
+import { RunningState } from '@/types/app-state';
+
+import { useConfigStore } from './use-config-store';
 
 interface AssistantState {
   runningState: RunningState;

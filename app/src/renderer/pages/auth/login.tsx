@@ -1,11 +1,12 @@
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+
 import { InputPassword } from '@/components/custom/input-password';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { useConfigStore } from '@/hooks/use-config-store';
 import useAuth from '@/hooks/use-auth';
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useConfigStore } from '@/hooks/use-config-store';
 
 export default function LoginPage() {
   const { login, loading, error, setError } = useAuth();

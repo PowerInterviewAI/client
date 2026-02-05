@@ -1,8 +1,10 @@
-import { Card } from '@/components/ui/card';
-import { Speaker, type Transcript } from '@/types/transcript';
 import { useEffect, useRef, useState } from 'react';
-import { Checkbox } from '../ui/checkbox';
+
+import { Card } from '@/components/ui/card';
 import { useConfigStore } from '@/hooks/use-config-store';
+import { Speaker, type Transcript } from '@/types/transcript';
+
+import { Checkbox } from '../ui/checkbox';
 
 interface TranscriptionPanelProps {
   transcripts: Transcript[];

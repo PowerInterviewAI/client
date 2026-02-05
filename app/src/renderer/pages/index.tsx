@@ -1,7 +1,8 @@
-import Loading from '@/components/custom/loading';
-import { useAppState } from '@/hooks/use-app-state';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+import Loading from '@/components/custom/loading';
+import { useAppState } from '@/hooks/use-app-state';
 
 export default function IndexPage() {
   const { appState } = useAppState();

@@ -1,8 +1,9 @@
+import { useEffect } from 'react';
+import { Link,Outlet, useNavigate } from 'react-router-dom';
+
+import logoSvg from '/logo.svg';
 import Loading from '@/components/custom/loading';
 import { useAppState } from '@/hooks/use-app-state';
-import { useEffect } from 'react';
-import { useNavigate, Outlet, Link } from 'react-router-dom';
-import logoSvg from '/logo.svg';
 
 export default function AuthLayout() {
   const { appState } = useAppState();

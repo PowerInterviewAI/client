@@ -5,12 +5,12 @@
  * Based on the Python equivalent with threading and streaming support
  */
 
-import { ReplySuggestion, Transcript, SuggestionState, Speaker } from '../types/app-state.js';
-import { DateTimeUtil } from '../utils/datetime.js';
 import { ApiClient } from '../api/client.js';
 import { configStore } from '../store/config-store.js';
-import { appStateService } from './app-state.service.js';
+import { ReplySuggestion, Speaker,SuggestionState, Transcript } from '../types/app-state.js';
+import { DateTimeUtil } from '../utils/datetime.js';
 import { UuidUtil } from '../utils/uuid.js';
+import { appStateService } from './app-state.service.js';
 
 interface GenerateReplySuggestionRequest {
   username: string;

@@ -1,4 +1,5 @@
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
+
 import Titlebar from './titlebar';
 import WindowResizer from './window-resizer';
 

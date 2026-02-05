@@ -1,4 +1,4 @@
-import { screen, BrowserWindow } from 'electron';
+import { BrowserWindow,screen } from 'electron';
 import ElectronStore from 'electron-store';
 
 interface StoreSchema {

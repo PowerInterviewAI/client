@@ -3,12 +3,13 @@
  * Generates code suggestions using LLM based on screenshots and transcripts
  */
 
-import { CodeSuggestion, SuggestionState, Transcript } from '../types/app-state.js';
+import screenshot from 'screenshot-desktop';
+import sharp from 'sharp';
+
 import { ApiClient } from '../api/client.js';
+import { CodeSuggestion, SuggestionState, Transcript } from '../types/app-state.js';
 import { DateTimeUtil } from '../utils/datetime.js';
 import { UuidUtil } from '../utils/uuid.js';
-import sharp from 'sharp';
-import screenshot from 'screenshot-desktop';
 import { appStateService } from './app-state.service.js';
 
 interface GenerateCodeSuggestionRequest {

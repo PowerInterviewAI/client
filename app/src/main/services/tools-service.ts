@@ -1,4 +1,7 @@
-import { convertMarkdownToDocx, downloadDocx } from '@mohtasham/md-to-docx';
+import { convertMarkdownToDocx } from '@mohtasham/md-to-docx';
+import { dialog } from 'electron';
+import fs from 'fs/promises';
+
 import { ApiClient } from '../api/client.js';
 import { configStore } from '../store/config-store.js';
 import { Transcript } from '../types/app-state.js';
@@ -11,6 +14,21 @@ interface GenerateSummarizeRequest {
 
 class ToolsService {
   private apiClient: ApiClient = new ApiClient();
+
+  private generateFilename(): string {
+    const d = new Date();
+
+    const pad = (n: number) => String(n).padStart(2, '0');
+
+    const yyyy = d.getFullYear();
+    const mm = pad(d.getMonth() + 1);
+    const dd = pad(d.getDate());
+    const hh = pad(d.getHours());
+    const min = pad(d.getMinutes());
+    const ss = pad(d.getSeconds());
+
+    return `report-${yyyy}-${mm}-${dd}_${hh}-${min}-${ss}.docx`;
+  }
 
   async exportTranscript(): Promise<void> {
     // Prepare request data
@@ -31,22 +49,16 @@ class ToolsService {
       throw new Error('No transcript data received from server.');
     }
     const docxBlob = await convertMarkdownToDocx(exportMarkdown);
-    try {
-      const { dialog } = await import('electron');
-      const fs = await import('fs/promises');
 
-      const { canceled, filePath } = await dialog.showSaveDialog({
-        title: 'Save Transcript',
-        defaultPath: 'transcript.docx',
-        filters: [{ name: 'Word Document', extensions: ['docx'] }],
-      });
+    const { canceled, filePath } = await dialog.showSaveDialog({
+      title: 'Save Transcript',
+      defaultPath: this.generateFilename(),
+      filters: [{ name: 'Word Document', extensions: ['docx'] }],
+    });
 
-      if (canceled || !filePath) return;
+    if (canceled || !filePath) return;
 
-      await fs.writeFile(filePath, Buffer.from(await docxBlob.arrayBuffer()));
-    } catch (err) {
-      throw err;
-    }
+    await fs.writeFile(filePath, Buffer.from(await docxBlob.arrayBuffer()));
   }
 }
 

@@ -1,7 +1,9 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { Toaster } from '../ui/sonner';
+
 import { useThemeStore } from '@/hooks/use-theme-store';
+
+import { Toaster } from '../ui/sonner';
 // Note: `useAppState` is now a standalone hook; no provider is needed.
 
 function ThemeProvider({ children }: { children: React.ReactNode }) {

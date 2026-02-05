@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -8,7 +10,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { HOTKEYS } from '@/lib/hotkeys';
-import React from 'react';
 
 interface DocumentationDialogProps {
   open: boolean;

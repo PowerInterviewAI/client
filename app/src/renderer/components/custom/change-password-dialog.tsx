@@ -1,3 +1,6 @@
+import { useState } from 'react';
+import { toast } from 'sonner';
+
 import { InputPassword } from '@/components/custom/input-password';
 import { Button } from '@/components/ui/button';
 import {
@@ -8,8 +11,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { useState } from 'react';
-import { toast } from 'sonner';
 
 interface ChangePasswordDialogProps {
   open: boolean;

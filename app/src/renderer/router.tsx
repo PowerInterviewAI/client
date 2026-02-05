@@ -1,12 +1,13 @@
 import { createHashRouter } from 'react-router-dom';
-import IndexPage from './pages/index';
-import MainPage from './pages/main/index';
+
 import AuthLayout from './pages/auth/layout';
 import LoginPage from './pages/auth/login';
 import SignupPage from './pages/auth/signup';
+import IndexPage from './pages/index';
+import MainPage from './pages/main/index';
+import PrivacyPage from './pages/privacy/index';
 import SettingsPage from './pages/settings/index';
 import TermsPage from './pages/terms/index';
-import PrivacyPage from './pages/privacy/index';
 
 export const router = createHashRouter([
   {

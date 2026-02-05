@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import { type Config } from '@/types/config';
+
 import { getElectron } from '@/lib/utils';
+import { type Config } from '@/types/config';
 
 interface ConfigStore {
   config: Config | undefined;

@@ -1,5 +1,5 @@
-import type { Config } from './config';
 import type { AppState } from './app-state';
+import type { Config } from './config';
 
 export {};
 

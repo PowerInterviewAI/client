@@ -4,8 +4,8 @@
  */
 
 import { HealthCheckApi } from '../api/health-check.js';
-import { appStateService } from './app-state.service.js';
 import { safeSleep } from '../utils/sleep.js';
+import { appStateService } from './app-state.service.js';
 
 const SUCCESS_INTERVAL = 60 * 1000; // 1 minute
 const FAILURE_INTERVAL = 1 * 1000; // 1 second

@@ -1,4 +1,5 @@
 import { ipcMain } from 'electron';
+
 import { codeSuggestionService } from '../services/code-suggestion.service.js';
 
 export function registerCodeSuggestionHandlers() {

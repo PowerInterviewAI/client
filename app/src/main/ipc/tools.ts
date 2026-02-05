@@ -1,4 +1,5 @@
 import { ipcMain } from 'electron';
+
 import { toolsService } from '../services/tools-service.js';
 
 export function registerToolsHandlers() {

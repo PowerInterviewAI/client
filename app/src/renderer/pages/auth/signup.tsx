@@ -1,11 +1,12 @@
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
+
 import { InputPassword } from '@/components/custom/input-password';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import useAuth from '@/hooks/use-auth';
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { toast } from 'sonner';
 
 export default function SignupPage() {
   const { signup, loading, error, setError } = useAuth();

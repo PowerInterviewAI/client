@@ -1,13 +1,14 @@
 import { BrowserWindow, globalShortcut } from 'electron';
+
+import { codeSuggestionService } from './services/code-suggestion.service.js';
 import {
-  moveWindowToCorner,
   moveWindowByArrow,
+  moveWindowToCorner,
   resizeWindowByArrow,
   toggleOpacity,
   toggleStealth,
   WindowPosition,
 } from './services/window-control-service.js';
-import { codeSuggestionService } from './services/code-suggestion.service.js';
 
 /**
  * Register global hotkeys for window management and navigation

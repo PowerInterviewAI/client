@@ -1,8 +1,11 @@
+import { X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useConfigStore } from '@/hooks/use-config-store';
+
 import {
   Dialog,
   DialogContent,
@@ -12,7 +15,6 @@ import {
   DialogTitle,
 } from '../ui/dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
-import { useConfigStore } from '@/hooks/use-config-store';
 
 interface ConfigurationDialogProps {
   isOpen: boolean;

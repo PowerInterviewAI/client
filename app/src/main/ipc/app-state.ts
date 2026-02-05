@@ -3,6 +3,7 @@
  */
 
 import { ipcMain } from 'electron';
+
 import { appStateService } from '../services/app-state.service.js';
 
 export function registerAppStateHandlers(): void {

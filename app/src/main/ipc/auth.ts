@@ -4,6 +4,7 @@
  */
 
 import { ipcMain } from 'electron';
+
 import { authService } from '../services/auth.service.js';
 
 export function registerAuthHandlers() {

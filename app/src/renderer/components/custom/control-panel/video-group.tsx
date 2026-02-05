@@ -1,3 +1,7 @@
+import { Ellipsis, UserLock } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -11,13 +15,10 @@ import {
 } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAssistantState } from '@/hooks/use-assistant-state';
-import { useVideoDevices } from '@/hooks/use-video-devices';
 import { useConfigStore } from '@/hooks/use-config-store';
+import { useVideoDevices } from '@/hooks/use-video-devices';
 import { RunningState } from '@/types/app-state';
 import { type AudioDevice } from '@/types/audio-device';
-import { Ellipsis, UserLock } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
 
 interface VideoGroupProps {
   videoDeviceNotFound: boolean;

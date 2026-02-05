@@ -1,4 +1,5 @@
 import { ipcMain } from 'electron';
+
 import { vcamBridgeService } from '../services/vcam-bridge.service.js';
 
 export function registerVcamBridgeHandlers() {

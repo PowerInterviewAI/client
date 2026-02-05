@@ -6,6 +6,7 @@
  */
 
 import { EventEmitter } from 'events';
+
 import { PeerConnection } from '../types/webrtc.js';
 
 export class WebRtcService extends EventEmitter {

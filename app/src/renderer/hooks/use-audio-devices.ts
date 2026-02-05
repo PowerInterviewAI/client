@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+
 import { type AudioDevice } from '@/types/audio-device';
 
 function useAudioDevices(kind: 'audioinput' | 'audiooutput', deviceType: string) {

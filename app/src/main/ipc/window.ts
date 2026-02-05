@@ -2,7 +2,8 @@
  * Window control IPC handlers
  */
 
-import { ipcMain, BrowserWindow } from 'electron';
+import { BrowserWindow,ipcMain } from 'electron';
+
 import * as windowControls from '../services/window-control-service.js';
 import { setWindowBounds } from '../services/window-control-service.js';
 

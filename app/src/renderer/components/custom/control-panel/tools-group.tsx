@@ -1,10 +1,11 @@
+import { Download, Loader } from 'lucide-react';
+import { toast } from 'sonner';
+
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAssistantState } from '@/hooks/use-assistant-state';
 import useTools from '@/hooks/use-tools';
 import { RunningState } from '@/types/app-state';
-import { Download, Loader } from 'lucide-react';
-import { toast } from 'sonner';
 
 interface ToolsGroupProps {
   getDisabled: (state: RunningState, disableOnRunning?: boolean) => boolean;

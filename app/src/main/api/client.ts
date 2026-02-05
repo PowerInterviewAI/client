@@ -4,8 +4,9 @@
  */
 
 import { app } from 'electron';
-import { EnvUtil } from '../utils/env.js';
+
 import { configStore } from '../store/config-store.js';
+import { EnvUtil } from '../utils/env.js';
 
 export interface ApiResponse<T = unknown> {
   data?: T;

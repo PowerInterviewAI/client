@@ -1,4 +1,5 @@
 import { ipcMain } from 'electron';
+
 import { transcriptService } from '../services/transcript.service.js';
 
 export function registerTranscriptHandlers() {

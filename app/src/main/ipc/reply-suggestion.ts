@@ -1,4 +1,5 @@
 import { ipcMain } from 'electron';
+
 import { replySuggestionService } from '../services/reply-suggestion.service.js';
 
 export function registerReplySuggestionHandlers() {

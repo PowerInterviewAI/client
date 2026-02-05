@@ -1,4 +1,5 @@
 import { Loader } from 'lucide-react';
+
 import logoSvg from '/logo.svg';
 
 type LoadingProps = {

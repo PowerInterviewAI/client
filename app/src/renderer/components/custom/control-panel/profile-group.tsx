@@ -1,3 +1,6 @@
+import { ChevronUp, Key, LogOut, Moon, SettingsIcon, Sun } from 'lucide-react';
+import { useState } from 'react';
+
 import DocumentationDialog from '@/components/custom/documentation-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -7,13 +10,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useAssistantState } from '@/hooks/use-assistant-state';
 import useAuth from '@/hooks/use-auth';
+import { useThemeStore } from '@/hooks/use-theme-store';
 import { RunningState } from '@/types/app-state';
 import { type Config } from '@/types/config';
-import { ChevronUp, Key, LogOut, Moon, SettingsIcon, Sun } from 'lucide-react';
-import { useState } from 'react';
-import { useAssistantState } from '@/hooks/use-assistant-state';
-import { useThemeStore } from '@/hooks/use-theme-store';
+
 import { ChangePasswordDialog } from '../change-password-dialog';
 
 interface ProfileGroupProps {

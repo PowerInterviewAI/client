@@ -1,3 +1,6 @@
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
 import CodeSuggestionsPanel from '@/components/custom/code-suggestions-panel';
 import ConfigurationDialog from '@/components/custom/configuration-dialog';
 import ControlPanel from '@/components/custom/control-panel';
@@ -7,15 +10,13 @@ import ReplySuggestionsPanel from '@/components/custom/reply-suggestions-panel';
 import TranscriptPanel from '@/components/custom/transcript-panel';
 import { VideoPanel, type VideoPanelHandle } from '@/components/custom/video-panel';
 import { useAppState } from '@/hooks/use-app-state';
-import useAuth from '@/hooks/use-auth';
-import useIsStealthMode from '@/hooks/use-is-stealth-mode';
-import { useConfigStore } from '@/hooks/use-config-store';
 import { useAssistantState } from '@/hooks/use-assistant-state';
+import useAuth from '@/hooks/use-auth';
+import { useConfigStore } from '@/hooks/use-config-store';
+import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { RunningState } from '@/types/app-state';
 import { type CodeSuggestion, type ReplySuggestion } from '@/types/suggestion';
 import { type Transcript } from '@/types/transcript';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 export default function MainPage() {
   console.log('Rendering MainPage');

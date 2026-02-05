@@ -1,16 +1,18 @@
+import { Ellipsis, Play, Square } from 'lucide-react';
+
+import { useAssistantState } from '@/hooks/use-assistant-state';
+import { useAudioInputDevices, useAudioOutputDevices } from '@/hooks/use-audio-devices';
+import { useConfigStore } from '@/hooks/use-config-store';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { useVideoDevices } from '@/hooks/use-video-devices';
 import { RunningState } from '@/types/app-state';
-import { Ellipsis, Play, Square } from 'lucide-react';
+
+import RunningIndicator from '../running-indicator';
 import { AudioGroup } from './audio-group';
 import { MainGroup } from './main-group';
 import { ProfileGroup } from './profile-group';
-import { VideoGroup } from './video-group';
 import { ToolsGroup } from './tools-group';
-import RunningIndicator from '../running-indicator';
-import { useAudioInputDevices, useAudioOutputDevices } from '@/hooks/use-audio-devices';
-import { useAssistantState } from '@/hooks/use-assistant-state';
-import { useConfigStore } from '@/hooks/use-config-store';
+import { VideoGroup } from './video-group';
 
 interface ControlPanelProps {
   runningState: RunningState;

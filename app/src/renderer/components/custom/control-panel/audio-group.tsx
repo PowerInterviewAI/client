@@ -1,3 +1,5 @@
+import { Mic } from 'lucide-react';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -13,7 +15,6 @@ import { useAssistantState } from '@/hooks/use-assistant-state';
 import { useConfigStore } from '@/hooks/use-config-store';
 import { RunningState } from '@/types/app-state';
 import { type AudioDevice } from '@/types/audio-device';
-import { Mic } from 'lucide-react';
 
 interface AudioGroupProps {
   audioInputDevices: AudioDevice[];
