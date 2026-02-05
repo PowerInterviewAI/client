@@ -1,5 +1,6 @@
 import { BrowserWindow, screen } from 'electron';
 import ElectronStore from 'electron-store';
+import { pushNotificationService } from './push-notification.service.js';
 
 interface StoreSchema {
   windowBounds?: { x?: number; y?: number; width: number; height: number };
@@ -337,6 +338,10 @@ export function toggleOpacity(): void {
   if (!win || win.isDestroyed()) return;
 
   if (!_stealth) {
+    pushNotificationService.pushNotification({
+      message: 'Opacity toggle is only available in stealth mode.',
+      type: 'warning',
+    });
     console.log('⚠️ Opacity toggle is only available in stealth mode');
     return;
   }
