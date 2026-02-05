@@ -296,6 +296,7 @@ class TranscriptService {
               t.timestamp - lastCleaned.endTimestamp <= INTER_TRANSCRIPT_GAP_MS
             ) {
               lastCleaned.text += ' ' + t.text;
+              lastCleaned.endTimestamp = t.endTimestamp;
             } else {
               cleaned.push({ ...t });
             }

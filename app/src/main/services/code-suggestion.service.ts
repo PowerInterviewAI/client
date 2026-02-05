@@ -147,7 +147,9 @@ export class CodeSuggestionService {
       return undefined;
     }
 
-    const parts = transcripts.map((t) => `${t.speaker}: ${t.text}`);
+    const parts = transcripts.map(
+      (t) => `[${new Date(t.timestamp).toLocaleString()}] ${t.speaker}: ${t.text}`
+    );
     return parts.join('\n');
   }
 
