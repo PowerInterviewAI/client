@@ -1,8 +1,9 @@
 import { Mic } from 'lucide-react';
+import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,
@@ -27,6 +28,7 @@ export function AudioGroup({
   audioInputDeviceNotFound,
   getDisabled,
 }: AudioGroupProps) {
+  const [open, setOpen] = useState(false);
   const { runningState } = useAssistantState();
   const { config, updateConfig } = useConfigStore();
   const usableAudioInputDevices = audioInputDevices.filter((d) => {
@@ -36,35 +38,34 @@ export function AudioGroup({
 
   return (
     <div className="flex items-center">
-      <Dialog>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <DialogTrigger asChild>
-              <div className="relative">
-                <Button
-                  variant="secondary"
-                  size="icon"
-                  className="h-8 w-12 border-none rounded-full"
-                  disabled={getDisabled(runningState)}
-                >
-                  <Mic className="h-4 w-4" />
-                </Button>
-                {audioInputDeviceNotFound && (
-                  <Badge
-                    variant="destructive"
-                    className="absolute -bottom-1 -right-1 h-4 min-w-4 rounded-full px-1 flex items-center justify-center text-[10px] border"
-                  >
-                    !
-                  </Badge>
-                )}
-              </div>
-            </DialogTrigger>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Audio options</p>
-          </TooltipContent>
-        </Tooltip>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="relative">
+            <Button
+              variant="secondary"
+              size="icon"
+              className="h-8 w-12 border-none rounded-full"
+              disabled={getDisabled(runningState)}
+              onClick={() => setOpen(true)}
+            >
+              <Mic className="h-4 w-4" />
+            </Button>
+            {audioInputDeviceNotFound && (
+              <Badge
+                variant="destructive"
+                className="absolute -bottom-1 -right-1 h-4 min-w-4 rounded-full px-1 flex items-center justify-center text-[10px] border"
+              >
+                !
+              </Badge>
+            )}
+          </div>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Audio options</p>
+        </TooltipContent>
+      </Tooltip>
 
+      <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="flex flex-col w-72 p-4">
           <DialogTitle>Audio Options</DialogTitle>
 
