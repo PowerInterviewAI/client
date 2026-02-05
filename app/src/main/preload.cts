@@ -78,6 +78,7 @@ const electronApi = {
   // Tools management
   tools: {
     exportTranscript: () => ipcRenderer.invoke('tools:export-transcript'),
+    clearAll: () => ipcRenderer.invoke('tools:clear-all'),
   },
 
   // Window controls

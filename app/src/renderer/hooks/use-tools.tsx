@@ -20,8 +20,18 @@ export default function useTools() {
       setExporting(false);
     }
   };
+
+  const clearAll = async () => {
+    const electron = getElectron();
+    if (!electron) {
+      throw new Error('Electron API not available');
+    }
+    await electron.tools.clearAll();
+  };
+
   return {
     exporting,
     exportTranscript,
+    clearAll,
   } as const;
 }

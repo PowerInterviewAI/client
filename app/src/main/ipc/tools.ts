@@ -6,4 +6,7 @@ export function registerToolsHandlers() {
   ipcMain.handle('tools:export-transcript', async () => {
     await toolsService.exportTranscript();
   });
+  ipcMain.handle('tools:clear-all', async () => {
+    await toolsService.clearAll();
+  });
 }

@@ -70,6 +70,7 @@ declare global {
     // Tools management
     tools: {
       exportTranscript: () => Promise<string>;
+      clearAll: () => Promise<void>;
     };
 
     // Window controls

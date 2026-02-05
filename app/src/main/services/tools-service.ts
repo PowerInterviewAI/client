@@ -100,6 +100,15 @@ class ToolsService {
 
     await fs.writeFile(filePath, Buffer.from(await docxBlob.arrayBuffer()));
   }
+
+  async clearAll(): Promise<void> {
+    // Clear in-memory state
+    appStateService.updateState({
+      transcripts: [],
+      replySuggestions: [],
+      codeSuggestions: [],
+    });
+  }
 }
 
 export const toolsService = new ToolsService();

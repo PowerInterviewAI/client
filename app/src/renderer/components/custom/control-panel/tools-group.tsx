@@ -1,4 +1,4 @@
-import { Loader, Save } from 'lucide-react';
+import { BrushCleaning, Loader, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,17 @@ interface ToolsGroupProps {
 
 export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
   const { runningState } = useAssistantState();
-  const { exporting, exportTranscript } = useTools();
+  const { exporting, exportTranscript, clearAll } = useTools();
+
+  const onClearAll = async () => {
+    try {
+      await clearAll();
+      toast.success('Cleared successfully');
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to clear');
+    }
+  };
 
   const onExportTranscript = async () => {
     try {
@@ -26,20 +36,39 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
   };
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          onClick={onExportTranscript}
-          size="sm"
-          className="h-8 w-8 text-xs rounded-xl cursor-pointer"
-          disabled={getDisabled(runningState) || exporting}
-        >
-          {exporting ? <Loader className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p>Export Transcription</p>
-      </TooltipContent>
-    </Tooltip>
+    <div className="flex items-center space-x-2">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="secondary"
+            onClick={onClearAll}
+            size="sm"
+            className="h-8 w-8 text-xs rounded-xl cursor-pointer"
+            disabled={getDisabled(runningState) || exporting}
+          >
+            <BrushCleaning className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Clear All</p>
+        </TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="secondary"
+            onClick={onExportTranscript}
+            size="sm"
+            className="h-8 w-8 text-xs rounded-xl cursor-pointer"
+            disabled={getDisabled(runningState) || exporting}
+          >
+            {exporting ? <Loader className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Export Interview</p>
+        </TooltipContent>
+      </Tooltip>
+    </div>
   );
 }
