@@ -1,4 +1,4 @@
-import { InputPassword } from '@/components/input-password';
+import { InputPassword } from '@/components/custom/input-password';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';

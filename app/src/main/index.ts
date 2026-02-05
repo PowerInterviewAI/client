@@ -32,6 +32,7 @@ import { registerVcamBridgeHandlers } from './ipc/vcam-bridge.js';
 import { registerConfigHandlers } from './ipc/config.js';
 import { registerAppStateHandlers } from './ipc/app-state.js';
 import { registerCodeSuggestionHandlers } from './ipc/code-suggestion.js';
+import { registerToolsHandlers } from './ipc/tools.js';
 
 let win: BrowserWindow | null = null;
 
@@ -146,6 +147,7 @@ app.whenReady().then(async () => {
   registerReplySuggestionHandlers();
   registerCodeSuggestionHandlers();
   registerVcamBridgeHandlers();
+  registerToolsHandlers();
 
   // Create window
   await createWindow();

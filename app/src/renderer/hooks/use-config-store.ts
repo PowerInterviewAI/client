@@ -1,10 +1,6 @@
 import { create } from 'zustand';
 import { type Config } from '@/types/config';
-
-// Helper to get Electron API
-const getElectron = () => {
-  return typeof window !== 'undefined' ? window.electronAPI : undefined;
-};
+import { getElectron } from '@/lib/utils';
 
 interface ConfigStore {
   config: Config | undefined;

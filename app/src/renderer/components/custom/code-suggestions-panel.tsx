@@ -3,7 +3,7 @@ import { type CodeSuggestion, SuggestionState } from '@/types/suggestion';
 import { File, Loader2, PauseCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { SafeMarkdown } from './safe-markdown';
-import { Checkbox } from './ui/checkbox';
+import { Checkbox } from '../ui/checkbox';
 
 interface CodeSuggestionsPanelProps {
   codeSuggestions?: CodeSuggestion[];

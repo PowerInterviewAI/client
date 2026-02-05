@@ -29,6 +29,7 @@ const SELF_ZMQ_PORT = 50002;
 const OTHER_ZMQ_PORT = 50003;
 const MAX_RESTART_COUNT = 5;
 const RESTART_DELAY_MS = 2000;
+const INTER_TRANSCRIPT_GAP_MS = 2000;
 
 class TranscriptService {
   private selfAgent: AgentProcess | null = null;
@@ -277,7 +278,11 @@ class TranscriptService {
           for (const t of allTranscripts) {
             const lastIndex = cleaned.length - 1;
             const lastCleaned = cleaned[lastIndex];
-            if (lastIndex >= 0 && lastCleaned.speaker === t.speaker) {
+            if (
+              lastIndex >= 0 &&
+              lastCleaned.speaker === t.speaker &&
+              t.timestamp - lastCleaned.timestamp <= INTER_TRANSCRIPT_GAP_MS
+            ) {
               lastCleaned.text += ' ' + t.text;
             } else {
               cleaned.push({ ...t });

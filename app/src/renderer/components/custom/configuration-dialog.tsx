@@ -10,8 +10,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from './ui/dialog';
-import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+} from '../ui/dialog';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { useConfigStore } from '@/hooks/use-config-store';
 
 interface ConfigurationDialogProps {

@@ -1,4 +1,4 @@
-import DocumentationDialog from '@/components/documentation-dialog';
+import DocumentationDialog from '@/components/custom/documentation-dialog';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,

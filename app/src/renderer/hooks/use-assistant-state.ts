@@ -1,7 +1,8 @@
 import { RunningState } from '@/types/app-state';
 import { create } from 'zustand';
-import { type VideoPanelHandle } from '@/components/video-panel';
+import { type VideoPanelHandle } from '@/components/custom/video-panel';
 import { useConfigStore } from './use-config-store';
+import { getElectron } from '@/lib/utils';
 
 interface AssistantState {
   runningState: RunningState;
@@ -15,11 +16,6 @@ interface AssistantState {
   setError: (error: string | null) => void;
   setVideoPanelRef: (ref: React.RefObject<VideoPanelHandle> | null) => void;
 }
-
-// Helper to get Electron API
-const getElectron = () => {
-  return typeof window !== 'undefined' ? window.electronAPI : undefined;
-};
 
 export const useAssistantState = create<AssistantState>((set, get) => ({
   runningState: RunningState.IDLE,

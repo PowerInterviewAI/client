@@ -1,4 +1,4 @@
-import DocumentationDialog from '@/components/documentation-dialog';
+import DocumentationDialog from '@/components/custom/documentation-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { useState } from 'react';

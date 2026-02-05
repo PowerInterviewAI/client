@@ -65,6 +65,11 @@ const electronApi = {
     stop: () => ipcRenderer.invoke('vcam-bridge:stop'),
   },
 
+  // Tools management
+  tools: {
+    exportTranscript: () => ipcRenderer.invoke('tools:export-transcript'),
+  },
+
   // Window controls
   minimize: () => ipcRenderer.send('window-minimize'),
   close: () => ipcRenderer.send('window-close'),

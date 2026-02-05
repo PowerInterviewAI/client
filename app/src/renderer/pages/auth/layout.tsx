@@ -1,4 +1,4 @@
-import Loading from '@/components/loading';
+import Loading from '@/components/custom/loading';
 import { useAppState } from '@/hooks/use-app-state';
 import { useEffect } from 'react';
 import { useNavigate, Outlet, Link } from 'react-router-dom';

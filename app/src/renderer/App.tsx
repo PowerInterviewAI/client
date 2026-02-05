@@ -1,7 +1,7 @@
 import { RouterProvider } from 'react-router-dom';
 import { router } from './router';
-import Providers from './components/providers';
-import MainFrame from './components/main-frame';
+import Providers from './components/custom/providers';
+import MainFrame from './components/custom/main-frame';
 
 function App() {
   return (
