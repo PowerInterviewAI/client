@@ -24,19 +24,4 @@ export class UuidUtil {
       hex.slice(20, 32),
     ].join('-');
   }
-
-  /**
-   * Validate UUID format
-   */
-  static isValid(uuid: string): boolean {
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    return uuidRegex.test(uuid);
-  }
-
-  /**
-   * Generate short ID (8 chars)
-   */
-  static short(): string {
-    return randomBytes(4).toString('hex');
-  }
 }

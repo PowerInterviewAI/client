@@ -10,7 +10,6 @@ const DEFAULT_STATE: AppState = {
   isRunning: false,
   isStealth: false,
   isRecording: false,
-  devices: [],
   isBackendLive: false,
   isGpuServerLive: false,
   isLoggedIn: false,
@@ -57,16 +56,6 @@ export class AppStateService {
 
   addCodeSuggestion(s: CodeSuggestion): void {
     this.state = { ...this.state, codeSuggestions: [...this.state.codeSuggestions, s] };
-    this.notifyRenderer();
-  }
-
-  clearTranscripts(): void {
-    this.state = { ...this.state, transcripts: [] };
-    this.notifyRenderer();
-  }
-
-  clearSuggestions(): void {
-    this.state = { ...this.state, replySuggestions: [], codeSuggestions: [] };
     this.notifyRenderer();
   }
 }

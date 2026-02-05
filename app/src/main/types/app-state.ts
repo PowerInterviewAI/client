@@ -50,8 +50,6 @@ export interface AppState {
   isRunning: boolean;
   isStealth: boolean;
   isRecording: boolean;
-  currentSession?: Session;
-  devices: DeviceInfo[];
   isBackendLive: boolean;
   isGpuServerLive: boolean;
   isLoggedIn: boolean | null;
@@ -59,27 +57,4 @@ export interface AppState {
   transcripts: Transcript[];
   replySuggestions: ReplySuggestion[];
   codeSuggestions: CodeSuggestion[];
-}
-
-export interface Session {
-  id: string;
-  startedAt: Date;
-  endedAt?: Date;
-  transcript: TranscriptEntry[];
-  suggestions: ReplySuggestion[];
-}
-
-export interface TranscriptEntry {
-  id: string;
-  timestamp: Date;
-  text: string;
-  speaker: 'user' | 'interviewer' | 'system';
-  confidence?: number;
-}
-
-export interface DeviceInfo {
-  id: string;
-  name: string;
-  type: 'audio-input' | 'audio-output' | 'video-input';
-  isDefault: boolean;
 }
