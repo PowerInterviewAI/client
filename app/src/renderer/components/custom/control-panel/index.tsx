@@ -133,6 +133,7 @@ export default function ControlPanel({ onProfileClick, onSignOut }: ControlPanel
           getDisabled={getDisabled}
         />
         <MainGroup stateConfig={{ onClick, className, icon, label }} getDisabled={getDisabled} />
+        <hr className="h-6 border border-border" />
         <ToolsGroup getDisabled={getDisabled} />
       </div>
 
