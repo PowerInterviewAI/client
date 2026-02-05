@@ -29,7 +29,7 @@ class ReplySuggestionService {
   /**
    * Clear all suggestions and stop current task
    */
-  clear(): void {
+  async clear(): Promise<void> {
     this.stopRunningTasks();
     this.suggestions.clear();
     // Update app state
@@ -156,6 +156,10 @@ class ReplySuggestionService {
     this.abortMap.forEach((_value, key) => {
       this.abortMap.set(key, true);
     });
+  }
+
+  async stop(): Promise<void> {
+    this.stopRunningTasks();
   }
 }
 

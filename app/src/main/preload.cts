@@ -52,11 +52,13 @@ const electronApi = {
   // Reply suggestion management
   replySuggestion: {
     clear: () => ipcRenderer.invoke('reply-suggestion:clear'),
+    stop: () => ipcRenderer.invoke('reply-suggestion:stop'),
   },
 
   // Code suggestion management
   codeSuggestion: {
     clear: () => ipcRenderer.invoke('code-suggestion:clear'),
+    stop: () => ipcRenderer.invoke('code-suggestion:stop'),
   },
 
   // VCam bridge management

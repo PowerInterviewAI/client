@@ -81,8 +81,10 @@ export const useAssistantState = create<AssistantState>((set, get) => ({
         videoPanelRef.current.stopWebRTC();
       }
 
-      // Stop transcription services
+      // Stop assistant services
       await electron.transcription.stop();
+      await electron.replySuggestion.stop();
+      await electron.codeSuggestion.stop();
 
       // Stop vcam bridge
       await electron.vcamBridge.stop();

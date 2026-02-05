@@ -48,11 +48,13 @@ declare global {
     // Reply suggestion management
     replySuggestion: {
       clear: () => Promise<void>;
+      stop: () => Promise<void>;
     };
 
     // Code suggestion management
     codeSuggestion: {
       clear: () => Promise<void>;
+      stop: () => Promise<void>;
     };
 
     // VCam bridge management

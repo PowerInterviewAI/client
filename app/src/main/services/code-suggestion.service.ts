@@ -332,12 +332,16 @@ export class CodeSuggestionService {
   /**
    * Clear suggestions (legacy method)
    */
-  clear(): void {
+  async clear(): Promise<void> {
     this.stopRunningTasks();
     this.suggestions.clear();
     this.uploadedImageNames = [];
     // Update app state
     appStateService.updateState({ codeSuggestions: [] });
+  }
+
+  async stop(): Promise<void> {
+    this.stopRunningTasks();
   }
 }
 
