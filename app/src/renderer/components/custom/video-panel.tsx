@@ -350,11 +350,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
 
     // Start/stop WebRTC on running state change
     useEffect(() => {
-      if (
-        runningState === RunningState.STOPPING ||
-        runningState === RunningState.STOPPED ||
-        runningState === RunningState.IDLE
-      ) {
+      if (runningState === RunningState.STOPPING || runningState === RunningState.IDLE) {
         stopWebRTC();
       }
     }, [runningState]);

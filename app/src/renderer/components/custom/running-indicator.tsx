@@ -12,7 +12,6 @@ export function RunningIndicator({ runningState, compact = false, className = ''
     [RunningState.STARTING]: { dotClass: 'bg-primary animate-pulse', label: 'Starting' },
     [RunningState.RUNNING]: { dotClass: 'bg-destructive animate-pulse', label: 'Running' },
     [RunningState.STOPPING]: { dotClass: 'bg-destructive animate-pulse', label: 'Stopping' },
-    [RunningState.STOPPED]: { dotClass: 'bg-muted-foreground', label: 'Stopped' },
   };
 
   const { dotClass, label } = indicatorConfig[runningState];

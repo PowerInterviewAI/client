@@ -67,6 +67,14 @@ const electronApi = {
     stop: () => ipcRenderer.invoke('vcam-bridge:stop'),
   },
 
+  // Listen for pushed notifications main
+  onPushNotification: (callback: (notification: any) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, notification: any) =>
+      callback(notification);
+    ipcRenderer.on('push-notification', handler);
+    return () => ipcRenderer.removeListener('push-notification', handler);
+  },
+
   // Tools management
   tools: {
     exportTranscript: () => ipcRenderer.invoke('tools:export-transcript'),

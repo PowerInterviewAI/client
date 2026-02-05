@@ -53,6 +53,7 @@ export const useAssistantState = create<AssistantState>((set, get) => ({
       await electron.transcription.start();
 
       set({ runningState: RunningState.RUNNING });
+      electron.appState.update({ runningState: RunningState.RUNNING });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to start assistant';
       set({
@@ -89,7 +90,8 @@ export const useAssistantState = create<AssistantState>((set, get) => ({
       // Stop vcam bridge
       await electron.vcamBridge.stop();
 
-      set({ runningState: RunningState.STOPPED });
+      set({ runningState: RunningState.IDLE });
+      electron.appState.update({ runningState: RunningState.IDLE });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to stop assistant';
       set({

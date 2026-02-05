@@ -17,6 +17,13 @@ export enum SuggestionState {
   ERROR = 'error',
 }
 
+export enum RunningState {
+  IDLE = 'idle',
+  STARTING = 'starting',
+  RUNNING = 'running',
+  STOPPING = 'stopping',
+}
+
 export interface Transcript {
   timestamp: number;
   text: string;
@@ -48,7 +55,7 @@ export interface AppState {
   isBackendLive: boolean;
   isGpuServerLive: boolean;
   isLoggedIn: boolean | null;
-  assistantState: 'idle' | 'starting' | 'running' | 'stopping';
+  runningState: RunningState;
   transcripts: Transcript[];
   replySuggestions: ReplySuggestion[];
   codeSuggestions: CodeSuggestion[];

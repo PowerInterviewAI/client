@@ -1,5 +1,6 @@
 import type { AppState } from './app-state';
 import type { Config } from './config';
+import type { PushNotification } from './push-notification';
 
 export {};
 
@@ -62,6 +63,9 @@ declare global {
       start: () => Promise<void>;
       stop: () => Promise<void>;
     };
+
+    // Push notification listener
+    onPushNotification: (callback: (notification: PushNotification) => void) => () => void;
 
     // Tools management
     tools: {

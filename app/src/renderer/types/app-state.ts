@@ -6,12 +6,11 @@ export enum RunningState {
   STARTING = 'starting',
   RUNNING = 'running',
   STOPPING = 'stopping',
-  STOPPED = 'stopped',
 }
 
 export interface AppState {
   isLoggedIn: boolean | null;
-  assistantState: RunningState;
+  runningState: RunningState;
   transcripts: Transcript[];
   replySuggestions: ReplySuggestion[];
   codeSuggestions: CodeSuggestion[];

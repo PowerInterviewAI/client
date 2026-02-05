@@ -7,10 +7,11 @@ import screenshot from 'screenshot-desktop';
 import sharp from 'sharp';
 
 import { ApiClient } from '../api/client.js';
-import { CodeSuggestion, SuggestionState, Transcript } from '../types/app-state.js';
+import { CodeSuggestion, RunningState, SuggestionState, Transcript } from '../types/app-state.js';
 import { DateTimeUtil } from '../utils/datetime.js';
 import { UuidUtil } from '../utils/uuid.js';
 import { appStateService } from './app-state.service.js';
+import { pushNotificationService } from './push-notification.service.js';
 
 interface GenerateCodeSuggestionRequest {
   user_prompt?: string;
@@ -18,7 +19,7 @@ interface GenerateCodeSuggestionRequest {
 }
 
 export class CodeSuggestionService {
-  private readonly MAX_SCREENSHOTS = 5;
+  private readonly MAX_SCREENSHOTS = 3;
 
   private apiClient: ApiClient = new ApiClient();
   private uploadedImageNames: string[] = [];
@@ -64,6 +65,14 @@ export class CodeSuggestionService {
    * Clear uploaded images
    */
   async clearImages(): Promise<void> {
+    if (appStateService.getState().runningState !== RunningState.RUNNING) {
+      pushNotificationService.pushNotification({
+        type: 'warning',
+        message: 'Cannot clear images when assistant is not running',
+      });
+      return;
+    }
+
     this.uploadedImageNames = [];
     appStateService.updateState({ codeSuggestions: this.getSuggestions() });
   }
@@ -72,11 +81,21 @@ export class CodeSuggestionService {
    * Capture screenshot and upload to backend
    */
   async captureScreenshot(): Promise<void> {
+    if (appStateService.getState().runningState !== RunningState.RUNNING) {
+      pushNotificationService.pushNotification({
+        type: 'warning',
+        message: 'Cannot capture screenshot when assistant is not running',
+      });
+      return;
+    }
+
     // Enforce maximum screenshots limit
     if (this.uploadedImageNames.length >= this.MAX_SCREENSHOTS) {
-      const message = `Maximum screenshots (${this.MAX_SCREENSHOTS}) reached`;
-      console.warn('[CodeSuggestionService]', message);
-      throw new Error(message);
+      pushNotificationService.pushNotification({
+        type: 'warning',
+        message: `Maximum of ${this.MAX_SCREENSHOTS} screenshots reached. Please clear images and try again.`,
+      });
+      return;
     }
 
     // Update app state
@@ -112,8 +131,20 @@ export class CodeSuggestionService {
    * Generate code suggestion asynchronously
    */
   async startGenerateSuggestion(transcripts?: Transcript[]): Promise<void> {
+    if (appStateService.getState().runningState !== RunningState.RUNNING) {
+      pushNotificationService.pushNotification({
+        type: 'warning',
+        message: 'Cannot generate suggestion when assistant is not running',
+      });
+      return;
+    }
+
     // If there are no uploaded images, there is nothing to suggest from
     if (this.uploadedImageNames.length === 0) {
+      pushNotificationService.pushNotification({
+        type: 'warning',
+        message: 'No uploaded images to generate suggestion from',
+      });
       return;
     }
 

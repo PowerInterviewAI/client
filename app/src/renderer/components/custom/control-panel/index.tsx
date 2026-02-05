@@ -15,7 +15,7 @@ import { ToolsGroup } from './tools-group';
 import { VideoGroup } from './video-group';
 
 interface ControlPanelProps {
-  runningState: RunningState;
+  assistantState: RunningState;
   onProfileClick: () => void;
   onSignOut: () => void;
 }
@@ -29,7 +29,7 @@ type StateConfig = {
 
 export default function ControlPanel({ onProfileClick, onSignOut }: ControlPanelProps) {
   const isStealth = useIsStealthMode();
-  const { runningState, startAssistant, stopAssistant } = useAssistantState();
+  const { runningState: assistantState, startAssistant, stopAssistant } = useAssistantState();
   const { config } = useConfigStore();
 
   const videoDevices = useVideoDevices();
@@ -68,17 +68,8 @@ export default function ControlPanel({ onProfileClick, onSignOut }: ControlPanel
       icon: <Ellipsis className="h-3.5 w-3.5 animate-pulse" />,
       label: 'Stopping...',
     },
-    [RunningState.STOPPED]: {
-      onClick: () => {
-        if (!checkCanStart()) return;
-        startAssistant();
-      },
-      className: 'bg-primary hover:bg-primary/90',
-      icon: <Play className="h-3.5 w-3.5" />,
-      label: 'Start',
-    },
   };
-  const { onClick, className, icon, label } = stateConfig[runningState];
+  const { onClick, className, icon, label } = stateConfig[assistantState];
 
   const audioInputDeviceNotFound =
     audioInputDevices?.find((d) => d.name === config?.audio_input_device_name) === undefined;
@@ -145,7 +136,7 @@ export default function ControlPanel({ onProfileClick, onSignOut }: ControlPanel
         <ToolsGroup getDisabled={getDisabled} />
       </div>
 
-      <RunningIndicator runningState={runningState} />
+      <RunningIndicator runningState={assistantState} />
     </div>
   );
 }

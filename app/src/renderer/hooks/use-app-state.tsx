@@ -32,7 +32,7 @@ class AppStateManager {
     if (!raw) return null;
     return {
       isLoggedIn: raw.isLoggedIn,
-      assistantState: raw.assistantState,
+      runningState: raw.runningState,
       transcripts: raw.transcripts ?? [],
       replySuggestions: raw.replySuggestions ?? [],
       codeSuggestions: raw.codeSuggestions ?? [],

@@ -124,7 +124,7 @@ export default function MainPage() {
   // Recompute when assistant running state or appState becomes available
   useEffect(() => {
     computeAvailable();
-  }, [appState?.assistantState, appState, computeAvailable]);
+  }, [appState?.runningState, appState, computeAvailable]);
 
   // Sign out handling
   const handleSignOut = async () => {
@@ -181,7 +181,7 @@ export default function MainPage() {
 
   return (
     <div className="flex-1 flex flex-col w-full bg-background p-1 space-y-1">
-      {isStealth && <HotkeysPanel runningState={appState?.assistantState ?? RunningState.IDLE} />}
+      {isStealth && <HotkeysPanel runningState={appState?.runningState ?? RunningState.IDLE} />}
 
       <div className="flex-1 flex overflow-y-hidden gap-1">
         {/* Left Column: Video + Transcription */}
@@ -193,7 +193,7 @@ export default function MainPage() {
           <div id="video-panel" className="h-45 w-full max-w-80 mx-auto" hidden={hideVideoPanel}>
             <VideoPanel
               ref={videoPanelRef}
-              runningState={appState?.assistantState ?? RunningState.IDLE}
+              runningState={appState?.runningState ?? RunningState.IDLE}
             />
           </div>
 
@@ -226,7 +226,7 @@ export default function MainPage() {
       </div>
 
       <ControlPanel
-        runningState={appState?.assistantState ?? RunningState.IDLE}
+        assistantState={appState?.runningState ?? RunningState.IDLE}
         onProfileClick={() => setIsProfileOpen(true)}
         onSignOut={handleSignOut}
       />

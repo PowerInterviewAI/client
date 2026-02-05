@@ -3,7 +3,7 @@
  * Central manager for application runtime state shared across main process
  */
 
-import { AppState, CodeSuggestion, ReplySuggestion } from '../types/app-state.js';
+import { AppState, CodeSuggestion, ReplySuggestion,RunningState } from '../types/app-state.js';
 import { getWindowReference } from './window-control-service.js';
 
 const DEFAULT_STATE: AppState = {
@@ -14,7 +14,7 @@ const DEFAULT_STATE: AppState = {
   isBackendLive: false,
   isGpuServerLive: false,
   isLoggedIn: false,
-  assistantState: 'idle',
+  runningState: RunningState.IDLE,
   transcripts: [],
   replySuggestions: [],
   codeSuggestions: [],
