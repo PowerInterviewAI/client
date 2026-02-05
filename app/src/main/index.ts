@@ -1,17 +1,9 @@
 import { app, BrowserWindow } from 'electron';
-import ElectronStore from 'electron-store';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-interface StoreSchema {
-  windowBounds?: { x?: number; y?: number; width: number; height: number };
-  _stealth?: boolean;
-}
-
-const store = new ElectronStore<StoreSchema>();
 
 // Import modules
 import { registerGlobalHotkeys, unregisterHotkeys } from './hotkeys.js';
@@ -69,12 +61,7 @@ if (!gotLock) {
 // CREATE WINDOW
 // -------------------------------------------------------------
 async function createWindow() {
-  const savedBounds = (store.get('windowBounds') as {
-    x?: number;
-    y?: number;
-    width?: number;
-    height?: number;
-  }) || {
+  const savedBounds = configStore.getWindowBounds() || {
     width: 1024,
     height: 640,
   };
@@ -111,7 +98,7 @@ async function createWindow() {
 
   win.on('close', () => {
     if (win) {
-      store.set('windowBounds', win.getBounds());
+      configStore.saveWindowBounds(win.getBounds());
     }
   });
 

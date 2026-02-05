@@ -1,21 +1,15 @@
 import { BrowserWindow, screen } from 'electron';
-import ElectronStore from 'electron-store';
+
+import { configStore } from '../store/config-store.js';
 import { pushNotificationService } from './push-notification.service.js';
-
-interface StoreSchema {
-  windowBounds?: { x?: number; y?: number; width: number; height: number };
-  _stealth?: boolean;
-}
-
-const store = new ElectronStore<StoreSchema>();
 
 // Global reference to the main window
 let win: BrowserWindow | null = null;
-let _stealth = !!store.get('_stealth');
+let _stealth = configStore.getStealth();
 
 // Ensure stealth is disabled by default on load
 try {
-  store.set('_stealth', false);
+  configStore.setStealth(false);
   _stealth = false;
 } catch (e) {
   console.warn('Failed to reset stealth state:', e);
@@ -264,7 +258,7 @@ export function enableStealth(): void {
 
     _stealth = true;
     try {
-      store.set('_stealth', _stealth);
+      configStore.setStealth(_stealth);
     } catch (e) {
       console.warn('Failed to save stealth state:', e);
     }
@@ -301,7 +295,7 @@ export function disableStealth(): void {
 
     _stealth = false;
     try {
-      store.set('_stealth', _stealth);
+      configStore.setStealth(_stealth);
     } catch (e) {
       console.warn('Failed to save stealth state:', e);
     }

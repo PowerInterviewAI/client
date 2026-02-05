@@ -190,6 +190,34 @@ export class ConfigStore {
   setConfigValue<K extends keyof RuntimeConfig>(key: K, value: RuntimeConfig[K]): RuntimeConfig {
     return this.updateConfig({ [key]: value } as Partial<RuntimeConfig>);
   }
+
+  /**
+   * Get window bounds
+   */
+  getWindowBounds(): { x?: number; y?: number; width: number; height: number } | undefined {
+    return this.store.get('window.bounds');
+  }
+
+  /**
+   * Save window bounds
+   */
+  saveWindowBounds(bounds: { x?: number; y?: number; width: number; height: number }): void {
+    this.store.set('window.bounds', bounds);
+  }
+
+  /**
+   * Get stealth mode state
+   */
+  getStealth(): boolean {
+    return this.store.get('window.stealth', false);
+  }
+
+  /**
+   * Set stealth mode state
+   */
+  setStealth(enabled: boolean): void {
+    this.store.set('window.stealth', enabled);
+  }
 }
 
 export const configStore = ConfigStore.getInstance();
