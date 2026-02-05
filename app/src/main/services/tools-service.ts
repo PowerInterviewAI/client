@@ -4,7 +4,7 @@ import fs from 'fs/promises';
 
 import { ApiClient } from '../api/client.js';
 import { configStore } from '../store/config-store.js';
-import { Transcript } from '../types/app-state.js';
+import { Speaker, Transcript } from '../types/app-state.js';
 import { appStateService } from './app-state.service.js';
 
 interface GenerateSummarizeRequest {
@@ -34,8 +34,9 @@ class ToolsService {
     // Prepare request data
     const username = configStore.getConfig().interview_conf.username;
     const transcripts = appStateService.getState().transcripts;
+    const suggestions = appStateService.getState().replySuggestions;
 
-    // Call the API to export the transcript
+    // Call the API to generate the summary text
     const response = await this.apiClient.post<string>('/api/llm/summarize', {
       username,
       transcripts,
@@ -43,12 +44,51 @@ class ToolsService {
     if (response.error) {
       throw new Error(response.error.message);
     }
-    // Convert Markdown to DOCX
-    const exportMarkdown = response.data;
-    if (!exportMarkdown) {
-      throw new Error('No transcript data received from server.');
+
+    const summaryPartRaw = response.data ?? '';
+
+    // Add Date/Time to summary (insert after first line)
+    let summaryPart = summaryPartRaw;
+    if (summaryPart) {
+      const lines = summaryPart.split('\n');
+      if (lines.length > 0) {
+        const datetimeNow = new Date().toLocaleString();
+        lines.splice(1, 0, `\n##### Date/Time: ${datetimeNow}`);
+        summaryPart = lines.join('\n');
+      }
     }
-    const docxBlob = await convertMarkdownToDocx(exportMarkdown);
+
+    // Build Transcripts section
+    const transcriptLines: string[] = [];
+    for (const t of transcripts) {
+      const timeStr = new Date(t.timestamp).toLocaleString();
+      const speakerName = t.speaker === Speaker.SELF ? username : 'Interviewer';
+      transcriptLines.push(`#### ***${speakerName} | ${timeStr}***\n${t.text}\n`);
+    }
+    const transcriptsPart = `# **Transcripts**\n\n${transcriptLines.join('\n')}`;
+
+    // Build Suggestions section
+    const suggestionLines: string[] = [];
+    for (const s of suggestions) {
+      const timeStr = new Date(s.timestamp).toLocaleString();
+      suggestionLines.push(
+        `#### ***Interviewer | ${timeStr}***\n${s.last_question}\n\n#### ***Suggestion***\n${s.answer}\n`
+      );
+    }
+    const suggestionsPart = `# **Suggestions**\n\n${suggestionLines.join('\n')}`;
+
+    // Combine all parts into final Markdown content
+    const fullMarkdown =
+      `${summaryPart}\n\n${transcripts.length > 0 ? transcriptsPart : ''}\n\n${suggestions.length > 0 ? suggestionsPart : ''}`.trim();
+
+    // Convert Markdown to DOCX
+    const docxBlob = await convertMarkdownToDocx(fullMarkdown, {
+      documentType: 'document',
+      style: {
+        heading1Alignment: 'CENTER',
+        heading5Alignment: 'CENTER',
+      },
+    });
 
     const { canceled, filePath } = await dialog.showSaveDialog({
       title: 'Save Transcript',
