@@ -10,6 +10,7 @@ import { ApiClient } from '../api/client.js';
 import { CodeSuggestion, RunningState, SuggestionState, Transcript } from '../types/app-state.js';
 import { DateTimeUtil } from '../utils/datetime.js';
 import { UuidUtil } from '../utils/uuid.js';
+import { actionLockService, ActionType } from './action-lock.service.js';
 import { appStateService } from './app-state.service.js';
 import { pushNotificationService } from './push-notification.service.js';
 
@@ -89,6 +90,11 @@ export class CodeSuggestionService {
       return;
     }
 
+    // Try to acquire lock
+    if (!actionLockService.tryAcquire(ActionType.SCREENSHOT_CAPTURE)) {
+      return;
+    }
+
     // Enforce maximum screenshots limit
     if (this.uploadedImageNames.length >= this.MAX_SCREENSHOTS) {
       pushNotificationService.pushNotification({
@@ -124,6 +130,9 @@ export class CodeSuggestionService {
     } catch (error) {
       console.error('[CodeSuggestionService] Failed to upload image:', error);
       throw error;
+    } finally {
+      // Release lock
+      actionLockService.release(ActionType.SCREENSHOT_CAPTURE);
     }
   }
 
@@ -136,6 +145,11 @@ export class CodeSuggestionService {
         type: 'warning',
         message: 'Cannot generate suggestion when assistant is not running',
       });
+      return;
+    }
+
+    // Try to acquire lock
+    if (!actionLockService.tryAcquire(ActionType.CODE_SUGGESTION)) {
       return;
     }
 
@@ -262,6 +276,9 @@ export class CodeSuggestionService {
       console.error('[CodeSuggestionService] Failed to generate code suggestion:', error);
       suggestion.state = SuggestionState.ERROR;
       this.setSuggestion(timestamp, suggestion);
+    } finally {
+      // Release lock when generation completes
+      actionLockService.release(ActionType.CODE_SUGGESTION);
     }
   }
 
