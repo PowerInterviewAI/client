@@ -30,7 +30,7 @@ const SELF_ZMQ_PORT = 50002;
 const OTHER_ZMQ_PORT = 50003;
 const MAX_RESTART_COUNT = 5;
 const RESTART_DELAY_MS = 2000;
-const INTER_TRANSCRIPT_GAP_MS = 2000;
+const INTER_TRANSCRIPT_GAP_MS = 5000;
 
 class TranscriptService {
   private selfAgent: AgentProcess | null = null;
