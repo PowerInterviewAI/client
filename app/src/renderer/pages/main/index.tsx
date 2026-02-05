@@ -194,7 +194,7 @@ export default function MainPage() {
       <div className="flex-1 flex overflow-y-hidden gap-1">
         {/* Left Column: Video + Transcription */}
         <div
-          className={`flex flex-col ${hasSuggestions ? 'w-80' : 'flex-1'} gap-1 transition-all duration-300 ease-in-out`}
+          className={`flex flex-col ${hasSuggestions ? 'w-80' : 'flex-1'} gap-1`}
           hidden={hideVideoPanel && hideTranscriptPanel}
         >
           {/* Video Panel - Small and compact */}

@@ -104,10 +104,7 @@ function ReplySuggestionsPanel({ suggestions = [], style }: SuggestionsPanelProp
   }, [containerRef]);
 
   return (
-    <Card
-      className="relative flex flex-col w-full h-full bg-card p-0 transition-all duration-300 ease-in-out"
-      style={style}
-    >
+    <Card className="relative flex flex-col w-full h-full bg-card p-0" style={style}>
       {/* Header */}
       <div className="border-b border-border px-4 pt-4 pb-2 shrink-0 flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
