@@ -32,7 +32,7 @@ def monitor_parent_process(parent_pid: int, processor: AudioController) -> None:
         time.sleep(1.0)
 
 
-def main() -> None:
+def main() -> int:
     parser = argparse.ArgumentParser(
         description="Audio Control Agent - Delays audio from input device to VBCABLE output",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -93,7 +93,7 @@ Examples:
                     device_type.append("OUTPUT")
                 logger.info(f"[{device['index']}] {device['name']} ({', '.join(device_type)})")
             logger.info("=" * 50)
-            return
+            return 0
 
         # Validate required arguments
         if not args.input_device:
@@ -119,11 +119,12 @@ Examples:
         logger.info("Keyboard interrupt received. Exiting...")
     except Exception as e:
         logger.exception(f"Error: {e}")
-        sys.exit(1)
     finally:
         if processor:
             processor.stop()
             processor.cleanup()
+
+    return 0
 
 
 if __name__ == "__main__":
