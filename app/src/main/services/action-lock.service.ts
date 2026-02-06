@@ -63,7 +63,7 @@ class ActionLockService {
 
     pushNotificationService.pushNotification({
       type: 'warning',
-      message: `${requested} blocked. ${running} is in progress.`,
+      message: `${running} is in progress. Try again a bit later.`,
     });
   }
 }
