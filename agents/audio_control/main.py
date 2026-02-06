@@ -6,16 +6,11 @@ import threading
 import time
 from types import FrameType
 
+import psutil
 from loguru import logger
 
 from agents.audio_control.audio_controller import AudioController
 from agents.shared.audio_device_service import AudioDeviceService
-
-
-def signal_handler(_signum: int, _frame: FrameType | None) -> None:
-    """Handle keyboard interrupt signal."""
-    logger.info("Received interrupt signal. Shutting down gracefully...")
-    sys.exit(0)
 
 
 def monitor_parent_process(parent_pid: int, processor: AudioController) -> None:
@@ -23,8 +18,8 @@ def monitor_parent_process(parent_pid: int, processor: AudioController) -> None:
     logger.info(f"Monitoring parent process PID: {parent_pid}")
     while processor.running:
         try:
-            # os.kill with signal 0 checks if process exists without sending a signal
-            os.kill(parent_pid, 0)
+            if not psutil.pid_exists(parent_pid):
+                raise ProcessLookupError  # noqa: TRY301
         except (OSError, ProcessLookupError):
             logger.warning(f"Parent process {parent_pid} no longer exists. Shutting down...")
             processor.stop()
@@ -76,7 +71,15 @@ Examples:
     args = parser.parse_args()
 
     # Setup signal handler for graceful shutdown
+    def signal_handler(signum: int, _frame: FrameType | None) -> None:
+        """Handle keyboard interrupt signal."""
+        logger.info(f"Received signal {signum}")
+        if processor:
+            processor.stop()
+            processor.cleanup()
+
     signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
 
     processor = None
 

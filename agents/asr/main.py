@@ -10,6 +10,7 @@ import sys
 import threading
 import time
 
+import psutil
 from loguru import logger
 
 from agents.asr.asr_agent import ASRAgent
@@ -25,8 +26,8 @@ def monitor_parent_process(parent_pid: int, agent: ASRAgent) -> None:
     logger.info(f"Monitoring parent process PID: {parent_pid}")
     while agent.running:
         try:
-            # os.kill with signal 0 checks if process exists without sending a signal
-            os.kill(parent_pid, 0)
+            if not psutil.pid_exists(parent_pid):
+                raise ProcessLookupError  # noqa: TRY301
         except (OSError, ProcessLookupError):
             logger.warning(f"Parent process {parent_pid} no longer exists. Shutting down...")
             agent.running = False
