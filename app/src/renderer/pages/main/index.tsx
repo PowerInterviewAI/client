@@ -19,8 +19,6 @@ import { type CodeSuggestion, type ReplySuggestion } from '@/types/suggestion';
 import { type Transcript } from '@/types/transcript';
 
 export default function MainPage() {
-  console.log('Rendering MainPage');
-
   const { logout } = useAuth();
   const navigate = useNavigate();
 
