@@ -116,8 +116,10 @@ class VCamAgent:
                 self.zmq_socket.close()
 
             logger.info(f"Connecting to ZeroMQ port {self.zmq_port}...")
-            self.zmq_socket = self.zmq_context.socket(zmq.SUB)
-            self.zmq_socket.setsockopt(zmq.SUBSCRIBE, b"")
+            # Use a PULL socket to receive frames from the application's Push socket.
+            # Push (app) -> Pull (agent) is the correct pipeline pattern for one-to-one frame delivery.
+            self.zmq_socket = self.zmq_context.socket(zmq.PULL)
+            # Set receive timeout to avoid blocking indefinitely
             self.zmq_socket.setsockopt(zmq.RCVTIMEO, 1000)  # 1 second timeout
             self.zmq_socket.connect(f"tcp://localhost:{self.zmq_port}")
 

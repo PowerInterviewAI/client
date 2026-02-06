@@ -45,14 +45,8 @@ class AudioController:
         self.running = True
 
         # Find input device using the service
-        input_devices = AudioDeviceService.get_input_devices()
-        input_device_index = None
-        for device in input_devices:
-            if self.input_device_name.lower() in device["name"].lower():
-                input_device_index = device["index"]
-                break
-
-        if input_device_index is None:
+        input_device_index = AudioDeviceService.get_device_index_by_name(self.input_device_name)
+        if input_device_index < 0:
             logger.error(f"Input device '{self.input_device_name}' not found!")
             self.list_devices()
             return
