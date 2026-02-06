@@ -34,17 +34,14 @@ export const useAssistantState = create<AssistantState>((set, get) => ({
       }
 
       // Clear previous history
-      await electron.transcription.clear();
-      await electron.replySuggestion.clear();
-      await electron.codeSuggestion.clear();
+      await electron.tools.clearAll();
 
       const config = useConfigStore.getState().config;
       const { videoPanelRef } = get();
 
       // Start WebRTC if face swap is enabled
       if (config?.faceSwap && videoPanelRef?.current) {
-        await videoPanelRef.current.startWebRTC();
-        await electron.webRtc.startAgents();
+        Promise.all([videoPanelRef.current.startWebRTC(), electron.webRtc.startAgents()]);
       }
 
       // Start transcription services
@@ -82,9 +79,11 @@ export const useAssistantState = create<AssistantState>((set, get) => ({
       }
 
       // Stop assistant services
-      await electron.transcription.stop();
-      await electron.replySuggestion.stop();
-      await electron.codeSuggestion.stop();
+      Promise.all([
+        electron.transcription.stop(),
+        electron.replySuggestion.stop(),
+        electron.codeSuggestion.stop(),
+      ]);
 
       set({ runningState: RunningState.IDLE });
       electron.appState.update({ runningState: RunningState.IDLE });
