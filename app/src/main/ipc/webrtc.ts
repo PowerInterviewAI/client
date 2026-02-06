@@ -4,7 +4,7 @@ import { webRtcService } from '../services/webrtc.service.js';
 
 export function registerWebRTCHandlers() {
   ipcMain.handle('webrtc:offer', async (_event, offer) => {
-    await webRtcService.offer(offer);
+    return await webRtcService.offer(offer);
   });
 
   ipcMain.handle('webrtc:start-agents', async () => {

@@ -63,7 +63,7 @@ class ToolsService {
     for (const t of transcripts) {
       const timeStr = new Date(t.timestamp).toLocaleString();
       const speakerName = t.speaker === Speaker.SELF ? username : 'Interviewer';
-      transcriptLines.push(`#### ***${speakerName} | ${timeStr}***\n${t.text}\n`);
+      transcriptLines.push(`#### ***${timeStr} | ${speakerName}***\n${t.text}\n`);
     }
     const transcriptsPart = `# **Transcripts**\n\n${transcriptLines.join('\n')}`;
 
@@ -72,7 +72,7 @@ class ToolsService {
     for (const s of suggestions) {
       const timeStr = new Date(s.timestamp).toLocaleString();
       suggestionLines.push(
-        `#### ***Interviewer | ${timeStr}***\n${s.last_question}\n\n#### ***Suggestion***\n${s.answer}\n`
+        `#### ***${timeStr} | Interviewer***\n${s.last_question}\n\n#### ***Suggestion***\n${s.answer}\n`
       );
     }
     const suggestionsPart = `# **Suggestions**\n\n${suggestionLines.join('\n')}`;

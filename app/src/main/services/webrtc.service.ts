@@ -41,9 +41,7 @@ class WebRTCService {
   // eslint-disable-next-line
   async offer(offer: any): Promise<any> {
     const conf = configStore.getConfig();
-
-    const apiClient = new ApiClient();
-    const res = await apiClient.post('/api/video/offer', {
+    return await new ApiClient().post('/api/webrtc/offer', {
       sdp: offer.sdp,
       type: offer.type,
       options: {
@@ -51,7 +49,6 @@ class WebRTCService {
         enhance_face: conf.enableFaceEnhance,
       } as WebRTCOptions,
     } as OfferRequest);
-    return res;
   }
 
   /**
@@ -369,36 +366,35 @@ class WebRTCService {
    * Get vcam agent executable command
    */
   private getVCamAgentCommand(): { command: string; args: string[] } {
+    // In production, use built executable
+    let buildDir = path.join(process.resourcesPath, 'agents');
+    // In development, use local build
     if (EnvUtil.isDev()) {
-      return {
-        command: 'python',
-        args: ['-m', 'agents.vcam.main'],
-      };
-    } else {
-      const exePath = path.join(process.resourcesPath, 'agents', 'vcam_agent.exe');
-      return {
-        command: exePath,
-        args: [],
-      };
+      buildDir = path.join(process.cwd(), '..', 'build', 'agents', 'dist');
     }
+    const exeName = process.platform === 'win32' ? 'vcam_agent.exe' : 'vcam_agent';
+    return {
+      command: path.join(buildDir, exeName),
+      args: [],
+    };
   }
 
   /**
    * Get audio control agent executable command
    */
   private getAudioControlAgentCommand(): { command: string; args: string[] } {
+    // In production, use built executable
+    let buildDir = path.join(process.resourcesPath, 'agents');
+    // In development, use local build
     if (EnvUtil.isDev()) {
-      return {
-        command: 'python',
-        args: ['-m', 'agents.audio_control.main'],
-      };
-    } else {
-      const exePath = path.join(process.resourcesPath, 'agents', 'audio_control_agent.exe');
-      return {
-        command: exePath,
-        args: [],
-      };
+      buildDir = path.join(process.cwd(), '..', 'build', 'agents', 'dist');
     }
+    const exeName =
+      process.platform === 'win32' ? 'audio_control_agent.exe' : 'audio_control_agent';
+    return {
+      command: path.join(buildDir, exeName),
+      args: [],
+    };
   }
 
   /**
