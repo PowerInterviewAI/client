@@ -22,7 +22,7 @@ import { EnvUtil } from '../utils/env.js';
 
 interface AgentProcess {
   process: ChildProcess;
-  name: string;
+  name: 'vcam' | 'audio_control';
   restartCount: number;
   isRestarting: boolean;
   shouldRestart?: boolean;
@@ -64,14 +64,11 @@ class WebRTCService {
     this.serviceActive = true;
 
     try {
-      // Start vcam agent first
-      await this.startVCamAgent();
-
-      // Setup ZMQ push socket for sending frames
-      await this.setupZmqPushSocket();
-
-      // Start audio control agent
-      await this.startAudioControlAgent();
+      await Promise.all([
+        this.startVCamAgent(),
+        this.setupZmqPushSocket(),
+        this.startAudioControlAgent(),
+      ]);
 
       console.log('WebRTC agents started successfully');
     } catch (error) {
@@ -206,9 +203,6 @@ class WebRTCService {
     proc.on('error', (error) => {
       console.error('VCam agent process error:', error);
     });
-
-    // Wait a bit for agent to start
-    await new Promise((resolve) => setTimeout(resolve, 1000));
   }
 
   /**
@@ -270,9 +264,6 @@ class WebRTCService {
     proc.on('error', (error) => {
       console.error('Audio control agent process error:', error);
     });
-
-    // Wait a bit for agent to start
-    await new Promise((resolve) => setTimeout(resolve, 500));
   }
 
   /**
@@ -343,6 +334,22 @@ class WebRTCService {
       );
       agent.isRestarting = true;
       agent.restartCount++;
+
+      // Clean up old agent reference
+      if (agent.name === 'vcam') {
+        this.vcamAgent = null;
+        // Close and recreate ZMQ socket
+        if (this.zmqPushSocket) {
+          try {
+            this.zmqPushSocket.close();
+            this.zmqPushSocket = null;
+          } catch (error) {
+            console.error('Error closing ZMQ socket during restart:', error);
+          }
+        }
+      } else if (agent.name === 'audio_control') {
+        this.audioControlAgent = null;
+      }
 
       await new Promise((resolve) => setTimeout(resolve, restartDelay));
 
