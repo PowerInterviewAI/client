@@ -44,10 +44,8 @@ export const useAssistantState = create<AssistantState>((set, get) => ({
       // Start WebRTC if face swap is enabled
       if (config?.faceSwap && videoPanelRef?.current) {
         await videoPanelRef.current.startWebRTC();
+        await electron.webRtc.startAgents();
       }
-
-      // Start WebRTC agents for media streaming
-      await electron.webRtc.startAgents();
 
       // Start transcription services
       await electron.transcription.start();
@@ -80,15 +78,13 @@ export const useAssistantState = create<AssistantState>((set, get) => ({
       // Stop WebRTC if face swap is enabled
       if (config?.faceSwap && videoPanelRef?.current) {
         videoPanelRef.current.stopWebRTC();
+        await electron.webRtc.stopAgents();
       }
 
       // Stop assistant services
       await electron.transcription.stop();
       await electron.replySuggestion.stop();
       await electron.codeSuggestion.stop();
-
-      // Stop WebRTC agents for media streaming
-      await electron.webRtc.stopAgents();
 
       set({ runningState: RunningState.IDLE });
       electron.appState.update({ runningState: RunningState.IDLE });
