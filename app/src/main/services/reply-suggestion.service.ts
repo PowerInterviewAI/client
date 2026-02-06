@@ -6,6 +6,7 @@
  */
 
 import { ApiClient } from '../api/client.js';
+import { REPLY_SUGGESTION_NO_SUGGESTION } from '../consts.js';
 import { configStore } from '../store/config-store.js';
 import { ReplySuggestion, Speaker, SuggestionState, Transcript } from '../types/app-state.js';
 import { DateTimeUtil } from '../utils/datetime.js';
@@ -20,8 +21,6 @@ interface GenerateReplySuggestionRequest {
 }
 
 class ReplySuggestionService {
-  private readonly NO_SUGGESTION = 'NO_SUGGESTION_NEEDED';
-
   private apiClient: ApiClient = new ApiClient();
   private suggestions: Map<number, ReplySuggestion> = new Map();
   private abortMap: Map<string, boolean> = new Map();
@@ -37,7 +36,10 @@ class ReplySuggestionService {
   }
 
   private apendSuggestion(timestamp: number, suggestion: ReplySuggestion): void {
-    if (suggestion.answer.length > 0 && this.NO_SUGGESTION.startsWith(suggestion.answer)) {
+    if (
+      suggestion.answer.length > 0 &&
+      REPLY_SUGGESTION_NO_SUGGESTION.startsWith(suggestion.answer)
+    ) {
       this.suggestions.delete(timestamp);
     } else {
       this.suggestions.set(timestamp, suggestion);

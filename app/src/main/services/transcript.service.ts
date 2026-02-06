@@ -8,7 +8,14 @@ import { BrowserWindow } from 'electron';
 import path from 'path';
 import * as zmq from 'zeromq';
 
-import { ApiClient } from '../api/client.js';
+import {
+  BACKEND_BASE_URL,
+  TRANSCRIPT_INTER_TRANSCRIPT_GAP_MS,
+  TRANSCRIPT_MAX_RESTART_COUNT,
+  TRANSCRIPT_OTHER_ZMQ_PORT,
+  TRANSCRIPT_RESTART_DELAY_MS,
+  TRANSCRIPT_SELF_ZMQ_PORT,
+} from '../consts.js';
 import { configStore } from '../store/config-store.js';
 import { Speaker, Transcript } from '../types/app-state.js';
 import { EnvUtil } from '../utils/env.js';
@@ -24,13 +31,6 @@ interface AgentProcess {
   isRestarting: boolean;
   shouldRestart?: boolean;
 }
-
-// Constants
-const SELF_ZMQ_PORT = 50002;
-const OTHER_ZMQ_PORT = 50003;
-const MAX_RESTART_COUNT = 5;
-const RESTART_DELAY_MS = 2000;
-const INTER_TRANSCRIPT_GAP_MS = 5000;
 
 class TranscriptService {
   private selfAgent: AgentProcess | null = null;
@@ -57,7 +57,7 @@ class TranscriptService {
     const audioDevice = config.audio_input_device_name || 'loopback';
 
     try {
-      this.selfAgent = await this.startAgent(SELF_ZMQ_PORT, audioDevice, Speaker.SELF);
+      this.selfAgent = await this.startAgent(TRANSCRIPT_SELF_ZMQ_PORT, audioDevice, Speaker.SELF);
       console.log('Self transcription started successfully');
     } catch (error) {
       console.error('Failed to start self transcription:', error);
@@ -94,7 +94,7 @@ class TranscriptService {
 
     try {
       // Other party always uses loopback
-      this.otherAgent = await this.startAgent(OTHER_ZMQ_PORT, 'loopback', Speaker.OTHER);
+      this.otherAgent = await this.startAgent(TRANSCRIPT_OTHER_ZMQ_PORT, 'loopback', Speaker.OTHER);
       console.log('Other transcription started successfully');
     } catch (error) {
       console.error('Failed to start other transcription:', error);
@@ -128,7 +128,7 @@ class TranscriptService {
   ): Promise<AgentProcess> {
     // Get agent executable path
     const { command, args: baseArgs } = this.getAgentCommand();
-    const serverUrl = ApiClient.BACKEND_URL.replace(/\/+$/, ''); // Remove trailing slash
+    const serverUrl = BACKEND_BASE_URL.replace(/\/+$/, ''); // Remove trailing slash
     const wsUrl = `${serverUrl.replace('http', 'ws')}/api/asr/streaming`;
 
     // Get session token
@@ -293,7 +293,7 @@ class TranscriptService {
             if (
               lastIndex >= 0 &&
               lastCleaned.speaker === t.speaker &&
-              t.timestamp - lastCleaned.endTimestamp <= INTER_TRANSCRIPT_GAP_MS
+              t.timestamp - lastCleaned.endTimestamp <= TRANSCRIPT_INTER_TRANSCRIPT_GAP_MS
             ) {
               lastCleaned.text += ' ' + t.text;
               lastCleaned.endTimestamp = t.endTimestamp;
@@ -382,15 +382,15 @@ class TranscriptService {
     }
 
     // Check restart conditions
-    if (!agent.isRestarting && agent.restartCount < MAX_RESTART_COUNT) {
+    if (!agent.isRestarting && agent.restartCount < TRANSCRIPT_MAX_RESTART_COUNT) {
       console.log(
-        `Agent ${agent.speaker} will restart (attempt ${agent.restartCount + 1}/${MAX_RESTART_COUNT})`
+        `Agent ${agent.speaker} will restart (attempt ${agent.restartCount + 1}/${TRANSCRIPT_MAX_RESTART_COUNT})`
       );
       agent.isRestarting = true;
       agent.restartCount++;
 
       // Wait before restarting
-      await new Promise((resolve) => setTimeout(resolve, RESTART_DELAY_MS));
+      await new Promise((resolve) => setTimeout(resolve, TRANSCRIPT_RESTART_DELAY_MS));
 
       try {
         // Determine audio source based on speaker
@@ -416,7 +416,7 @@ class TranscriptService {
         console.error(`Failed to restart agent ${agent.speaker}:`, error);
         agent.isRestarting = false;
       }
-    } else if (agent.restartCount >= MAX_RESTART_COUNT) {
+    } else if (agent.restartCount >= TRANSCRIPT_MAX_RESTART_COUNT) {
       console.error(`Agent ${agent.speaker} exceeded max restart attempts`);
       // Notify renderer about failure
       const windows = BrowserWindow.getAllWindows();

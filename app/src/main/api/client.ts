@@ -5,8 +5,8 @@
 
 import { app } from 'electron';
 
+import { BACKEND_BASE_URL } from '../consts.js';
 import { configStore } from '../store/config-store.js';
-import { EnvUtil } from '../utils/env.js';
 
 export interface ApiResponse<T = unknown> {
   data?: T;
@@ -19,15 +19,11 @@ export interface ApiResponse<T = unknown> {
 }
 
 export class ApiClient {
-  static readonly BACKEND_URL: string = EnvUtil.isDev()
-    ? 'http://localhost:8000'
-    : 'https://power-interview-backend.onrender.com';
-
   private baseUrl: string;
   private headers: Record<string, string> = {};
 
   constructor() {
-    const baseUrl = ApiClient.BACKEND_URL;
+    const baseUrl = BACKEND_BASE_URL;
     this.baseUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/'; // Ensure baseUrl ends with slash
     this.headers = {
       'Content-Type': 'application/json',

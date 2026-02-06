@@ -4,7 +4,7 @@
  */
 
 import { AppState, CodeSuggestion, ReplySuggestion, RunningState } from '../types/app-state.js';
-import { getWindowReference } from './window-control-service.js';
+import { getWindowReference } from './window-control.service.js';
 
 const DEFAULT_STATE: AppState = {
   isRunning: false,

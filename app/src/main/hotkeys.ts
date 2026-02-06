@@ -8,7 +8,7 @@ import {
   toggleOpacity,
   toggleStealth,
   WindowPosition,
-} from './services/window-control-service.js';
+} from './services/window-control.service.js';
 
 /**
  * Register global hotkeys for window management and navigation

@@ -20,7 +20,7 @@ import { registerWindowHandlers } from './ipc/window.js';
 import { healthCheckService } from './services/health-check.service.js';
 import { transcriptService } from './services/transcript.service.js';
 import { vcamBridgeService } from './services/vcam-bridge.service.js';
-import { setWindowReference } from './services/window-control-service.js';
+import { setWindowReference } from './services/window-control.service.js';
 // Import services
 import { configStore } from './store/config-store.js';
 

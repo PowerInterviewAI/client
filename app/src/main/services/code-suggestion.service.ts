@@ -7,6 +7,7 @@ import screenshot from 'screenshot-desktop';
 import sharp from 'sharp';
 
 import { ApiClient } from '../api/client.js';
+import { BACKEND_BASE_URL, CODE_SUGGESTION_MAX_SCREENSHOTS } from '../consts.js';
 import { CodeSuggestion, RunningState, SuggestionState, Transcript } from '../types/app-state.js';
 import { DateTimeUtil } from '../utils/datetime.js';
 import { UuidUtil } from '../utils/uuid.js';
@@ -20,8 +21,6 @@ interface GenerateCodeSuggestionRequest {
 }
 
 export class CodeSuggestionService {
-  private readonly MAX_SCREENSHOTS = 3;
-
   private apiClient: ApiClient = new ApiClient();
   private uploadedImageNames: string[] = [];
   private suggestions: Map<number, CodeSuggestion> = new Map();
@@ -96,10 +95,10 @@ export class CodeSuggestionService {
     }
 
     // Enforce maximum screenshots limit
-    if (this.uploadedImageNames.length >= this.MAX_SCREENSHOTS) {
+    if (this.uploadedImageNames.length >= CODE_SUGGESTION_MAX_SCREENSHOTS) {
       pushNotificationService.pushNotification({
         type: 'warning',
-        message: `Maximum of ${this.MAX_SCREENSHOTS} screenshots reached. Please clear images and try again.`,
+        message: `Maximum of ${CODE_SUGGESTION_MAX_SCREENSHOTS} screenshots reached. Please clear images and try again.`,
       });
       return;
     }
@@ -286,7 +285,7 @@ export class CodeSuggestionService {
    * Get backend image URL
    */
   private getBackendImageUrl(imageName: string): string {
-    return `${ApiClient.BACKEND_URL}/api/llm/get-image/${imageName}`;
+    return `${BACKEND_BASE_URL}/api/llm/get-image/${imageName}`;
   }
 
   /**

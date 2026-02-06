@@ -1,5 +1,5 @@
 import { PushNotification } from '../types/push-notification.js';
-import { getWindowReference } from './window-control-service.js';
+import { getWindowReference } from './window-control.service.js';
 
 class PushNotificationService {
   pushNotification(notification: PushNotification) {

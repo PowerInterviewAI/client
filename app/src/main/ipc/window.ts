@@ -4,8 +4,8 @@
 
 import { BrowserWindow, ipcMain } from 'electron';
 
-import * as windowControls from '../services/window-control-service.js';
-import { setWindowBounds } from '../services/window-control-service.js';
+import * as windowControls from '../services/window-control.service.js';
+import { setWindowBounds } from '../services/window-control.service.js';
 
 export function registerWindowHandlers(win: BrowserWindow): void {
   // Minimize window
