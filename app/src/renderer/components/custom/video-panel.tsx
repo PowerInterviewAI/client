@@ -33,6 +33,9 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
     const captureCanvasRef = useRef<HTMLCanvasElement | null>(null);
     const captureIntervalRef = useRef<number | null>(null);
     const pcRef = useRef<RTCPeerConnection | null>(null);
+    const reconnectTimeoutRef = useRef<number | null>(null);
+    const reconnectAttemptsRef = useRef<number>(0);
+    const isReconnectingRef = useRef<boolean>(false);
 
     const electron = getElectron();
     if (!electron) {
@@ -78,109 +81,241 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       checkSupportedVideoCodecs();
     }, []);
 
+    const scheduleReconnect = () => {
+      if (runningState !== RunningState.RUNNING) {
+        console.log('Not reconnecting: runningState is not RUNNING');
+        return;
+      }
+
+      if (isReconnectingRef.current) {
+        console.log('Reconnect already scheduled');
+        return;
+      }
+
+      isReconnectingRef.current = true;
+
+      // Calculate exponential backoff delay (capped at 30 seconds)
+      const baseDelay = 1000; // 1 second
+      const maxDelay = 30000; // 30 seconds
+      const delay = Math.min(baseDelay * Math.pow(2, reconnectAttemptsRef.current), maxDelay);
+
+      console.log(
+        `Scheduling reconnect attempt #${reconnectAttemptsRef.current + 1} in ${delay}ms`
+      );
+      setVideoMessage(`Reconnecting in ${(delay / 1000).toFixed(0)}s...`);
+
+      reconnectTimeoutRef.current = window.setTimeout(() => {
+        reconnectTimeoutRef.current = null;
+        isReconnectingRef.current = false;
+        reconnectAttemptsRef.current += 1;
+
+        console.log(`Attempting reconnect #${reconnectAttemptsRef.current}`);
+
+        // Clean up existing connection before reconnecting
+        if (pcRef.current) {
+          try {
+            pcRef.current.close();
+          } catch (e) {
+            console.warn('Error closing peer connection during reconnect:', e);
+          }
+          pcRef.current = null;
+        }
+
+        stopCaptureLoop();
+
+        // Only reconnect if still in RUNNING state
+        if (runningState === RunningState.RUNNING) {
+          startWebRTC().catch((err) => {
+            console.error('Reconnect failed:', err);
+            toast.error(`WebRTC reconnection failed: ${err.message}`);
+            // Try again
+            scheduleReconnect();
+          });
+        }
+      }, delay);
+    };
+
     const startWebRTC = async () => {
       if (pcRef.current) return;
 
-      setVideoMessage('Waiting for processed video stream...');
+      try {
+        setVideoMessage('Waiting for processed video stream...');
 
-      const pc = new RTCPeerConnection();
-      pcRef.current = pc;
+        const pc = new RTCPeerConnection();
+        pcRef.current = pc;
 
-      // Hold the remote stream when it arrives
-      const remoteStream = new MediaStream();
-      pc.ontrack = (event) => {
-        // Add incoming tracks to remoteStream
-        if (event.streams?.[0]) {
-          const firstTrack = event.streams[0].getTracks()[0];
-          if (firstTrack) remoteStream.addTrack(firstTrack);
-        } else if (event.track) {
-          remoteStream.addTrack(event.track);
+        // Monitor connection state for reconnection
+        pc.oniceconnectionstatechange = () => {
+          console.log('ICE connection state:', pc.iceConnectionState);
+
+          if (
+            pc.iceConnectionState === 'failed' ||
+            pc.iceConnectionState === 'disconnected' ||
+            pc.iceConnectionState === 'closed'
+          ) {
+            console.warn('ICE connection failed/disconnected, scheduling reconnect');
+            if (runningState === RunningState.RUNNING) {
+              scheduleReconnect();
+            }
+          } else if (
+            pc.iceConnectionState === 'connected' ||
+            pc.iceConnectionState === 'completed'
+          ) {
+            // Reset reconnect attempts on successful connection
+            reconnectAttemptsRef.current = 0;
+            console.log('ICE connection established, reset reconnect attempts');
+          }
+        };
+
+        pc.onconnectionstatechange = () => {
+          console.log('Connection state:', pc.connectionState);
+
+          if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+            console.warn('Connection failed/closed, scheduling reconnect');
+            if (runningState === RunningState.RUNNING) {
+              scheduleReconnect();
+            }
+          } else if (pc.connectionState === 'connected') {
+            // Reset reconnect attempts on successful connection
+            reconnectAttemptsRef.current = 0;
+            console.log('Connection established, reset reconnect attempts');
+          }
+        };
+
+        // Monitor for errors
+        pc.onicecandidateerror = (event) => {
+          console.error('ICE candidate error:', event);
+        };
+
+        // Hold the remote stream when it arrives
+        const remoteStream = new MediaStream();
+        pc.ontrack = (event) => {
+          // Add incoming tracks to remoteStream
+          if (event.streams?.[0]) {
+            const firstTrack = event.streams[0].getTracks()[0];
+            if (firstTrack) {
+              remoteStream.addTrack(firstTrack);
+
+              // Monitor track for ended event
+              firstTrack.onended = () => {
+                console.warn('Remote video track ended, scheduling reconnect');
+                if (runningState === RunningState.RUNNING) {
+                  scheduleReconnect();
+                }
+              };
+            }
+          } else if (event.track) {
+            remoteStream.addTrack(event.track);
+
+            // Monitor track for ended event
+            event.track.onended = () => {
+              console.warn('Remote video track ended, scheduling reconnect');
+              if (runningState === RunningState.RUNNING) {
+                scheduleReconnect();
+              }
+            };
+          }
+
+          // Attach remote stream to visible video element
+          if (videoRef.current) {
+            videoRef.current.srcObject = remoteStream;
+            videoRef.current.play().catch(() => {});
+            // Start capture loop to compress frames to JPEG and send to main
+            startCaptureLoop();
+          }
+        };
+
+        // Find video device id from name
+        const videoDeviceId = videoDevices.find((d) => d.label === cameraDeviceName)?.deviceId;
+        console.log('Video device id', videoDevices, cameraDeviceName, videoDeviceId);
+
+        // Acquire local camera only if you still want to send local tracks to the peer
+        const localStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            deviceId: videoDeviceId ? { exact: videoDeviceId } : undefined,
+            width: { ideal: videoWidth },
+            height: { ideal: videoHeight },
+            frameRate: { ideal: fps, max: fps },
+          },
+          audio: false,
+        });
+
+        // Get capabilities and prefer H264 first
+        const caps = RTCRtpSender.getCapabilities('video');
+        if (!caps) {
+          toast.warning('Unable to get video capabilities');
+          console.warn('No video capabilities available');
+          return;
+        }
+        const h264Codecs = caps.codecs.filter(
+          (c) =>
+            c.mimeType.toLowerCase() === 'video/h264' &&
+            c.sdpFmtpLine?.includes('profile-level-id=42c01e') // Constrained Baseline L3.0
+        );
+        const preferredCodecs = [...h264Codecs];
+
+        // Create transceiver BEFORE attaching track
+        const videoTransceiver = pc.addTransceiver('video', { direction: 'sendrecv' });
+        videoTransceiver.setCodecPreferences(preferredCodecs);
+
+        // Attach camera track to transceiver
+        const videoTrack = localStream.getVideoTracks()[0];
+        await videoTransceiver.sender.replaceTrack(videoTrack);
+
+        const sender = videoTransceiver.sender;
+        const params = sender.getParameters();
+
+        let maxBitrate;
+        if (videoWidth >= 1920) {
+          maxBitrate = 3_500_000; // 1080p
+        } else if (videoWidth >= 1280) {
+          maxBitrate = 1_800_000; // 720p
+        } else {
+          maxBitrate = 500_000; // 640x480
         }
 
-        // Attach remote stream to visible video element
-        if (videoRef.current) {
-          videoRef.current.srcObject = remoteStream;
-          videoRef.current.play().catch(() => {});
-          // Start capture loop to compress frames to JPEG and send to main
-          startCaptureLoop();
+        params.encodings = [
+          {
+            maxBitrate,
+            maxFramerate: fps,
+          },
+        ];
+
+        params.degradationPreference = 'maintain-framerate';
+
+        await sender.setParameters(params);
+
+        // Create offer
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+
+        // Send offer to server with face swap always enabled
+        const res = await electron.webRtc.offer(offer);
+        const answer = res.data;
+
+        // Apply answer
+        await pc.setRemoteDescription(new RTCSessionDescription(answer));
+
+        setIsStreaming(true);
+
+        // Check the active video codec
+        checkActiveVideoCodec();
+      } catch (error) {
+        console.error('Error in startWebRTC:', error);
+
+        // Clean up on error
+        if (pcRef.current) {
+          try {
+            pcRef.current.close();
+          } catch (e) {
+            console.warn('Error closing peer connection after error:', e);
+          }
+          pcRef.current = null;
         }
-      };
 
-      // Find video device id from name
-      const videoDeviceId = videoDevices.find((d) => d.label === cameraDeviceName)?.deviceId;
-      console.log('Video device id', videoDevices, cameraDeviceName, videoDeviceId);
-
-      // Acquire local camera only if you still want to send local tracks to the peer
-      const localStream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          deviceId: videoDeviceId ? { exact: videoDeviceId } : undefined,
-          width: { ideal: videoWidth },
-          height: { ideal: videoHeight },
-          frameRate: { ideal: fps, max: fps },
-        },
-        audio: false,
-      });
-
-      // Get capabilities and prefer H264 first
-      const caps = RTCRtpSender.getCapabilities('video');
-      if (!caps) {
-        toast.warning('Unable to get video capabilities');
-        console.warn('No video capabilities available');
-        return;
+        // Rethrow to trigger reconnection in scheduleReconnect
+        throw error;
       }
-      const h264Codecs = caps.codecs.filter(
-        (c) =>
-          c.mimeType.toLowerCase() === 'video/h264' &&
-          c.sdpFmtpLine?.includes('profile-level-id=42c01e') // Constrained Baseline L3.0
-      );
-      const preferredCodecs = [...h264Codecs];
-
-      // Create transceiver BEFORE attaching track
-      const videoTransceiver = pc.addTransceiver('video', { direction: 'sendrecv' });
-      videoTransceiver.setCodecPreferences(preferredCodecs);
-
-      // Attach camera track to transceiver
-      const videoTrack = localStream.getVideoTracks()[0];
-      await videoTransceiver.sender.replaceTrack(videoTrack);
-
-      const sender = videoTransceiver.sender;
-      const params = sender.getParameters();
-
-      let maxBitrate;
-      if (videoWidth >= 1920) {
-        maxBitrate = 3_500_000; // 1080p
-      } else if (videoWidth >= 1280) {
-        maxBitrate = 1_800_000; // 720p
-      } else {
-        maxBitrate = 500_000; // 640x480
-      }
-
-      params.encodings = [
-        {
-          maxBitrate,
-          maxFramerate: fps,
-        },
-      ];
-
-      params.degradationPreference = 'maintain-framerate';
-
-      await sender.setParameters(params);
-
-      // Create offer
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-
-      // Send offer to server with face swap always enabled
-      const res = await electron.webRtc.offer(offer);
-      const answer = res.data;
-
-      // Apply answer
-      await pc.setRemoteDescription(new RTCSessionDescription(answer));
-
-      setIsStreaming(true);
-
-      // Check the active video codec
-      checkActiveVideoCodec();
     };
 
     const startCaptureLoop = () => {
@@ -237,6 +372,14 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
     };
 
     const stopWebRTC = () => {
+      // Clear any pending reconnection attempts
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+      isReconnectingRef.current = false;
+      reconnectAttemptsRef.current = 0;
+
       // Close RTCPeerConnection
       if (pcRef.current) {
         try {
