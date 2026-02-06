@@ -121,9 +121,6 @@ async function createWindow() {
 // APP LIFECYCLE
 // -------------------------------------------------------------
 app.whenReady().then(async () => {
-  // Initialize services
-  configStore.load();
-
   // Register all IPC handlers
   registerConfigHandlers();
   registerAppStateHandlers();

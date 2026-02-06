@@ -8,7 +8,7 @@ import { BrowserWindow } from 'electron';
 import path from 'path';
 import * as zmq from 'zeromq';
 
-import { configManager } from '../config/app.js';
+import { ApiClient } from '../api/client.js';
 import { configStore } from '../store/config-store.js';
 import { Speaker, Transcript } from '../types/app-state.js';
 import { EnvUtil } from '../utils/env.js';
@@ -128,7 +128,7 @@ class TranscriptService {
   ): Promise<AgentProcess> {
     // Get agent executable path
     const { command, args: baseArgs } = this.getAgentCommand();
-    const serverUrl = configManager.get('serverUrl');
+    const serverUrl = ApiClient.BACKEND_URL.replace(/\/+$/, ''); // Remove trailing slash
     const wsUrl = `${serverUrl.replace('http', 'ws')}/api/asr/streaming`;
 
     // Get session token

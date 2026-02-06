@@ -5,8 +5,6 @@
 
 import ElectronStore from 'electron-store';
 
-import { AppConfig, configManager } from '../config/app.js';
-
 // Runtime configuration (matches Config type in frontend)
 export interface RuntimeConfig {
   interview_conf: {
@@ -50,35 +48,23 @@ const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
 };
 
 interface StoredConfig {
-  app?: Partial<AppConfig>;
   window?: {
     bounds?: { x: number; y: number; width: number; height: number };
     stealth?: boolean;
   };
-  user?: {
-    preferences?: Record<string, unknown>;
-  };
   runtime?: Partial<RuntimeConfig>;
 }
 
-export class ConfigStore {
+class ConfigStore {
   private store: ElectronStore<StoredConfig>;
-  private static instance: ConfigStore;
 
-  private constructor() {
+  constructor() {
     this.store = new ElectronStore<StoredConfig>({
       name: 'config',
       defaults: {
         runtime: DEFAULT_RUNTIME_CONFIG,
       },
     });
-  }
-
-  static getInstance(): ConfigStore {
-    if (!ConfigStore.instance) {
-      ConfigStore.instance = new ConfigStore();
-    }
-    return ConfigStore.instance;
   }
 
   /**
@@ -117,81 +103,6 @@ export class ConfigStore {
   }
 
   /**
-   * Load configuration from disk
-   */
-  load(): void {
-    const stored = this.store.get('app', {});
-    configManager.updateConfig(stored);
-  }
-
-  /**
-   * Save configuration to disk
-   */
-  save(updates: Partial<AppConfig>): void {
-    const current = this.store.get('app', {});
-    this.store.set('app', { ...current, ...updates });
-    configManager.updateConfig(updates);
-  }
-
-  /**
-   * Get all configuration
-   */
-  getAll(): StoredConfig {
-    return this.store.store;
-  }
-
-  /**
-   * Reset configuration to defaults
-   */
-  reset(): void {
-    this.store.clear();
-    configManager.updateConfig(configManager.getConfig());
-  }
-
-  /**
-   * Get window configuration
-   */
-  getWindow(): StoredConfig['window'] {
-    return this.store.get('window', {});
-  }
-
-  /**
-   * Save window configuration
-   */
-  saveWindow(config: StoredConfig['window']): void {
-    this.store.set('window', config);
-  }
-
-  /**
-   * Get user preferences
-   */
-  getPreferences(): Record<string, unknown> {
-    return this.store.get('user.preferences', {});
-  }
-
-  /**
-   * Save user preferences
-   */
-  savePreferences(preferences: Record<string, unknown>): void {
-    this.store.set('user.preferences', preferences);
-  }
-
-  /**
-   * Get specific config value
-   */
-  getConfigValue<K extends keyof RuntimeConfig>(key: K): RuntimeConfig[K] {
-    const config = this.getConfig();
-    return config[key];
-  }
-
-  /**
-   * Set specific config value
-   */
-  setConfigValue<K extends keyof RuntimeConfig>(key: K, value: RuntimeConfig[K]): RuntimeConfig {
-    return this.updateConfig({ [key]: value } as Partial<RuntimeConfig>);
-  }
-
-  /**
    * Get window bounds
    */
   getWindowBounds(): { x?: number; y?: number; width: number; height: number } | undefined {
@@ -220,4 +131,4 @@ export class ConfigStore {
   }
 }
 
-export const configStore = ConfigStore.getInstance();
+export const configStore = new ConfigStore();
