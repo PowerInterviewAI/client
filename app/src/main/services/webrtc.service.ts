@@ -18,7 +18,7 @@ class WebRTCService {
     const conf = configStore.getConfig();
 
     const apiClient = new ApiClient();
-    const res = await apiClient.post('/video/offer', {
+    const res = await apiClient.post('/api/video/offer', {
       sdp: offer.sdp,
       type: offer.type,
       options: {
