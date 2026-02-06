@@ -6,27 +6,24 @@ import { RunningState } from '@/types/app-state';
 
 import { useConfigStore } from './use-config-store';
 
-interface AssistantState {
-  runningState: RunningState;
+interface AssistantService {
   error: string | null;
   videoPanelRef: React.RefObject<VideoPanelHandle> | null;
 
   // Actions
   startAssistant: () => Promise<void>;
   stopAssistant: () => Promise<void>;
-  setRunningState: (state: RunningState) => void;
   setError: (error: string | null) => void;
   setVideoPanelRef: (ref: React.RefObject<VideoPanelHandle> | null) => void;
 }
 
-export const useAssistantState = create<AssistantState>((set, get) => ({
-  runningState: RunningState.IDLE,
+export const useAssistantService = create<AssistantService>((set, get) => ({
   error: null,
   videoPanelRef: null,
 
   startAssistant: async () => {
     try {
-      set({ runningState: RunningState.STARTING, error: null });
+      set({ error: null });
 
       const electron = getElectron();
       if (!electron) {
@@ -47,12 +44,10 @@ export const useAssistantState = create<AssistantState>((set, get) => ({
       // Start transcription services
       await electron.transcription.start();
 
-      set({ runningState: RunningState.RUNNING });
       electron.appState.update({ runningState: RunningState.RUNNING });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to start assistant';
       set({
-        runningState: RunningState.IDLE,
         error: errorMessage,
       });
       console.error('Start assistant error:', error);
@@ -62,7 +57,7 @@ export const useAssistantState = create<AssistantState>((set, get) => ({
 
   stopAssistant: async () => {
     try {
-      set({ runningState: RunningState.STOPPING, error: null });
+      set({ error: null });
 
       const electron = getElectron();
       if (!electron) {
@@ -85,21 +80,16 @@ export const useAssistantState = create<AssistantState>((set, get) => ({
         electron.codeSuggestion.stop(),
       ]);
 
-      set({ runningState: RunningState.IDLE });
+      set({ error: null });
       electron.appState.update({ runningState: RunningState.IDLE });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to stop assistant';
       set({
-        runningState: RunningState.RUNNING,
         error: errorMessage,
       });
       console.error('Stop assistant error:', error);
       throw error;
     }
-  },
-
-  setRunningState: (state: RunningState) => {
-    set({ runningState: state });
   },
 
   setError: (error: string | null) => {

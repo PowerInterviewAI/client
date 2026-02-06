@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useAssistantState } from '@/hooks/use-assistant-state';
+import { useAppState } from '@/hooks/use-app-state';
 import useAuth from '@/hooks/use-auth';
 import { useThemeStore } from '@/hooks/use-theme-store';
 import { RunningState } from '@/types/app-state';
@@ -31,7 +31,7 @@ export function ProfileGroup({
   onSignOut,
   getDisabled,
 }: ProfileGroupProps) {
-  const { runningState } = useAssistantState();
+  const { runningState } = useAppState();
   const { isDark, toggleTheme } = useThemeStore();
   const { changePassword, loading, error, setError } = useAuth();
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);

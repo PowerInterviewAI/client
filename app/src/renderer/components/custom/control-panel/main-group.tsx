@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useAssistantState } from '@/hooks/use-assistant-state';
+import { useAppState } from '@/hooks/use-app-state';
 import { RunningState } from '@/types/app-state';
 
 interface MainGroupProps {
@@ -14,7 +14,8 @@ interface MainGroupProps {
 }
 
 export function MainGroup({ stateConfig, getDisabled }: MainGroupProps) {
-  const { runningState } = useAssistantState();
+  const { runningState } = useAppState();
+
   const { onClick, className, icon, label } = stateConfig;
 
   const handleStartStopClick = async () => {

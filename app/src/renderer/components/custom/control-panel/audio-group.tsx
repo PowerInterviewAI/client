@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useAssistantState } from '@/hooks/use-assistant-state';
+import { useAppState } from '@/hooks/use-app-state';
 import { useConfigStore } from '@/hooks/use-config-store';
 import { RunningState } from '@/types/app-state';
 import { type AudioDevice } from '@/types/audio-device';
@@ -29,7 +29,7 @@ export function AudioGroup({
   getDisabled,
 }: AudioGroupProps) {
   const [open, setOpen] = useState(false);
-  const { runningState } = useAssistantState();
+  const { runningState } = useAppState();
   const { config, updateConfig } = useConfigStore();
   const usableAudioInputDevices = audioInputDevices.filter((d) => {
     if (d.name.toLowerCase().includes('virtual')) return false;

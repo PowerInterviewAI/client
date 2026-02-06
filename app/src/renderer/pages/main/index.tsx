@@ -10,7 +10,7 @@ import ReplySuggestionsPanel from '@/components/custom/reply-suggestions-panel';
 import TranscriptPanel from '@/components/custom/transcript-panel';
 import { VideoPanel, type VideoPanelHandle } from '@/components/custom/video-panel';
 import { useAppState } from '@/hooks/use-app-state';
-import { useAssistantState } from '@/hooks/use-assistant-state';
+import { useAssistantService } from '@/hooks/use-assistant-service';
 import useAuth from '@/hooks/use-auth';
 import { useConfigStore } from '@/hooks/use-config-store';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
@@ -24,7 +24,7 @@ export default function MainPage() {
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { config, isLoading: configLoading, loadConfig } = useConfigStore();
-  const { setVideoPanelRef } = useAssistantState();
+  const { setVideoPanelRef } = useAssistantService();
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const [replySuggestions, setReplySuggestions] = useState<ReplySuggestion[]>([]);
   const [codeSuggestions, setCodeSuggestions] = useState<CodeSuggestion[]>([]);

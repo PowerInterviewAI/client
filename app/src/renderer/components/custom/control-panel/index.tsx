@@ -1,6 +1,7 @@
 import { Ellipsis, Play, Square } from 'lucide-react';
 
-import { useAssistantState } from '@/hooks/use-assistant-state';
+import { useAppState } from '@/hooks/use-app-state';
+import { useAssistantService } from '@/hooks/use-assistant-service';
 import { useAudioInputDevices, useAudioOutputDevices } from '@/hooks/use-audio-devices';
 import { useConfigStore } from '@/hooks/use-config-store';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
@@ -29,7 +30,8 @@ type StateConfig = {
 
 export default function ControlPanel({ onProfileClick, onSignOut }: ControlPanelProps) {
   const isStealth = useIsStealthMode();
-  const { runningState: assistantState, startAssistant, stopAssistant } = useAssistantState();
+  const { startAssistant, stopAssistant } = useAssistantService();
+  const { runningState } = useAppState();
   const { config } = useConfigStore();
 
   const videoDevices = useVideoDevices();
@@ -69,7 +71,7 @@ export default function ControlPanel({ onProfileClick, onSignOut }: ControlPanel
       label: 'Stopping...',
     },
   };
-  const { onClick, className, icon, label } = stateConfig[assistantState];
+  const { onClick, className, icon, label } = stateConfig[runningState];
 
   const audioInputDeviceNotFound =
     audioInputDevices?.find((d) => d.name === config?.audioInputDeviceName) === undefined;
@@ -137,7 +139,7 @@ export default function ControlPanel({ onProfileClick, onSignOut }: ControlPanel
         <ToolsGroup getDisabled={getDisabled} />
       </div>
 
-      <RunningIndicator runningState={assistantState} />
+      <RunningIndicator runningState={runningState} />
     </div>
   );
 }

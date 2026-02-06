@@ -6,9 +6,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { type AppState } from '@/types/app-state';
+import { type AppState, RunningState } from '@/types/app-state';
 
 interface AppStateContextType {
+  runningState: RunningState;
   appState: AppState | null;
   updateAppState: (updates: Partial<AppState>) => Promise<void>;
 }
@@ -129,5 +130,8 @@ export const useAppState = (): AppStateContextType => {
     await manager.updateAppState(updates);
   }, []);
 
-  return useMemo(() => ({ appState, updateAppState }), [appState, updateAppState]);
+  return useMemo(
+    () => ({ runningState: appState?.runningState || RunningState.IDLE, appState, updateAppState }),
+    [appState, updateAppState]
+  );
 };

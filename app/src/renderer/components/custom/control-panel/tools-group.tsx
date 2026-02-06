@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useAssistantState } from '@/hooks/use-assistant-state';
+import { useAppState } from '@/hooks/use-app-state';
 import useTools from '@/hooks/use-tools';
 import { RunningState } from '@/types/app-state';
 
@@ -12,7 +12,7 @@ interface ToolsGroupProps {
 }
 
 export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
-  const { runningState } = useAssistantState();
+  const { runningState } = useAppState();
   const { exporting, exportTranscript, clearAll } = useTools();
 
   const onClearAll = async () => {

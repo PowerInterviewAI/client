@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useAssistantState } from '@/hooks/use-assistant-state';
+import { useAppState } from '@/hooks/use-app-state';
 import { useConfigStore } from '@/hooks/use-config-store';
 import { useVideoDevices } from '@/hooks/use-video-devices';
 import { RunningState } from '@/types/app-state';
@@ -31,7 +31,7 @@ export function VideoGroup({
   audioOutputDevices,
   getDisabled,
 }: VideoGroupProps) {
-  const { runningState } = useAssistantState();
+  const { runningState } = useAppState();
   const { config, updateConfig } = useConfigStore();
   const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
