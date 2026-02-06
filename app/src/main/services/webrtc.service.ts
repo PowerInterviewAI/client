@@ -1,103 +1,85 @@
 /**
  * WebRTC Service
- * Handles peer-to-peer video/audio connections
- *
- * SKELETON: Complex implementation requires signaling server
+ * Manages media service for screen sharing
  */
 
-import { EventEmitter } from 'events';
+import { ApiClient } from '../api/client.js';
+import { configStore } from '../store/config.store.js';
+import { OfferRequest, WebRTCOptions } from '../types/webrtc.js';
 
-import { PeerConnection } from '../types/webrtc.js';
+class WebRTCService {
+  private serviceActive = false;
 
-export class WebRtcService extends EventEmitter {
-  private static instance: WebRtcService;
-  private peers: Map<string, PeerConnection> = new Map();
+  /**
+   * Offer WebRTC connection for media streaming
+   */
+  // eslint-disable-next-line
+  async offer(offer: any): Promise<any> {
+    const conf = configStore.getConfig();
 
-  private constructor() {
-    super();
-  }
-
-  static getInstance(): WebRtcService {
-    if (!WebRtcService.instance) {
-      WebRtcService.instance = new WebRtcService();
-    }
-    return WebRtcService.instance;
+    const apiClient = new ApiClient();
+    const res = await apiClient.post('/video/offer', {
+      sdp: offer.sdp,
+      type: offer.type,
+      options: {
+        photo: conf.interview_conf.photo,
+        enhance_face: conf.enable_face_enhance,
+      } as WebRTCOptions,
+    } as OfferRequest);
+    return res;
   }
 
   /**
-   * Initialize WebRTC with STUN/TURN servers
-   * SKELETON: Configure ICE servers
+   * Start media service
    */
-  async initialize(): Promise<void> {
-    console.log('[WebRtcService] initialize - not implemented');
-
-    // TODO: Configure ICE servers (STUN/TURN)
-    // - Default: Google STUN servers
-    // - Optional: Custom TURN server for NAT traversal
-  }
-
-  /**
-   * Create peer connection
-   * SKELETON: Requires signaling mechanism
-   */
-  async createPeerConnection(peerId: string): Promise<PeerConnection> {
-    console.log(`[WebRtcService] createPeerConnection: ${peerId} - not implemented`);
-
-    // TODO: Create RTCPeerConnection
-    // - Set up ICE candidate gathering
-    // - Configure media streams
-    // - Set up data channels
-    // - Handle negotiation
-
-    throw new Error('Not implemented');
-  }
-
-  /**
-   * Add media stream to peer
-   */
-  async addStream(peerId: string): Promise<void> {
-    console.log(`[WebRtcService] addStream: ${peerId} - not implemented`);
-
-    // TODO: Add tracks from stream to peer connection
-  }
-
-  /**
-   * Send data through data channel
-   */
-  async sendData(peerId: string): Promise<void> {
-    const peer = this.peers.get(peerId);
-    if (!peer?.dataChannel) {
-      throw new Error(`No data channel for peer ${peerId}`);
-    }
-
-    // TODO: Send data through RTCDataChannel
-    console.log(`[WebRtcService] sendData: ${peerId} - not implemented`);
-  }
-
-  /**
-   * Close peer connection
-   */
-  async closePeerConnection(peerId: string): Promise<void> {
-    const peer = this.peers.get(peerId);
-    if (!peer) {
+  async startAgents(): Promise<void> {
+    if (this.serviceActive) {
+      console.log('WebRTC service already active');
       return;
     }
 
-    // TODO: Clean up connection
-    // - Close data channels
-    // - Stop media streams
-    // - Close RTCPeerConnection
+    console.log('Starting WebRTC service...');
+    this.serviceActive = true;
 
-    this.peers.delete(peerId);
-    this.emit('peer-closed', peerId);
+    // TODO: Implement actual service logic
+    // - Initialize media service device
+    // - Setup video stream capture
+    // - Start frame processing/forwarding
   }
 
   /**
-   * Get all active peers
+   * Stop media service
    */
-  getActivePeers(): string[] {
-    return Array.from(this.peers.keys());
+  async stopAgents(): Promise<void> {
+    if (!this.serviceActive) {
+      console.log('WebRTC service not active');
+      return;
+    }
+
+    console.log('Stopping WebRTC service...');
+    this.serviceActive = false;
+
+    // TODO: Implement cleanup logic
+    // - Stop video stream
+    // - Clean up media service resources
+    // - Release device handles
+  }
+
+  async putVideoFrame(frameData: ArrayBuffer): Promise<void> {
+    if (!this.serviceActive) {
+      console.warn('WebRTC service not active. Cannot send video frame.');
+      return;
+    }
+  }
+
+  /**
+   * Get current service status
+   */
+  getStatus() {
+    return {
+      serviceActive: this.serviceActive,
+    };
   }
 }
 
-export const webRtcService = WebRtcService.getInstance();
+export const webRtcService = new WebRTCService();

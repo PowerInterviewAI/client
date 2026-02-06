@@ -1,10 +1,10 @@
-/**
- * WebRTC Types
- */
+export interface WebRTCOptions {
+  photo: string;
+  enhance_face: boolean;
+}
 
-export interface PeerConnection {
-  id: string;
-  connection: RTCPeerConnection;
-  stream?: MediaStream;
-  dataChannel?: RTCDataChannel;
+export interface OfferRequest {
+  sdp: string;
+  type: string;
+  options: WebRTCOptions;
 }

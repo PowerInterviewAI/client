@@ -46,8 +46,8 @@ export const useAssistantState = create<AssistantState>((set, get) => ({
         await videoPanelRef.current.startWebRTC();
       }
 
-      // Start vcam bridge
-      await electron.vcamBridge.start();
+      // Start WebRTC agents for media streaming
+      await electron.webRtc.startAgents();
 
       // Start transcription services
       await electron.transcription.start();
@@ -87,8 +87,8 @@ export const useAssistantState = create<AssistantState>((set, get) => ({
       await electron.replySuggestion.stop();
       await electron.codeSuggestion.stop();
 
-      // Stop vcam bridge
-      await electron.vcamBridge.stop();
+      // Stop WebRTC agents for media streaming
+      await electron.webRtc.stopAgents();
 
       set({ runningState: RunningState.IDLE });
       electron.appState.update({ runningState: RunningState.IDLE });

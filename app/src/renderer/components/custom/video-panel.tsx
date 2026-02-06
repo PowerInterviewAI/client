@@ -4,8 +4,8 @@ import { toast } from 'sonner';
 
 import { useConfigStore } from '@/hooks/use-config-store';
 import { useVideoDevices } from '@/hooks/use-video-devices';
+import { getElectron } from '@/lib/utils';
 import { RunningState } from '@/types/app-state';
-import { type OfferRequest, type WebRTCOptions } from '@/types/webrtc';
 
 interface VideoPanelProps {
   runningState: RunningState;
@@ -24,23 +24,20 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
     const { config } = useConfigStore();
     const videoDevices = useVideoDevices();
 
-    const photo = config?.interview_conf?.photo ?? '';
     const cameraDeviceName = config?.camera_device_name ?? '';
     const videoWidth = config?.video_width ?? 640;
     const videoHeight = config?.video_height ?? 480;
-    const enableFaceEnhance = config?.enable_face_enhance ?? false;
 
     const [videoMessage, setVideoMessage] = useState('Video Stream');
     const videoRef = useRef<HTMLVideoElement>(null);
+    const captureCanvasRef = useRef<HTMLCanvasElement | null>(null);
+    const captureIntervalRef = useRef<number | null>(null);
     const pcRef = useRef<RTCPeerConnection | null>(null);
 
-    // WebSocket and frame loop references
-    const wsRef = useRef<WebSocket | null>(null);
-    const canvasRef = useRef<HTMLCanvasElement | null>(null);
-    const streamRef = useRef<MediaStream | null>(null);
-    const frameTimerRef = useRef<number | null>(null);
-    const sendingRef = useRef(false);
-    const droppedRef = useRef(0);
+    const electron = getElectron();
+    if (!electron) {
+      throw new Error('Electron API not available');
+    }
 
     const [isStreaming, setIsStreaming] = useState(false);
 
@@ -104,18 +101,8 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
         if (videoRef.current) {
           videoRef.current.srcObject = remoteStream;
           videoRef.current.play().catch(() => {});
-        }
-
-        // Start sending frames from the remote stream to the backend
-        // Only start once (guard)
-        if (!wsRef.current) {
-          startWebSocketFrameStreamingFromStream(
-            remoteStream,
-            videoWidth,
-            videoHeight,
-            fps,
-            jpegQuality
-          ).catch((err) => console.error('Frame streaming failed', err));
+          // Start capture loop to compress frames to JPEG and send to main
+          startCaptureLoop();
         }
       };
 
@@ -133,7 +120,6 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
         },
         audio: false,
       });
-      streamRef.current = localStream;
 
       // Get capabilities and prefer H264 first
       const caps = RTCRtpSender.getCapabilities('video');
@@ -185,14 +171,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       await pc.setLocalDescription(offer);
 
       // Send offer to server with face swap always enabled
-      const res = await axiosClient.post('/video/offer', {
-        sdp: offer.sdp,
-        type: offer.type,
-        options: {
-          photo,
-          enhance_face: enableFaceEnhance,
-        } as WebRTCOptions,
-      } as OfferRequest);
+      const res = await electron.webRtc.offer(offer);
       const answer = res.data;
 
       // Apply answer
@@ -204,123 +183,60 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       checkActiveVideoCodec();
     };
 
-    const startWebSocketFrameStreamingFromStream = async (
-      stream: MediaStream,
-      width: number,
-      height: number,
-      fps: number,
-      quality: number
-    ) => {
-      // Create canvas and hidden video feeder
+    const startCaptureLoop = () => {
+      // avoid starting multiple loops
+      if (captureIntervalRef.current) return;
+
       const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-      canvasRef.current = canvas;
+      canvas.width = videoWidth;
+      canvas.height = videoHeight;
+      captureCanvasRef.current = canvas;
+
       const ctx = canvas.getContext('2d');
-      if (!ctx) throw new Error('Canvas 2D context not available');
+      if (!ctx) return;
 
-      const feederVideo = document.createElement('video');
-      feederVideo.playsInline = true;
-      feederVideo.muted = true;
-      feederVideo.autoplay = true;
-      feederVideo.srcObject = stream;
+      const intervalMs = Math.max(1000 / fps, 33); // cap to ~30fps min interval
 
-      // Ensure the remote video is playing before drawing frames
-      await feederVideo.play().catch(() => {
-        // play() may fail if autoplay blocked; user interaction may be required
-      });
-
-      // Open WebSocket
-      const ws = new WebSocket(`${window.location.origin}/api/video/frames`);
-      wsRef.current = ws;
-
-      ws.onopen = () => {
-        // Start frame loop
-      };
-
-      ws.onclose = () => {
-        // cleanup handled elsewhere
-      };
-
-      ws.onerror = (ev) => {
-        console.error('WebSocket error', ev);
-      };
-
-      // Frame loop
-      const intervalMs = Math.round(1000 / fps);
-      const BUFFERED_AMOUNT_MAX = 2_000_000; // bytes (2 MB)
-
-      const loop = () => {
+      captureIntervalRef.current = window.setInterval(async () => {
         try {
-          // Backpressure: if a send/encode is in progress or socket bufferedAmount is high, drop frame
-          if (
-            sendingRef.current ||
-            ws.readyState !== WebSocket.OPEN ||
-            (ws.bufferedAmount && ws.bufferedAmount > BUFFERED_AMOUNT_MAX)
-          ) {
-            droppedRef.current += 1;
-            return;
-          }
+          const videoEl = videoRef.current;
+          if (!videoEl || videoEl.readyState < 2) return;
 
-          // mark busy (covers encode + send)
-          sendingRef.current = true;
+          // draw current frame
+          ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
 
-          // draw remote frame into canvas
-          ctx.drawImage(feederVideo, 0, 0, width, height);
-
+          // convert to JPEG blob
           canvas.toBlob(
-            (blob) => {
-              if (!blob) {
-                sendingRef.current = false;
-                return;
-              }
-              if (ws.readyState === WebSocket.OPEN) {
-                // send ArrayBuffer for binary websocket
-                blob
-                  .arrayBuffer()
-                  .then((buf) => {
-                    try {
-                      ws.send(buf);
-                    } catch (e) {
-                      console.error('WebSocket send error', e);
-                    }
-                  })
-                  .finally(() => {
-                    sendingRef.current = false;
-                  });
-              } else {
-                sendingRef.current = false;
+            async (blob) => {
+              if (!blob) return;
+              try {
+                const arrayBuffer = await blob.arrayBuffer();
+                // send to main process via preload API
+                await electron.webRtc.putVideoFrame(arrayBuffer);
+              } catch (err) {
+                console.warn('Failed to send video frame to main:', err);
               }
             },
             'image/jpeg',
-            quality
+            jpegQuality
           );
         } catch (err) {
-          // ignore transient errors (e.g., video not ready)
-          console.error(err);
-          sendingRef.current = false;
+          console.warn('Error in capture loop:', err);
         }
-      };
+      }, intervalMs) as unknown as number;
+    };
 
-      frameTimerRef.current = window.setInterval(loop, intervalMs);
+    const stopCaptureLoop = () => {
+      if (captureIntervalRef.current) {
+        clearInterval(captureIntervalRef.current);
+        captureIntervalRef.current = null;
+      }
+      if (captureCanvasRef.current) {
+        captureCanvasRef.current = null;
+      }
     };
 
     const stopWebRTC = () => {
-      // Stop frame loop
-      if (frameTimerRef.current !== null) {
-        window.clearInterval(frameTimerRef.current);
-        frameTimerRef.current = null;
-      }
-
-      // Close WebSocket
-      if (wsRef.current) {
-        try {
-          wsRef.current.close();
-          // eslint-disable-next-line no-empty
-        } catch {}
-        wsRef.current = null;
-      }
-
       // Close RTCPeerConnection
       if (pcRef.current) {
         try {
@@ -330,19 +246,13 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
         pcRef.current = null;
       }
 
-      // Stop media tracks
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((t) => t.stop());
-        streamRef.current = null;
-      }
-
       // Clear video element
       if (videoRef.current) {
         videoRef.current.srcObject = null;
       }
 
-      // Clear canvas
-      canvasRef.current = null;
+      // stop capture loop
+      stopCaptureLoop();
 
       setVideoMessage('Video Stream');
       setIsStreaming(false);

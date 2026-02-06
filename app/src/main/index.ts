@@ -14,12 +14,12 @@ import { registerConfigHandlers } from './ipc/config.js';
 import { registerReplySuggestionHandlers } from './ipc/reply-suggestion.js';
 import { registerToolsHandlers } from './ipc/tools.js';
 import { registerTranscriptHandlers } from './ipc/transcript.js';
-import { registerVcamBridgeHandlers } from './ipc/vcam-bridge.js';
+import { registerWebRTCHandlers } from './ipc/webrtc.js';
 // Import IPC handlers
 import { registerWindowHandlers } from './ipc/window.js';
 import { healthCheckService } from './services/health-check.service.js';
 import { transcriptService } from './services/transcript.service.js';
-import { vcamBridgeService } from './services/vcam-bridge.service.js';
+import { webRtcService } from './services/webrtc.service.js';
 import { setWindowReference } from './services/window-control.service.js';
 // Import services
 import { configStore } from './store/config.store.js';
@@ -128,7 +128,7 @@ app.whenReady().then(async () => {
   registerTranscriptHandlers();
   registerReplySuggestionHandlers();
   registerCodeSuggestionHandlers();
-  registerVcamBridgeHandlers();
+  registerWebRTCHandlers();
   registerToolsHandlers();
 
   // Create window
@@ -149,7 +149,7 @@ app.whenReady().then(async () => {
 app.on('will-quit', async () => {
   // Stop all services
   await transcriptService.stop();
-  await vcamBridgeService.stop();
+  await webRtcService.stopAgents();
   healthCheckService.stop();
 
   unregisterHotkeys();

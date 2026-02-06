@@ -61,10 +61,13 @@ const electronApi = {
     stop: () => ipcRenderer.invoke('code-suggestion:stop'),
   },
 
-  // VCam bridge management
-  vcamBridge: {
-    start: () => ipcRenderer.invoke('vcam-bridge:start'),
-    stop: () => ipcRenderer.invoke('vcam-bridge:stop'),
+  // Media management
+  webRtc: {
+    offer: (offer: any) => ipcRenderer.invoke('webrtc:offer', offer),
+    startAgents: () => ipcRenderer.invoke('webrtc:start-agents'),
+    stopAgents: () => ipcRenderer.invoke('webrtc:stop-agents'),
+    putVideoFrame: (frameData: ArrayBuffer) =>
+      ipcRenderer.invoke('webrtc:put-video-frame', frameData),
   },
 
   // Listen for pushed notifications main

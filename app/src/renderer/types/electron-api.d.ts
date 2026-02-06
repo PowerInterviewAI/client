@@ -58,10 +58,13 @@ declare global {
       stop: () => Promise<void>;
     };
 
-    // VCam bridge management
-    vcamBridge: {
-      start: () => Promise<void>;
-      stop: () => Promise<void>;
+    // WebRTC management
+    webRtc: {
+      // eslint-disable-next-line
+      offer: (any) => Promise<any>;
+      startAgents: () => Promise<void>;
+      stopAgents: () => Promise<void>;
+      putVideoFrame: (frameData: ArrayBuffer) => Promise<void>;
     };
 
     // Push notification listener
