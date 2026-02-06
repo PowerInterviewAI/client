@@ -75,9 +75,18 @@ export function VideoGroup({
     }
 
     let cleanupStream: MediaStream | null = null;
-    const videoElement = videoPreviewRef.current;
+    let videoElement = videoPreviewRef.current;
 
     const startPreview = async () => {
+      await new Promise((r) => requestAnimationFrame(r)); // wait for DOM to mount
+      videoElement = videoPreviewRef.current;
+
+      console.log('Starting video preview with config:', {
+        camera_device_name: config?.camera_device_name,
+        video_width: config?.video_width,
+        video_height: config?.video_height,
+      });
+
       // Stop previous stream before starting a new one
       if (previewStreamRef.current) {
         previewStreamRef.current.getTracks().forEach((t) => t.stop());
@@ -88,6 +97,7 @@ export function VideoGroup({
       const videoDeviceId = videoDevices.find(
         (d) => d.label === config?.camera_device_name
       )?.deviceId;
+      console.log('Selected video device ID:', videoDeviceId);
 
       // Create media stream
       const constraints: MediaStreamConstraints = {
@@ -107,6 +117,8 @@ export function VideoGroup({
           videoElement.srcObject = stream;
           // Some browsers need play() after setting srcObject
           await videoElement.play().catch(() => {});
+        } else {
+          console.error('Video element not found for preview');
         }
       } catch (err) {
         toast.error('Unable to access camera');
