@@ -6,7 +6,7 @@
 import { app } from 'electron';
 
 import { BACKEND_BASE_URL } from '../consts.js';
-import { configStore } from '../store/config-store.js';
+import { configStore } from '../store/config.store.js';
 
 export interface ApiResponse<T = unknown> {
   data?: T;

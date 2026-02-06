@@ -1,5 +1,5 @@
 import { AuthApi } from '../api/auth.js';
-import { configStore } from '../store/config-store.js';
+import { configStore } from '../store/config.store.js';
 import { appStateService } from './app-state.service.js';
 
 /**

@@ -16,7 +16,7 @@ import {
   TRANSCRIPT_RESTART_DELAY_MS,
   TRANSCRIPT_SELF_ZMQ_PORT,
 } from '../consts.js';
-import { configStore } from '../store/config-store.js';
+import { configStore } from '../store/config.store.js';
 import { Speaker, Transcript } from '../types/app-state.js';
 import { EnvUtil } from '../utils/env.js';
 import { appStateService } from './app-state.service.js';

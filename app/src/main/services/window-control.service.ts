@@ -1,6 +1,6 @@
 import { BrowserWindow, screen } from 'electron';
 
-import { configStore } from '../store/config-store.js';
+import { configStore } from '../store/config.store.js';
 import { pushNotificationService } from './push-notification.service.js';
 
 // Global reference to the main window

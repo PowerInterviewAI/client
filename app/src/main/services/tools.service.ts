@@ -3,7 +3,7 @@ import { dialog } from 'electron';
 import fs from 'fs/promises';
 
 import { ApiClient } from '../api/client.js';
-import { configStore } from '../store/config-store.js';
+import { configStore } from '../store/config.store.js';
 import { Speaker, Transcript } from '../types/app-state.js';
 import { appStateService } from './app-state.service.js';
 

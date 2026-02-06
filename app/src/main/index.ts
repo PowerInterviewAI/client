@@ -22,7 +22,7 @@ import { transcriptService } from './services/transcript.service.js';
 import { vcamBridgeService } from './services/vcam-bridge.service.js';
 import { setWindowReference } from './services/window-control.service.js';
 // Import services
-import { configStore } from './store/config-store.js';
+import { configStore } from './store/config.store.js';
 
 let win: BrowserWindow | null = null;
 

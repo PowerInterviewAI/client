@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron';
 
-import { configStore, RuntimeConfig } from '../store/config-store.js';
+import { configStore, RuntimeConfig } from '../store/config.store.js';
 
 export function registerConfigHandlers() {
   // Handle config queries
