@@ -24,9 +24,9 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
     const { config } = useConfigStore();
     const videoDevices = useVideoDevices();
 
-    const cameraDeviceName = config?.camera_device_name ?? '';
-    const videoWidth = config?.video_width ?? 1280;
-    const videoHeight = config?.video_height ?? 720;
+    const cameraDeviceName = config?.cameraDeviceName ?? '';
+    const videoWidth = config?.videoWidth ?? 1280;
+    const videoHeight = config?.videoHeight ?? 720;
 
     const [videoMessage, setVideoMessage] = useState('Video Stream');
     const videoRef = useRef<HTMLVideoElement>(null);

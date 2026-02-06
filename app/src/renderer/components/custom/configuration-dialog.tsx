@@ -35,24 +35,24 @@ export default function ConfigurationDialog({ isOpen, onOpenChange }: Configurat
 
     // Queue state updates in a single microtask to avoid cascading renders
     Promise.resolve().then(() => {
-      if (config?.interview_conf) {
-        setPhoto(config.interview_conf.photo ?? '');
-        setName(config.interview_conf.username ?? '');
-        setProfileData(config.interview_conf.profile_data ?? '');
-        setJobDescription(config.interview_conf.job_description ?? '');
+      if (config?.interviewConf) {
+        setPhoto(config.interviewConf.photo ?? '');
+        setName(config.interviewConf.username ?? '');
+        setProfileData(config.interviewConf.profileData ?? '');
+        setJobDescription(config.interviewConf.jobDescription ?? '');
       }
     });
-  }, [isOpen, config?.interview_conf]);
+  }, [isOpen, config?.interviewConf]);
 
   const handleSave = async () => {
     const interviewConf = {
       photo: photo,
       username: name,
-      profile_data: profileData,
-      job_description: jobDescription,
+      profileData: profileData,
+      jobDescription: jobDescription,
     };
     try {
-      await updateConfig({ interview_conf: interviewConf });
+      await updateConfig({ interviewConf: interviewConf });
       onOpenChange(false);
     } catch (error) {
       console.error('Failed to save configuration:', error);

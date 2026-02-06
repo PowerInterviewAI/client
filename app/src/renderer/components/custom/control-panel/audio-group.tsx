@@ -73,8 +73,8 @@ export function AudioGroup({
           <div className="mb-3">
             <label className="text-xs text-muted-foreground mb-1 block">Microphone</label>
             <Select
-              value={config?.audio_input_device_name}
-              onValueChange={(v) => updateConfig({ audio_input_device_name: v })}
+              value={config?.audioInputDeviceName}
+              onValueChange={(v) => updateConfig({ audioInputDeviceName: v })}
             >
               <SelectTrigger className="h-8 w-full text-xs">
                 <SelectValue placeholder="Select microphone" />

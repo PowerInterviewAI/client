@@ -32,7 +32,7 @@ class ToolsService {
 
   async exportTranscript(): Promise<void> {
     // Prepare request data
-    const username = configStore.getConfig().interview_conf.username;
+    const username = configStore.getConfig().interviewConf.username;
     const transcripts = appStateService.getState().transcripts;
     const suggestions = appStateService.getState().replySuggestions;
 

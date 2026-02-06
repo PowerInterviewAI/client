@@ -54,7 +54,7 @@ class TranscriptService {
 
     // Get audio device from config
     const config = configStore.getConfig();
-    const audioDevice = config.audio_input_device_name || 'loopback';
+    const audioDevice = config.audioInputDeviceName || 'loopback';
 
     try {
       this.selfAgent = await this.startAgent(TRANSCRIPT_SELF_ZMQ_PORT, audioDevice, Speaker.SELF);
@@ -132,7 +132,7 @@ class TranscriptService {
     const wsUrl = `${serverUrl.replace('http', 'ws')}/api/asr/streaming`;
 
     // Get session token
-    const sessionToken = configStore.getConfig().session_token;
+    const sessionToken = configStore.getConfig().sessionToken;
 
     console.log(`Starting ASR agent: ${command}`);
     console.log(`Audio source: ${audioSource}, Port: ${port}, Speaker: ${speaker}`);
@@ -396,9 +396,7 @@ class TranscriptService {
         // Determine audio source based on speaker
         const config = configStore.getConfig();
         const audioSource =
-          agent.speaker === Speaker.SELF
-            ? config.audio_input_device_name || 'loopback'
-            : 'loopback';
+          agent.speaker === Speaker.SELF ? config.audioInputDeviceName || 'loopback' : 'loopback';
 
         // Start new agent
         const newAgent = await this.startAgent(agent.port, audioSource, agent.speaker);

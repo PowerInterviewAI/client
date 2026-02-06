@@ -50,7 +50,7 @@ export default function MainPage() {
   const hasReplySuggestions = replySuggestions.length > 0;
   const hasCodeSuggestions = codeSuggestions.length > 0;
   const hasTranscripts = transcripts.length > 0;
-  const hideVideoPanel = !config?.face_swap;
+  const hideVideoPanel = !config?.faceSwap;
   const hideTranscriptPanel = hasCodeSuggestions && !hasTranscripts;
 
   const hasSuggestions = hasReplySuggestions || hasCodeSuggestions;
@@ -119,7 +119,7 @@ export default function MainPage() {
   // Recompute when face swap setting toggles
   useEffect(() => {
     computeAvailable();
-  }, [config?.face_swap, computeAvailable]);
+  }, [config?.faceSwap, computeAvailable]);
 
   // Recompute when assistant running state or appState becomes available
   useEffect(() => {

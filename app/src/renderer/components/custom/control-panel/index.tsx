@@ -72,25 +72,25 @@ export default function ControlPanel({ onProfileClick, onSignOut }: ControlPanel
   const { onClick, className, icon, label } = stateConfig[assistantState];
 
   const audioInputDeviceNotFound =
-    audioInputDevices?.find((d) => d.name === config?.audio_input_device_name) === undefined;
+    audioInputDevices?.find((d) => d.name === config?.audioInputDeviceName) === undefined;
   const videoDeviceNotFound =
-    videoDevices.find((d) => d.label === config?.camera_device_name) === undefined;
+    videoDevices.find((d) => d.label === config?.cameraDeviceName) === undefined;
 
   const checkCanStart = () => {
     const checks: { ok: boolean; message: string }[] = [
-      { ok: !!config?.interview_conf, message: 'Profile is not set' },
-      { ok: !!config?.interview_conf?.username, message: 'Username is not set' },
-      { ok: !!config?.interview_conf?.photo, message: 'Photo is not set' },
-      { ok: !!config?.interview_conf?.profile_data, message: 'Profile data is not set' },
+      { ok: !!config?.interviewConf, message: 'Profile is not set' },
+      { ok: !!config?.interviewConf?.username, message: 'Username is not set' },
+      { ok: !!config?.interviewConf?.photo, message: 'Photo is not set' },
+      { ok: !!config?.interviewConf?.profileData, message: 'Profile data is not set' },
 
       {
         ok: !audioInputDeviceNotFound,
-        message: `Audio input device "${config?.audio_input_device_name}" is not found`,
+        message: `Audio input device "${config?.audioInputDeviceName}" is not found`,
       },
       // Validate video device only if face swap is enabled
       {
-        ok: !config?.face_swap || !videoDeviceNotFound,
-        message: `Video device "${config?.camera_device_name}" is not found`,
+        ok: !config?.faceSwap || !videoDeviceNotFound,
+        message: `Video device "${config?.cameraDeviceName}" is not found`,
       },
     ];
 

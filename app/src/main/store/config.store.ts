@@ -7,44 +7,44 @@ import ElectronStore from 'electron-store';
 
 // Runtime configuration (matches Config type in frontend)
 export interface RuntimeConfig {
-  interview_conf: {
+  interviewConf: {
     photo: string;
     username: string;
-    profile_data: string;
-    job_description: string;
+    profileData: string;
+    jobDescription: string;
   };
   language: string;
-  session_token: string;
+  sessionToken: string;
   email: string;
   password: string;
-  audio_input_device_name: string;
-  face_swap: boolean;
-  camera_device_name: string;
-  video_width: number;
-  video_height: number;
-  enable_face_enhance: boolean;
-  audio_delay_ms: number;
+  audioInputDeviceName: string;
+  faceSwap: boolean;
+  cameraDeviceName: string;
+  videoWidth: number;
+  videoHeight: number;
+  enableFaceEnhance: boolean;
+  audioDelayMs: number;
 }
 
 // Default runtime configuration
 const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
-  interview_conf: {
+  interviewConf: {
     photo: '',
     username: '',
-    profile_data: '',
-    job_description: '',
+    profileData: '',
+    jobDescription: '',
   },
   language: 'en',
-  session_token: '',
+  sessionToken: '',
   email: '',
   password: '',
-  audio_input_device_name: '',
-  face_swap: false,
-  camera_device_name: '',
-  video_width: 1280,
-  video_height: 720,
-  enable_face_enhance: false,
-  audio_delay_ms: 0,
+  audioInputDeviceName: '',
+  faceSwap: false,
+  cameraDeviceName: '',
+  videoWidth: 1280,
+  videoHeight: 720,
+  enableFaceEnhance: false,
+  audioDelayMs: 300,
 };
 
 interface StoredConfig {
@@ -83,10 +83,10 @@ class ConfigStore {
     const updated = { ...current, ...updates };
 
     // Deep merge interview_conf if it's being partially updated
-    if (updates.interview_conf) {
-      updated.interview_conf = {
-        ...current.interview_conf,
-        ...updates.interview_conf,
+    if (updates.interviewConf) {
+      updated.interviewConf = {
+        ...current.interviewConf,
+        ...updates.interviewConf,
       };
     }
 

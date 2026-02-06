@@ -13,7 +13,7 @@ interface TranscriptionPanelProps {
 
 function TranscriptPanel({ transcripts, style }: TranscriptionPanelProps) {
   const { config } = useConfigStore();
-  const username = config?.interview_conf?.username ?? '';
+  const username = config?.interviewConf?.username ?? '';
   const containerRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);

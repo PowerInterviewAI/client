@@ -50,15 +50,15 @@ export function VideoGroup({
 
   useEffect(() => {
     // Disable face swap if required devices are not found
-    if (!obsCameraExists && config?.face_swap) {
-      updateConfig({ face_swap: false });
+    if (!obsCameraExists && config?.faceSwap) {
+      updateConfig({ faceSwap: false });
       toast.error('OBS Virtual Camera not found — disabling Face Swap');
     }
-    if (!vbInputExists && config?.face_swap) {
-      updateConfig({ face_swap: false });
+    if (!vbInputExists && config?.faceSwap) {
+      updateConfig({ faceSwap: false });
       toast.error('VB-Audio Virtual Cable not found — disabling Face Swap');
     }
-  }, [obsCameraExists, vbInputExists, config?.face_swap, updateConfig]);
+  }, [obsCameraExists, vbInputExists, config?.faceSwap, updateConfig]);
 
   const usableVideoDevices = videoDevices.filter((d) => {
     if (d.label.toLowerCase().startsWith(OBS_CAMERA_PREFIX.toLowerCase())) return false;
@@ -82,9 +82,9 @@ export function VideoGroup({
       videoElement = videoPreviewRef.current;
 
       console.log('Starting video preview with config:', {
-        camera_device_name: config?.camera_device_name,
-        video_width: config?.video_width,
-        video_height: config?.video_height,
+        camera_device_name: config?.cameraDeviceName,
+        video_width: config?.videoWidth,
+        video_height: config?.videoHeight,
       });
 
       // Stop previous stream before starting a new one
@@ -95,7 +95,7 @@ export function VideoGroup({
 
       // Find camera device id by name
       const videoDeviceId = videoDevices.find(
-        (d) => d.label === config?.camera_device_name
+        (d) => d.label === config?.cameraDeviceName
       )?.deviceId;
       console.log('Selected video device ID:', videoDeviceId);
 
@@ -103,8 +103,8 @@ export function VideoGroup({
       const constraints: MediaStreamConstraints = {
         video: {
           deviceId: videoDeviceId ? { exact: videoDeviceId } : undefined,
-          width: config?.video_width,
-          height: config?.video_height,
+          width: config?.videoWidth,
+          height: config?.videoHeight,
         },
         audio: false,
       };
@@ -140,38 +140,38 @@ export function VideoGroup({
     };
   }, [
     isVideoDialogOpen,
-    config?.face_swap,
+    config?.faceSwap,
     videoDevices,
-    config?.camera_device_name,
-    config?.video_width,
-    config?.video_height,
+    config?.cameraDeviceName,
+    config?.videoWidth,
+    config?.videoHeight,
   ]);
 
   return (
     <div className="relative">
       <div
         className={`flex items-center overflow-hidden border rounded-full ${
-          config?.face_swap ? '' : 'text-white'
+          config?.faceSwap ? '' : 'text-white'
         }`}
       >
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant={config?.face_swap ? 'secondary' : 'destructive'}
+              variant={config?.faceSwap ? 'secondary' : 'destructive'}
               size="icon"
               className="h-8 w-8 border-none rounded-none"
               disabled={
                 getDisabled(runningState) ||
-                ((!obsCameraExists || !vbInputExists) && !config?.face_swap)
+                ((!obsCameraExists || !vbInputExists) && !config?.faceSwap)
               }
               onClick={() => {
-                const tryingToEnable = !config?.face_swap;
+                const tryingToEnable = !config?.faceSwap;
                 if (tryingToEnable && (!obsCameraExists || !vbInputExists)) {
                   alert('OBS Virtual Camera or VB-Audio Input not found. Face Swap requires both.');
                   return;
                 }
-                toast.success(config?.face_swap ? 'Face Swap disabled' : 'Face Swap enabled');
-                updateConfig({ face_swap: !config?.face_swap });
+                toast.success(config?.faceSwap ? 'Face Swap disabled' : 'Face Swap enabled');
+                updateConfig({ faceSwap: !config?.faceSwap });
               }}
             >
               <UserLock className="h-4 w-4" />
@@ -187,7 +187,7 @@ export function VideoGroup({
             <TooltipTrigger asChild>
               <DialogTrigger asChild>
                 <Button
-                  variant={config?.face_swap ? 'secondary' : 'destructive'}
+                  variant={config?.faceSwap ? 'secondary' : 'destructive'}
                   size="icon"
                   className="h-8 w-8 rounded-none border-none"
                   disabled={getDisabled(runningState)}
@@ -244,8 +244,8 @@ export function VideoGroup({
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Camera Device</label>
                   <Select
-                    value={`${config?.camera_device_name}`}
-                    onValueChange={(v) => updateConfig({ camera_device_name: v })}
+                    value={`${config?.cameraDeviceName}`}
+                    onValueChange={(v) => updateConfig({ cameraDeviceName: v })}
                   >
                     <SelectTrigger className="h-8 w-full text-xs">
                       <SelectValue placeholder="Select camera" />
@@ -264,10 +264,10 @@ export function VideoGroup({
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Resolution</label>
                   <Select
-                    value={`${config?.video_width}x${config?.video_height}`}
+                    value={`${config?.videoWidth}x${config?.videoHeight}`}
                     onValueChange={(v) => {
                       const [w, h] = v.split('x').map(Number);
-                      updateConfig({ video_width: w, video_height: h });
+                      updateConfig({ videoWidth: w, videoHeight: h });
                     }}
                   >
                     <SelectTrigger className="h-8 w-full text-xs">
@@ -287,14 +287,12 @@ export function VideoGroup({
                 <div className="flex items-center justify-between">
                   <span className="text-xs">Face Enhance</span>
                   <Button
-                    variant={config?.enable_face_enhance ? 'default' : 'outline'}
+                    variant={config?.enableFaceEnhance ? 'default' : 'outline'}
                     size="sm"
                     className="w-16"
-                    onClick={() =>
-                      updateConfig({ enable_face_enhance: !config?.enable_face_enhance })
-                    }
+                    onClick={() => updateConfig({ enableFaceEnhance: !config?.enableFaceEnhance })}
                   >
-                    {config?.enable_face_enhance ? 'On' : 'Off'}
+                    {config?.enableFaceEnhance ? 'On' : 'Off'}
                   </Button>
                 </div>
 
@@ -305,8 +303,8 @@ export function VideoGroup({
                   </label>
                   <Input
                     type="number"
-                    value={config?.audio_delay_ms ?? ''}
-                    onChange={(e) => updateConfig({ audio_delay_ms: Number(e.target.value) || 0 })}
+                    value={config?.audioDelayMs ?? ''}
+                    onChange={(e) => updateConfig({ audioDelayMs: Number(e.target.value) || 0 })}
                     className="w-full h-8 px-2 text-xs border rounded-md bg-background"
                     min={0}
                     step={10}

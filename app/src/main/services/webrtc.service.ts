@@ -47,8 +47,8 @@ class WebRTCService {
       sdp: offer.sdp,
       type: offer.type,
       options: {
-        photo: conf.interview_conf.photo,
-        enhance_face: conf.enable_face_enhance,
+        photo: conf.interviewConf.photo,
+        enhance_face: conf.enableFaceEnhance,
       } as WebRTCOptions,
     } as OfferRequest);
     return res;
@@ -155,8 +155,8 @@ class WebRTCService {
     }
 
     const config = configStore.getConfig();
-    const videoWidth = config.video_width || 1280;
-    const videoHeight = config.video_height || 720;
+    const videoWidth = config.videoWidth || 1280;
+    const videoHeight = config.videoHeight || 720;
     const fps = 30;
 
     const { command, args: baseArgs } = this.getVCamAgentCommand();
@@ -224,8 +224,8 @@ class WebRTCService {
     }
 
     const config = configStore.getConfig();
-    const inputDevice = config.audio_input_device_name || 'loopback';
-    const audioDelay = config.audio_delay_ms || AUDIO_CONTROL_DELAY_MS;
+    const inputDevice = config.audioInputDeviceName || 'loopback';
+    const audioDelay = config.audioDelayMs || AUDIO_CONTROL_DELAY_MS;
 
     const { command, args: baseArgs } = this.getAudioControlAgentCommand();
 

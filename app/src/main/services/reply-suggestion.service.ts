@@ -71,9 +71,9 @@ class ReplySuggestionService {
     try {
       const conf = configStore.getConfig();
       const requestBody: GenerateReplySuggestionRequest = {
-        username: conf.interview_conf.username,
-        profile_data: conf.interview_conf.profile_data,
-        job_description: conf.interview_conf.job_description,
+        username: conf.interviewConf.username,
+        profile_data: conf.interviewConf.profileData,
+        job_description: conf.interviewConf.jobDescription,
         transcripts: transcripts,
       };
 

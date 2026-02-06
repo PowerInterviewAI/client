@@ -42,7 +42,7 @@ export const useAssistantState = create<AssistantState>((set, get) => ({
       const { videoPanelRef } = get();
 
       // Start WebRTC if face swap is enabled
-      if (config?.face_swap && videoPanelRef?.current) {
+      if (config?.faceSwap && videoPanelRef?.current) {
         await videoPanelRef.current.startWebRTC();
       }
 
@@ -78,7 +78,7 @@ export const useAssistantState = create<AssistantState>((set, get) => ({
       const { videoPanelRef } = get();
 
       // Stop WebRTC if face swap is enabled
-      if (config?.face_swap && videoPanelRef?.current) {
+      if (config?.faceSwap && videoPanelRef?.current) {
         videoPanelRef.current.stopWebRTC();
       }
 

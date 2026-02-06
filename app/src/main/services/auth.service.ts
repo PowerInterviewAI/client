@@ -51,7 +51,7 @@ export class AuthService {
 
         // persist credentials and session token in the config store
         configStore.updateConfig({ email, password });
-        configStore.updateConfig({ session_token: response.data?.session_token });
+        configStore.updateConfig({ sessionToken: response.data?.session_token });
 
         // update app state to logged in
         appStateService.updateState({ isLoggedIn: true });
@@ -79,7 +79,7 @@ export class AuthService {
       return { success: false, error: 'Logout failed' };
     } finally {
       // clear session token and update app state
-      configStore.updateConfig({ session_token: '' });
+      configStore.updateConfig({ sessionToken: '' });
       appStateService.updateState({ isLoggedIn: false });
     }
   }

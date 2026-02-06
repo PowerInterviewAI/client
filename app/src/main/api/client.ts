@@ -59,9 +59,9 @@ export class ApiClient {
   async postFormData<T>(path: string, formData: FormData): Promise<ApiResponse<T>> {
     const url = this.buildUrl(path);
     try {
-      const session_token = configStore.getConfig().session_token;
-      if (session_token) {
-        this.setAuthToken(session_token);
+      const sessionToken = configStore.getConfig().sessionToken;
+      if (sessionToken) {
+        this.setAuthToken(sessionToken);
       }
 
       // Create headers without Content-Type for FormData
@@ -140,9 +140,9 @@ export class ApiClient {
    */
   private async request<T>(method: string, url: string, body?: unknown): Promise<ApiResponse<T>> {
     try {
-      const session_token = configStore.getConfig().session_token;
-      if (session_token) {
-        this.setAuthToken(session_token);
+      const sessionToken = configStore.getConfig().sessionToken;
+      if (sessionToken) {
+        this.setAuthToken(sessionToken);
       }
 
       const response = await fetch(url, {
@@ -188,9 +188,9 @@ export class ApiClient {
     body?: unknown
   ): Promise<ReadableStream<Uint8Array> | null> {
     try {
-      const session_token = configStore.getConfig().session_token;
-      if (session_token) {
-        this.setAuthToken(session_token);
+      const sessionToken = configStore.getConfig().sessionToken;
+      if (sessionToken) {
+        this.setAuthToken(sessionToken);
       }
 
       const response = await fetch(url, {

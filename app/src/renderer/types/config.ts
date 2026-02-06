@@ -1,8 +1,8 @@
 export interface InterviewConf {
   photo: string;
   username: string;
-  profile_data: string;
-  job_description: string;
+  profileData: string;
+  jobDescription: string;
 }
 
 export enum Language {
@@ -10,22 +10,22 @@ export enum Language {
 }
 
 export interface Config {
-  interview_conf: InterviewConf;
+  interviewConf: InterviewConf;
   language: Language;
 
   // Authentication
-  session_token: string;
+  sessionToken: string;
   email: string;
   password: string;
 
   // Transcription options
-  audio_input_device_name: string;
+  audioInputDeviceName: string;
 
   // Video control options - Face Swap Control
-  face_swap: boolean;
-  camera_device_name: string;
-  video_width: number;
-  video_height: number;
-  enable_face_enhance: boolean;
-  audio_delay_ms: number;
+  faceSwap: boolean;
+  cameraDeviceName: string;
+  videoWidth: number;
+  videoHeight: number;
+  enableFaceEnhance: boolean;
+  audioDelayMs: number;
 }
