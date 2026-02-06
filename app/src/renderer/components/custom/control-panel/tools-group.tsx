@@ -18,7 +18,7 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
   const onClearAll = async () => {
     try {
       await clearAll();
-      toast.success('Cleared successfully');
+      toast.success('Everything cleared successfully');
     } catch (error) {
       console.error(error);
       toast.error('Failed to clear');
@@ -28,10 +28,10 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
   const onExportTranscript = async () => {
     try {
       await exportTranscript();
-      toast.success('Transcript exported successfully');
+      toast.success('Interview exported successfully');
     } catch (error) {
       console.error(error);
-      toast.error('Failed to export transcript');
+      toast.error('Failed to export interview');
     }
   };
 
