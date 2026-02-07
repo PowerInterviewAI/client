@@ -34,9 +34,9 @@ export default function MainFrame({ children }: { children: React.ReactNode }) {
 
   return (
     <main
-      className={`overflow-hidden border-2 bg-background ${isStealth ? ' border-blue-500 rounded-2xl' : 'rounded-lg'} `}
+      className={`overflow-hidden bg-background ${isStealth ? 'border-2 border-blue-500 rounded-2xl' : 'border border-foreground/30 rounded-xl'} `}
     >
-      <div className={`flex flex-col ${isStealth ? 'h-[calc(100vh-4px)]' : 'h-[calc(100vh-4px)]'}`}>
+      <div className="flex flex-col h-[calc(100vh-4px)]">
         <Titlebar />
         <div className="flex-1 flex flex-col overflow-auto">{children}</div>
       </div>
