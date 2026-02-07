@@ -6,9 +6,9 @@ import { ApiClient } from '../api/client.js';
 import { configStore } from '../store/config.store.js';
 import { Speaker, Transcript } from '../types/app-state.js';
 import { appStateService } from './app-state.service.js';
-import { transcriptService } from './transcript.service.js';
-import { replySuggestionService } from './reply-suggestion.service.js';
 import { codeSuggestionService } from './code-suggestion.service.js';
+import { replySuggestionService } from './reply-suggestion.service.js';
+import { transcriptService } from './transcript.service.js';
 
 interface GenerateSummarizeRequest {
   username: string;

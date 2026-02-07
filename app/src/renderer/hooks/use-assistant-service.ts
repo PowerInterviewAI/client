@@ -29,6 +29,7 @@ export const useAssistantService = create<AssistantService>((set, get) => ({
       if (!electron) {
         throw new Error('Electron API not available');
       }
+      electron.appState.update({ runningState: RunningState.STARTING });
 
       // Clear previous history
       await electron.tools.clearAll();
@@ -38,7 +39,12 @@ export const useAssistantService = create<AssistantService>((set, get) => ({
 
       // Start WebRTC if face swap is enabled
       if (config?.faceSwap && videoPanelRef?.current) {
-        Promise.all([videoPanelRef.current.startWebRTC(), electron.webRtc.startAgents()]);
+        try {
+          await Promise.all([videoPanelRef.current.startWebRTC(), electron.webRtc.startAgents()]);
+        } catch (error) {
+          console.error('Failed to start WebRTC or agents:', error);
+          throw new Error('Failed to start face swap services');
+        }
       }
 
       // Start transcription services
@@ -63,6 +69,7 @@ export const useAssistantService = create<AssistantService>((set, get) => ({
       if (!electron) {
         throw new Error('Electron API not available');
       }
+      electron.appState.update({ runningState: RunningState.STOPPING });
 
       const config = useConfigStore.getState().config;
       const { videoPanelRef } = get();
@@ -74,13 +81,12 @@ export const useAssistantService = create<AssistantService>((set, get) => ({
       }
 
       // Stop assistant services
-      Promise.all([
+      await Promise.all([
         electron.transcription.stop(),
         electron.replySuggestion.stop(),
         electron.codeSuggestion.stop(),
       ]);
 
-      set({ error: null });
       electron.appState.update({ runningState: RunningState.IDLE });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to stop assistant';

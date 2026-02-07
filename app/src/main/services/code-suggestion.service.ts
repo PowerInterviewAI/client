@@ -285,7 +285,7 @@ export class CodeSuggestionService {
    * Get backend image URL
    */
   private getBackendImageUrl(imageName: string): string {
-    return `${BACKEND_BASE_URL}/api/llm/get-image/${imageName}`;
+    return `${BACKEND_BASE_URL}/api/llm/get-thumb/${imageName}`;
   }
 
   /**

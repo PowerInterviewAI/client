@@ -61,6 +61,8 @@ class ActionLockService {
     const requested = actionNames[requestedAction];
     const running = actionNames[runningAction];
 
+    console.log(`${requested} is blocked because ${running} is in progress.`);
+
     pushNotificationService.pushNotification({
       type: 'warning',
       message: `${running} is in progress. Try again a bit later.`,

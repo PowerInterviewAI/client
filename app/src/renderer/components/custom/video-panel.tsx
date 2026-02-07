@@ -403,7 +403,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
 
     // Start/stop WebRTC on running state change
     useEffect(() => {
-      if (runningState === RunningState.RUNNING) {
+      if (runningState === RunningState.RUNNING && config?.faceSwap) {
         // Automatically start WebRTC when running state is RUNNING
         startWebRTC().catch((err) => {
           console.error('Failed to start WebRTC:', err);

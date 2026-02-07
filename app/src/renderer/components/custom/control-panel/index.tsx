@@ -1,4 +1,5 @@
 import { Ellipsis, Play, Square } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { useAppState } from '@/hooks/use-app-state';
 import { useAssistantService } from '@/hooks/use-assistant-service';
@@ -42,9 +43,15 @@ export default function ControlPanel({ onProfileClick, onSignOut }: ControlPanel
 
   const stateConfig: Record<RunningState, StateConfig> = {
     [RunningState.IDLE]: {
-      onClick: () => {
+      onClick: async () => {
         if (!checkCanStart()) return;
-        startAssistant();
+        try {
+          await startAssistant();
+        } catch (error) {
+          console.log('Failed to start assistant:', error);
+          toast.error(error instanceof Error ? error.message : 'Failed to start assistant');
+          await stopAssistant();
+        }
       },
       className: 'bg-primary hover:bg-primary/90',
       icon: <Play className="h-3.5 w-3.5" />,
@@ -57,8 +64,8 @@ export default function ControlPanel({ onProfileClick, onSignOut }: ControlPanel
       label: 'Starting...',
     },
     [RunningState.RUNNING]: {
-      onClick: () => {
-        stopAssistant();
+      onClick: async () => {
+        await stopAssistant();
       },
       className: 'bg-destructive hover:bg-destructive/90',
       icon: <Square className="h-3.5 w-3.5" />,
