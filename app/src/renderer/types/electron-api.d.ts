@@ -77,7 +77,6 @@ declare global {
     };
 
     // Window controls
-    minimize: () => void;
     close: () => void;
 
     // Edge resize support

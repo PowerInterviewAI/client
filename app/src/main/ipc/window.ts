@@ -8,13 +8,6 @@ import * as windowControls from '../services/window-control.service.js';
 import { setWindowBounds } from '../services/window-control.service.js';
 
 export function registerWindowHandlers(win: BrowserWindow): void {
-  // Minimize window
-  ipcMain.on('window-minimize', () => {
-    if (win && !win.isDestroyed()) {
-      win.minimize();
-    }
-  });
-
   // Close window
   ipcMain.on('window-close', () => {
     if (win && !win.isDestroyed()) {

@@ -85,7 +85,6 @@ const electronApi = {
   },
 
   // Window controls
-  minimize: () => ipcRenderer.send('window-minimize'),
   close: () => ipcRenderer.send('window-close'),
 
   // Edge resize support
