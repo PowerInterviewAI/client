@@ -9,24 +9,24 @@
 
 </div>
 
-## 🌟 Overview
+## Overview
 
 Power Interview is a privacy-first AI assistant designed to help you ace technical and behavioral interviews. With real-time transcription, intelligent suggestions, and cutting-edge face swap technology, you'll have the confidence and support you need during live interviews—all while maintaining your privacy.
 
-## 🔒 Privacy First
+## Privacy First
 
 **Your data stays with you.** Power Interview is built with privacy as a core principle:
 
-- 🏠 **Client-Side Application**: This is a desktop client for account management and user interface
-- 🔐 **Secure Storage**: Credentials and personal information stored securely using Electron Store
-- 🤖 **AI Processing**: AI/LLM inference and face swap processing handled by secure backend services
-- 🚫 **No Data Mining**: We don't collect, sell, or share your personal information
-- 🎯 **Minimal Data Transfer**: Only necessary data sent for AI suggestions (transcripts, screenshots, profile)
-- 💾 **Your Control**: All your CV, profile data, and configurations remain on your device
+- **Client-Side Application**: This is a desktop client for account management and user interface
+- **Secure Storage**: Credentials and personal information stored securely using Electron Store
+- **AI Processing**: AI/LLM inference and face swap processing handled by secure backend services
+- **No Data Mining**: We don't collect, sell, or share your personal information
+- **Minimal Data Transfer**: Only necessary data sent for AI suggestions (transcripts, screenshots, profile)
+- **Your Control**: All your CV, profile data, and configurations remain on your device
 
-## ✨ Key Features
+## Key Features
 
-### 🎭 Real-Time Face Swap
+### Real-Time Face Swap
 
 Transform your video appearance during live interviews with advanced face swap technology:
 
@@ -36,7 +36,7 @@ Transform your video appearance during live interviews with advanced face swap t
 - **OBS Virtual Camera Support**: Professional-grade virtual camera output
 - **Configurable Settings**: Adjust video resolution, quality, and audio sync
 
-### 🎤 Real-Time Transcription
+### Real-Time Transcription
 
 Stay on top of the conversation with live ASR (Automatic Speech Recognition):
 
@@ -45,7 +45,7 @@ Stay on top of the conversation with live ASR (Automatic Speech Recognition):
 - **Speaker Detection**: Automatically identifies who's speaking
 - **Transcript History**: Full conversation history available during the interview
 
-### 💡 Intelligent AI Suggestions
+### Intelligent AI Suggestions
 
 Get instant, context-aware help during interviews:
 
@@ -63,7 +63,7 @@ Get instant, context-aware help during interviews:
 - **LLM-Powered**: Advanced language models generate optimal solutions
 - **Syntax Highlighting**: Code rendered with proper highlighting for readability
 
-### 🎮 Stealth Mode & Hotkeys
+### Stealth Mode & Hotkeys
 
 Operate discreetly during interviews:
 
@@ -77,7 +77,7 @@ Operate discreetly during interviews:
   - `Ctrl+Alt+Shift+Arrow`: Move window
   - `Ctrl+Win+Shift+Arrow`: Resize window
 
-### ⚙️ Smart Configuration
+### Smart Configuration
 
 Tailor the experience to your needs:
 
@@ -88,7 +88,7 @@ Tailor the experience to your needs:
 - **Language Support**: Currently supports English with more languages coming
 - **Persistent Settings**: All configurations saved between sessions
 
-### 🔧 Advanced Features
+### Advanced Features
 
 - **Health Monitoring**: Real-time backend and GPU server status checks
 - **Action Locking**: Prevents conflicting operations during critical tasks
@@ -97,7 +97,7 @@ Tailor the experience to your needs:
 - **State Persistence**: All app state maintained across page refreshes
 - **Audio Delay Compensation**: Configurable audio sync for perfect video/audio alignment
 
-## 🏗️ Architecture
+## Architecture
 
 Power Interview follows a **client-server architecture** where the desktop application handles user interaction and local agent management, while AI/LLM processing and face swap inference are performed by backend services.
 
@@ -129,7 +129,7 @@ Power Interview follows a **client-server architecture** where the desktop appli
 - **WebRTC**: Low-latency video streaming for face swap processing
 - **REST API**: Configuration and data management
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -185,7 +185,7 @@ Power Interview follows a **client-server architecture** where the desktop appli
    - Click "Start" to begin transcription and AI assistance
    - Enable face swap if needed for your video call
 
-## 📦 Building for Production
+## Building for Production
 
 ### 1. Build Python Agents
 
@@ -209,7 +209,7 @@ python -m scripts.build_all
 
 This will build both the Python agents and the Electron app in one step.
 
-## 🎯 Use Cases
+## Use Cases
 
 ### Technical Interviews
 
@@ -235,7 +235,7 @@ This will build both the Python agents and the Electron app in one step.
 - Control your video appearance
 - Maintain professionalism while staying anonymous
 
-## 🔐 Security & Privacy
+## Security & Privacy
 
 ### Local Data Storage
 
@@ -258,7 +258,7 @@ All sensitive data is stored locally using Electron Store with encryption:
 - Export your transcripts and suggestions
 - Full control over what data is shared
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 ### Frontend
 
@@ -284,7 +284,7 @@ All sensitive data is stored locally using Electron Store with encryption:
 - **Nuitka** - Python to executable compilation
 - **Ruff** - Python linting and formatting
 
-## 📝 Project Structure
+## Project Structure
 
 ```
 power-interview-client/
@@ -303,21 +303,21 @@ power-interview-client/
 └── requirements.txt       # Python dependencies
 ```
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
-- Built with ❤️ for interview candidates everywhere
+- Built for interview candidates everywhere
 - Special thanks to the open-source community
 - Powered by cutting-edge AI and computer vision technology
 
-## 📞 Support
+## Support
 
 For issues, questions, or suggestions:
 
@@ -328,7 +328,7 @@ For issues, questions, or suggestions:
 
 <div align="center">
 
-**Made with 💪 to help you ace your interviews while protecting your privacy**
+**Made to help you ace your interviews while protecting your privacy**
 
 [Website](https://power-interview.com) • [Documentation](https://docs.power-interview.com) • [Community](https://community.power-interview.com)
 
