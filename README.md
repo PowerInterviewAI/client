@@ -150,7 +150,7 @@ Tailor the experience to your needs:
 3. **Build Python agents**
 
    ```bash
-   python scripts/build_all.py
+   python -m scripts.build_***_agents
    ```
 
 4. **Run the application**
@@ -175,19 +175,27 @@ Tailor the experience to your needs:
 
 ## 📦 Building for Production
 
-### Build Electron App
-
-```bash
-python -m scripts.build_electron_app
-```
-
-### Build Python Agents
+### 1. Build Python Agents
 
 ```bash
 python -m scripts.build_*_agents
 ```
 
+### 2. Build Electron App
+
+```bash
+python -m scripts.build_electron_app
+```
+
 The built application will be available in the `build` and `dist` directories.
+
+### #. Build All
+
+```bash
+python -m scripts.build_all
+```
+
+This will build both the Python agents and the Electron app in one step.
 
 ## 🎯 Use Cases
 
