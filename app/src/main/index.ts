@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, Menu } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -69,8 +69,8 @@ async function createWindow() {
   win = new BrowserWindow({
     title: 'Power Interview',
     ...savedBounds,
-    // transparent: true,
-    // frame: false,
+    transparent: true,
+    frame: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       nodeIntegration: false,
@@ -82,13 +82,13 @@ async function createWindow() {
   });
 
   // Remove the default application menu and hide the menu bar
-  /*try {
+  try {
     Menu.setApplicationMenu(null);
   } catch (e) {
     console.warn('Failed to set application menu:', e);
   }
   win.setMenuBarVisibility(false);
-  win.setAutoHideMenuBar(true);//*/
+  win.setAutoHideMenuBar(true);
 
   // Enable content protection to prevent screen capture/recording
   win.setContentProtection(true);
