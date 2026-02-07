@@ -1,0 +1,134 @@
+/**
+ * Configuration Store
+ * Manages persistent application configuration locally
+ */
+
+import ElectronStore from 'electron-store';
+
+// Runtime configuration (matches Config type in frontend)
+export interface RuntimeConfig {
+  interviewConf: {
+    photo: string;
+    username: string;
+    profileData: string;
+    jobDescription: string;
+  };
+  language: string;
+  sessionToken: string;
+  email: string;
+  password: string;
+  audioInputDeviceName: string;
+  faceSwap: boolean;
+  cameraDeviceName: string;
+  videoWidth: number;
+  videoHeight: number;
+  enableFaceEnhance: boolean;
+  audioDelayMs: number;
+}
+
+// Default runtime configuration
+const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
+  interviewConf: {
+    photo: '',
+    username: '',
+    profileData: '',
+    jobDescription: '',
+  },
+  language: 'en',
+  sessionToken: '',
+  email: '',
+  password: '',
+  audioInputDeviceName: '',
+  faceSwap: false,
+  cameraDeviceName: '',
+  videoWidth: 1280,
+  videoHeight: 720,
+  enableFaceEnhance: false,
+  audioDelayMs: 300,
+};
+
+interface StoredConfig {
+  window?: {
+    bounds?: { x: number; y: number; width: number; height: number };
+    stealth?: boolean;
+  };
+  runtime?: Partial<RuntimeConfig>;
+}
+
+class ConfigStore {
+  private store: ElectronStore<StoredConfig>;
+
+  constructor() {
+    this.store = new ElectronStore<StoredConfig>({
+      name: 'config',
+      defaults: {
+        runtime: DEFAULT_RUNTIME_CONFIG,
+      },
+    });
+  }
+
+  /**
+   * Get runtime configuration from local store
+   */
+  getConfig(): RuntimeConfig {
+    const config = this.store.get('runtime', DEFAULT_RUNTIME_CONFIG);
+    return { ...DEFAULT_RUNTIME_CONFIG, ...config } as RuntimeConfig;
+  }
+
+  /**
+   * Update runtime configuration in local store
+   */
+  updateConfig(updates: Partial<RuntimeConfig>): RuntimeConfig {
+    const current = this.getConfig();
+    const updated = { ...current, ...updates };
+
+    // Deep merge interview_conf if it's being partially updated
+    if (updates.interviewConf) {
+      updated.interviewConf = {
+        ...current.interviewConf,
+        ...updates.interviewConf,
+      };
+    }
+
+    this.store.set('runtime', updated);
+    return updated;
+  }
+
+  /**
+   * Reset runtime configuration to defaults
+   */
+  resetRuntimeConfig(): RuntimeConfig {
+    this.store.set('runtime', DEFAULT_RUNTIME_CONFIG);
+    return DEFAULT_RUNTIME_CONFIG;
+  }
+
+  /**
+   * Get window bounds
+   */
+  getWindowBounds(): { x?: number; y?: number; width: number; height: number } | undefined {
+    return this.store.get('window.bounds');
+  }
+
+  /**
+   * Save window bounds
+   */
+  saveWindowBounds(bounds: { x?: number; y?: number; width: number; height: number }): void {
+    this.store.set('window.bounds', bounds);
+  }
+
+  /**
+   * Get stealth mode state
+   */
+  getStealth(): boolean {
+    return this.store.get('window.stealth', false);
+  }
+
+  /**
+   * Set stealth mode state
+   */
+  setStealth(enabled: boolean): void {
+    this.store.set('window.stealth', enabled);
+  }
+}
+
+export const configStore = new ConfigStore();

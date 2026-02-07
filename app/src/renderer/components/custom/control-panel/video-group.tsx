@@ -1,0 +1,328 @@
+import { Ellipsis, UserLock } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useAppState } from '@/hooks/use-app-state';
+import { useConfigStore } from '@/hooks/use-config-store';
+import { useVideoDevices } from '@/hooks/use-video-devices';
+import { RunningState } from '@/types/app-state';
+import { type AudioDevice } from '@/types/audio-device';
+
+interface VideoGroupProps {
+  videoDeviceNotFound: boolean;
+  audioOutputDevices: AudioDevice[];
+  getDisabled: (state: RunningState, disableOnRunning?: boolean) => boolean;
+}
+
+export function VideoGroup({
+  videoDeviceNotFound,
+  audioOutputDevices,
+  getDisabled,
+}: VideoGroupProps) {
+  const { runningState } = useAppState();
+  const { config, updateConfig } = useConfigStore();
+  const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
+  const videoPreviewRef = useRef<HTMLVideoElement>(null);
+  const previewStreamRef = useRef<MediaStream | null>(null);
+  const videoDevices = useVideoDevices();
+
+  const OBS_CAMERA_PREFIX = 'OBS Virtual';
+  const obsCameraExists =
+    videoDevices.length > 0 ? videoDevices.some((d) => d.label.includes(OBS_CAMERA_PREFIX)) : true;
+
+  const VB_AUDIO_INPUT_PREFIX = 'CABLE Input (VB-Audio Virtual';
+  const vbInputExists =
+    audioOutputDevices.length > 0
+      ? audioOutputDevices.some((d) => d.name.startsWith(VB_AUDIO_INPUT_PREFIX))
+      : true;
+
+  useEffect(() => {
+    // Disable face swap if required devices are not found
+    if (!obsCameraExists && config?.faceSwap) {
+      updateConfig({ faceSwap: false });
+      toast.error('OBS Virtual Camera not found — disabling Face Swap');
+    }
+    if (!vbInputExists && config?.faceSwap) {
+      updateConfig({ faceSwap: false });
+      toast.error('VB-Audio Virtual Cable not found — disabling Face Swap');
+    }
+  }, [obsCameraExists, vbInputExists, config?.faceSwap, updateConfig]);
+
+  const usableVideoDevices = videoDevices.filter((d) => {
+    if (d.label.toLowerCase().startsWith(OBS_CAMERA_PREFIX.toLowerCase())) return false;
+    if (d.label.toLowerCase().includes('virtual')) return false;
+    return true;
+  });
+
+  useEffect(() => {
+    // Only run when dialog is open
+    if (!isVideoDialogOpen) return;
+    if (!navigator.mediaDevices?.getUserMedia) {
+      toast.error('Media devices API unavailable');
+      return;
+    }
+
+    let cleanupStream: MediaStream | null = null;
+    let videoElement = videoPreviewRef.current;
+
+    const startPreview = async () => {
+      await new Promise((r) => requestAnimationFrame(r)); // wait for DOM to mount
+      videoElement = videoPreviewRef.current;
+
+      console.log('Starting video preview with config:', {
+        camera_device_name: config?.cameraDeviceName,
+        video_width: config?.videoWidth,
+        video_height: config?.videoHeight,
+      });
+
+      // Stop previous stream before starting a new one
+      if (previewStreamRef.current) {
+        previewStreamRef.current.getTracks().forEach((t) => t.stop());
+        previewStreamRef.current = null;
+      }
+
+      // Find camera device id by name
+      const videoDeviceId = videoDevices.find(
+        (d) => d.label === config?.cameraDeviceName
+      )?.deviceId;
+      console.log('Selected video device ID:', videoDeviceId);
+
+      // Create media stream
+      const constraints: MediaStreamConstraints = {
+        video: {
+          deviceId: videoDeviceId ? { exact: videoDeviceId } : undefined,
+          width: config?.videoWidth,
+          height: config?.videoHeight,
+        },
+        audio: false,
+      };
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        cleanupStream = stream;
+        previewStreamRef.current = stream;
+        if (videoElement) {
+          videoElement.srcObject = stream;
+          // Some browsers need play() after setting srcObject
+          await videoElement.play().catch(() => {});
+        } else {
+          console.error('Video element not found for preview');
+        }
+      } catch (err) {
+        toast.error('Unable to access camera');
+        console.error(err);
+      }
+    };
+
+    startPreview();
+
+    // Cleanup when dialog closes or dependencies change
+    return () => {
+      if (cleanupStream) {
+        cleanupStream.getTracks().forEach((t) => t.stop());
+        previewStreamRef.current = null;
+      }
+      if (videoElement) {
+        videoElement.srcObject = null;
+      }
+    };
+  }, [
+    isVideoDialogOpen,
+    config?.faceSwap,
+    videoDevices,
+    config?.cameraDeviceName,
+    config?.videoWidth,
+    config?.videoHeight,
+  ]);
+
+  return (
+    <div className="relative">
+      <div
+        className={`flex items-center overflow-hidden border rounded-full ${
+          config?.faceSwap ? '' : 'text-white'
+        }`}
+      >
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant={config?.faceSwap ? 'secondary' : 'destructive'}
+              size="icon"
+              className="h-8 w-8 border-none rounded-none"
+              disabled={
+                getDisabled(runningState) ||
+                ((!obsCameraExists || !vbInputExists) && !config?.faceSwap)
+              }
+              onClick={() => {
+                const tryingToEnable = !config?.faceSwap;
+                if (tryingToEnable && (!obsCameraExists || !vbInputExists)) {
+                  alert('OBS Virtual Camera or VB-Audio Input not found. Face Swap requires both.');
+                  return;
+                }
+                toast.success(config?.faceSwap ? 'Face Swap disabled' : 'Face Swap enabled');
+                updateConfig({ faceSwap: !config?.faceSwap });
+              }}
+            >
+              <UserLock className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Toggle Face Swap</p>
+          </TooltipContent>
+        </Tooltip>
+
+        <Dialog open={isVideoDialogOpen} onOpenChange={setIsVideoDialogOpen}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DialogTrigger asChild>
+                <Button
+                  variant={config?.faceSwap ? 'secondary' : 'destructive'}
+                  size="icon"
+                  className="h-8 w-8 rounded-none border-none"
+                  disabled={getDisabled(runningState)}
+                >
+                  <Ellipsis className="h-4 w-4" />
+                </Button>
+              </DialogTrigger>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Face Swap options</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <DialogContent className="flex flex-col w-72 p-4 gap-4">
+            <DialogTitle>Face Swap Options</DialogTitle>
+
+            {!obsCameraExists && (
+              <div className="text-sm text-destructive">
+                OBS Virtual Camera not found.
+                <br />
+                Face Swap feature requires OBS Virtual Camera.
+                <br />
+                Download and install OBS studio from
+                <br />
+                <span className="underline">https://obsproject.com/download</span>
+                <br />
+                and then restart this application.
+              </div>
+            )}
+            {!vbInputExists && (
+              <div className="text-sm text-destructive">
+                VB-Audio Input device not found.
+                <br />
+                Audio Sync feature requires VB-Audio Virtual Cable.
+                <br />
+                Download and install VBCABLE Driver from
+                <br />
+                <span className="underline">https://vb-audio.com/Cable/</span>
+              </div>
+            )}
+
+            {obsCameraExists && vbInputExists && (
+              <>
+                {/* Camera Preview */}
+                <video
+                  ref={videoPreviewRef}
+                  autoPlay
+                  muted
+                  playsInline
+                  className="w-full h-32 bg-black rounded-md object-contain"
+                />
+
+                {/* Camera Device Select */}
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Camera Device</label>
+                  <Select
+                    value={`${config?.cameraDeviceName}`}
+                    onValueChange={(v) => updateConfig({ cameraDeviceName: v })}
+                  >
+                    <SelectTrigger className="h-8 w-full text-xs">
+                      <SelectValue placeholder="Select camera" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {usableVideoDevices.map((device) => (
+                        <SelectItem key={device.label} value={device.label}>
+                          {device.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Resolution Select */}
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Resolution</label>
+                  <Select
+                    value={`${config?.videoWidth}x${config?.videoHeight}`}
+                    onValueChange={(v) => {
+                      const [w, h] = v.split('x').map(Number);
+                      updateConfig({ videoWidth: w, videoHeight: h });
+                    }}
+                  >
+                    <SelectTrigger className="h-8 w-full text-xs">
+                      <SelectValue placeholder="Select resolution" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {['640x360', '640x480', '1280x720', '1920x1080'].map((res) => (
+                        <SelectItem key={res} value={res}>
+                          {res}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Face Enhance Toggle */}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs">Face Enhance</span>
+                  <Button
+                    variant={config?.enableFaceEnhance ? 'default' : 'outline'}
+                    size="sm"
+                    className="w-16"
+                    onClick={() => updateConfig({ enableFaceEnhance: !config?.enableFaceEnhance })}
+                  >
+                    {config?.enableFaceEnhance ? 'On' : 'Off'}
+                  </Button>
+                </div>
+
+                {/* Audio Delay */}
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">
+                    Audio Sync Delay (ms)
+                  </label>
+                  <Input
+                    type="number"
+                    value={config?.audioDelayMs ?? ''}
+                    onChange={(e) => updateConfig({ audioDelayMs: Number(e.target.value) || 0 })}
+                    className="w-full h-8 px-2 text-xs border rounded-md bg-background"
+                    min={0}
+                    step={10}
+                  />
+                </div>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
+      {videoDeviceNotFound && (
+        <Badge
+          variant="destructive"
+          className="absolute -bottom-1 -right-1 h-4 min-w-4 rounded-full px-1 flex items-center justify-center text-[10px] border"
+        >
+          !
+        </Badge>
+      )}
+    </div>
+  );
+}

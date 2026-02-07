@@ -1,7 +1,7 @@
 [tool.ruff]
 target-version = "py312"
 line-length = 120
-exclude = ["venv", "build.py"]
+exclude = ["venv", "build", "dist"]
 
 [tool.ruff.lint]
 select = ["ALL"]
@@ -21,14 +21,15 @@ ignore = [
 [tool.mypy]
 python_version = "3.12"
 strict = true
-plugins = ["pydantic.mypy"]
+exclude = "venv/"
 
 [[tool.mypy.overrides]]
 module = [
     "pyaudiowpatch",
     "pyvirtualcam",
     "sounddevice",
-    "uuid_extensions",
-    "vosk",
+    "zmq",
+    "scipy",
+    "websockets",
 ]
 ignore_missing_imports = true

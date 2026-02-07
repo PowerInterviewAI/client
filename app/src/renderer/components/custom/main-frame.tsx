@@ -1,0 +1,46 @@
+import React, { useEffect } from 'react';
+import { toast } from 'sonner';
+
+import useIsStealthMode from '@/hooks/use-is-stealth-mode';
+import type { PushNotification } from '@/types/push-notification';
+
+import Titlebar from './titlebar';
+import WindowResizer from './window-resizer';
+
+export default function MainFrame({ children }: { children: React.ReactNode }) {
+  const isStealth = useIsStealthMode();
+
+  useEffect(() => {
+    const api = window.electronAPI;
+    if (!api?.onPushNotification) return;
+
+    const remove = api.onPushNotification((notification: PushNotification) => {
+      try {
+        const msg = notification.message;
+        const type = notification.type;
+
+        if (type === 'error') toast.error(msg);
+        else if (type === 'info') toast.info(msg);
+        else if (type === 'success') toast.success(msg);
+        else if (type === 'warning') toast.warning(msg);
+        else toast(msg);
+      } catch (e) {
+        console.warn('push notification handler error', e);
+      }
+    });
+
+    return () => remove?.();
+  }, []);
+
+  return (
+    <main
+      className={`overflow-hidden bg-background ${isStealth ? 'border-2 border-blue-500 rounded-2xl' : 'border border-foreground/30'} `}
+    >
+      <div className="flex flex-col h-[calc(100vh-4px)]">
+        <Titlebar />
+        <div className="flex-1 flex flex-col overflow-auto">{children}</div>
+      </div>
+      <WindowResizer />
+    </main>
+  );
+}
