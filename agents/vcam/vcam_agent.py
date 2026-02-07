@@ -32,7 +32,7 @@ class VCamAgent:
         self.stats_interval = stats_interval
 
         # Frame queue with max size to prevent memory overflow
-        self.frame_queue: queue.Queue[np.ndarray[Any, Any]] = queue.Queue(maxsize=10)
+        self.frame_queue: queue.Queue[np.ndarray[Any, Any]] = queue.Queue(maxsize=4)
         self.last_frame: np.ndarray[Any, Any] | None = None
 
         # Control flags
