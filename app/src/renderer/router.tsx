@@ -5,9 +5,6 @@ import LoginPage from './pages/auth/login';
 import SignupPage from './pages/auth/signup';
 import IndexPage from './pages/index';
 import MainPage from './pages/main/index';
-import PrivacyPage from './pages/privacy/index';
-import SettingsPage from './pages/settings/index';
-import TermsPage from './pages/terms/index';
 
 export const router = createHashRouter([
   {
@@ -31,17 +28,5 @@ export const router = createHashRouter([
         element: <SignupPage />,
       },
     ],
-  },
-  {
-    path: '/settings',
-    element: <SettingsPage />,
-  },
-  {
-    path: '/terms',
-    element: <TermsPage />,
-  },
-  {
-    path: '/privacy',
-    element: <PrivacyPage />,
   },
 ]);
