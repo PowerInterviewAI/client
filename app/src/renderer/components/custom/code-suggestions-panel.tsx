@@ -148,13 +148,13 @@ function CodeSuggestionsPanel({ codeSuggestions = [], style }: CodeSuggestionsPa
                             <img
                               key={i}
                               src={url}
-                              className="h-12 w-16 object-cover rounded-md border border-border bg-muted"
+                              className="h-12 w-16 object-cover rounded-md border-2 border-blue-400 bg-muted"
                               alt={`thumb-${i}`}
                             />
                           ) : (
                             <div
                               key={i}
-                              className="h-12 w-16 flex items-center justify-center rounded-md bg-muted"
+                              className="h-12 w-16 flex items-center justify-center rounded-md border-2 border-blue-400 bg-muted"
                             >
                               <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />
                             </div>
