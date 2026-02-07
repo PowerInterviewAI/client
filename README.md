@@ -310,6 +310,25 @@ power-interview-client/
 └── requirements.txt       # Python dependencies
 ```
 
+## Legal Disclaimer
+
+**IMPORTANT: This software is provided for legitimate educational and interview preparation purposes only.**
+
+By using Power Interview, you agree to:
+
+- Use this software only for **legal and ethical purposes**
+- Comply with all applicable laws and regulations in your jurisdiction
+- Respect the policies and terms of service of any platforms or services you use during interviews
+- Obtain proper consent when recording or processing audio/video of other individuals
+- Use the face swap feature only with your own likeness or with explicit permission from the person whose face is being used
+- Not use this software to deceive, defraud, or misrepresent yourself in any unlawful manner
+
+**User Responsibility**: Users are solely responsible for ensuring their use of this software complies with applicable laws, regulations, and ethical guidelines. The developers and maintainers of Power Interview assume no liability for any misuse of this software.
+
+**Face Swap Ethics**: The face swap technology is intended for privacy protection and personal presentation preferences during legitimate interviews. Using face swap to impersonate another person or to engage in fraudulent activities is strictly prohibited and may be illegal.
+
+If you are unsure about the legality or appropriateness of using this software in your specific situation, please consult with a legal professional before proceeding.
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
