@@ -64,12 +64,6 @@ def main() -> int:
         help=f"ZeroMQ port (default: {DEFAULT_ZMQ_PORT})",
     )
     parser.add_argument(
-        "-n",
-        "--no-datetime",
-        action="store_true",
-        help="Disable datetime overlay (default: False)",
-    )
-    parser.add_argument(
         "--watch-parent",
         action="store_true",
         help="Monitor parent process and exit if it dies",
@@ -83,7 +77,6 @@ def main() -> int:
         height=args.height,
         fps=args.fps,
         zmq_port=args.port,
-        show_datetime=not args.no_datetime,
         stats_interval=STATS_INTERVAL_SECONDS,
     )
 

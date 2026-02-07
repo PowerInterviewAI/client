@@ -5,7 +5,6 @@ Virtual Camera Agent that receives frames via ZeroMQ and outputs to a virtual ca
 import queue
 import threading
 import time
-from datetime import datetime
 from typing import Any
 
 import cv2
@@ -13,8 +12,6 @@ import numpy as np
 import pyvirtualcam
 import zmq
 from loguru import logger
-
-show_datetime: bool = True
 
 
 class VCamAgent:
@@ -26,14 +23,12 @@ class VCamAgent:
         height: int = 720,
         fps: int = 30,
         zmq_port: int = 50001,
-        show_datetime: bool = True,  # noqa: FBT001, FBT002
         stats_interval: float = 10.0,
     ) -> None:
         self.width = width
         self.height = height
         self.fps = fps
         self.zmq_port = zmq_port
-        self.show_datetime = show_datetime
         self.stats_interval = stats_interval
 
         # Frame queue with max size to prevent memory overflow
@@ -60,34 +55,8 @@ class VCamAgent:
         self.last_written_count = 0
 
     def create_black_frame(self) -> np.ndarray[Any, Any]:
-        """Create a black frame with optional datetime overlay."""
-        frame = np.zeros((self.height, self.width, 3), dtype=np.uint8)
-
-        if self.show_datetime:
-            # Add datetime text
-            timestamp = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S")
-            font = cv2.FONT_HERSHEY_SIMPLEX
-            font_scale = 1.5
-            thickness = 2
-            color = (255, 255, 255)
-
-            # Get text size for centering
-            text_size = cv2.getTextSize(timestamp, font, font_scale, thickness)[0]
-            text_x = (self.width - text_size[0]) // 2
-            text_y = (self.height + text_size[1]) // 2
-
-            cv2.putText(
-                frame,
-                timestamp,
-                (text_x, text_y),
-                font,
-                font_scale,
-                color,
-                thickness,
-                cv2.LINE_AA,
-            )
-
-        return frame
+        """Create a black frame."""
+        return np.zeros((self.height, self.width, 3), dtype=np.uint8)
 
     def init_virtual_camera(self) -> bool:
         """Initialize virtual camera."""
@@ -209,7 +178,7 @@ class VCamAgent:
                     self.last_frame = frame
                 except queue.Empty:
                     # No frames available, use last frame if exists, otherwise black frame
-                    frame = self.last_frame or self.create_black_frame()
+                    frame = self.last_frame if self.last_frame is not None else self.create_black_frame()
 
                 # Write to virtual camera
                 if self.vcam:
