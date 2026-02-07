@@ -36,6 +36,8 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
     const reconnectTimeoutRef = useRef<number | null>(null);
     const reconnectAttemptsRef = useRef<number>(0);
     const isReconnectingRef = useRef<boolean>(false);
+    const sendingRef = useRef<boolean>(false);
+    const droppedRef = useRef<number>(0);
 
     const electron = getElectron();
     if (!electron) {
@@ -330,31 +332,58 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
 
       const intervalMs = Math.max(1000 / fps, 33); // cap to ~30fps min interval
 
-      captureIntervalRef.current = window.setInterval(async () => {
+      captureIntervalRef.current = window.setInterval(() => {
         try {
+          // Backpressure: if a send/encode is in progress, drop frame
+          if (sendingRef.current) {
+            droppedRef.current += 1;
+            // Log dropped frames periodically
+            if (droppedRef.current % 30 === 0) {
+              console.warn(`Dropped ${droppedRef.current} frames (backpressure)`);
+            }
+            return;
+          }
+
           const videoEl = videoRef.current;
           if (!videoEl || videoEl.readyState < 2) return;
+
+          // Mark as busy BEFORE starting encode
+          sendingRef.current = true;
 
           // draw current frame
           ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
 
           // convert to JPEG blob
           canvas.toBlob(
-            async (blob) => {
-              if (!blob) return;
-              try {
-                const arrayBuffer = await blob.arrayBuffer();
-                // send to main process via preload API
-                await electron.webRtc.putVideoFrame(arrayBuffer);
-              } catch (err) {
-                console.warn('Failed to send video frame to main:', err);
+            (blob) => {
+              if (!blob) {
+                sendingRef.current = false;
+                return;
               }
+              // send ArrayBuffer to main process
+              blob
+                .arrayBuffer()
+                .then(async (arrayBuffer) => {
+                  try {
+                    await electron.webRtc.putVideoFrame(arrayBuffer);
+                  } catch (err) {
+                    console.warn('Failed to send video frame to main:', err);
+                  }
+                })
+                .catch((err) => {
+                  console.error('Error converting blob to ArrayBuffer:', err);
+                })
+                .finally(() => {
+                  // Release flag AFTER send completes
+                  sendingRef.current = false;
+                });
             },
             'image/jpeg',
             jpegQuality
           );
         } catch (err) {
           console.warn('Error in capture loop:', err);
+          sendingRef.current = false;
         }
       }, intervalMs) as unknown as number;
     };
@@ -367,6 +396,9 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       if (captureCanvasRef.current) {
         captureCanvasRef.current = null;
       }
+      // Reset refs
+      sendingRef.current = false;
+      droppedRef.current = 0;
     };
 
     const stopWebRTC = () => {
