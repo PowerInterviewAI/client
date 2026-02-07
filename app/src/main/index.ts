@@ -107,7 +107,7 @@ async function createWindow() {
 
   if (process.env.NODE_ENV === 'development') {
     win.loadURL('http://localhost:5173');
-    win.webContents.openDevTools();
+    // win.webContents.openDevTools();
   } else {
     // Use app.getAppPath() for conventional path resolution
     // This works correctly whether the app is packaged or not

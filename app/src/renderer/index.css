@@ -175,8 +175,11 @@
     @apply border-border outline-ring/50;
   }
 
-  body {
-    @apply bg-background text-foreground;
+  html,
+  body,
+  #root {
+    background: transparent !important;
+    @apply text-foreground;
   }
 
   pre,
