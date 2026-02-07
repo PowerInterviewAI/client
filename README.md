@@ -169,7 +169,7 @@ Power Interview follows a **client-server architecture** where the desktop appli
 3. **Build Python agents**
 
    ```bash
-   python -m scripts.build_***_agents
+   python -m scripts.build_XXXX_agent
    ```
 
 4. **Run the application**
@@ -197,7 +197,7 @@ Power Interview follows a **client-server architecture** where the desktop appli
 ### 1. Build Python Agents
 
 ```bash
-python -m scripts.build_*_agents
+python -m scripts.build_XXXX_agent
 ```
 
 ### 2. Build Electron App
