@@ -75,7 +75,7 @@
     "wait-on": "^9.0.3"
   },
   "build": {
-    "appId": "ai.power-interview",
+    "appId": "ai.power-interview.client",
     "productName": "Power Interview",
     "copyright": "Copyright ©2026 Power Interview",
     "files": [
