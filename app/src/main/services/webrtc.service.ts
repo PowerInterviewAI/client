@@ -197,7 +197,9 @@ class WebRTCService {
 
     proc.on('exit', (code, signal) => {
       console.log(`VCam agent exited: code=${code}, signal=${signal}`);
-      this.handleAgentExit(agentProcess, () => this.startVCamAgent());
+      this.handleAgentExit(agentProcess, async () => {
+        await Promise.all([this.setupZmqPushSocket(), this.startVCamAgent()]);
+      });
     });
 
     proc.on('error', (error) => {
