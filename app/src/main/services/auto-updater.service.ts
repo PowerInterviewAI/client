@@ -1,0 +1,196 @@
+/**
+ * Auto-Updater Service
+ * Handles automatic updates from GitHub Releases
+ *
+ * Features:
+ * - Check for updates on app launch
+ * - Background download of updates
+ * - User notification and restart prompting
+ * - Graceful error handling
+ * - Lifecycle event logging
+ */
+
+import { autoUpdater } from 'electron-updater';
+import { BrowserWindow } from 'electron';
+
+export interface UpdateInfo {
+  version: string;
+  releaseDate: string;
+  releaseNotes?: string;
+}
+
+export enum UpdateStatus {
+  CHECKING = 'checking',
+  AVAILABLE = 'available',
+  NOT_AVAILABLE = 'not-available',
+  DOWNLOADING = 'downloading',
+  DOWNLOADED = 'downloaded',
+  ERROR = 'error',
+}
+
+export interface UpdateProgressInfo {
+  bytesPerSecond: number;
+  percent: number;
+  transferred: number;
+  total: number;
+}
+
+class AutoUpdaterService {
+  private mainWindow: BrowserWindow | null = null;
+  private updateCheckInProgress = false;
+
+  constructor() {
+    this.setupAutoUpdater();
+  }
+
+  /**
+   * Initialize auto-updater configuration
+   */
+  private setupAutoUpdater(): void {
+    // Configure auto-updater
+    autoUpdater.autoDownload = true; // Download automatically when update is available
+    autoUpdater.autoInstallOnAppQuit = true; // Install on quit
+
+    // Logging configuration
+    autoUpdater.logger = {
+      info: (message: any) => console.log('[AutoUpdater]', message),
+      warn: (message: any) => console.warn('[AutoUpdater]', message),
+      error: (message: any) => console.error('[AutoUpdater]', message),
+      debug: (message: any) => console.debug('[AutoUpdater]', message),
+    };
+
+    this.registerEventHandlers();
+  }
+
+  /**
+   * Register event handlers for auto-updater lifecycle
+   */
+  private registerEventHandlers(): void {
+    // Checking for update
+    autoUpdater.on('checking-for-update', () => {
+      console.log('[AutoUpdater] Checking for updates...');
+      this.notifyRenderer(UpdateStatus.CHECKING, null);
+    });
+
+    // Update available
+    autoUpdater.on('update-available', (info) => {
+      console.log('[AutoUpdater] Update available:', info.version);
+      this.notifyRenderer(UpdateStatus.AVAILABLE, {
+        version: info.version,
+        releaseDate: info.releaseDate,
+        releaseNotes: info.releaseNotes as string | undefined,
+      });
+    });
+
+    // Update not available
+    autoUpdater.on('update-not-available', (info) => {
+      console.log('[AutoUpdater] No updates available. Current version:', info.version);
+      this.updateCheckInProgress = false;
+      this.notifyRenderer(UpdateStatus.NOT_AVAILABLE, null);
+    });
+
+    // Download progress
+    autoUpdater.on('download-progress', (progressObj) => {
+      console.log(
+        `[AutoUpdater] Download progress: ${progressObj.percent.toFixed(2)}% (${(progressObj.bytesPerSecond / 1024 / 1024).toFixed(2)} MB/s)`
+      );
+      this.notifyRenderer(UpdateStatus.DOWNLOADING, null, {
+        bytesPerSecond: progressObj.bytesPerSecond,
+        percent: progressObj.percent,
+        transferred: progressObj.transferred,
+        total: progressObj.total,
+      });
+    });
+
+    // Update downloaded
+    autoUpdater.on('update-downloaded', (info) => {
+      console.log('[AutoUpdater] Update downloaded:', info.version);
+      console.log('[AutoUpdater] Update will be installed on app restart');
+      this.updateCheckInProgress = false;
+      this.notifyRenderer(UpdateStatus.DOWNLOADED, {
+        version: info.version,
+        releaseDate: info.releaseDate,
+        releaseNotes: info.releaseNotes as string | undefined,
+      });
+    });
+
+    // Error handling
+    autoUpdater.on('error', (error) => {
+      console.error('[AutoUpdater] Error:', error);
+      this.updateCheckInProgress = false;
+      this.notifyRenderer(UpdateStatus.ERROR, null, null, error.message || 'Unknown error');
+    });
+  }
+
+  /**
+   * Set the main window reference for sending IPC messages
+   */
+  setMainWindow(window: BrowserWindow): void {
+    this.mainWindow = window;
+  }
+
+  /**
+   * Check for updates
+   * @returns Promise that resolves when check is complete
+   */
+  async checkForUpdates(): Promise<void> {
+    if (this.updateCheckInProgress) {
+      console.log('[AutoUpdater] Update check already in progress, skipping...');
+      return;
+    }
+
+    // Skip update checks in development mode
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[AutoUpdater] Skipping update check in development mode');
+      return;
+    }
+
+    this.updateCheckInProgress = true;
+
+    try {
+      await autoUpdater.checkForUpdates();
+    } catch (error) {
+      console.error('[AutoUpdater] Failed to check for updates:', error);
+      this.updateCheckInProgress = false;
+      // Error will be handled by the 'error' event handler
+    }
+  }
+
+  /**
+   * Quit and install the downloaded update
+   */
+  quitAndInstall(): void {
+    console.log('[AutoUpdater] Quitting and installing update...');
+    autoUpdater.quitAndInstall(false, true);
+  }
+
+  /**
+   * Send update status to renderer process
+   */
+  private notifyRenderer(
+    status: UpdateStatus,
+    info: UpdateInfo | null,
+    progress?: UpdateProgressInfo | null,
+    error?: string
+  ): void {
+    if (!this.mainWindow || this.mainWindow.isDestroyed()) {
+      return;
+    }
+
+    this.mainWindow.webContents.send('auto-updater:status', {
+      status,
+      info,
+      progress,
+      error,
+    });
+  }
+
+  /**
+   * Get current version
+   */
+  getCurrentVersion(): string {
+    return autoUpdater.currentVersion.version;
+  }
+}
+
+export const autoUpdaterService = new AutoUpdaterService();

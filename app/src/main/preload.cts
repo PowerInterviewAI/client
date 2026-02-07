@@ -84,6 +84,18 @@ const electronApi = {
     clearAll: () => ipcRenderer.invoke('tools:clear-all'),
   },
 
+  // Auto-updater management
+  autoUpdater: {
+    checkForUpdates: () => ipcRenderer.invoke('auto-updater:check-for-updates'),
+    quitAndInstall: () => ipcRenderer.invoke('auto-updater:quit-and-install'),
+    getVersion: () => ipcRenderer.invoke('auto-updater:get-version'),
+    onStatusUpdate: (callback: (data: any) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, data: any) => callback(data);
+      ipcRenderer.on('auto-updater:status', handler);
+      return () => ipcRenderer.removeListener('auto-updater:status', handler);
+    },
+  },
+
   // Window controls
   close: () => ipcRenderer.send('window-close'),
 
