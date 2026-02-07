@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { InputPassword } from '@/components/custom/input-password';
@@ -10,6 +10,7 @@ import useAuth from '@/hooks/use-auth';
 
 export default function SignupPage() {
   const { signup, loading, error, setError } = useAuth();
+  const navigate = useNavigate();
 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -28,7 +29,7 @@ export default function SignupPage() {
       toast.success('Signup successful! Please login.');
       // redirect to login page
       setTimeout(() => {
-        window.location.href = '/auth/login';
+        navigate('/auth/login');
       }, 2000);
     } else {
       toast.error('Signup failed. Please try again.');
