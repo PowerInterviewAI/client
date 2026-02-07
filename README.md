@@ -4,7 +4,7 @@
 
 **Your Personal AI-Powered Interview Coach with Real-Time Face Swap Technology**
 
-[![Version](https://img.shields.io/badge/version-0.9.0-blue.svg)](https://github.com/yourusername/power-interview)
+[![Version](https://img.shields.io/badge/version-0.9.0-blue.svg)](https://github.com/PowerInterviewAI/power-interview-assistant)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 </div>
@@ -17,10 +17,11 @@ Power Interview is a privacy-first AI assistant designed to help you ace technic
 
 **Your data stays with you.** Power Interview is built with privacy as a core principle:
 
-- 🏠 **Local Processing**: All sensitive data is processed locally on your machine
+- 🏠 **Client-Side Application**: This is a desktop client for account management and user interface
 - 🔐 **Secure Storage**: Credentials and personal information stored securely using Electron Store
+- 🤖 **AI Processing**: AI/LLM inference and face swap processing handled by secure backend services
 - 🚫 **No Data Mining**: We don't collect, sell, or share your personal information
-- 🎯 **Minimal Server Communication**: Only necessary API calls for AI suggestions
+- 🎯 **Minimal Data Transfer**: Only necessary data sent for AI suggestions (transcripts, screenshots, profile)
 - 💾 **Your Control**: All your CV, profile data, and configurations remain on your device
 
 ## ✨ Key Features
@@ -98,24 +99,35 @@ Tailor the experience to your needs:
 
 ## 🏗️ Architecture
 
-### Desktop Application
+Power Interview follows a **client-server architecture** where the desktop application handles user interaction and local agent management, while AI/LLM processing and face swap inference are performed by backend services.
+
+### Desktop Client Application
 
 - **Framework**: Electron with React + TypeScript
 - **UI Library**: Radix UI + Tailwind CSS
 - **State Management**: Zustand + React Query
 - **IPC Communication**: Electron IPC for main-renderer communication
+- **Role**: User interface, account management, configuration, and local agent orchestration
 
-### Python Agents
+### Python Agents (Local)
 
-- **ASR Agent**: Real-time audio capture and transcription
-- **VCam Agent**: Virtual camera with face swap processing
+- **ASR Agent**: Real-time audio capture and transcription routing
+- **VCam Agent**: Virtual camera frame capture and streaming
 - **Audio Control Agent**: Audio device management and routing
+
+### Backend Services (Online)
+
+- **AI/LLM Service**: Generates interview reply and code suggestions using advanced language models
+- **Face Swap Service**: Performs real-time face swapping using deep learning models
+- **ASR Service**: Speech-to-text transcription processing
+- **Authentication Service**: Secure user authentication and session management
 
 ### Communication
 
-- **ZeroMQ**: High-performance inter-process communication
-- **WebSocket**: Real-time ASR streaming
-- **WebRTC**: Low-latency video streaming
+- **ZeroMQ**: High-performance inter-process communication between local agents
+- **WebSocket**: Real-time streaming between client and backend services
+- **WebRTC**: Low-latency video streaming for face swap processing
+- **REST API**: Configuration and data management
 
 ## 🚀 Getting Started
 
