@@ -94,10 +94,8 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
 
       isReconnectingRef.current = true;
 
-      // Calculate exponential backoff delay (capped at 30 seconds)
-      const baseDelay = 1000; // 1 second
-      const maxDelay = 30000; // 30 seconds
-      const delay = Math.min(baseDelay * Math.pow(2, reconnectAttemptsRef.current), maxDelay);
+      // Fixed delay for reconnection attempts to avoid overwhelming the system
+      const delay = 5000;
 
       console.log(
         `Scheduling reconnect attempt #${reconnectAttemptsRef.current + 1} in ${delay}ms`
@@ -127,7 +125,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
         if (runningState === RunningState.RUNNING) {
           startWebRTC().catch((err) => {
             console.error('Reconnect failed:', err);
-            toast.error(`WebRTC reconnection failed: ${err.message}`);
+            toast.error(`Connection to Face Swap service failed. Retrying...`);
             // Try again
             scheduleReconnect();
           });
