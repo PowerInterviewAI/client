@@ -26,7 +26,6 @@ export function useHotkeyScroll(section: string, onScroll: (direction: 'up' | 'd
 export function useWindowControls() {
   if (typeof window !== 'undefined' && window.electronAPI) {
     return {
-      minimize: window.electronAPI.minimize ?? (() => {}),
       close: window.electronAPI.close ?? (() => {}),
       resizeWindowDelta: window.electronAPI.resizeWindowDelta ?? (() => {}),
       setStealth: window.electronAPI.setStealth ?? (() => {}),
