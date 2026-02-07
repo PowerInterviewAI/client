@@ -141,12 +141,12 @@ export default function ConfigurationDialog({ isOpen, onOpenChange }: Configurat
 
             <div className="grid gap-2">
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                Username
+                Profile Name
               </label>
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Enter your username"
+                placeholder="Enter your profile name"
                 className="text-sm"
               />
             </div>
