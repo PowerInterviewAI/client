@@ -376,7 +376,7 @@ class WebRTCService {
    */
   private getVCamAgentCommand(): { command: string; args: string[] } {
     // In production, use built executable
-    let buildDir = path.join(process.resourcesPath, 'agents');
+    let buildDir = path.join(process.execPath, '..', 'agents');
     // In development, use local build
     if (EnvUtil.isDev()) {
       buildDir = path.join(process.cwd(), '..', 'build', 'agents', 'dist');
@@ -393,7 +393,7 @@ class WebRTCService {
    */
   private getAudioControlAgentCommand(): { command: string; args: string[] } {
     // In production, use built executable
-    let buildDir = path.join(process.resourcesPath, 'agents');
+    let buildDir = path.join(process.execPath, '..', 'agents');
     // In development, use local build
     if (EnvUtil.isDev()) {
       buildDir = path.join(process.cwd(), '..', 'build', 'agents', 'dist');
