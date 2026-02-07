@@ -131,8 +131,8 @@ Tailor the experience to your needs:
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/yourusername/power-interview-client.git
-   cd power-interview-client
+   git clone https://github.com/PowerInterviewAI/power-interview-assistant
+   cd power-interview-assistant
    ```
 
 2. **Install dependencies**
