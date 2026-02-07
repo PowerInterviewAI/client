@@ -65,10 +65,13 @@ Get instant, context-aware help during interviews:
 
 ### Stealth Mode & Hotkeys
 
+Stealth mode allows you to operate discreetly during interviews, keeping your AI assistant out of sight while still providing real-time support.
+Also, you will not lose focus on active tabs or windows during interviews, as the app can be controlled entirely through hotkeys.
+
 Operate discreetly during interviews:
 
-- **Stealth Mode** (`Ctrl+Shift+Q`): Minimize window visibility
-- **Opacity Control** (`Ctrl+Shift+D`): Adjust window transparency
+- **Stealth Mode** (`Ctrl+Shift+Q`): Toggle stealth mode
+- **Opacity Control** (`Ctrl+Shift+D`): Toggle window opacity for discreet viewing in stealth mode
 - **Window Positioning** (`Ctrl+Shift+1-9`): Quick window placement (numpad layout)
 - **Scroll Controls**:
   - `Ctrl+Shift+J/K`: Scroll interview suggestions
@@ -76,6 +79,10 @@ Operate discreetly during interviews:
 - **Window Management**:
   - `Ctrl+Alt+Shift+Arrow`: Move window
   - `Ctrl+Win+Shift+Arrow`: Resize window
+- **Code Suggestion Controls**:
+  - `Ctrl+Alt+Shift+S`: Take screenshot for code suggestions
+  - `Ctrl+Alt+Shift+Enter`: Submit screenshots
+  - `Ctrl+Alt+Shift+X`: Clear screenshots
 
 ### Smart Configuration
 
