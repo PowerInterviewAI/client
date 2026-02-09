@@ -77,8 +77,8 @@ export const useAssistantService = create<AssistantService>((set, get) => ({
       // Stop WebRTC if face swap is enabled
       if (config?.faceSwap && videoPanelRef?.current) {
         videoPanelRef.current.stopWebRTC();
-        await electron.webRtc.stopAgents();
       }
+      await electron.webRtc.stopAgents();
 
       // Stop assistant services
       await Promise.all([
