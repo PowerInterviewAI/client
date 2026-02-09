@@ -14,6 +14,7 @@ import pkg from 'electron-updater';
 const { autoUpdater } = pkg;
 
 import { BrowserWindow } from 'electron';
+
 import { EnvUtil } from '../utils/env.js';
 
 export interface UpdateInfo {

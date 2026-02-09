@@ -4,6 +4,7 @@
  */
 
 import { ipcMain } from 'electron';
+
 import { autoUpdaterService } from '../services/auto-updater.service.js';
 
 /**
