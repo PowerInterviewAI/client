@@ -62,7 +62,7 @@ export default function Titlebar() {
           {appState?.isLoggedIn ? (
             <div
               className={cn(
-                'text-sm font-medium mr-2',
+                'text-xs font-bold mr-2',
                 availableMinutes >= 5
                   ? 'text-green-600'
                   : availableMinutes >= 1
