@@ -33,12 +33,13 @@ export function VideoGroup({
   audioOutputDevices,
   getDisabled,
 }: VideoGroupProps) {
-  const { runningState } = useAppState();
+  const { runningState, appState } = useAppState();
   const { config, updateConfig } = useConfigStore();
   const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
   const previewStreamRef = useRef<MediaStream | null>(null);
   const videoDevices = useVideoDevices();
+  const lowCredits = (appState?.credits ?? 0) <= 0;
 
   const OBS_CAMERA_PREFIX = 'OBS Virtual';
   const obsCameraExists =
@@ -61,6 +62,13 @@ export function VideoGroup({
       toast.error('VB-Audio Virtual Cable not found — disabling Face Swap');
     }
   }, [obsCameraExists, vbInputExists, config?.faceSwap, updateConfig]);
+
+  useEffect(() => {
+    if (lowCredits && config?.faceSwap) {
+      updateConfig({ faceSwap: false });
+      toast.error('Credits depleted — disabling Face Swap');
+    }
+  }, [lowCredits, config?.faceSwap, updateConfig]);
 
   const usableVideoDevices = videoDevices.filter((d) => {
     if (d.label.toLowerCase().startsWith(OBS_CAMERA_PREFIX.toLowerCase())) return false;
@@ -164,7 +172,8 @@ export function VideoGroup({
               className="h-8 w-8 border-none rounded-none"
               disabled={
                 getDisabled(runningState) ||
-                ((!obsCameraExists || !vbInputExists) && !config?.faceSwap)
+                ((!obsCameraExists || !vbInputExists) && !config?.faceSwap) ||
+                (appState?.credits ?? 0) <= 0
               }
               onClick={() => {
                 const tryingToEnable = !config?.faceSwap;
@@ -205,6 +214,15 @@ export function VideoGroup({
 
           <DialogContent className="flex flex-col w-72 p-4 gap-4">
             <DialogTitle>Face Swap Options</DialogTitle>
+            {lowCredits && (
+              <div className="text-sm text-destructive">
+                Credits depleted.
+                <br />
+                Face Swap feature is disabled.
+                <br />
+                Please recharge credits to enable Face Swap.
+              </div>
+            )}
 
             {!obsCameraExists && (
               <div className="text-sm text-destructive">
