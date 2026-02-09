@@ -1,7 +1,7 @@
 {
   "name": "power-interview",
   "private": false,
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "AI-powered interview preparation assistant",
   "author": "Power Interview",
   "main": "electron-dist/index.js",
