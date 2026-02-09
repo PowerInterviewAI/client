@@ -133,7 +133,7 @@ class ReplySuggestionService {
     const filteredTranscripts = [...transcripts];
     while (
       filteredTranscripts.length > 0 &&
-      filteredTranscripts[filteredTranscripts.length - 1].speaker === Speaker.SELF
+      filteredTranscripts[filteredTranscripts.length - 1].speaker === Speaker.Self
     ) {
       filteredTranscripts.pop();
     }

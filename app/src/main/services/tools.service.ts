@@ -65,7 +65,7 @@ class ToolsService {
     const transcriptLines: string[] = [];
     for (const t of transcripts) {
       const timeStr = new Date(t.timestamp).toLocaleString();
-      const speakerName = t.speaker === Speaker.SELF ? username : 'Interviewer';
+      const speakerName = t.speaker === Speaker.Self ? username : 'Interviewer';
       transcriptLines.push(`#### ***${timeStr} | ${speakerName}***\n${t.text}\n`);
     }
     const transcriptsPart = `# **Transcripts**\n\n${transcriptLines.join('\n')}`;
