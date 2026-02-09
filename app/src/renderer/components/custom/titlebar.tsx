@@ -5,6 +5,7 @@ import DocumentationDialog from '@/components/custom/documentation-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAppState } from '@/hooks/use-app-state';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
+import { cn } from '@/lib/utils';
 
 export default function Titlebar() {
   const isStealth = useIsStealthMode();
@@ -24,6 +25,12 @@ export default function Titlebar() {
   };
 
   const { appState } = useAppState();
+  const remainingCredits = appState?.credits ?? 0;
+  const availableMinutes = Math.floor(remainingCredits / 10);
+  const availableTime =
+    availableMinutes <= 0
+      ? 'Less than 1 min'
+      : `${availableMinutes} min${availableMinutes > 1 ? 's' : ''}`;
 
   if (isStealth) return null;
 
@@ -53,8 +60,17 @@ export default function Titlebar() {
           style={{ WebkitAppRegion: 'no-drag' } as any}
         >
           {appState?.isLoggedIn ? (
-            <div className="text-sm font-medium text-muted-foreground mr-2">
-              Credits: {appState?.credits}
+            <div
+              className={cn(
+                'text-sm font-medium mr-2',
+                availableMinutes >= 5
+                  ? 'text-green-600'
+                  : availableMinutes >= 1
+                    ? 'text-yellow-600 animate-pulse'
+                    : 'text-destructive animate-pulse'
+              )}
+            >
+              Credits: {appState?.credits} (Available for {availableTime})
             </div>
           ) : null}
           <Tooltip>
