@@ -17,11 +17,11 @@ export function registerGlobalHotkeys(): void {
   // Unregister existing hotkeys first
   globalShortcut.unregisterAll();
 
-  // Stealth mode toggle — Ctrl+Shift+Q
-  globalShortcut.register('Control+Shift+Q', () => toggleStealth());
+  // Stealth mode toggle — Ctrl+Shift+M
+  globalShortcut.register('Control+Shift+M', () => toggleStealth());
 
-  // Opacity toggle (Ctrl+Shift+D): toggle opacity when in stealth mode
-  globalShortcut.register('Control+Shift+D', () => toggleOpacity());
+  // Opacity toggle (Ctrl+Shift+N): toggle opacity when in stealth mode
+  globalShortcut.register('Control+Shift+N', () => toggleOpacity());
 
   // Window positioning hotkeys (Ctrl+Shift+1-9)
   // Map numpad-style positions: 7 8 9
@@ -100,8 +100,8 @@ export function registerGlobalHotkeys(): void {
     }
   });
 
-  // Code suggestion operations: Ctrl+Alt+Shift+S (screenshot), X (clear), Enter (submit)
-  globalShortcut.register('Control+Alt+Shift+S', async () => {
+  // Code suggestion operations: Ctrl+Alt+Shift+P (screenshot), X (clear), Enter (submit)
+  globalShortcut.register('Control+Alt+Shift+P', async () => {
     await codeSuggestionService.captureScreenshot();
   });
   globalShortcut.register('Control+Alt+Shift+X', async () => {
@@ -112,14 +112,14 @@ export function registerGlobalHotkeys(): void {
   });
 
   console.log('🎹 Global hotkeys registered:');
-  console.log('  Ctrl+Shift+Q: Toggle stealth mode');
-  console.log('  Ctrl+Shift+D: Toggle opacity (stealth only)');
+  console.log('  Ctrl+Shift+M: Toggle stealth mode');
+  console.log('  Ctrl+Shift+N: Toggle opacity (stealth only)');
   console.log('  Ctrl+Shift+1-9: Place window (numpad layout)');
   console.log('  Ctrl+Alt+Shift+Arrow: Move window');
   console.log('  Ctrl+Win+Shift+Arrow: Resize window');
   console.log('  Ctrl+Shift+J / K: Scroll interview suggestions (J down, K up)');
   console.log('  Ctrl+Shift+U / I: Scroll code suggestions (U down, I up)');
-  console.log('  Ctrl+Alt+Shift+S: Capture screenshot (renderer action)');
+  console.log('  Ctrl+Alt+Shift+P: Capture screenshot (renderer action)');
   console.log('  Ctrl+Alt+Shift+X: Clear screenshots (renderer action)');
   console.log('  Ctrl+Alt+Shift+Enter: Submit (renderer action)');
 }
