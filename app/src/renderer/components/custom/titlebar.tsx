@@ -65,7 +65,7 @@ export default function Titlebar() {
                 className={cn(
                   'text-xs font-bold mr-2',
                   availableMinutes >= 5
-                    ? 'text-green-600'
+                    ? 'text-muted-foreground'
                     : availableMinutes >= 1
                       ? 'text-yellow-600 animate-pulse'
                       : 'text-destructive animate-pulse'

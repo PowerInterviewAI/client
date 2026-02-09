@@ -30,7 +30,7 @@ export default function StatusPanel({ runningState = RunningState.Idle }: Props)
             className={cn(
               'text-xs font-bold ml-2',
               availableMinutes >= 5
-                ? 'text-green-600'
+                ? 'text-muted-foreground'
                 : availableMinutes >= 1
                   ? 'text-yellow-600 animate-pulse'
                   : 'text-destructive animate-pulse'
