@@ -45,7 +45,7 @@ export class CodeSuggestionService {
         timestamp: DateTimeUtil.now(),
         image_urls: [...this.uploadedImageNames.map((name) => this.getBackendImageUrl(name)), null],
         suggestion_content: '',
-        state: SuggestionState.UPLOADING,
+        state: SuggestionState.Uploading,
       };
       suggestionsArray = [...suggestionsArray, pendingPrompt];
     } else if (this.uploadedImageNames.length > 0) {
@@ -53,7 +53,7 @@ export class CodeSuggestionService {
         timestamp: DateTimeUtil.now(),
         image_urls: this.uploadedImageNames.map((name) => this.getBackendImageUrl(name)),
         suggestion_content: '',
-        state: SuggestionState.IDLE,
+        state: SuggestionState.Idle,
       };
       suggestionsArray = [...suggestionsArray, pendingPrompt];
     }
@@ -65,7 +65,7 @@ export class CodeSuggestionService {
    * Clear uploaded images
    */
   async clearImages(): Promise<void> {
-    if (appStateService.getState().runningState !== RunningState.RUNNING) {
+    if (appStateService.getState().runningState !== RunningState.Running) {
       pushNotificationService.pushNotification({
         type: 'warning',
         message: 'Cannot clear images when assistant is not running',
@@ -81,7 +81,7 @@ export class CodeSuggestionService {
    * Capture screenshot and upload to backend
    */
   async captureScreenshot(): Promise<void> {
-    if (appStateService.getState().runningState !== RunningState.RUNNING) {
+    if (appStateService.getState().runningState !== RunningState.Running) {
       pushNotificationService.pushNotification({
         type: 'warning',
         message: 'Cannot capture screenshot when assistant is not running',
@@ -90,7 +90,7 @@ export class CodeSuggestionService {
     }
 
     // Try to acquire lock
-    if (!actionLockService.tryAcquire(ActionType.SCREENSHOT_CAPTURE)) {
+    if (!actionLockService.tryAcquire(ActionType.ScreenshotCapture)) {
       return;
     }
 
@@ -131,7 +131,7 @@ export class CodeSuggestionService {
       throw error;
     } finally {
       // Release lock
-      actionLockService.release(ActionType.SCREENSHOT_CAPTURE);
+      actionLockService.release(ActionType.ScreenshotCapture);
     }
   }
 
@@ -139,7 +139,7 @@ export class CodeSuggestionService {
    * Generate code suggestion asynchronously
    */
   async startGenerateSuggestion(transcripts?: Transcript[]): Promise<void> {
-    if (appStateService.getState().runningState !== RunningState.RUNNING) {
+    if (appStateService.getState().runningState !== RunningState.Running) {
       pushNotificationService.pushNotification({
         type: 'warning',
         message: 'Cannot generate suggestion when assistant is not running',
@@ -148,7 +148,7 @@ export class CodeSuggestionService {
     }
 
     // Try to acquire lock
-    if (!actionLockService.tryAcquire(ActionType.CODE_SUGGESTION)) {
+    if (!actionLockService.tryAcquire(ActionType.CodeSuggestion)) {
       return;
     }
 
@@ -219,7 +219,7 @@ export class CodeSuggestionService {
       timestamp,
       image_urls: this.uploadedImageNames.map((name) => this.getBackendImageUrl(name)),
       suggestion_content: '',
-      state: SuggestionState.PENDING,
+      state: SuggestionState.Pending,
     };
     this.setSuggestion(timestamp, suggestion);
 
@@ -236,7 +236,7 @@ export class CodeSuggestionService {
       const decoder = new TextDecoder();
 
       // Update state to loading
-      suggestion.state = SuggestionState.LOADING;
+      suggestion.state = SuggestionState.Loading;
       this.setSuggestion(timestamp, suggestion);
 
       try {
@@ -250,7 +250,7 @@ export class CodeSuggestionService {
             this.abortMap.delete(taskId);
 
             console.info('[CodeSuggestionService] Code suggestion generation stopped by user');
-            suggestion.state = SuggestionState.STOPPED;
+            suggestion.state = SuggestionState.Stopped;
             this.setSuggestion(timestamp, suggestion);
             return;
           }
@@ -258,14 +258,14 @@ export class CodeSuggestionService {
           if (value) {
             const chunk = decoder.decode(value, { stream: true });
             suggestion.suggestion_content += chunk;
-            suggestion.state = SuggestionState.LOADING;
+            suggestion.state = SuggestionState.Loading;
             this.setSuggestion(timestamp, suggestion);
           }
         }
 
         // Mark as successful if not stopped
-        if (suggestion.state === SuggestionState.LOADING) {
-          suggestion.state = SuggestionState.SUCCESS;
+        if (suggestion.state === SuggestionState.Loading) {
+          suggestion.state = SuggestionState.Success;
           this.setSuggestion(timestamp, suggestion);
         }
       } finally {
@@ -273,11 +273,11 @@ export class CodeSuggestionService {
       }
     } catch (error) {
       console.error('[CodeSuggestionService] Failed to generate code suggestion:', error);
-      suggestion.state = SuggestionState.ERROR;
+      suggestion.state = SuggestionState.Error;
       this.setSuggestion(timestamp, suggestion);
     } finally {
       // Release lock when generation completes
-      actionLockService.release(ActionType.CODE_SUGGESTION);
+      actionLockService.release(ActionType.CodeSuggestion);
     }
   }
 
