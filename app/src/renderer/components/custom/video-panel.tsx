@@ -9,6 +9,7 @@ import { RunningState } from '@/types/app-state';
 
 interface VideoPanelProps {
   runningState: RunningState;
+  credits: number;
   // Optional: streaming fps for websocket
   fps?: number;
   jpegQuality?: number; // 0.0 - 1.0
@@ -20,7 +21,7 @@ export interface VideoPanelHandle {
 }
 
 export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
-  ({ runningState, fps = 30, jpegQuality = 0.8 }, ref) => {
+  ({ runningState, credits, fps = 30, jpegQuality = 0.8 }, ref) => {
     const { config } = useConfigStore();
     const videoDevices = useVideoDevices();
 

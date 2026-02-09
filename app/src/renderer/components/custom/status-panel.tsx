@@ -1,4 +1,3 @@
-import { useAppState } from '@/hooks/use-app-state';
 import { CREDITS_PER_MINUTE } from '@/lib/consts';
 import { HOTKEYS } from '@/lib/hotkeys';
 import { cn } from '@/lib/utils';
@@ -7,16 +6,15 @@ import { RunningState } from '@/types/app-state';
 import { RunningIndicator } from './running-indicator';
 
 type Props = {
-  runningState?: RunningState;
+  runningState: RunningState;
+  credits: number;
 };
 
-export default function StatusPanel({ runningState = RunningState.Idle }: Props) {
-  const { appState } = useAppState();
-  const remainingCredits = appState?.credits ?? 0;
-  const availableMinutes = Math.floor(remainingCredits / CREDITS_PER_MINUTE);
+export default function StatusPanel({ runningState, credits }: Props) {
+  const availableMinutes = Math.floor(credits / CREDITS_PER_MINUTE);
   const availableTime =
     availableMinutes <= 0
-      ? remainingCredits > 0
+      ? credits > 0
         ? 'Available for less than 1 min'
         : 'No credits left'
       : `Available for ${availableMinutes} min${availableMinutes > 1 ? 's' : ''}`;
@@ -39,7 +37,7 @@ export default function StatusPanel({ runningState = RunningState.Idle }: Props)
                   : 'text-destructive animate-pulse'
             )}
           >
-            Credits: {appState?.credits} ({availableTime})
+            Credits: {credits} ({availableTime})
           </div>
         </div>
         <div className="hidden sm:flex gap-x-2 gap-y-1 flex-wrap">

@@ -198,6 +198,7 @@ export default function MainPage() {
             <VideoPanel
               ref={videoPanelRef}
               runningState={appState?.runningState ?? RunningState.Idle}
+              credits={appState?.credits ?? 0}
             />
           </div>
 
@@ -226,7 +227,12 @@ export default function MainPage() {
         onSignOut={handleSignOut}
       />
 
-      {isStealth && <StatusPanel runningState={appState?.runningState ?? RunningState.Idle} />}
+      {isStealth && (
+        <StatusPanel
+          runningState={appState?.runningState ?? RunningState.Idle}
+          credits={appState?.credits ?? 0}
+        />
+      )}
 
       <ConfigurationDialog isOpen={isProfileOpen} onOpenChange={setIsProfileOpen} />
     </div>
