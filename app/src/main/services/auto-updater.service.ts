@@ -10,7 +10,9 @@
  * - Lifecycle event logging
  */
 
-import { autoUpdater } from 'electron-updater';
+import pkg from 'electron-updater';
+const { autoUpdater } = pkg;
+
 import { BrowserWindow } from 'electron';
 import { EnvUtil } from '../utils/env.js';
 
