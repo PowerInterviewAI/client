@@ -89,17 +89,17 @@ export class CodeSuggestionService {
       return;
     }
 
-    // Try to acquire lock
-    if (!actionLockService.tryAcquire(ActionType.ScreenshotCapture)) {
-      return;
-    }
-
     // Enforce maximum screenshots limit
     if (this.uploadedImageNames.length >= CODE_SUGGESTION_MAX_SCREENSHOTS) {
       pushNotificationService.pushNotification({
         type: 'warning',
         message: `Maximum of ${CODE_SUGGESTION_MAX_SCREENSHOTS} screenshots reached. Please clear images and try again.`,
       });
+      return;
+    }
+
+    // Try to acquire lock
+    if (!actionLockService.tryAcquire(ActionType.ScreenshotCapture)) {
       return;
     }
 
