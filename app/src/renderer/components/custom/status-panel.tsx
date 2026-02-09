@@ -15,8 +15,10 @@ export default function StatusPanel({ runningState = RunningState.Idle }: Props)
   const availableMinutes = Math.floor(remainingCredits / 10);
   const availableTime =
     availableMinutes <= 0
-      ? 'Less than 1 min'
-      : `${availableMinutes} min${availableMinutes > 1 ? 's' : ''}`;
+      ? remainingCredits > 0
+        ? 'Available for less than 1 min'
+        : 'No credits left'
+      : `Available for ${availableMinutes} min${availableMinutes > 1 ? 's' : ''}`;
 
   return (
     <div
@@ -36,7 +38,7 @@ export default function StatusPanel({ runningState = RunningState.Idle }: Props)
                   : 'text-destructive animate-pulse'
             )}
           >
-            Credits: {appState?.credits} (Available for {availableTime})
+            Credits: {appState?.credits} ({availableTime})
           </div>
         </div>
         <div className="hidden sm:flex gap-x-2 gap-y-1 flex-wrap">

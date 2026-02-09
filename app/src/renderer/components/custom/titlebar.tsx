@@ -29,8 +29,10 @@ export default function Titlebar() {
   const availableMinutes = Math.floor(remainingCredits / 10);
   const availableTime =
     availableMinutes <= 0
-      ? 'Less than 1 min'
-      : `${availableMinutes} min${availableMinutes > 1 ? 's' : ''}`;
+      ? remainingCredits > 0
+        ? 'Available for less than 1 min'
+        : 'No credits left'
+      : `Available for ${availableMinutes} min${availableMinutes > 1 ? 's' : ''}`;
 
   if (isStealth) return null;
 
@@ -73,7 +75,7 @@ export default function Titlebar() {
                 // eslint-disable-next-line
                 style={{ WebkitAppRegion: 'drag' } as any}
               >
-                Credits: {appState?.credits} (Available for {availableTime})
+                Credits: {appState?.credits} ({availableTime})
               </div>
               <Tooltip>
                 <TooltipTrigger asChild>
