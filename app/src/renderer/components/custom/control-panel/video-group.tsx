@@ -43,13 +43,13 @@ export function VideoGroup({
 
   const OBS_CAMERA_PREFIX = 'OBS Virtual';
   const obsCameraExists =
-    videoDevices.length > 0 ? videoDevices.some((d) => d.label.includes(OBS_CAMERA_PREFIX)) : false;
+    videoDevices.length > 0 ? videoDevices.some((d) => d.label.includes(OBS_CAMERA_PREFIX)) : true;
 
   const VB_AUDIO_INPUT_PREFIX = 'CABLE Input (VB-Audio Virtual';
   const vbInputExists =
     audioOutputDevices.length > 0
       ? audioOutputDevices.some((d) => d.name.startsWith(VB_AUDIO_INPUT_PREFIX))
-      : false;
+      : true;
 
   useEffect(() => {
     // Disable face swap if required devices are not found
