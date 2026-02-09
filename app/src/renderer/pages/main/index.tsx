@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import CodeSuggestionsPanel from '@/components/custom/code-suggestions-panel';
 import ConfigurationDialog from '@/components/custom/configuration-dialog';
 import ControlPanel from '@/components/custom/control-panel';
-import HotkeysPanel from '@/components/custom/hotkeys-panel';
+import StatusPanel from '@/components/custom/status-panel';
 import Loading from '@/components/custom/loading';
 import ReplySuggestionsPanel from '@/components/custom/reply-suggestions-panel';
 import TranscriptPanel from '@/components/custom/transcript-panel';
@@ -59,23 +59,23 @@ export default function MainPage() {
   const computeAvailable = useCallback(() => {
     if (typeof window === 'undefined') return;
     const title = document.getElementById('titlebar')?.getBoundingClientRect().height || 0;
-    let hot = document.getElementById('hotkeys-panel')?.getBoundingClientRect().height || 0;
+    let status = document.getElementById('status-panel')?.getBoundingClientRect().height || 0;
     let control = document.getElementById('control-panel')?.getBoundingClientRect().height || 0;
     let video = document.getElementById('video-panel')?.getBoundingClientRect().height || 0;
     const extra = 12; // spacing/padding between elements
 
-    if (hot > 0) hot += 4; // account for border
+    if (status > 0) status += 4; // account for border
     if (control > 0) control += 4; // account for border
     if (video > 0) video += 4; // account for border
 
     setTranscriptHeight(
-      Math.max(100, window.innerHeight - (title + hot + control + video + extra))
+      Math.max(100, window.innerHeight - (title + status + control + video + extra))
     );
     if (suggestionPanelCount > 0) {
       setSuggestionHeight(
         Math.max(
           100,
-          window.innerHeight - (title + hot + control + extra) - (suggestionPanelCount - 1) * 4
+          window.innerHeight - (title + status + control + extra) - (suggestionPanelCount - 1) * 4
         ) / suggestionPanelCount
       );
     } else {
@@ -187,8 +187,6 @@ export default function MainPage() {
 
   return (
     <div className="flex-1 flex flex-col w-full bg-background p-1 space-y-1">
-      {isStealth && <HotkeysPanel runningState={appState?.runningState ?? RunningState.Idle} />}
-
       <div className="flex-1 flex overflow-y-hidden gap-1">
         {/* Left Column: Video + Transcription */}
         <div
@@ -227,6 +225,8 @@ export default function MainPage() {
         onProfileClick={() => setIsProfileOpen(true)}
         onSignOut={handleSignOut}
       />
+
+      {isStealth && <StatusPanel runningState={appState?.runningState ?? RunningState.Idle} />}
 
       <ConfigurationDialog isOpen={isProfileOpen} onOpenChange={setIsProfileOpen} />
     </div>
