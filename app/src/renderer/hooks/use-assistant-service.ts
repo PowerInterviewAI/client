@@ -29,7 +29,7 @@ export const useAssistantService = create<AssistantService>((set, get) => ({
       if (!electron) {
         throw new Error('Electron API not available');
       }
-      electron.appState.update({ runningState: RunningState.STARTING });
+      electron.appState.update({ runningState: RunningState.Starting });
 
       // Clear previous history
       await electron.tools.clearAll();
@@ -50,7 +50,7 @@ export const useAssistantService = create<AssistantService>((set, get) => ({
       // Start transcription services
       await electron.transcription.start();
 
-      electron.appState.update({ runningState: RunningState.RUNNING });
+      electron.appState.update({ runningState: RunningState.Running });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to start assistant';
       set({
@@ -69,7 +69,7 @@ export const useAssistantService = create<AssistantService>((set, get) => ({
       if (!electron) {
         throw new Error('Electron API not available');
       }
-      electron.appState.update({ runningState: RunningState.STOPPING });
+      electron.appState.update({ runningState: RunningState.Stopping });
 
       const config = useConfigStore.getState().config;
       const { videoPanelRef } = get();
@@ -87,7 +87,7 @@ export const useAssistantService = create<AssistantService>((set, get) => ({
         electron.codeSuggestion.stop(),
       ]);
 
-      electron.appState.update({ runningState: RunningState.IDLE });
+      electron.appState.update({ runningState: RunningState.Idle });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to stop assistant';
       set({

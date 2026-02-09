@@ -7,7 +7,7 @@ type Props = {
   runningState?: RunningState;
 };
 
-export default function HotkeysPanel({ runningState = RunningState.IDLE }: Props) {
+export default function HotkeysPanel({ runningState = RunningState.Idle }: Props) {
   return (
     <div
       id="hotkeys-panel"

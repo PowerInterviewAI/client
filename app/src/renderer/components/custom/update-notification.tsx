@@ -21,7 +21,7 @@ export function UpdateNotification() {
     // Avoid duplicate notifications for the same status
     if (lastStatusRef.current === status) {
       // Update download progress toast if it exists
-      if (status === UpdateStatus.DOWNLOADING && downloadToastIdRef.current && progress) {
+      if (status === UpdateStatus.Downloading && downloadToastIdRef.current && progress) {
         toast.loading(`Downloading update... ${progress.percent.toFixed(0)}%`, {
           id: downloadToastIdRef.current,
           description: `${(progress.transferred / 1024 / 1024).toFixed(1)} MB / ${(progress.total / 1024 / 1024).toFixed(1)} MB`,
@@ -33,12 +33,12 @@ export function UpdateNotification() {
     lastStatusRef.current = status;
 
     switch (status) {
-      case UpdateStatus.CHECKING:
+      case UpdateStatus.Checking:
         // Don't show intrusive UI for checking
         console.log('[UpdateNotification] Checking for updates...');
         break;
 
-      case UpdateStatus.AVAILABLE:
+      case UpdateStatus.Available:
         if (info) {
           toast.info(`Update Available: v${info.version}`, {
             description: 'Download will start automatically in the background.',
@@ -47,12 +47,12 @@ export function UpdateNotification() {
         }
         break;
 
-      case UpdateStatus.NOT_AVAILABLE:
+      case UpdateStatus.NotAvailable:
         // Don't show notification for no updates
         console.log('[UpdateNotification] No updates available');
         break;
 
-      case UpdateStatus.DOWNLOADING:
+      case UpdateStatus.Downloading:
         if (progress) {
           downloadToastIdRef.current = toast.loading(
             `Downloading update... ${progress.percent.toFixed(0)}%`,
@@ -63,7 +63,7 @@ export function UpdateNotification() {
         }
         break;
 
-      case UpdateStatus.DOWNLOADED:
+      case UpdateStatus.Downloaded:
         // Dismiss download progress toast
         if (downloadToastIdRef.current) {
           toast.dismiss(downloadToastIdRef.current);
@@ -90,7 +90,7 @@ export function UpdateNotification() {
         }
         break;
 
-      case UpdateStatus.ERROR:
+      case UpdateStatus.Error:
         // Dismiss download progress toast if exists
         if (downloadToastIdRef.current) {
           toast.dismiss(downloadToastIdRef.current);

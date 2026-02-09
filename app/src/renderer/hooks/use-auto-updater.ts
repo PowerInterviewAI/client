@@ -6,12 +6,12 @@
 import { useEffect, useState } from 'react';
 
 export enum UpdateStatus {
-  CHECKING = 'checking',
-  AVAILABLE = 'available',
-  NOT_AVAILABLE = 'not-available',
-  DOWNLOADING = 'downloading',
-  DOWNLOADED = 'downloaded',
-  ERROR = 'error',
+  Checking = 'checking',
+  Available = 'available',
+  NotAvailable = 'not-available',
+  Downloading = 'downloading',
+  Downloaded = 'downloaded',
+  Error = 'error',
 }
 
 export interface UpdateInfo {

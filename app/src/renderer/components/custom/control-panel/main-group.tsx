@@ -26,7 +26,7 @@ export function MainGroup({ stateConfig, getDisabled }: MainGroupProps) {
 
       // If we're currently running, the user is stopping — wait for any async stop
       // action to complete before asking about export.
-      if (runningState === RunningState.RUNNING) {
+      if (runningState === RunningState.Running) {
         if (res && typeof res.then === 'function') {
           try {
             await res;

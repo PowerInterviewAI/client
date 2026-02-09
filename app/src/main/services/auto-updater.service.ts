@@ -24,12 +24,12 @@ export interface UpdateInfo {
 }
 
 export enum UpdateStatus {
-  CHECKING = 'checking',
-  AVAILABLE = 'available',
-  NOT_AVAILABLE = 'not-available',
-  DOWNLOADING = 'downloading',
-  DOWNLOADED = 'downloaded',
-  ERROR = 'error',
+  Checking = 'checking',
+  Available = 'available',
+  NotAvailable = 'not-available',
+  Downloading = 'downloading',
+  Downloaded = 'downloaded',
+  Error = 'error',
 }
 
 export interface UpdateProgressInfo {
@@ -77,13 +77,13 @@ class AutoUpdaterService {
     // Checking for update
     autoUpdater.on('checking-for-update', () => {
       console.log('[AutoUpdater] Checking for updates...');
-      this.notifyRenderer(UpdateStatus.CHECKING, null);
+      this.notifyRenderer(UpdateStatus.Checking, null);
     });
 
     // Update available
     autoUpdater.on('update-available', (info) => {
       console.log('[AutoUpdater] Update available:', info.version);
-      this.notifyRenderer(UpdateStatus.AVAILABLE, {
+      this.notifyRenderer(UpdateStatus.Available, {
         version: info.version,
         releaseDate: info.releaseDate,
         releaseNotes: info.releaseNotes as string | undefined,
@@ -94,7 +94,7 @@ class AutoUpdaterService {
     autoUpdater.on('update-not-available', (info) => {
       console.log('[AutoUpdater] No updates available. Current version:', info.version);
       this.updateCheckInProgress = false;
-      this.notifyRenderer(UpdateStatus.NOT_AVAILABLE, null);
+      this.notifyRenderer(UpdateStatus.NotAvailable, null);
     });
 
     // Download progress
@@ -102,7 +102,7 @@ class AutoUpdaterService {
       console.log(
         `[AutoUpdater] Download progress: ${progressObj.percent.toFixed(2)}% (${(progressObj.bytesPerSecond / 1024 / 1024).toFixed(2)} MB/s)`
       );
-      this.notifyRenderer(UpdateStatus.DOWNLOADING, null, {
+      this.notifyRenderer(UpdateStatus.Downloading, null, {
         bytesPerSecond: progressObj.bytesPerSecond,
         percent: progressObj.percent,
         transferred: progressObj.transferred,
@@ -115,7 +115,7 @@ class AutoUpdaterService {
       console.log('[AutoUpdater] Update downloaded:', info.version);
       console.log('[AutoUpdater] Update will be installed on app restart');
       this.updateCheckInProgress = false;
-      this.notifyRenderer(UpdateStatus.DOWNLOADED, {
+      this.notifyRenderer(UpdateStatus.Downloaded, {
         version: info.version,
         releaseDate: info.releaseDate,
         releaseNotes: info.releaseNotes as string | undefined,
@@ -126,7 +126,7 @@ class AutoUpdaterService {
     autoUpdater.on('error', (error) => {
       console.error('[AutoUpdater] Error:', error);
       this.updateCheckInProgress = false;
-      this.notifyRenderer(UpdateStatus.ERROR, null, null, error.message || 'Unknown error');
+      this.notifyRenderer(UpdateStatus.Error, null, null, error.message || 'Unknown error');
     });
   }
 

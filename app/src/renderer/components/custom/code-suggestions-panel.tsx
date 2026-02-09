@@ -53,11 +53,11 @@ function CodeSuggestionsPanel({ codeSuggestions = [], style }: CodeSuggestionsPa
     const lengthChanged = currentLength !== prevLengthRef.current;
     const becameSuccess =
       lastSuggestion &&
-      prevLastStateRef.current !== SuggestionState.SUCCESS &&
-      currentLastState === SuggestionState.SUCCESS;
+      prevLastStateRef.current !== SuggestionState.Success &&
+      currentLastState === SuggestionState.Success;
     const contentChangedWhileLoading =
       lastSuggestion &&
-      currentLastState === SuggestionState.LOADING &&
+      currentLastState === SuggestionState.Loading &&
       currentLastContent !== prevLastContentRef.current;
 
     if (lengthChanged || becameSuccess || contentChangedWhileLoading) {
@@ -161,8 +161,8 @@ function CodeSuggestionsPanel({ codeSuggestions = [], style }: CodeSuggestionsPa
                           )
                         )}
                       </div>
-                      {(s.state === SuggestionState.PENDING ||
-                        s.state === SuggestionState.LOADING) && (
+                      {(s.state === SuggestionState.Pending ||
+                        s.state === SuggestionState.Loading) && (
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
                           <Loader2 className="h-4 w-4 animate-spin" />
                           <span>Generating</span>
@@ -174,8 +174,8 @@ function CodeSuggestionsPanel({ codeSuggestions = [], style }: CodeSuggestionsPa
                       <div className="h-12 w-16 flex items-center justify-center rounded-md bg-muted">
                         <File className="h-5 w-5 text-muted-foreground" />
                       </div>
-                      {(s.state === SuggestionState.PENDING ||
-                        s.state === SuggestionState.LOADING) && (
+                      {(s.state === SuggestionState.Pending ||
+                        s.state === SuggestionState.Loading) && (
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
                           <Loader2 className="h-4 w-4 animate-spin" />
                           <span>Generating</span>
@@ -186,7 +186,7 @@ function CodeSuggestionsPanel({ codeSuggestions = [], style }: CodeSuggestionsPa
                 </div>
 
                 <div className="flex-1">
-                  {(s.state === SuggestionState.LOADING || s.state === SuggestionState.SUCCESS) && (
+                  {(s.state === SuggestionState.Loading || s.state === SuggestionState.Success) && (
                     <div className="text-sm text-foreground/90 leading-relaxed">
                       <div className="text-sm">
                         <SafeMarkdown content={s.suggestion_content} />
@@ -194,14 +194,14 @@ function CodeSuggestionsPanel({ codeSuggestions = [], style }: CodeSuggestionsPa
                     </div>
                   )}
 
-                  {s.state === SuggestionState.STOPPED && (
+                  {s.state === SuggestionState.Stopped && (
                     <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                       <PauseCircle className="h-4 w-4" />
                       <span>Suggestion canceled</span>
                     </div>
                   )}
 
-                  {s.state === SuggestionState.ERROR && (
+                  {s.state === SuggestionState.Error && (
                     <div className="bg-destructive/10 border border-destructive/20 rounded-md p-2 mt-1">
                       <p className="text-xs text-destructive">Failed to generate</p>
                     </div>

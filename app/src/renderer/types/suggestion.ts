@@ -1,10 +1,10 @@
 export enum SuggestionState {
-  IDLE = 'idle',
-  PENDING = 'pending',
-  LOADING = 'loading',
-  SUCCESS = 'success',
-  STOPPED = 'stopped',
-  ERROR = 'error',
+  Idle = 'idle',
+  Pending = 'pending',
+  Loading = 'loading',
+  Success = 'success',
+  Stopped = 'stopped',
+  Error = 'error',
 }
 
 export interface ReplySuggestion {
