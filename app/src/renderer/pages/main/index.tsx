@@ -24,7 +24,7 @@ export default function MainPage() {
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { config, isLoading: configLoading, loadConfig } = useConfigStore();
-  const { setVideoPanelRef } = useAssistantService();
+  const { setVideoPanelRef, stopAssistant } = useAssistantService();
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const [replySuggestions, setReplySuggestions] = useState<ReplySuggestion[]>([]);
   const [codeSuggestions, setCodeSuggestions] = useState<CodeSuggestion[]>([]);
@@ -39,6 +39,19 @@ export default function MainPage() {
   useEffect(() => {
     setVideoPanelRef(videoPanelRef as React.RefObject<VideoPanelHandle>);
   }, [setVideoPanelRef]);
+
+  // Listen for hotkey to stop assistant
+  useEffect(() => {
+    if (!window?.electronAPI?.onHotkeyStopAssistant) return;
+
+    const cleanup = window.electronAPI.onHotkeyStopAssistant(() => {
+      stopAssistant().catch((err) => {
+        console.error('Failed to stop assistant from hotkey:', err);
+      });
+    });
+
+    return cleanup;
+  }, [stopAssistant]);
 
   // Load config on mount
   useEffect(() => {

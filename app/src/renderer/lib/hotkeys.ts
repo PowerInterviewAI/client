@@ -1,4 +1,7 @@
 export const HOTKEYS: Array<[string, string, string]> = [
+  // General
+  ['Ctrl+Shift+Q', 'Stop assistant', 'Stop assistant'],
+
   // App / mode toggles
   ['Ctrl+Shift+M', 'Toggle stealth', 'Toggle stealth mode on or off'],
   ['Ctrl+Shift+N', 'Toggle opacity', 'Toggle window opacity (only in stealth mode)'],

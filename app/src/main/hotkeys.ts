@@ -17,6 +17,14 @@ export function registerGlobalHotkeys(): void {
   // Unregister existing hotkeys first
   globalShortcut.unregisterAll();
 
+  // Stop assistant — Ctrl+Shift+Q
+  globalShortcut.register('Control+Shift+Q', () => {
+    const w = BrowserWindow.getAllWindows()[0];
+    if (w && !w.isDestroyed()) {
+      w.webContents.send('hotkey-stop-assistant');
+    }
+  });
+
   // Stealth mode toggle — Ctrl+Shift+M
   globalShortcut.register('Control+Shift+M', () => toggleStealth());
 
@@ -112,6 +120,7 @@ export function registerGlobalHotkeys(): void {
   });
 
   console.log('🎹 Global hotkeys registered:');
+  console.log('  Ctrl+Shift+Q: Stop assistant');
   console.log('  Ctrl+Shift+M: Toggle stealth mode');
   console.log('  Ctrl+Shift+N: Toggle opacity (stealth only)');
   console.log('  Ctrl+Shift+1-9: Place window (numpad layout)');

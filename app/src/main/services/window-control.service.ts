@@ -57,8 +57,8 @@ export function setWindowBounds(bounds: WindowBounds): void {
   if (!win || win.isDestroyed()) return;
 
   try {
-    const MIN_WIDTH = 1024;
-    const MIN_HEIGHT = 640;
+    const MIN_WIDTH = 1096;
+    const MIN_HEIGHT = 720;
 
     // Fill missing values from current bounds
     const current = win.getBounds();

@@ -70,6 +70,7 @@ Also, you will not lose focus on active tabs or windows during interviews, as th
 
 Operate discreetly during interviews:
 
+- **Stop Assistant** (`Ctrl+Shift+Q`): Stop the assistant
 - **Stealth Mode** (`Ctrl+Shift+M`): Toggle stealth mode
 - **Opacity Control** (`Ctrl+Shift+N`): Toggle window opacity for discreet viewing in stealth mode
 - **Window Positioning** (`Ctrl+Shift+1-9`): Quick window placement (numpad layout)

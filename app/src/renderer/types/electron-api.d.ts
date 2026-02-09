@@ -9,6 +9,9 @@ declare global {
     // Hotkey scroll events
     onHotkeyScroll: (callback: (section: string, direction: 'up' | 'down') => void) => () => void;
 
+    // Hotkey stop assistant event
+    onHotkeyStopAssistant: (callback: () => void) => () => void;
+
     // Configuration management
     config: {
       get: () => Promise<Config>;

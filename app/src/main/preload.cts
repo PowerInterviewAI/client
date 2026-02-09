@@ -13,6 +13,13 @@ const electronApi = {
     return () => ipcRenderer.removeListener('hotkey-scroll', handler);
   },
 
+  // Hotkey stop assistant event
+  onHotkeyStopAssistant: (callback: () => void) => {
+    const handler = () => callback();
+    ipcRenderer.on('hotkey-stop-assistant', handler);
+    return () => ipcRenderer.removeListener('hotkey-stop-assistant', handler);
+  },
+
   // Configuration management
   config: {
     get: () => ipcRenderer.invoke('config:get'),
