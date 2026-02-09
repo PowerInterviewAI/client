@@ -99,6 +99,9 @@ const electronApi = {
   // Window controls
   close: () => ipcRenderer.send('window-close'),
 
+  // Open external URLs in the default browser
+  openExternal: (url: string) => ipcRenderer.invoke('open-external', url),
+
   // Edge resize support
   resizeWindowDelta: (dx: number, dy: number, edge: string) =>
     ipcRenderer.send('window-resize-delta', dx, dy, edge),

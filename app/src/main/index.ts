@@ -12,6 +12,7 @@ import { registerAuthHandlers } from './ipc/auth.js';
 import { registerAutoUpdaterHandlers } from './ipc/auto-updater.js';
 import { registerCodeSuggestionHandlers } from './ipc/code-suggestion.js';
 import { registerConfigHandlers } from './ipc/config.js';
+import { registerExternalHandlers } from './ipc/external.js';
 import { registerReplySuggestionHandlers } from './ipc/reply-suggestion.js';
 import { registerToolsHandlers } from './ipc/tools.js';
 import { registerTranscriptHandlers } from './ipc/transcript.js';
@@ -134,6 +135,7 @@ app.whenReady().then(async () => {
   registerWebRTCHandlers();
   registerToolsHandlers();
   registerAutoUpdaterHandlers();
+  registerExternalHandlers();
 
   // Create window
   await createWindow();

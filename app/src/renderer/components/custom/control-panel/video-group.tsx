@@ -19,6 +19,7 @@ import { useConfigStore } from '@/hooks/use-config-store';
 import { useVideoDevices } from '@/hooks/use-video-devices';
 import { RunningState } from '@/types/app-state';
 import { type AudioDevice } from '@/types/audio-device';
+import ExternalLink from '../external-link';
 
 interface VideoGroupProps {
   videoDeviceNotFound: boolean;
@@ -40,13 +41,15 @@ export function VideoGroup({
 
   const OBS_CAMERA_PREFIX = 'OBS Virtual';
   const obsCameraExists =
-    videoDevices.length > 0 ? videoDevices.some((d) => d.label.includes(OBS_CAMERA_PREFIX)) : true;
+    videoDevices.length > 0
+      ? videoDevices.some((d) => d.label.includes(OBS_CAMERA_PREFIX)) && false
+      : false;
 
   const VB_AUDIO_INPUT_PREFIX = 'CABLE Input (VB-Audio Virtual';
   const vbInputExists =
     audioOutputDevices.length > 0
       ? audioOutputDevices.some((d) => d.name.startsWith(VB_AUDIO_INPUT_PREFIX))
-      : true;
+      : false;
 
   useEffect(() => {
     // Disable face swap if required devices are not found
@@ -212,7 +215,9 @@ export function VideoGroup({
                 <br />
                 Download and install OBS studio from
                 <br />
-                <span className="underline">https://obsproject.com/download</span>
+                <ExternalLink href="https://obsproject.com/download" className="underline">
+                  https://obsproject.com/download
+                </ExternalLink>
                 <br />
                 and then restart this application.
               </div>
@@ -225,7 +230,9 @@ export function VideoGroup({
                 <br />
                 Download and install VBCABLE Driver from
                 <br />
-                <span className="underline">https://vb-audio.com/Cable/</span>
+                <ExternalLink href="https://vb-audio.com/Cable/" className="underline">
+                  https://vb-audio.com/Cable/
+                </ExternalLink>
               </div>
             )}
 
