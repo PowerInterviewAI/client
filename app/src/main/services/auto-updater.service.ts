@@ -12,6 +12,7 @@
 
 import { autoUpdater } from 'electron-updater';
 import { BrowserWindow } from 'electron';
+import { EnvUtil } from '../utils/env';
 
 export interface UpdateInfo {
   version: string;
@@ -140,7 +141,7 @@ class AutoUpdaterService {
     }
 
     // Skip update checks in development mode
-    if (process.env.NODE_ENV === 'development') {
+    if (EnvUtil.isDev()) {
       console.log('[AutoUpdater] Skipping update check in development mode');
       return;
     }
