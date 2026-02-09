@@ -42,7 +42,7 @@ export default function ControlPanel({ onProfileClick, onSignOut }: ControlPanel
   if (isStealth) return null;
 
   const stateConfig: Record<RunningState, StateConfig> = {
-    [RunningState.IDLE]: {
+    [RunningState.Idle]: {
       onClick: async () => {
         if (!checkCanStart()) return;
         try {
@@ -57,13 +57,13 @@ export default function ControlPanel({ onProfileClick, onSignOut }: ControlPanel
       icon: <Play className="h-3.5 w-3.5" />,
       label: 'Start',
     },
-    [RunningState.STARTING]: {
+    [RunningState.Starting]: {
       onClick: () => {},
       className: 'bg-primary hover:bg-primary/90',
       icon: <Ellipsis className="h-3.5 w-3.5 animate-pulse" />,
       label: 'Starting...',
     },
-    [RunningState.RUNNING]: {
+    [RunningState.Running]: {
       onClick: async () => {
         await stopAssistant();
       },
@@ -71,7 +71,7 @@ export default function ControlPanel({ onProfileClick, onSignOut }: ControlPanel
       icon: <Square className="h-3.5 w-3.5" />,
       label: 'Stop',
     },
-    [RunningState.STOPPING]: {
+    [RunningState.Stopping]: {
       onClick: () => {},
       className: 'bg-destructive hover:bg-destructive/90',
       icon: <Ellipsis className="h-3.5 w-3.5 animate-pulse" />,
@@ -114,8 +114,8 @@ export default function ControlPanel({ onProfileClick, onSignOut }: ControlPanel
   };
 
   const getDisabled = (state: RunningState, disableOnRunning: boolean = true): boolean => {
-    if (disableOnRunning && state === RunningState.RUNNING) return true;
-    return state === RunningState.STARTING || state === RunningState.STOPPING;
+    if (disableOnRunning && state === RunningState.Running) return true;
+    return state === RunningState.Starting || state === RunningState.Stopping;
   };
 
   return (

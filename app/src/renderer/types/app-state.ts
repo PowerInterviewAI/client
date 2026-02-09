@@ -2,10 +2,10 @@ import { type CodeSuggestion, type ReplySuggestion } from './suggestion';
 import { type Transcript } from './transcript';
 
 export enum RunningState {
-  IDLE = 'idle',
-  STARTING = 'starting',
-  RUNNING = 'running',
-  STOPPING = 'stopping',
+  Idle = 'idle',
+  Starting = 'starting',
+  Running = 'running',
+  Stopping = 'stopping',
 }
 
 export interface AppState {

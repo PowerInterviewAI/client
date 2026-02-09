@@ -8,10 +8,10 @@ type Props = {
 
 export function RunningIndicator({ runningState, compact = false, className = '' }: Props) {
   const indicatorConfig: Record<RunningState, { dotClass: string; label: string }> = {
-    [RunningState.IDLE]: { dotClass: 'bg-muted-foreground', label: 'Idle' },
-    [RunningState.STARTING]: { dotClass: 'bg-primary animate-pulse', label: 'Starting' },
-    [RunningState.RUNNING]: { dotClass: 'bg-destructive animate-pulse', label: 'Running' },
-    [RunningState.STOPPING]: { dotClass: 'bg-destructive animate-pulse', label: 'Stopping' },
+    [RunningState.Idle]: { dotClass: 'bg-muted-foreground', label: 'Idle' },
+    [RunningState.Starting]: { dotClass: 'bg-primary animate-pulse', label: 'Starting' },
+    [RunningState.Running]: { dotClass: 'bg-destructive animate-pulse', label: 'Running' },
+    [RunningState.Stopping]: { dotClass: 'bg-destructive animate-pulse', label: 'Stopping' },
   };
 
   const { dotClass, label } = indicatorConfig[runningState];

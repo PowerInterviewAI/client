@@ -5,6 +5,7 @@ import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import type { PushNotification } from '@/types/push-notification';
 
 import Titlebar from './titlebar';
+import { UpdateNotification } from './update-notification';
 import WindowResizer from './window-resizer';
 
 export default function MainFrame({ children }: { children: React.ReactNode }) {
@@ -41,6 +42,7 @@ export default function MainFrame({ children }: { children: React.ReactNode }) {
         <div className="flex-1 flex flex-col overflow-auto">{children}</div>
       </div>
       <WindowResizer />
+      <UpdateNotification />
     </main>
   );
 }

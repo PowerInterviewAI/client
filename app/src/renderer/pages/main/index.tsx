@@ -187,7 +187,7 @@ export default function MainPage() {
 
   return (
     <div className="flex-1 flex flex-col w-full bg-background p-1 space-y-1">
-      {isStealth && <HotkeysPanel runningState={appState?.runningState ?? RunningState.IDLE} />}
+      {isStealth && <HotkeysPanel runningState={appState?.runningState ?? RunningState.Idle} />}
 
       <div className="flex-1 flex overflow-y-hidden gap-1">
         {/* Left Column: Video + Transcription */}
@@ -199,7 +199,7 @@ export default function MainPage() {
           <div id="video-panel" className="h-45 w-full max-w-80 mx-auto" hidden={hideVideoPanel}>
             <VideoPanel
               ref={videoPanelRef}
-              runningState={appState?.runningState ?? RunningState.IDLE}
+              runningState={appState?.runningState ?? RunningState.Idle}
             />
           </div>
 
@@ -223,7 +223,7 @@ export default function MainPage() {
       </div>
 
       <ControlPanel
-        assistantState={appState?.runningState ?? RunningState.IDLE}
+        assistantState={appState?.runningState ?? RunningState.Idle}
         onProfileClick={() => setIsProfileOpen(true)}
         onSignOut={handleSignOut}
       />

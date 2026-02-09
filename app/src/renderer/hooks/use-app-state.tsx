@@ -131,7 +131,7 @@ export const useAppState = (): AppStateContextType => {
   }, []);
 
   return useMemo(
-    () => ({ runningState: appState?.runningState || RunningState.IDLE, appState, updateAppState }),
+    () => ({ runningState: appState?.runningState || RunningState.Idle, appState, updateAppState }),
     [appState, updateAppState]
   );
 };

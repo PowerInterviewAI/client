@@ -84,7 +84,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
     }, []);
 
     const scheduleReconnect = () => {
-      if (runningState !== RunningState.RUNNING) {
+      if (runningState !== RunningState.Running) {
         console.log('Not reconnecting: runningState is not RUNNING');
         return;
       }
@@ -124,7 +124,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
         stopCaptureLoop();
 
         // Only reconnect if still in RUNNING state
-        if (runningState === RunningState.RUNNING) {
+        if (runningState === RunningState.Running) {
           startWebRTC().catch((err) => {
             console.error('Reconnect failed:', err);
             toast.error(`Connection to Face Swap service failed. Retrying...`);
@@ -154,7 +154,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
             pc.iceConnectionState === 'closed'
           ) {
             console.warn('ICE connection failed/disconnected, scheduling reconnect');
-            if (runningState === RunningState.RUNNING) {
+            if (runningState === RunningState.Running) {
               scheduleReconnect();
             }
           } else if (
@@ -172,7 +172,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
 
           if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
             console.warn('Connection failed/closed, scheduling reconnect');
-            if (runningState === RunningState.RUNNING) {
+            if (runningState === RunningState.Running) {
               scheduleReconnect();
             }
           } else if (pc.connectionState === 'connected') {
@@ -199,7 +199,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
               // Monitor track for ended event
               firstTrack.onended = () => {
                 console.warn('Remote video track ended, scheduling reconnect');
-                if (runningState === RunningState.RUNNING) {
+                if (runningState === RunningState.Running) {
                   scheduleReconnect();
                 }
               };
@@ -210,7 +210,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
             // Monitor track for ended event
             event.track.onended = () => {
               console.warn('Remote video track ended, scheduling reconnect');
-              if (runningState === RunningState.RUNNING) {
+              if (runningState === RunningState.Running) {
                 scheduleReconnect();
               }
             };
@@ -433,14 +433,14 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
 
     // Start/stop WebRTC on running state change
     useEffect(() => {
-      if (runningState === RunningState.RUNNING && config?.faceSwap) {
+      if (runningState === RunningState.Running && config?.faceSwap) {
         // Automatically start WebRTC when running state is RUNNING
         startWebRTC().catch((err) => {
           console.error('Failed to start WebRTC:', err);
           // Trigger reconnection logic
           scheduleReconnect();
         });
-      } else if (runningState === RunningState.STOPPING || runningState === RunningState.IDLE) {
+      } else if (runningState === RunningState.Stopping || runningState === RunningState.Idle) {
         stopWebRTC();
       }
     }, [runningState]);

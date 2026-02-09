@@ -13,7 +13,7 @@ const DEFAULT_STATE: AppState = {
   isBackendLive: false,
   isGpuServerLive: false,
   isLoggedIn: false,
-  runningState: RunningState.IDLE,
+  runningState: RunningState.Idle,
   transcripts: [],
   replySuggestions: [],
   codeSuggestions: [],

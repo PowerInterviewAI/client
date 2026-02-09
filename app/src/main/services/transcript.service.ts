@@ -57,7 +57,7 @@ class TranscriptService {
     const audioDevice = config.audioInputDeviceName || 'loopback';
 
     try {
-      this.selfAgent = await this.startAgent(TRANSCRIPT_SELF_ZMQ_PORT, audioDevice, Speaker.SELF);
+      this.selfAgent = await this.startAgent(TRANSCRIPT_SELF_ZMQ_PORT, audioDevice, Speaker.Self);
       console.log('Self transcription started successfully');
     } catch (error) {
       console.error('Failed to start self transcription:', error);
@@ -94,7 +94,7 @@ class TranscriptService {
 
     try {
       // Other party always uses loopback
-      this.otherAgent = await this.startAgent(TRANSCRIPT_OTHER_ZMQ_PORT, 'loopback', Speaker.OTHER);
+      this.otherAgent = await this.startAgent(TRANSCRIPT_OTHER_ZMQ_PORT, 'loopback', Speaker.Other);
       console.log('Other transcription started successfully');
     } catch (error) {
       console.error('Failed to start other transcription:', error);
@@ -239,7 +239,7 @@ class TranscriptService {
             endTimestamp: new Date().getTime(),
           };
 
-          if (transcript.speaker === Speaker.SELF) {
+          if (transcript.speaker === Speaker.Self) {
             if (isFinal) {
               transcript.timestamp = this.selfPartialTranscript?.timestamp ?? transcript.timestamp;
               this.selfTranscripts.push(transcript);
@@ -303,7 +303,7 @@ class TranscriptService {
           }
 
           // Generate reply suggestions
-          if (transcript.speaker === Speaker.OTHER && transcript.isFinal) {
+          if (transcript.speaker === Speaker.Other && transcript.isFinal) {
             await replySuggestionService.startGenerateSuggestion(cleaned);
           }
 
@@ -396,14 +396,14 @@ class TranscriptService {
         // Determine audio source based on speaker
         const config = configStore.getConfig();
         const audioSource =
-          agent.speaker === Speaker.SELF ? config.audioInputDeviceName || 'loopback' : 'loopback';
+          agent.speaker === Speaker.Self ? config.audioInputDeviceName || 'loopback' : 'loopback';
 
         // Start new agent
         const newAgent = await this.startAgent(agent.port, audioSource, agent.speaker);
         newAgent.restartCount = agent.restartCount;
 
         // Update reference
-        if (agent.speaker === Speaker.SELF) {
+        if (agent.speaker === Speaker.Self) {
           this.selfAgent = newAgent;
         } else {
           this.otherAgent = newAgent;

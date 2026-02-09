@@ -6,8 +6,8 @@
 import { pushNotificationService } from './push-notification.service.js';
 
 export enum ActionType {
-  SCREENSHOT_CAPTURE = 'screenshot_capture',
-  CODE_SUGGESTION = 'code_suggestion',
+  ScreenshotCapture = 'screenshot_capture',
+  CodeSuggestion = 'code_suggestion',
 }
 
 class ActionLockService {
@@ -54,8 +54,8 @@ class ActionLockService {
    */
   private notifyBlocked(requestedAction: ActionType, runningAction: ActionType): void {
     const actionNames: Record<ActionType, string> = {
-      [ActionType.SCREENSHOT_CAPTURE]: 'Screenshot capture',
-      [ActionType.CODE_SUGGESTION]: 'Code suggestion generation',
+      [ActionType.ScreenshotCapture]: 'Screenshot capture',
+      [ActionType.CodeSuggestion]: 'Code suggestion generation',
     };
 
     const requested = actionNames[requestedAction];

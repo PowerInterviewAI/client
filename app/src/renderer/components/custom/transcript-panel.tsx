@@ -51,7 +51,7 @@ function TranscriptPanel({ transcripts, style }: TranscriptionPanelProps) {
               <div key={idx} className="space-y-1 pb-1 border-b border-border/50 last:border-0">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-semibold text-primary">
-                    {item.speaker === Speaker.SELF ? username : 'Interviewer'}
+                    {item.speaker === Speaker.Self ? username : 'Interviewer'}
                   </span>
                   <span className="text-xs text-muted-foreground shrink-0">
                     {new Date(item.timestamp).toLocaleString()}

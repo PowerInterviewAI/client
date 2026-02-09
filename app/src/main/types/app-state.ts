@@ -3,25 +3,25 @@
  */
 
 export enum Speaker {
-  SELF = 'self',
-  OTHER = 'other',
+  Self = 'self',
+  Other = 'other',
 }
 
 export enum SuggestionState {
-  IDLE = 'idle',
-  UPLOADING = 'uploading',
-  PENDING = 'pending',
-  LOADING = 'loading',
-  SUCCESS = 'success',
-  STOPPED = 'stopped',
-  ERROR = 'error',
+  Idle = 'idle',
+  Uploading = 'uploading',
+  Pending = 'pending',
+  Loading = 'loading',
+  Success = 'success',
+  Stopped = 'stopped',
+  Error = 'error',
 }
 
 export enum RunningState {
-  IDLE = 'idle',
-  STARTING = 'starting',
-  RUNNING = 'running',
-  STOPPING = 'stopping',
+  Idle = 'idle',
+  Starting = 'starting',
+  Running = 'running',
+  Stopping = 'stopping',
 }
 
 export interface Transcript {

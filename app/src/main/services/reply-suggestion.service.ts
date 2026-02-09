@@ -62,7 +62,7 @@ class ReplySuggestionService {
       timestamp,
       last_question: transcripts[transcripts.length - 1].text,
       answer: '',
-      state: SuggestionState.PENDING,
+      state: SuggestionState.Pending,
     };
 
     // Append initial suggestion
@@ -92,7 +92,7 @@ class ReplySuggestionService {
             this.abortMap.delete(taskId);
 
             console.log('Suggestion generation aborted by user request');
-            suggestion.state = SuggestionState.STOPPED;
+            suggestion.state = SuggestionState.Stopped;
             this.apendSuggestion(timestamp, suggestion);
             return;
           }
@@ -102,7 +102,7 @@ class ReplySuggestionService {
           if (value) {
             const chunk = decoder.decode(value, { stream: true });
             suggestion.answer += chunk;
-            suggestion.state = SuggestionState.LOADING;
+            suggestion.state = SuggestionState.Loading;
 
             // Update the suggestion
             this.apendSuggestion(timestamp, suggestion);
@@ -110,8 +110,8 @@ class ReplySuggestionService {
         }
 
         // Mark as successful if not stopped
-        if (suggestion.state === SuggestionState.LOADING) {
-          suggestion.state = SuggestionState.SUCCESS;
+        if (suggestion.state === SuggestionState.Loading) {
+          suggestion.state = SuggestionState.Success;
           this.apendSuggestion(timestamp, suggestion);
         }
       } finally {
@@ -119,7 +119,7 @@ class ReplySuggestionService {
       }
     } catch {
       console.error('Failed to generate suggestion');
-      suggestion.state = SuggestionState.ERROR;
+      suggestion.state = SuggestionState.Error;
 
       this.apendSuggestion(timestamp, suggestion);
     }
@@ -133,7 +133,7 @@ class ReplySuggestionService {
     const filteredTranscripts = [...transcripts];
     while (
       filteredTranscripts.length > 0 &&
-      filteredTranscripts[filteredTranscripts.length - 1].speaker === Speaker.SELF
+      filteredTranscripts[filteredTranscripts.length - 1].speaker === Speaker.Self
     ) {
       filteredTranscripts.pop();
     }

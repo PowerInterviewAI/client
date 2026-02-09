@@ -9,6 +9,7 @@ const __dirname = path.dirname(__filename);
 import { registerGlobalHotkeys, unregisterHotkeys } from './hotkeys.js';
 import { registerAppStateHandlers } from './ipc/app-state.js';
 import { registerAuthHandlers } from './ipc/auth.js';
+import { registerAutoUpdaterHandlers } from './ipc/auto-updater.js';
 import { registerCodeSuggestionHandlers } from './ipc/code-suggestion.js';
 import { registerConfigHandlers } from './ipc/config.js';
 import { registerReplySuggestionHandlers } from './ipc/reply-suggestion.js';
@@ -17,12 +18,14 @@ import { registerTranscriptHandlers } from './ipc/transcript.js';
 import { registerWebRTCHandlers } from './ipc/webrtc.js';
 // Import IPC handlers
 import { registerWindowHandlers } from './ipc/window.js';
+import { autoUpdaterService } from './services/auto-updater.service.js';
 import { healthCheckService } from './services/health-check.service.js';
 import { transcriptService } from './services/transcript.service.js';
 import { webRtcService } from './services/webrtc.service.js';
 import { setWindowReference } from './services/window-control.service.js';
 // Import services
 import { configStore } from './store/config.store.js';
+import { EnvUtil } from './utils/env.js';
 
 let win: BrowserWindow | null = null;
 
@@ -105,9 +108,9 @@ async function createWindow() {
   // Clear cache before loading
   await win.webContents.session.clearCache();
 
-  if (process.env.NODE_ENV === 'development') {
+  if (EnvUtil.isDev()) {
     win.loadURL('http://localhost:5173');
-    // win.webContents.openDevTools();
+    win.webContents.openDevTools();
   } else {
     // Use app.getAppPath() for conventional path resolution
     // This works correctly whether the app is packaged or not
@@ -130,6 +133,7 @@ app.whenReady().then(async () => {
   registerCodeSuggestionHandlers();
   registerWebRTCHandlers();
   registerToolsHandlers();
+  registerAutoUpdaterHandlers();
 
   // Create window
   await createWindow();
@@ -137,6 +141,17 @@ app.whenReady().then(async () => {
   // Register window-specific IPC handlers
   if (win) {
     registerWindowHandlers(win);
+
+    // Set window reference for auto-updater
+    autoUpdaterService.setMainWindow(win);
+
+    // Check for updates on app launch
+    // Use setTimeout to avoid blocking the app initialization
+    setTimeout(() => {
+      autoUpdaterService.checkForUpdates().catch((error) => {
+        console.error('[Main] Failed to check for updates:', error);
+      });
+    }, 3000); // Wait 3 seconds after app launch
   }
 
   // Start health check service

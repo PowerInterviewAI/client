@@ -183,8 +183,8 @@ Power Interview follows a **client-server architecture** where the desktop appli
 1. **Launch the app** and sign in with your credentials
 2. **Configure your profile**:
    - Click the profile icon in the control panel
-   - Upload your face swap photo
-   - Enter your name, CV/resume content, and job description
+   - Set your face swap photo
+   - Enter your name, profile(e.g. CV/resume, portfolio or bio) content, and context (e.g. job description or role requirements)
 3. **Select your devices**:
    - Choose your microphone for transcription
    - Select your camera for video (if using face swap)

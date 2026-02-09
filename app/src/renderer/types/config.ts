@@ -6,7 +6,7 @@ export interface InterviewConf {
 }
 
 export enum Language {
-  ENGLISH = 'en',
+  English = 'en',
 }
 
 export interface Config {
