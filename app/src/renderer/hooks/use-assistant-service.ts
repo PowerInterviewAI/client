@@ -88,6 +88,8 @@ export const useAssistantService = create<AssistantService>((set, get) => ({
       ]);
 
       electron.appState.update({ runningState: RunningState.Idle });
+
+      electron.setStealth(false); // Ensure stealth mode is turned off when stopping assistant
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to stop assistant';
       set({

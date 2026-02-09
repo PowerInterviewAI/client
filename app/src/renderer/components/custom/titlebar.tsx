@@ -6,7 +6,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useAppState } from '@/hooks/use-app-state';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { CREDITS_PER_MINUTE } from '@/lib/consts';
-import { cn } from '@/lib/utils';
+import { cn, getElectron } from '@/lib/utils';
 
 export default function Titlebar() {
   const isStealth = useIsStealthMode();
@@ -18,10 +18,11 @@ export default function Titlebar() {
 
   const [isDocsOpen, setIsDocsOpen] = useState(false);
   const handleToggleStealth = () => {
-    // Prefer delegating to main process window-controls via preload
-    if (typeof window !== 'undefined' && window?.electronAPI?.toggleStealth) {
-      window.electronAPI.toggleStealth();
-      return;
+    const electron = getElectron();
+    if (electron) {
+      electron.toggleStealth();
+    } else {
+      console.warn('Electron API not available for toggling stealth mode');
     }
   };
 
