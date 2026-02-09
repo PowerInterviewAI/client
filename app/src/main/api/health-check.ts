@@ -4,6 +4,7 @@
 
 import { appStateService } from '../services/app-state.service.js';
 import { RunningState } from '../types/app-state.js';
+import { ClientPingRequest, ClientPingResponse } from '../types/healthceck.js';
 import { ApiClient, ApiResponse } from './client.js';
 
 export class HealthCheckApi extends ApiClient {
@@ -17,13 +18,12 @@ export class HealthCheckApi extends ApiClient {
   /**
    * Ping client to backend with device info
    */
-  async pingClient(): Promise<ApiResponse<string>> {
+  async pingClient(): Promise<ApiResponse<ClientPingResponse>> {
     const appState = appStateService.getState();
-    const payload = {
+    return this.post<ClientPingResponse>('/api/health-check/ping-client', {
       is_gpu_alive: appState.isGpuServerLive,
       is_assistant_running: appState.runningState === RunningState.Running,
-    };
-    return this.post('/api/health-check/ping-client', payload);
+    } as ClientPingRequest);
   }
 
   /**

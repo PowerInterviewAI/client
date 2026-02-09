@@ -10,10 +10,11 @@ export enum RunningState {
 
 export interface AppState {
   isLoggedIn: boolean | null;
+  isBackendLive: boolean;
+  isGpuServerLive: boolean;
   runningState: RunningState;
   transcripts: Transcript[];
   replySuggestions: ReplySuggestion[];
   codeSuggestions: CodeSuggestion[];
-  isBackendLive: boolean;
-  isGpuServerLive: boolean;
+  credits: number;
 }

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import faviconSvg from '/favicon.svg';
 import DocumentationDialog from '@/components/custom/documentation-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useAppState } from '@/hooks/use-app-state';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 
 export default function Titlebar() {
@@ -21,6 +22,8 @@ export default function Titlebar() {
       return;
     }
   };
+
+  const { appState } = useAppState();
 
   if (isStealth) return null;
 
@@ -49,6 +52,11 @@ export default function Titlebar() {
           // eslint-disable-next-line
           style={{ WebkitAppRegion: 'no-drag' } as any}
         >
+          {appState?.isLoggedIn ? (
+            <div className="text-sm font-medium text-muted-foreground mr-2">
+              Credits: {appState?.credits}
+            </div>
+          ) : null}
           <Tooltip>
             <TooltipTrigger asChild>
               <button
@@ -58,7 +66,7 @@ export default function Titlebar() {
                 // eslint-disable-next-line
                 style={{ WebkitAppRegion: 'no-drag' } as any}
               >
-                ?
+                <span className="font-medium text-muted-foreground mb-px">?</span>
               </button>
             </TooltipTrigger>
             <TooltipContent>

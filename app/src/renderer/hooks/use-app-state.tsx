@@ -33,12 +33,13 @@ class AppStateManager {
     if (!raw) return null;
     return {
       isLoggedIn: raw.isLoggedIn,
+      isBackendLive: raw.isBackendLive,
+      isGpuServerLive: raw.isGpuServerLive,
       runningState: raw.runningState,
       transcripts: raw.transcripts ?? [],
       replySuggestions: raw.replySuggestions ?? [],
       codeSuggestions: raw.codeSuggestions ?? [],
-      isBackendLive: raw.isBackendLive,
-      isGpuServerLive: raw.isGpuServerLive,
+      credits: raw.credits ?? 0,
     };
   }
 

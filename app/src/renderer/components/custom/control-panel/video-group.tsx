@@ -19,6 +19,7 @@ import { useConfigStore } from '@/hooks/use-config-store';
 import { useVideoDevices } from '@/hooks/use-video-devices';
 import { RunningState } from '@/types/app-state';
 import { type AudioDevice } from '@/types/audio-device';
+
 import ExternalLink from '../external-link';
 
 interface VideoGroupProps {
