@@ -60,67 +60,71 @@ export default function Titlebar() {
           style={{ WebkitAppRegion: 'no-drag' } as any}
         >
           {appState?.isLoggedIn ? (
-            <div
-              className={cn(
-                'text-xs font-bold mr-2',
-                availableMinutes >= 5
-                  ? 'text-green-600'
-                  : availableMinutes >= 1
-                    ? 'text-yellow-600 animate-pulse'
-                    : 'text-destructive animate-pulse'
-              )}
-            >
-              Credits: {appState?.credits} (Available for {availableTime})
-            </div>
-          ) : null}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={() => setIsDocsOpen(true)}
-                aria-label="Documentation"
-                className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
+            <>
+              <div
+                className={cn(
+                  'text-xs font-bold mr-2',
+                  availableMinutes >= 5
+                    ? 'text-green-600'
+                    : availableMinutes >= 1
+                      ? 'text-yellow-600 animate-pulse'
+                      : 'text-destructive animate-pulse'
+                )}
                 // eslint-disable-next-line
-                style={{ WebkitAppRegion: 'no-drag' } as any}
+                style={{ WebkitAppRegion: 'drag' } as any}
               >
-                <span className="font-medium text-muted-foreground mb-px">?</span>
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Documentation</p>
-            </TooltipContent>
-          </Tooltip>
+                Credits: {appState?.credits} (Available for {availableTime})
+              </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setIsDocsOpen(true)}
+                    aria-label="Documentation"
+                    className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
+                    // eslint-disable-next-line
+                    style={{ WebkitAppRegion: 'no-drag' } as any}
+                  >
+                    <span className="font-medium text-muted-foreground mb-px">?</span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Documentation</p>
+                </TooltipContent>
+              </Tooltip>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={handleToggleStealth}
-                aria-label="Toggle stealth mode"
-                title="Toggle stealth mode"
-                className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
-                // eslint-disable-next-line
-                style={{ WebkitAppRegion: 'no-drag' } as any}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <circle cx="12" cy="12" r="3" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Toggle stealth</p>
-            </TooltipContent>
-          </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={handleToggleStealth}
+                    aria-label="Toggle stealth mode"
+                    title="Toggle stealth mode"
+                    className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
+                    // eslint-disable-next-line
+                    style={{ WebkitAppRegion: 'no-drag' } as any}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <circle cx="12" cy="12" r="3" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Toggle stealth</p>
+                </TooltipContent>
+              </Tooltip>
+            </>
+          ) : null}
 
           {/* Maximize button removed by request */}
           <Tooltip>
