@@ -147,10 +147,10 @@ class AutoUpdaterService {
       return;
     }
 
-    // Skip update checks in development mode
+    // Force dev update config if in development mode for testing
     if (EnvUtil.isDev()) {
-      console.log('[AutoUpdater] Skipping update check in development mode');
-      return;
+      console.log('[AutoUpdater] Forcing dev update config for testing');
+      autoUpdater.forceDevUpdateConfig = true;
     }
 
     this.updateCheckInProgress = true;
