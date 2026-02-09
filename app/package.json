@@ -1,8 +1,8 @@
 {
   "name": "power-interview",
   "private": false,
-  "version": "0.9.1",
-  "description": "AI-powered interview preparation assistant",
+  "version": "0.9.2",
+  "description": "AI-powered live interview assistant",
   "author": "Power Interview",
   "main": "electron-dist/index.js",
   "type": "module",
@@ -108,12 +108,13 @@
       "icon": "build/icon.ico"
     },
     "nsis": {
-      "oneClick": false,
+      "oneClick": true,
       "perMachine": false,
       "allowElevation": false,
-      "allowToChangeInstallationDirectory": true,
+      "allowToChangeInstallationDirectory": false,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
+      "deleteAppDataOnUninstall": false,
       "installerLanguages": [
         "en_US"
       ],
