@@ -451,6 +451,16 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       return () => stopWebRTC();
     }, []);
 
+    // Close WebRTC and pause video when credits reach 0
+    useEffect(() => {
+      if (credits === 0 && runningState === RunningState.Running) {
+        console.log('Credits depleted, stopping WebRTC');
+        stopWebRTC();
+        setVideoMessage('Out of credits');
+        toast.warning('Out of credits - video paused');
+      }
+    }, [credits, runningState]);
+
     // ⚡ Expose functions to parent via ref
     useImperativeHandle(ref, () => ({
       startWebRTC,
