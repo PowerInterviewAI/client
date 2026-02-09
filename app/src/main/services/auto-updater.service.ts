@@ -57,9 +57,13 @@ class AutoUpdaterService {
 
     // Logging configuration
     autoUpdater.logger = {
+      // eslint-disable-next-line
       info: (message: any) => console.log('[AutoUpdater]', message),
+      // eslint-disable-next-line
       warn: (message: any) => console.warn('[AutoUpdater]', message),
+      // eslint-disable-next-line
       error: (message: any) => console.error('[AutoUpdater]', message),
+      // eslint-disable-next-line
       debug: (message: any) => console.debug('[AutoUpdater]', message),
     };
 
