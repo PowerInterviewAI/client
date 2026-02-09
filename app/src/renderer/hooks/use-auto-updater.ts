@@ -43,11 +43,13 @@ export function useAutoUpdater() {
     if (window.electronAPI?.autoUpdater) {
       window.electronAPI.autoUpdater
         .getVersion()
+        // eslint-disable-next-line
         .then((result: any) => {
           if (result.success && result.version) {
             setCurrentVersion(result.version);
           }
         })
+        // eslint-disable-next-line
         .catch((error: any) => {
           console.error('Failed to get version:', error);
         });
