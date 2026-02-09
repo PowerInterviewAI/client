@@ -2,20 +2,42 @@ import { HOTKEYS } from '@/lib/hotkeys';
 import { RunningState } from '@/types/app-state';
 
 import { RunningIndicator } from './running-indicator';
+import { useAppState } from '@/hooks/use-app-state';
+import { cn } from '@/lib/utils';
 
 type Props = {
   runningState?: RunningState;
 };
 
 export default function StatusPanel({ runningState = RunningState.Idle }: Props) {
+  const { appState } = useAppState();
+  const remainingCredits = appState?.credits ?? 0;
+  const availableMinutes = Math.floor(remainingCredits / 10);
+  const availableTime =
+    availableMinutes <= 0
+      ? 'Less than 1 min'
+      : `${availableMinutes} min${availableMinutes > 1 ? 's' : ''}`;
+
   return (
     <div
       id="status-panel"
       className="flex items-center justify-between text-muted-foreground bg-white dark:bg-black rounded-md p-2"
     >
       <div className="space-y-1">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-2">
           <RunningIndicator runningState={runningState} />
+          <div
+            className={cn(
+              'text-xs font-bold ml-2',
+              availableMinutes >= 5
+                ? 'text-green-600'
+                : availableMinutes >= 1
+                  ? 'text-yellow-600 animate-pulse'
+                  : 'text-destructive animate-pulse'
+            )}
+          >
+            Credits: {appState?.credits} (Available for {availableTime})
+          </div>
         </div>
         <div className="hidden sm:flex gap-x-2 gap-y-1 flex-wrap">
           {HOTKEYS.map(([k, d]) => (
