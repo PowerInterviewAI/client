@@ -25,6 +25,7 @@ import { webRtcService } from './services/webrtc.service.js';
 import { setWindowReference } from './services/window-control.service.js';
 // Import services
 import { configStore } from './store/config.store.js';
+import { EnvUtil } from './utils/env.js';
 
 let win: BrowserWindow | null = null;
 
@@ -107,7 +108,7 @@ async function createWindow() {
   // Clear cache before loading
   await win.webContents.session.clearCache();
 
-  if (process.env.NODE_ENV === 'development') {
+  if (EnvUtil.isDev()) {
     win.loadURL('http://localhost:5173');
     win.webContents.openDevTools();
   } else {
