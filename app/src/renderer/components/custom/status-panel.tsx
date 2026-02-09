@@ -1,9 +1,9 @@
+import { useAppState } from '@/hooks/use-app-state';
 import { HOTKEYS } from '@/lib/hotkeys';
+import { cn } from '@/lib/utils';
 import { RunningState } from '@/types/app-state';
 
 import { RunningIndicator } from './running-indicator';
-import { useAppState } from '@/hooks/use-app-state';
-import { cn } from '@/lib/utils';
 
 type Props = {
   runningState?: RunningState;
