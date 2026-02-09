@@ -153,24 +153,24 @@ export default function ConfigurationDialog({ isOpen, onOpenChange }: Configurat
 
             <div className="grid gap-2">
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                CV / Resume Content (Recommended)
+                User Profile (Recommended)
               </label>
               <Textarea
                 value={profileData}
                 onChange={(e) => setProfileData(e.target.value)}
-                placeholder="Enter your CV or resume content"
+                placeholder="Enter your profile information. (e.g. your CV/resume, LinkedIn profile, or a brief bio)"
                 className="text-sm min-h-20 max-h-40 overflow-auto"
               />
             </div>
 
             <div className="grid gap-2">
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                Job Description (Optional)
+                Interview Context (Optional)
               </label>
               <Textarea
                 value={jobDescription}
                 onChange={(e) => setJobDescription(e.target.value)}
-                placeholder="Enter the job description you are targeting"
+                placeholder="Enter the interview context you are targeting. (e.g. the job description or role requirements)"
                 className="text-sm min-h-20 max-h-40 overflow-auto"
               />
             </div>
