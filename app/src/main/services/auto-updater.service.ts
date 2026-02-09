@@ -12,7 +12,7 @@
 
 import { autoUpdater } from 'electron-updater';
 import { BrowserWindow } from 'electron';
-import { EnvUtil } from '../utils/env';
+import { EnvUtil } from '../utils/env.js';
 
 export interface UpdateInfo {
   version: string;
