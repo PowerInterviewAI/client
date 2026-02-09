@@ -158,6 +158,8 @@ export class CodeSuggestionService {
         type: 'warning',
         message: 'No uploaded images to generate suggestion from',
       });
+      // Release lock since we're not generating
+      actionLockService.release(ActionType.CodeSuggestion);
       return;
     }
 
