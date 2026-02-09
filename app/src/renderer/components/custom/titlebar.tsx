@@ -5,6 +5,7 @@ import DocumentationDialog from '@/components/custom/documentation-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAppState } from '@/hooks/use-app-state';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
+import { CREDITS_PER_MINUTE } from '@/lib/consts';
 import { cn } from '@/lib/utils';
 
 export default function Titlebar() {
@@ -26,7 +27,7 @@ export default function Titlebar() {
 
   const { appState } = useAppState();
   const remainingCredits = appState?.credits ?? 0;
-  const availableMinutes = Math.floor(remainingCredits / 10);
+  const availableMinutes = Math.floor(remainingCredits / CREDITS_PER_MINUTE);
   const availableTime =
     availableMinutes <= 0
       ? remainingCredits > 0

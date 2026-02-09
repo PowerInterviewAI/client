@@ -1,4 +1,5 @@
 import { useAppState } from '@/hooks/use-app-state';
+import { CREDITS_PER_MINUTE } from '@/lib/consts';
 import { HOTKEYS } from '@/lib/hotkeys';
 import { cn } from '@/lib/utils';
 import { RunningState } from '@/types/app-state';
@@ -12,7 +13,7 @@ type Props = {
 export default function StatusPanel({ runningState = RunningState.Idle }: Props) {
   const { appState } = useAppState();
   const remainingCredits = appState?.credits ?? 0;
-  const availableMinutes = Math.floor(remainingCredits / 10);
+  const availableMinutes = Math.floor(remainingCredits / CREDITS_PER_MINUTE);
   const availableTime =
     availableMinutes <= 0
       ? remainingCredits > 0
