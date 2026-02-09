@@ -17,10 +17,8 @@ def build_electron_app() -> None:
     print("==== Building Electron App ====")  # noqa: T201
 
     # Install dependencies if needed
-    node_modules = electron_dir / "node_modules"
-    if not node_modules.exists():
-        print("Installing npm dependencies...")  # noqa: T201
-        run("npm install", cwd=str(electron_dir))
+    print("Installing npm dependencies...")  # noqa: T201
+    run("npm install", cwd=str(electron_dir))
 
     # Build the Electron app
     print("Building Electron app...")  # noqa: T201
