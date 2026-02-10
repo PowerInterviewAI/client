@@ -4,7 +4,7 @@
 
 **Your Personal AI-Powered Interview Coach with Real-Time Face Swap Technology**
 
-[![Version](https://img.shields.io/badge/version-0.9.0-blue.svg)](https://github.com/PowerInterviewAI/power-interview-assistant/releases/tag/v0.9.0)
+[![Version](https://img.shields.io/badge/version-0.10.1-blue.svg)](https://github.com/PowerInterviewAI/power-interview-assistant/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 </div>
@@ -357,6 +357,6 @@ For issues, questions, or suggestions:
 
 **Made to help you ace your interviews while protecting your privacy**
 
-[Website](https://power-interview.com) • [Documentation](https://docs.power-interview.com) • [Community](https://community.power-interview.com)
+[Website](https://power-interview.com) • [Documentation](https://docs.power-interview.com)
 
 </div>
