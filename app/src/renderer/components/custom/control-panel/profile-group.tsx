@@ -91,14 +91,6 @@ export function ProfileGroup({
             <SettingsIcon className="mr-2 h-4 w-4" />
             Configuration
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate('/payment')} disabled={disabled}>
-            <CreditCard className="mr-2 h-4 w-4" />
-            Payment
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => !disabled && toggleTheme()}>
-            {isDark ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
-            {isDark ? 'Light mode' : 'Dark mode'}
-          </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
               if (disabled) return;
@@ -108,6 +100,15 @@ export function ProfileGroup({
           >
             <Key className="mr-2 h-4 w-4" />
             Change password
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigate('/payment')} disabled={disabled}>
+            <CreditCard className="mr-2 h-4 w-4" />
+            Payment
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => !disabled && toggleTheme()}>
+            {isDark ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+            {isDark ? 'Light mode' : 'Dark mode'}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => !disabled && onSignOut()} disabled={disabled}>
