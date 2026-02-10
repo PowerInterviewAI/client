@@ -1,5 +1,6 @@
 import { ChevronUp, CreditCard, Key, LogOut, Moon, SettingsIcon, Sun } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
 
 import DocumentationDialog from '@/components/custom/documentation-dialog';
 import { Button } from '@/components/ui/button';
@@ -17,7 +18,6 @@ import { RunningState } from '@/types/app-state';
 import { type Config } from '@/types/config';
 
 import { ChangePasswordDialog } from '../change-password-dialog';
-import PaymentDialog from '../payment-dialog';
 
 interface ProfileGroupProps {
   config?: Config;
@@ -32,12 +32,12 @@ export function ProfileGroup({
   onSignOut,
   getDisabled,
 }: ProfileGroupProps) {
+  const navigate = useNavigate();
   const { runningState } = useAppState();
   const { isDark, toggleTheme } = useThemeStore();
   const { changePassword, loading, error, setError } = useAuth();
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isDocumentationOpen, setIsDocumentationOpen] = useState(false);
-  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
   const disabled = getDisabled(runningState, true);
 
@@ -91,7 +91,7 @@ export function ProfileGroup({
             <SettingsIcon className="mr-2 h-4 w-4" />
             Configuration
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => !disabled && setIsPaymentOpen(true)} disabled={disabled}>
+          <DropdownMenuItem onClick={() => navigate('/payment')} disabled={disabled}>
             <CreditCard className="mr-2 h-4 w-4" />
             Payment
           </DropdownMenuItem>
@@ -124,7 +124,6 @@ export function ProfileGroup({
         loading={loading}
         error={error}
       />
-      <PaymentDialog isOpen={isPaymentOpen} onOpenChange={setIsPaymentOpen} />
       <DocumentationDialog open={isDocumentationOpen} onOpenChange={setIsDocumentationOpen} />
     </div>
   );

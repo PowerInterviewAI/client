@@ -79,6 +79,7 @@ export default function PaymentStatusTab({ initialPaymentId = '' }: PaymentStatu
               placeholder="Enter payment ID"
               value={paymentId}
               onChange={(e) => setPaymentId(e.target.value)}
+              className="max-w-40"
             />
             <Button onClick={() => handleCheckStatus()} disabled={!paymentId || loading}>
               {loading ? 'Checking...' : 'Check Status'}
@@ -143,7 +144,7 @@ export default function PaymentStatusTab({ initialPaymentId = '' }: PaymentStatu
                   <div className="border-t pt-4">
                     <p className="text-sm font-medium mb-2">Payment Address</p>
                     <div className="flex gap-2 items-center">
-                      <code className="flex-1 bg-muted px-3 py-2 rounded text-sm break-all">
+                      <code className="flex-1 bg-muted px-3 py-2 max-w-sm rounded text-sm break-all">
                         {paymentStatus.pay_address}
                       </code>
                       <Button size="sm" variant="secondary" onClick={handleCopyAddress}>

@@ -1,51 +1,31 @@
 /**
- * Payment Dialog
- * Unified dialog for payment management with tabs for plans, history, and status
+ * Payment Page
+ * Unified page for payment management with tabs for plans, history, and status
  */
 
-import { CreditCard, History, Receipt } from 'lucide-react';
+import { ArrowLeft, CreditCard, History, Receipt } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import BuyCreditsTab from '@/components/custom/payment/buy-credits-tab';
+import PaymentHistoryTab from '@/components/custom/payment/payment-history-tab';
+import PaymentStatusTab from '@/components/custom/payment/payment-status-tab';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAppState } from '@/hooks/use-app-state';
 import { usePayment } from '@/hooks/use-payment';
 
-import BuyCreditsTab from './buy-credits-tab';
-import PaymentHistoryTab from './payment-history-tab';
-import PaymentStatusTab from './payment-status-tab';
+export default function PaymentPage() {
+  const navigate = useNavigate();
 
-interface PaymentDialogProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  defaultTab?: 'buy' | 'history' | 'status';
-}
-
-export default function PaymentDialog({
-  isOpen,
-  onOpenChange,
-  defaultTab = 'buy',
-}: PaymentDialogProps) {
-  const [activeTab, setActiveTab] = useState(defaultTab);
+  const [activeTab, setActiveTab] = useState('buy');
   const [statusPaymentId, setStatusPaymentId] = useState('');
   const { appState } = useAppState();
   const { getCurrencies } = usePayment();
 
   useEffect(() => {
-    if (isOpen) {
-      getCurrencies();
-    }
-  }, [isOpen, getCurrencies]);
-
-  useEffect(() => {
-    setActiveTab(defaultTab);
-  }, [defaultTab]);
+    getCurrencies();
+  }, [getCurrencies]);
 
   const handlePaymentCreated = (paymentId: string) => {
     setStatusPaymentId(paymentId);
@@ -64,19 +44,34 @@ export default function PaymentDialog({
   const remainingCredits = appState?.credits ?? 0;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-5xl max-h-[90vh] overflow-auto flex flex-col">
-        <DialogHeader>
-          <DialogTitle>Payment Management</DialogTitle>
-          <DialogDescription>
-            Manage your credits, view payment history, and check payment status
-          </DialogDescription>
-        </DialogHeader>
+    <div className="h-screen w-full flex flex-col bg-background">
+      {/* Header */}
+      <div className="border-b bg-background px-6 py-4">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+          <div className="flex-1">
+            <h1 className="text-xl font-semibold">Payment Management</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Manage your credits, view payment history, and check payment status
+            </p>
+          </div>
+        </div>
+      </div>
 
+      {/* Content */}
+      <div className="flex-1 overflow-hidden px-6 py-6 w-full max-w-3xl mx-auto">
         <Tabs
           value={activeTab}
           onValueChange={(value) => setActiveTab(value as 'buy' | 'history' | 'status')}
-          className="flex-1 flex flex-col"
+          className="h-full flex flex-col"
         >
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="buy" className="flex items-center gap-2">
@@ -93,11 +88,11 @@ export default function PaymentDialog({
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="buy" className="flex-1 overflow-auto mt-4">
+          <TabsContent value="buy" className="flex-1 overflow-auto mt-6">
             <BuyCreditsTab credits={remainingCredits} onPaymentCreated={handlePaymentCreated} />
           </TabsContent>
 
-          <TabsContent value="history" className="flex-1 overflow-auto mt-4">
+          <TabsContent value="history" className="flex-1 overflow-auto mt-6">
             <PaymentHistoryTab
               isActive={activeTab === 'history'}
               onViewPayment={handleViewPayment}
@@ -105,11 +100,11 @@ export default function PaymentDialog({
             />
           </TabsContent>
 
-          <TabsContent value="status" className="flex-1 overflow-auto mt-4">
+          <TabsContent value="status" className="flex-1 overflow-auto mt-6">
             <PaymentStatusTab key={statusPaymentId} initialPaymentId={statusPaymentId} />
           </TabsContent>
         </Tabs>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }

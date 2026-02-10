@@ -89,6 +89,7 @@ export default function PaymentHistoryTab({
               <TableRow>
                 <TableHead>Date</TableHead>
                 <TableHead>Order ID</TableHead>
+                <TableHead>Payment ID</TableHead>
                 <TableHead>Credits</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Status</TableHead>
@@ -104,6 +105,7 @@ export default function PaymentHistoryTab({
                   <TableCell className="text-sm font-mono">
                     #{payment.order_id.slice(0, 8)}
                   </TableCell>
+                  <TableCell className="text-sm font-mono">{payment.payment_id}</TableCell>
                   <TableCell className="text-sm font-medium">
                     {payment.credits_amount.toLocaleString()}
                   </TableCell>
