@@ -44,7 +44,7 @@ export default function PaymentPage() {
   const remainingCredits = appState?.credits ?? 0;
 
   return (
-    <div className="h-screen w-full flex flex-col bg-background">
+    <div className="w-full flex flex-col bg-background">
       {/* Header */}
       <div className="border-b bg-background px-6 py-4">
         <div className="flex items-center gap-4">
