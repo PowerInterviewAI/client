@@ -1,10 +1,10 @@
 export const HOTKEYS: Array<[string, string, string]> = [
   // General
-  ['Ctrl+Shift+Q', 'Stop', 'Stop assistant'],
+  ['Ctrl+Shift+Q', 'Stop', 'Stop assistant and exit stealth mode'],
 
   // App / mode toggles
   ['Ctrl+Shift+M', 'Stealth', 'Toggle stealth mode on or off'],
-  ['Ctrl+Shift+N', 'Opacity', 'Toggle window opacity (only in stealth mode)'],
+  ['Ctrl+Shift+N', 'Opacity', 'Toggle window opacity in stealth mode'],
 
   // Window management
   ['Ctrl+Shift+1-9', 'Place Win', 'Place window in a specific corner, side, or center'],
