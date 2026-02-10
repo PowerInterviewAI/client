@@ -357,6 +357,6 @@ For issues, questions, or suggestions:
 
 **Made to help you ace your interviews while protecting your privacy**
 
-[Website](https://power-interview.com) • [Documentation](https://docs.power-interview.com)
+[Website](https://powerinterviewai.github.io/hero/) • [Documentation](https://powerinterviewai.github.io/hero/docs)
 
 </div>
