@@ -13,6 +13,7 @@ import { registerAutoUpdaterHandlers } from './ipc/auto-updater.js';
 import { registerCodeSuggestionHandlers } from './ipc/code-suggestion.js';
 import { registerConfigHandlers } from './ipc/config.js';
 import { registerExternalHandlers } from './ipc/external.js';
+import { registerPaymentHandlers } from './ipc/payment.js';
 import { registerReplySuggestionHandlers } from './ipc/reply-suggestion.js';
 import { registerToolsHandlers } from './ipc/tools.js';
 import { registerTranscriptHandlers } from './ipc/transcript.js';
@@ -129,6 +130,7 @@ app.whenReady().then(async () => {
   registerConfigHandlers();
   registerAppStateHandlers();
   registerAuthHandlers();
+  registerPaymentHandlers();
   registerTranscriptHandlers();
   registerReplySuggestionHandlers();
   registerCodeSuggestionHandlers();

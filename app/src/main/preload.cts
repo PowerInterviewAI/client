@@ -36,6 +36,16 @@ const electronApi = {
       ipcRenderer.invoke('auth:change-password', currentPassword, newPassword),
   },
 
+  // Payment management
+  payment: {
+    getPlans: () => ipcRenderer.invoke('payment:get-plans'),
+    getCurrencies: () => ipcRenderer.invoke('payment:get-currencies'),
+    create: (data: any) => ipcRenderer.invoke('payment:create', data),
+    getStatus: (paymentId: string) => ipcRenderer.invoke('payment:get-status', paymentId),
+    getHistory: () => ipcRenderer.invoke('payment:get-history'),
+    getCredits: () => ipcRenderer.invoke('payment:get-credits'),
+  },
+
   // App state management
   appState: {
     get: () => ipcRenderer.invoke('app:get-state'),
