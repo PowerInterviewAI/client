@@ -55,7 +55,6 @@ export default function PaymentPage() {
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back
           </Button>
           <div className="flex-1">
             <h1 className="text-xl font-semibold">Payment Management</h1>

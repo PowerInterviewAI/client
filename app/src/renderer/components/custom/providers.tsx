@@ -45,7 +45,7 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
     <div>
       {children}
       {/* Toaster adapts to theme */}
-      <Toaster richColors position="top-center" theme={theme} closeButton />
+      <Toaster richColors position="top-center" theme={theme} />
     </div>
   );
 }
