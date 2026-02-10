@@ -102,7 +102,7 @@ export default function MainPage() {
   useEffect(() => {
     setTimeout(() => {
       computeAvailable();
-    }, 0);
+    }, 10);
   }, [computeAvailable]);
 
   // compute panel height by subtracting hotkeys/control/video heights from viewport
