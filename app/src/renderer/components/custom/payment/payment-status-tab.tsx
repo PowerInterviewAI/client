@@ -2,8 +2,8 @@
  * Payment Status Tab Component
  */
 
-import { QRCodeSVG } from 'qrcode.react';
 import { useCallback, useState } from 'react';
+import { QrcodeCanvas, useQrcodeDownload } from 'react-qrcode-pretty';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -27,6 +27,7 @@ export default function PaymentStatusTab({ initialPaymentId = '' }: PaymentStatu
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatusResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [setQrcode, downloadQrcode, isQrcodeReady] = useQrcodeDownload('payment');
 
   const handleCheckStatus = useCallback(
     async (id?: string) => {
@@ -165,9 +166,33 @@ export default function PaymentStatusTab({ initialPaymentId = '' }: PaymentStatu
 
                       <TabsContent value="qr" className="mt-4">
                         <div className="flex flex-col items-center space-y-3">
-                          <div className="bg-white p-4 rounded-lg border">
-                            <QRCodeSVG value={getPaymentUri()} size={200} level="M" />
-                          </div>
+                          <QrcodeCanvas
+                            value={getPaymentUri()}
+                            size={320}
+                            level="M"
+                            variant={{
+                              eyes: 'gravity',
+                              body: 'fluid',
+                            }}
+                            color={{
+                              eyes: '#1e293b',
+                              body: '#334155',
+                            }}
+                            padding={16}
+                            margin={0}
+                            bgColor="#ddeeff"
+                            bgRounded
+                            divider
+                            onReady={setQrcode}
+                          />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => downloadQrcode(`payment-${paymentStatus.order_id}`)}
+                            disabled={!isQrcodeReady}
+                          >
+                            Download QR Code
+                          </Button>
                           <p className="text-sm text-muted-foreground text-center">
                             Scan with your wallet app
                           </p>
