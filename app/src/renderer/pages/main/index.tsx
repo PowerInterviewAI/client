@@ -95,7 +95,15 @@ export default function MainPage() {
       setSuggestionHeight(0);
     }
   }, [suggestionPanelCount]);
+
   const isStealth = useIsStealthMode();
+
+  // Compute available space when page is navigated to
+  useEffect(() => {
+    setTimeout(() => {
+      computeAvailable();
+    }, 0);
+  }, [computeAvailable]);
 
   // compute panel height by subtracting hotkeys/control/video heights from viewport
   // placed here so hooks order is stable across renders (avoids conditional-hook errors)
