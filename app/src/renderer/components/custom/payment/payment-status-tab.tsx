@@ -180,7 +180,7 @@ export default function PaymentStatusTab({ initialPaymentId = '' }: PaymentStatu
                             }}
                             padding={16}
                             margin={0}
-                            bgColor="#ddeeff"
+                            bgColor="#eef0ff"
                             bgRounded
                             divider
                             onReady={setQrcode}
