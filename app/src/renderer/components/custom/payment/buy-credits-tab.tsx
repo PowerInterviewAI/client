@@ -4,7 +4,7 @@
 
 import { useCallback, useState } from 'react';
 
-import Loading from '@/components/custom/loading';
+import { Loading } from '@/components/custom/loading';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {

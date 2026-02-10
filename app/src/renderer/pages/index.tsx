@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import Loading from '@/components/custom/loading';
+import { LoadingPage } from '@/components/custom/loading';
 import { useAppState } from '@/hooks/use-app-state';
 
 export default function IndexPage() {
@@ -18,5 +18,5 @@ export default function IndexPage() {
   }, [appState?.isBackendLive, appState?.isLoggedIn, navigate]);
 
   // Optionally, render a loading state while checking
-  return <Loading disclaimer="Loading…" />;
+  return <LoadingPage disclaimer="Loading…" />;
 }

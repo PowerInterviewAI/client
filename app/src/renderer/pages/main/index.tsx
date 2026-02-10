@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import CodeSuggestionsPanel from '@/components/custom/code-suggestions-panel';
 import ConfigurationDialog from '@/components/custom/configuration-dialog';
 import ControlPanel from '@/components/custom/control-panel';
-import Loading from '@/components/custom/loading';
+import { LoadingPage } from '@/components/custom/loading';
 import ReplySuggestionsPanel from '@/components/custom/reply-suggestions-panel';
 import StatusPanel from '@/components/custom/status-panel';
 import TranscriptPanel from '@/components/custom/transcript-panel';
@@ -180,22 +180,22 @@ export default function MainPage() {
 
   // Show loading if not logged in (fallback)
   if (appState?.isLoggedIn === false) {
-    return <Loading disclaimer="Redirecting to login…" />;
+    return <LoadingPage disclaimer="Redirecting to login…" />;
   }
 
   // Show loading if auth status is unknown
   if (appState?.isLoggedIn === null) {
-    return <Loading disclaimer="Checking authentication status…" />;
+    return <LoadingPage disclaimer="Checking authentication status…" />;
   }
 
   // Show loading if config or app state is not loaded yet
   if (configLoading || !appState || (appState && !appState.isBackendLive)) {
-    return <Loading disclaimer="Loading…" />;
+    return <LoadingPage disclaimer="Loading…" />;
   }
 
   if (appState?.isGpuServerLive === false) {
     // Show loading if GPU server is not live
-    return <Loading disclaimer="Initializing AI resources… This may take several minutes" />;
+    return <LoadingPage disclaimer="Initializing AI resources… This may take several minutes" />;
   }
 
   return (
