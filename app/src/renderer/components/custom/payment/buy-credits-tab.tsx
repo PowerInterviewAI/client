@@ -3,6 +3,7 @@
  */
 
 import { useCallback, useState } from 'react';
+import { Check } from 'lucide-react';
 
 import { Loading } from '@/components/custom/loading';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,44 @@ import { usePayment } from '@/hooks/use-payment';
 import { CREDITS_PER_MINUTE } from '@/lib/consts';
 import { cn } from '@/lib/utils';
 import type { AvailableCurrency, CreditPlanInfo } from '@/types/payment';
+import { CreditPlan } from '@/types/payment';
+
+// Plan features configuration
+const planFeatures: Record<CreditPlan, string[]> = {
+  [CreditPlan.Starter]: [
+    'Real-time transcription',
+    'AI reply suggestions',
+    'Code assistance',
+    'Face swap feature',
+  ],
+  [CreditPlan.Pro]: [
+    'Real-time transcription',
+    'AI reply suggestions',
+    'Code assistance',
+    'Face swap feature',
+    'Priority support',
+  ],
+  [CreditPlan.Enterprise]: [
+    'Real-time transcription',
+    'AI reply suggestions',
+    'Code assistance',
+    'Face swap feature',
+    'Priority support',
+    'Dedicated account manager',
+  ],
+};
+
+const planNames: Record<CreditPlan, string> = {
+  [CreditPlan.Starter]: 'Starter',
+  [CreditPlan.Pro]: 'Pro',
+  [CreditPlan.Enterprise]: 'Enterprise',
+};
+
+const planDescriptions: Record<CreditPlan, string> = {
+  [CreditPlan.Starter]: 'Perfect for trying out the platform',
+  [CreditPlan.Pro]: 'Best value for serious job seekers',
+  [CreditPlan.Enterprise]: 'For heavy users and teams',
+};
 
 interface BuyCreditsTabProps {
   credits: number;
@@ -79,34 +118,84 @@ export default function BuyCreditsTab({ credits, onPaymentCreated }: BuyCreditsT
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-1">
-            {plans.map((plan) => (
-              <Card
-                key={plan.plan}
-                className={cn(
-                  'cursor-pointer transition-all hover:shadow-lg',
-                  selectedPlan?.plan === plan.plan && 'ring-2 ring-primary'
-                )}
-                onClick={() => handleSelectPlan(plan)}
-              >
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    {plan.credits.toLocaleString()} Credits
-                    {plan.popular && (
-                      <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">
-                        Popular
-                      </span>
-                    )}
-                  </CardTitle>
-                  <CardDescription>${plan.priceUsd} USD</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {plan.description && (
-                    <p className="text-sm text-muted-foreground">{plan.description}</p>
+          <div className="mx-auto grid gap-2 md:grid-cols-3 p-1">
+            {plans.map((plan) => {
+              const isPro = plan.plan === CreditPlan.Pro;
+              const minutes = Math.floor(plan.credits / CREDITS_PER_MINUTE);
+              const features = planFeatures[plan.plan] || [];
+              const planName = planNames[plan.plan] || plan.plan;
+              const planDescription = planDescriptions[plan.plan] || plan.description || '';
+
+              return (
+                <Card
+                  key={plan.plan}
+                  className={cn(
+                    'relative flex flex-col transition-shadow',
+                    isPro
+                      ? 'border-primary shadow-lg hover:shadow-xl'
+                      : 'shadow-sm hover:shadow-lg',
+                    selectedPlan?.plan === plan.plan && 'ring-2 ring-primary'
                   )}
-                </CardContent>
-              </Card>
-            ))}
+                >
+                  {isPro && (
+                    <div className="absolute -top-4 left-0 right-0 flex justify-center">
+                      <span className="rounded-full bg-primary px-4 py-1 text-sm font-semibold text-primary-foreground">
+                        Most Popular
+                      </span>
+                    </div>
+                  )}
+
+                  <CardHeader className={cn(isPro && 'pt-8')}>
+                    <CardTitle className="text-2xl">{planName}</CardTitle>
+                    <CardDescription>{planDescription}</CardDescription>
+                    <div className="mt-4">
+                      <span className="text-4xl font-bold">${plan.priceUsd}</span>
+                      <span className="text-muted-foreground">
+                        {' '}
+                        / {plan.credits.toLocaleString()} credits
+                      </span>
+                    </div>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      ~{minutes.toLocaleString()} minutes of AI assistance
+                    </p>
+                  </CardHeader>
+
+                  <CardContent className="flex-1 pt-0">
+                    <ul className="space-y-3">
+                      <li className="flex items-start">
+                        <Check className="mr-2 h-5 w-5 shrink-0 text-primary" />
+                        <span className="text-sm">
+                          {plan.credits.toLocaleString()} credits (~{minutes.toLocaleString()}{' '}
+                          minutes)
+                        </span>
+                      </li>
+                      {features.map((feature, idx) => (
+                        <li key={idx} className="flex items-start">
+                          <Check className="mr-2 h-5 w-5 shrink-0 text-primary" />
+                          <span className="text-sm">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <Button
+                      className={cn(
+                        'mt-6 w-full',
+                        isPro
+                          ? ''
+                          : 'border border-input bg-background hover:bg-accent hover:text-accent-foreground'
+                      )}
+                      variant={isPro ? 'default' : 'outline'}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSelectPlan(plan);
+                      }}
+                    >
+                      Buy
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
 
           {selectedPlan && (

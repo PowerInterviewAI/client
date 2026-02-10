@@ -66,7 +66,7 @@ export default function PaymentPage() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-hidden px-6 py-6 w-full max-w-3xl mx-auto">
+      <div className="flex-1 overflow-hidden px-6 py-6 w-full max-w-4xl mx-auto">
         <Tabs
           value={activeTab}
           onValueChange={(value) => setActiveTab(value as 'buy' | 'history' | 'status')}
