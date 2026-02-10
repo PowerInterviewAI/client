@@ -2,7 +2,7 @@
  * Buy Credits Tab Component
  */
 
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Check } from 'lucide-react';
 
 import { Loading } from '@/components/custom/loading';
@@ -68,11 +68,15 @@ export default function BuyCreditsTab({ credits, onPaymentCreated }: BuyCreditsT
   const [selectedPlan, setSelectedPlan] = useState<CreditPlanInfo | null>(null);
   const [selectedCurrency, setSelectedCurrency] = useState<string>('');
   const [creating, setCreating] = useState(false);
+  const paymentDetailsRef = useRef<HTMLDivElement>(null);
 
   const availableMinutes = Math.floor(credits / CREDITS_PER_MINUTE);
 
   const handleSelectPlan = useCallback((plan: CreditPlanInfo) => {
     setSelectedPlan(plan);
+    setTimeout(() => {
+      paymentDetailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
   }, []);
 
   const handleCreatePayment = useCallback(async () => {
@@ -179,7 +183,7 @@ export default function BuyCreditsTab({ credits, onPaymentCreated }: BuyCreditsT
 
                     <Button
                       className={cn(
-                        'mt-6 w-full',
+                        'mt-6 w-full cursor-pointer',
                         isPro
                           ? ''
                           : 'border border-input bg-background hover:bg-accent hover:text-accent-foreground'
@@ -199,7 +203,7 @@ export default function BuyCreditsTab({ credits, onPaymentCreated }: BuyCreditsT
           </div>
 
           {selectedPlan && (
-            <Card>
+            <Card ref={paymentDetailsRef}>
               <CardHeader>
                 <CardTitle>Payment Details</CardTitle>
                 <CardDescription>
