@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePayment } from '@/hooks/use-payment';
 import { cn } from '@/lib/utils';
 import type { PaymentStatusResponse } from '@/types/payment';
@@ -154,37 +155,54 @@ export default function PaymentStatusTab({ initialPaymentId = '' }: PaymentStatu
               paymentStatus.payment_status !== PaymentStatus.Failed &&
               paymentStatus.payment_status !== PaymentStatus.Expired && (
                 <>
-                  <div className="border-t pt-4 space-y-4">
-                    <div>
-                      <p className="text-sm font-medium mb-3">Payment Address</p>
-                      <div className="flex gap-6 items-start">
-                        {/* QR Code */}
-                        <div className="shrink-0">
+                  <div className="border-t pt-4">
+                    <p className="text-sm font-medium mb-3">Payment Methods</p>
+                    <Tabs defaultValue="qr" className="w-full">
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="qr">QR Code</TabsTrigger>
+                        <TabsTrigger value="address">Address</TabsTrigger>
+                      </TabsList>
+
+                      <TabsContent value="qr" className="mt-4">
+                        <div className="flex flex-col items-center space-y-3">
                           <div className="bg-white p-4 rounded-lg border">
-                            <QRCodeSVG value={getPaymentUri()} size={160} level="M" />
+                            <QRCodeSVG value={getPaymentUri()} size={200} level="M" />
                           </div>
-                          <p className="text-xs text-muted-foreground text-center mt-2">
-                            Scan with wallet app
+                          <p className="text-sm text-muted-foreground text-center">
+                            Scan with your wallet app
+                          </p>
+                          <p className="text-xs text-muted-foreground text-center">
+                            QR code includes address and amount ({paymentStatus.pay_amount}{' '}
+                            {paymentStatus.pay_currency.toUpperCase()})
                           </p>
                         </div>
+                      </TabsContent>
 
-                        {/* Address Text */}
-                        <div className="flex-1 space-y-2">
-                          <div className="flex gap-2 items-center">
-                            <code className="flex-1 bg-muted px-3 py-2 rounded text-sm break-all">
-                              {paymentStatus.pay_address}
-                            </code>
-                            <Button size="sm" variant="secondary" onClick={handleCopyAddress}>
-                              Copy
-                            </Button>
+                      <TabsContent value="address" className="mt-4">
+                        <div className="space-y-3">
+                          <div>
+                            <p className="text-sm font-medium mb-2">Payment Address</p>
+                            <div className="flex gap-2 items-center">
+                              <code className="flex-1 bg-muted px-3 py-2 rounded text-sm break-all">
+                                {paymentStatus.pay_address}
+                              </code>
+                              <Button size="sm" variant="secondary" onClick={handleCopyAddress}>
+                                Copy
+                              </Button>
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium mb-2">Amount to Send</p>
+                            <p className="text-lg font-semibold">
+                              {paymentStatus.pay_amount} {paymentStatus.pay_currency.toUpperCase()}
+                            </p>
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            QR code includes amount. Send exactly {paymentStatus.pay_amount}{' '}
-                            {paymentStatus.pay_currency.toUpperCase()} to this address.
+                            Send exactly this amount to the address above.
                           </p>
                         </div>
-                      </div>
-                    </div>
+                      </TabsContent>
+                    </Tabs>
                   </div>
                 </>
               )}
