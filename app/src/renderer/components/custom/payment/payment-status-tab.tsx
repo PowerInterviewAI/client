@@ -2,6 +2,7 @@
  * Payment Status Tab Component
  */
 
+import { QRCodeSVG } from 'qrcode.react';
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -54,6 +55,18 @@ export default function PaymentStatusTab({ initialPaymentId = '' }: PaymentStatu
       navigator.clipboard.writeText(paymentStatus.pay_address);
       toast.success('Payment address copied to clipboard');
     }
+  }, [paymentStatus]);
+
+  // Generate payment URI for wallet apps (includes amount)
+  const getPaymentUri = useCallback(() => {
+    if (!paymentStatus) return '';
+
+    const { pay_address, pay_amount, pay_currency } = paymentStatus;
+    const currency = pay_currency.toLowerCase();
+
+    // For most cryptocurrencies, the format is: currency:address?amount=value
+    // This is BIP21 for Bitcoin and similar standards for other cryptos
+    return `${currency}:${pay_address}?amount=${pay_amount}`;
   }, [paymentStatus]);
 
   // Auto-check if initialPaymentId changes
@@ -141,15 +154,36 @@ export default function PaymentStatusTab({ initialPaymentId = '' }: PaymentStatu
               paymentStatus.payment_status !== PaymentStatus.Failed &&
               paymentStatus.payment_status !== PaymentStatus.Expired && (
                 <>
-                  <div className="border-t pt-4">
-                    <p className="text-sm font-medium mb-2">Payment Address</p>
-                    <div className="flex gap-2 items-center">
-                      <code className="flex-1 bg-muted px-3 py-2 max-w-sm rounded text-sm break-all">
-                        {paymentStatus.pay_address}
-                      </code>
-                      <Button size="sm" variant="secondary" onClick={handleCopyAddress}>
-                        Copy
-                      </Button>
+                  <div className="border-t pt-4 space-y-4">
+                    <div>
+                      <p className="text-sm font-medium mb-3">Payment Address</p>
+                      <div className="flex gap-6 items-start">
+                        {/* QR Code */}
+                        <div className="shrink-0">
+                          <div className="bg-white p-4 rounded-lg border">
+                            <QRCodeSVG value={getPaymentUri()} size={160} level="M" />
+                          </div>
+                          <p className="text-xs text-muted-foreground text-center mt-2">
+                            Scan with wallet app
+                          </p>
+                        </div>
+
+                        {/* Address Text */}
+                        <div className="flex-1 space-y-2">
+                          <div className="flex gap-2 items-center">
+                            <code className="flex-1 bg-muted px-3 py-2 rounded text-sm break-all">
+                              {paymentStatus.pay_address}
+                            </code>
+                            <Button size="sm" variant="secondary" onClick={handleCopyAddress}>
+                              Copy
+                            </Button>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            QR code includes amount. Send exactly {paymentStatus.pay_amount}{' '}
+                            {paymentStatus.pay_currency.toUpperCase()} to this address.
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </>
