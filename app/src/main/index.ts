@@ -95,8 +95,14 @@ async function createWindow() {
   win.setMenuBarVisibility(false);
   win.setAutoHideMenuBar(true);
 
-  // Enable content protection to prevent screen capture/recording
-  win.setContentProtection(true);
+  // Enable content protection to prevent screen capture/recording (unless disabled via CLI)
+  const disableContentProtection = process.argv.includes('--disable-content-protection');
+  if (!disableContentProtection) {
+    console.log('Enabling content protection to prevent screen capture/recording');
+    win.setContentProtection(true);
+  } else {
+    console.log('Content protection is disabled via command line argument');
+  }
 
   // Set window reference for window controls
   setWindowReference(win);
