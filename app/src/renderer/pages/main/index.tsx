@@ -4,9 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import CodeSuggestionsPanel from '@/components/custom/code-suggestions-panel';
 import ConfigurationDialog from '@/components/custom/configuration-dialog';
 import ControlPanel from '@/components/custom/control-panel';
-import HotkeysPanel from '@/components/custom/hotkeys-panel';
-import Loading from '@/components/custom/loading';
+import { LoadingPage } from '@/components/custom/loading';
 import ReplySuggestionsPanel from '@/components/custom/reply-suggestions-panel';
+import StatusPanel from '@/components/custom/status-panel';
 import TranscriptPanel from '@/components/custom/transcript-panel';
 import { VideoPanel, type VideoPanelHandle } from '@/components/custom/video-panel';
 import { useAppState } from '@/hooks/use-app-state';
@@ -24,7 +24,7 @@ export default function MainPage() {
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { config, isLoading: configLoading, loadConfig } = useConfigStore();
-  const { setVideoPanelRef } = useAssistantService();
+  const { setVideoPanelRef, stopAssistant } = useAssistantService();
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const [replySuggestions, setReplySuggestions] = useState<ReplySuggestion[]>([]);
   const [codeSuggestions, setCodeSuggestions] = useState<CodeSuggestion[]>([]);
@@ -39,6 +39,19 @@ export default function MainPage() {
   useEffect(() => {
     setVideoPanelRef(videoPanelRef as React.RefObject<VideoPanelHandle>);
   }, [setVideoPanelRef]);
+
+  // Listen for hotkey to stop assistant
+  useEffect(() => {
+    if (!window?.electronAPI?.onHotkeyStopAssistant) return;
+
+    const cleanup = window.electronAPI.onHotkeyStopAssistant(() => {
+      stopAssistant().catch((err) => {
+        console.error('Failed to stop assistant from hotkey:', err);
+      });
+    });
+
+    return cleanup;
+  }, [stopAssistant]);
 
   // Load config on mount
   useEffect(() => {
@@ -59,30 +72,38 @@ export default function MainPage() {
   const computeAvailable = useCallback(() => {
     if (typeof window === 'undefined') return;
     const title = document.getElementById('titlebar')?.getBoundingClientRect().height || 0;
-    let hot = document.getElementById('hotkeys-panel')?.getBoundingClientRect().height || 0;
+    let status = document.getElementById('status-panel')?.getBoundingClientRect().height || 0;
     let control = document.getElementById('control-panel')?.getBoundingClientRect().height || 0;
     let video = document.getElementById('video-panel')?.getBoundingClientRect().height || 0;
     const extra = 12; // spacing/padding between elements
 
-    if (hot > 0) hot += 4; // account for border
+    if (status > 0) status += 4; // account for border
     if (control > 0) control += 4; // account for border
     if (video > 0) video += 4; // account for border
 
     setTranscriptHeight(
-      Math.max(100, window.innerHeight - (title + hot + control + video + extra))
+      Math.max(100, window.innerHeight - (title + status + control + video + extra))
     );
     if (suggestionPanelCount > 0) {
       setSuggestionHeight(
         Math.max(
           100,
-          window.innerHeight - (title + hot + control + extra) - (suggestionPanelCount - 1) * 4
+          window.innerHeight - (title + status + control + extra) - (suggestionPanelCount - 1) * 4
         ) / suggestionPanelCount
       );
     } else {
       setSuggestionHeight(0);
     }
   }, [suggestionPanelCount]);
+
   const isStealth = useIsStealthMode();
+
+  // Compute available space when page is navigated to
+  useEffect(() => {
+    setTimeout(() => {
+      computeAvailable();
+    }, 0);
+  }, [computeAvailable]);
 
   // compute panel height by subtracting hotkeys/control/video heights from viewport
   // placed here so hooks order is stable across renders (avoids conditional-hook errors)
@@ -167,28 +188,26 @@ export default function MainPage() {
 
   // Show loading if not logged in (fallback)
   if (appState?.isLoggedIn === false) {
-    return <Loading disclaimer="Redirecting to login…" />;
+    return <LoadingPage disclaimer="Redirecting to login…" />;
   }
 
   // Show loading if auth status is unknown
   if (appState?.isLoggedIn === null) {
-    return <Loading disclaimer="Checking authentication status…" />;
+    return <LoadingPage disclaimer="Checking authentication status…" />;
   }
 
   // Show loading if config or app state is not loaded yet
   if (configLoading || !appState || (appState && !appState.isBackendLive)) {
-    return <Loading disclaimer="Loading…" />;
+    return <LoadingPage disclaimer="Loading…" />;
   }
 
   if (appState?.isGpuServerLive === false) {
     // Show loading if GPU server is not live
-    return <Loading disclaimer="Initializing AI resources… This may take several minutes" />;
+    return <LoadingPage disclaimer="Initializing AI resources… This may take several minutes" />;
   }
 
   return (
     <div className="flex-1 flex flex-col w-full bg-background p-1 space-y-1">
-      {isStealth && <HotkeysPanel runningState={appState?.runningState ?? RunningState.Idle} />}
-
       <div className="flex-1 flex overflow-y-hidden gap-1">
         {/* Left Column: Video + Transcription */}
         <div
@@ -200,6 +219,7 @@ export default function MainPage() {
             <VideoPanel
               ref={videoPanelRef}
               runningState={appState?.runningState ?? RunningState.Idle}
+              credits={appState?.credits ?? 0}
             />
           </div>
 
@@ -227,6 +247,13 @@ export default function MainPage() {
         onProfileClick={() => setIsProfileOpen(true)}
         onSignOut={handleSignOut}
       />
+
+      {isStealth && (
+        <StatusPanel
+          runningState={appState?.runningState ?? RunningState.Idle}
+          credits={appState?.credits ?? 0}
+        />
+      )}
 
       <ConfigurationDialog isOpen={isProfileOpen} onOpenChange={setIsProfileOpen} />
     </div>

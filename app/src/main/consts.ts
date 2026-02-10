@@ -2,7 +2,7 @@ import { EnvUtil } from './utils/env.js';
 
 export const BACKEND_BASE_URL = EnvUtil.isDev()
   ? 'http://localhost:8000'
-  : 'https://power-interview-backend.onrender.com';
+  : 'http://5.181.0.143:8080';
 
 export const TRANSCRIPT_SELF_ZMQ_PORT = 50002;
 export const TRANSCRIPT_OTHER_ZMQ_PORT = 50003;

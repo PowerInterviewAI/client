@@ -7,7 +7,7 @@ import { HealthCheckApi } from '../api/health-check.js';
 import { safeSleep } from '../utils/sleep.js';
 import { appStateService } from './app-state.service.js';
 
-const SUCCESS_INTERVAL = 60 * 1000; // 1 minute
+const SUCCESS_INTERVAL = 5 * 1000; // 5 seconds
 const FAILURE_INTERVAL = 1 * 1000; // 1 second
 
 export class HealthCheckService {
@@ -82,7 +82,8 @@ export class HealthCheckService {
         let nextInterval = SUCCESS_INTERVAL;
 
         try {
-          await this.client.pingClient();
+          const pingResponse = await this.client.pingClient();
+          appStateService.updateState({ credits: pingResponse.data?.credits ?? 0 });
         } catch (error) {
           console.error('[HealthCheckService] Client ping error:', error);
           nextInterval = FAILURE_INTERVAL;

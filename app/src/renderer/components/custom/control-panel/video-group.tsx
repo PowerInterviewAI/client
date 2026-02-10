@@ -20,6 +20,8 @@ import { useVideoDevices } from '@/hooks/use-video-devices';
 import { RunningState } from '@/types/app-state';
 import { type AudioDevice } from '@/types/audio-device';
 
+import ExternalLink from '../external-link';
+
 interface VideoGroupProps {
   videoDeviceNotFound: boolean;
   audioOutputDevices: AudioDevice[];
@@ -31,12 +33,13 @@ export function VideoGroup({
   audioOutputDevices,
   getDisabled,
 }: VideoGroupProps) {
-  const { runningState } = useAppState();
+  const { runningState, appState } = useAppState();
   const { config, updateConfig } = useConfigStore();
   const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
   const previewStreamRef = useRef<MediaStream | null>(null);
   const videoDevices = useVideoDevices();
+  const lowCredits = (appState?.credits ?? 0) <= 0;
 
   const OBS_CAMERA_PREFIX = 'OBS Virtual';
   const obsCameraExists =
@@ -59,6 +62,13 @@ export function VideoGroup({
       toast.error('VB-Audio Virtual Cable not found — disabling Face Swap');
     }
   }, [obsCameraExists, vbInputExists, config?.faceSwap, updateConfig]);
+
+  useEffect(() => {
+    if (lowCredits && config?.faceSwap) {
+      updateConfig({ faceSwap: false });
+      toast.error('Credits depleted — disabling Face Swap');
+    }
+  }, [lowCredits, config?.faceSwap, updateConfig]);
 
   const usableVideoDevices = videoDevices.filter((d) => {
     if (d.label.toLowerCase().startsWith(OBS_CAMERA_PREFIX.toLowerCase())) return false;
@@ -162,7 +172,8 @@ export function VideoGroup({
               className="h-8 w-8 border-none rounded-none"
               disabled={
                 getDisabled(runningState) ||
-                ((!obsCameraExists || !vbInputExists) && !config?.faceSwap)
+                ((!obsCameraExists || !vbInputExists) && !config?.faceSwap) ||
+                (appState?.credits ?? 0) <= 0
               }
               onClick={() => {
                 const tryingToEnable = !config?.faceSwap;
@@ -203,6 +214,15 @@ export function VideoGroup({
 
           <DialogContent className="flex flex-col w-72 p-4 gap-4">
             <DialogTitle>Face Swap Options</DialogTitle>
+            {lowCredits && (
+              <div className="text-sm text-destructive">
+                Credits depleted.
+                <br />
+                Face Swap feature is disabled.
+                <br />
+                Please recharge credits to enable Face Swap.
+              </div>
+            )}
 
             {!obsCameraExists && (
               <div className="text-sm text-destructive">
@@ -212,7 +232,9 @@ export function VideoGroup({
                 <br />
                 Download and install OBS studio from
                 <br />
-                <span className="underline">https://obsproject.com/download</span>
+                <ExternalLink href="https://obsproject.com/download" className="underline">
+                  https://obsproject.com/download
+                </ExternalLink>
                 <br />
                 and then restart this application.
               </div>
@@ -225,7 +247,9 @@ export function VideoGroup({
                 <br />
                 Download and install VBCABLE Driver from
                 <br />
-                <span className="underline">https://vb-audio.com/Cable/</span>
+                <ExternalLink href="https://vb-audio.com/Cable/" className="underline">
+                  https://vb-audio.com/Cable/
+                </ExternalLink>
               </div>
             )}
 
@@ -274,7 +298,7 @@ export function VideoGroup({
                       <SelectValue placeholder="Select resolution" />
                     </SelectTrigger>
                     <SelectContent>
-                      {['640x360', '640x480', '1280x720', '1920x1080'].map((res) => (
+                      {['640x360', '640x480', '1280x720'].map((res) => (
                         <SelectItem key={res} value={res}>
                           {res}
                         </SelectItem>

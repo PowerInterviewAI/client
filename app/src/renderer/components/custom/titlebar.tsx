@@ -3,7 +3,10 @@ import { useState } from 'react';
 import faviconSvg from '/favicon.svg';
 import DocumentationDialog from '@/components/custom/documentation-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useAppState } from '@/hooks/use-app-state';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
+import { CREDITS_PER_MINUTE } from '@/lib/consts';
+import { cn, getElectron } from '@/lib/utils';
 
 export default function Titlebar() {
   const isStealth = useIsStealthMode();
@@ -15,12 +18,23 @@ export default function Titlebar() {
 
   const [isDocsOpen, setIsDocsOpen] = useState(false);
   const handleToggleStealth = () => {
-    // Prefer delegating to main process window-controls via preload
-    if (typeof window !== 'undefined' && window?.electronAPI?.toggleStealth) {
-      window.electronAPI.toggleStealth();
-      return;
+    const electron = getElectron();
+    if (electron) {
+      electron.toggleStealth();
+    } else {
+      console.warn('Electron API not available for toggling stealth mode');
     }
   };
+
+  const { appState } = useAppState();
+  const remainingCredits = appState?.credits ?? 0;
+  const availableMinutes = Math.floor(remainingCredits / CREDITS_PER_MINUTE);
+  const availableTime =
+    availableMinutes <= 0
+      ? remainingCredits > 0
+        ? 'Available for less than 1 min'
+        : 'No credits left'
+      : `Available for ${availableMinutes} min${availableMinutes > 1 ? 's' : ''}`;
 
   if (isStealth) return null;
 
@@ -49,54 +63,72 @@ export default function Titlebar() {
           // eslint-disable-next-line
           style={{ WebkitAppRegion: 'no-drag' } as any}
         >
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={() => setIsDocsOpen(true)}
-                aria-label="Documentation"
-                className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
+          {appState?.isLoggedIn ? (
+            <>
+              <div
+                className={cn(
+                  'text-xs font-bold mr-2',
+                  availableMinutes >= 5
+                    ? 'text-muted-foreground'
+                    : availableMinutes >= 1
+                      ? 'text-yellow-600 animate-pulse'
+                      : 'text-destructive animate-pulse'
+                )}
                 // eslint-disable-next-line
-                style={{ WebkitAppRegion: 'no-drag' } as any}
+                style={{ WebkitAppRegion: 'drag' } as any}
               >
-                ?
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Documentation</p>
-            </TooltipContent>
-          </Tooltip>
+                Credits: {appState?.credits} ({availableTime})
+              </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setIsDocsOpen(true)}
+                    aria-label="Documentation"
+                    className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
+                    // eslint-disable-next-line
+                    style={{ WebkitAppRegion: 'no-drag' } as any}
+                  >
+                    <span className="font-medium text-muted-foreground mb-px">?</span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Documentation</p>
+                </TooltipContent>
+              </Tooltip>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={handleToggleStealth}
-                aria-label="Toggle stealth mode"
-                title="Toggle stealth mode"
-                className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
-                // eslint-disable-next-line
-                style={{ WebkitAppRegion: 'no-drag' } as any}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <circle cx="12" cy="12" r="3" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Toggle stealth</p>
-            </TooltipContent>
-          </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={handleToggleStealth}
+                    aria-label="Toggle stealth mode"
+                    title="Toggle stealth mode"
+                    className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
+                    // eslint-disable-next-line
+                    style={{ WebkitAppRegion: 'no-drag' } as any}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <circle cx="12" cy="12" r="3" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Toggle stealth</p>
+                </TooltipContent>
+              </Tooltip>
+            </>
+          ) : null}
 
           {/* Maximize button removed by request */}
           <Tooltip>

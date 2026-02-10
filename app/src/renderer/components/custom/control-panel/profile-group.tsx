@@ -1,5 +1,6 @@
-import { ChevronUp, Key, LogOut, Moon, SettingsIcon, Sun } from 'lucide-react';
+import { ChevronUp, CreditCard, Key, LogOut, Moon, SettingsIcon, Sun } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
 
 import DocumentationDialog from '@/components/custom/documentation-dialog';
 import { Button } from '@/components/ui/button';
@@ -31,6 +32,7 @@ export function ProfileGroup({
   onSignOut,
   getDisabled,
 }: ProfileGroupProps) {
+  const navigate = useNavigate();
   const { runningState } = useAppState();
   const { isDark, toggleTheme } = useThemeStore();
   const { changePassword, loading, error, setError } = useAuth();
@@ -89,10 +91,6 @@ export function ProfileGroup({
             <SettingsIcon className="mr-2 h-4 w-4" />
             Configuration
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => !disabled && toggleTheme()}>
-            {isDark ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
-            {isDark ? 'Light mode' : 'Dark mode'}
-          </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
               if (disabled) return;
@@ -102,6 +100,15 @@ export function ProfileGroup({
           >
             <Key className="mr-2 h-4 w-4" />
             Change password
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigate('/payment')} disabled={disabled}>
+            <CreditCard className="mr-2 h-4 w-4" />
+            Payment
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => !disabled && toggleTheme()}>
+            {isDark ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+            {isDark ? 'Light mode' : 'Dark mode'}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => !disabled && onSignOut()} disabled={disabled}>

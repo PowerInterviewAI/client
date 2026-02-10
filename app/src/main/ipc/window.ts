@@ -4,6 +4,8 @@
 
 import { BrowserWindow, ipcMain } from 'electron';
 
+import { appStateService } from '../services/app-state.service.js';
+import { pushNotificationService } from '../services/push-notification.service.js';
 import * as windowControls from '../services/window-control.service.js';
 import { setWindowBounds } from '../services/window-control.service.js';
 
@@ -18,6 +20,16 @@ export function registerWindowHandlers(win: BrowserWindow): void {
   // Set stealth mode
   ipcMain.on('set-stealth', (_event, isStealth: boolean) => {
     try {
+      // Check if user is logged in
+      if (!appStateService.getState().isLoggedIn) {
+        pushNotificationService.pushNotification({
+          message: 'You must be logged in to use stealth mode.',
+          type: 'error',
+        });
+        console.log('⚠️ Stealth mode requires authentication');
+        return;
+      }
+
       if (isStealth) {
         windowControls.enableStealth();
       } else {

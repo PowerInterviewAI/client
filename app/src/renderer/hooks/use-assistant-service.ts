@@ -77,8 +77,8 @@ export const useAssistantService = create<AssistantService>((set, get) => ({
       // Stop WebRTC if face swap is enabled
       if (config?.faceSwap && videoPanelRef?.current) {
         videoPanelRef.current.stopWebRTC();
-        await electron.webRtc.stopAgents();
       }
+      await electron.webRtc.stopAgents();
 
       // Stop assistant services
       await Promise.all([
@@ -88,6 +88,8 @@ export const useAssistantService = create<AssistantService>((set, get) => ({
       ]);
 
       electron.appState.update({ runningState: RunningState.Idle });
+
+      electron.setStealth(false); // Ensure stealth mode is turned off when stopping assistant
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to stop assistant';
       set({

@@ -13,6 +13,13 @@ const electronApi = {
     return () => ipcRenderer.removeListener('hotkey-scroll', handler);
   },
 
+  // Hotkey stop assistant event
+  onHotkeyStopAssistant: (callback: () => void) => {
+    const handler = () => callback();
+    ipcRenderer.on('hotkey-stop-assistant', handler);
+    return () => ipcRenderer.removeListener('hotkey-stop-assistant', handler);
+  },
+
   // Configuration management
   config: {
     get: () => ipcRenderer.invoke('config:get'),
@@ -27,6 +34,16 @@ const electronApi = {
     logout: () => ipcRenderer.invoke('auth:logout'),
     changePassword: (currentPassword: string, newPassword: string) =>
       ipcRenderer.invoke('auth:change-password', currentPassword, newPassword),
+  },
+
+  // Payment management
+  payment: {
+    getPlans: () => ipcRenderer.invoke('payment:get-plans'),
+    getCurrencies: () => ipcRenderer.invoke('payment:get-currencies'),
+    create: (data: any) => ipcRenderer.invoke('payment:create', data),
+    getStatus: (paymentId: string) => ipcRenderer.invoke('payment:get-status', paymentId),
+    getHistory: () => ipcRenderer.invoke('payment:get-history'),
+    getCredits: () => ipcRenderer.invoke('payment:get-credits'),
   },
 
   // App state management
@@ -98,6 +115,9 @@ const electronApi = {
 
   // Window controls
   close: () => ipcRenderer.send('window-close'),
+
+  // Open external URLs in the default browser
+  openExternal: (url: string) => ipcRenderer.invoke('open-external', url),
 
   // Edge resize support
   resizeWindowDelta: (dx: number, dy: number, edge: string) =>

@@ -6,7 +6,7 @@ type LoadingProps = {
   disclaimer: string;
 };
 
-export default function Loading({ disclaimer }: LoadingProps) {
+export function LoadingPage({ disclaimer }: LoadingProps) {
   const title = 'Power Interview';
 
   return (
@@ -19,6 +19,15 @@ export default function Loading({ disclaimer }: LoadingProps) {
         <p className="animate-pulse text-sm mt-4">{disclaimer}</p>
         <Loader className="w-4 h-4 animate-spin" />
       </div>
+    </div>
+  );
+}
+
+export function Loading({ disclaimer }: LoadingProps) {
+  return (
+    <div className="flex flex-col items-center">
+      <p className="animate-pulse text-sm mt-4">{disclaimer}</p>
+      <Loader className="w-4 h-4 animate-spin" />
     </div>
   );
 }

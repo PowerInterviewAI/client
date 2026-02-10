@@ -9,6 +9,7 @@ import { RunningState } from '@/types/app-state';
 
 interface VideoPanelProps {
   runningState: RunningState;
+  credits: number;
   // Optional: streaming fps for websocket
   fps?: number;
   jpegQuality?: number; // 0.0 - 1.0
@@ -20,7 +21,7 @@ export interface VideoPanelHandle {
 }
 
 export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
-  ({ runningState, fps = 30, jpegQuality = 0.8 }, ref) => {
+  ({ runningState, credits, fps = 30, jpegQuality = 0.8 }, ref) => {
     const { config } = useConfigStore();
     const videoDevices = useVideoDevices();
 
@@ -449,6 +450,16 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
     useEffect(() => {
       return () => stopWebRTC();
     }, []);
+
+    // Close WebRTC and pause video when credits reach 0
+    useEffect(() => {
+      if (credits === 0 && runningState === RunningState.Running) {
+        console.log('Credits depleted, stopping WebRTC');
+        stopWebRTC();
+        setVideoMessage('Out of credits');
+        toast.warning('Out of credits - video paused');
+      }
+    }, [credits, runningState]);
 
     // ⚡ Expose functions to parent via ref
     useImperativeHandle(ref, () => ({

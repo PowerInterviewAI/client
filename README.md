@@ -70,8 +70,9 @@ Also, you will not lose focus on active tabs or windows during interviews, as th
 
 Operate discreetly during interviews:
 
-- **Stealth Mode** (`Ctrl+Shift+Q`): Toggle stealth mode
-- **Opacity Control** (`Ctrl+Shift+D`): Toggle window opacity for discreet viewing in stealth mode
+- **Stop Assistant** (`Ctrl+Shift+Q`): Stop the assistant
+- **Stealth Mode** (`Ctrl+Shift+M`): Toggle stealth mode
+- **Opacity Control** (`Ctrl+Shift+N`): Toggle window opacity for discreet viewing in stealth mode
 - **Window Positioning** (`Ctrl+Shift+1-9`): Quick window placement (numpad layout)
 - **Scroll Controls**:
   - `Ctrl+Shift+J/K`: Scroll interview suggestions
@@ -80,7 +81,7 @@ Operate discreetly during interviews:
   - `Ctrl+Alt+Shift+Arrow`: Move window
   - `Ctrl+Win+Shift+Arrow`: Resize window
 - **Code Suggestion Controls**:
-  - `Ctrl+Alt+Shift+S`: Take screenshot for code suggestions
+  - `Ctrl+Alt+Shift+P`: Take screenshot for code suggestions
   - `Ctrl+Alt+Shift+Enter`: Submit screenshots
   - `Ctrl+Alt+Shift+X`: Clear screenshots
 

@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 
 import logoSvg from '/logo.svg';
-import Loading from '@/components/custom/loading';
+import { LoadingPage } from '@/components/custom/loading';
 import { useAppState } from '@/hooks/use-app-state';
 
 export default function AuthLayout() {
@@ -43,6 +43,6 @@ export default function AuthLayout() {
       </div>
     );
   } else {
-    return <Loading disclaimer="Loading…" />;
+    return <LoadingPage disclaimer="Loading…" />;
   }
 }

@@ -37,7 +37,7 @@ export default function DocumentationDialog({ open, onOpenChange }: Documentatio
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl w-full max-h-[80vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>About Power Interview {version ? `v${version}` : ''}</DialogTitle>
+          <DialogTitle>Power Interview {version ? `v${version}` : ''}</DialogTitle>
           <DialogDescription>
             <p>
               Power Interview is an AI-powered tool designed to assist with technical interviews by

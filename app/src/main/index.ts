@@ -12,6 +12,8 @@ import { registerAuthHandlers } from './ipc/auth.js';
 import { registerAutoUpdaterHandlers } from './ipc/auto-updater.js';
 import { registerCodeSuggestionHandlers } from './ipc/code-suggestion.js';
 import { registerConfigHandlers } from './ipc/config.js';
+import { registerExternalHandlers } from './ipc/external.js';
+import { registerPaymentHandlers } from './ipc/payment.js';
 import { registerReplySuggestionHandlers } from './ipc/reply-suggestion.js';
 import { registerToolsHandlers } from './ipc/tools.js';
 import { registerTranscriptHandlers } from './ipc/transcript.js';
@@ -93,8 +95,14 @@ async function createWindow() {
   win.setMenuBarVisibility(false);
   win.setAutoHideMenuBar(true);
 
-  // Enable content protection to prevent screen capture/recording
-  win.setContentProtection(true);
+  // Enable content protection to prevent screen capture/recording (unless disabled via CLI)
+  const disableContentProtection = process.argv.includes('--disable-content-protection');
+  if (!disableContentProtection) {
+    console.log('Enabling content protection to prevent screen capture/recording');
+    win.setContentProtection(true);
+  } else {
+    console.log('Content protection is disabled via command line argument');
+  }
 
   // Set window reference for window controls
   setWindowReference(win);
@@ -128,12 +136,14 @@ app.whenReady().then(async () => {
   registerConfigHandlers();
   registerAppStateHandlers();
   registerAuthHandlers();
+  registerPaymentHandlers();
   registerTranscriptHandlers();
   registerReplySuggestionHandlers();
   registerCodeSuggestionHandlers();
   registerWebRTCHandlers();
   registerToolsHandlers();
   registerAutoUpdaterHandlers();
+  registerExternalHandlers();
 
   // Create window
   await createWindow();

@@ -5,6 +5,7 @@ import LoginPage from './pages/auth/login';
 import SignupPage from './pages/auth/signup';
 import IndexPage from './pages/index';
 import MainPage from './pages/main/index';
+import PaymentPage from './pages/payment';
 
 export const router = createHashRouter([
   {
@@ -28,5 +29,9 @@ export const router = createHashRouter([
         element: <SignupPage />,
       },
     ],
+  },
+  {
+    path: '/payment',
+    element: <PaymentPage />,
   },
 ]);

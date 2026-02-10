@@ -1,6 +1,7 @@
 import { BrowserWindow, screen } from 'electron';
 
 import { configStore } from '../store/config.store.js';
+import { appStateService } from './app-state.service.js';
 import { pushNotificationService } from './push-notification.service.js';
 
 // Global reference to the main window
@@ -56,7 +57,7 @@ export function setWindowBounds(bounds: WindowBounds): void {
   if (!win || win.isDestroyed()) return;
 
   try {
-    const MIN_WIDTH = 1024;
+    const MIN_WIDTH = 960;
     const MIN_HEIGHT = 640;
 
     // Fill missing values from current bounds
@@ -318,6 +319,16 @@ export function disableStealth(): void {
  * Toggle stealth mode on/off
  */
 export function toggleStealth(): void {
+  // Check if user is logged in
+  if (!appStateService.getState().isLoggedIn) {
+    pushNotificationService.pushNotification({
+      message: 'You must be logged in to use stealth mode.',
+      type: 'error',
+    });
+    console.log('⚠️ Stealth mode requires authentication');
+    return;
+  }
+
   if (_stealth) {
     disableStealth();
   } else {

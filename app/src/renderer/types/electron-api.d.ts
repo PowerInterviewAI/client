@@ -1,5 +1,13 @@
 import type { AppState } from './app-state';
 import type { Config } from './config';
+import type {
+  AvailableCurrency,
+  CreatePaymentRequest,
+  CreatePaymentResponse,
+  CreditPlanInfo,
+  PaymentHistory,
+  PaymentStatusResponse,
+} from './payment';
 import type { PushNotification } from './push-notification';
 
 export {};
@@ -8,6 +16,9 @@ declare global {
   interface ElectronAPI {
     // Hotkey scroll events
     onHotkeyScroll: (callback: (section: string, direction: 'up' | 'down') => void) => () => void;
+
+    // Hotkey stop assistant event
+    onHotkeyStopAssistant: (callback: () => void) => () => void;
 
     // Configuration management
     config: {
@@ -28,6 +39,24 @@ declare global {
         oldPassword: string,
         newPassword: string
       ) => Promise<{ success: boolean; error?: string }>;
+    };
+
+    // Payment management
+    payment: {
+      getPlans: () => Promise<{ success: boolean; data?: CreditPlanInfo[]; error?: string }>;
+      getCurrencies: () => Promise<{
+        success: boolean;
+        data?: AvailableCurrency[];
+        error?: string;
+      }>;
+      create: (
+        data: CreatePaymentRequest
+      ) => Promise<{ success: boolean; data?: CreatePaymentResponse; error?: string }>;
+      getStatus: (
+        paymentId: string
+      ) => Promise<{ success: boolean; data?: PaymentStatusResponse; error?: string }>;
+      getHistory: () => Promise<{ success: boolean; data?: PaymentHistory[]; error?: string }>;
+      getCredits: () => Promise<{ success: boolean; credits?: number; error?: string }>;
     };
 
     // App state management
@@ -104,6 +133,9 @@ declare global {
 
     // Window controls
     close: () => void;
+
+    // Open external URL in user's default browser
+    openExternal: (url: string) => Promise<{ success: boolean; error?: string }>;
 
     // Edge resize support
     resizeWindowDelta: (dx: number, dy: number, edge: string) => void;
