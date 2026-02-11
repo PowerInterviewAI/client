@@ -1,3 +1,4 @@
+import { DialogDescription } from '@radix-ui/react-dialog';
 import { Ellipsis, UserLock } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -212,7 +213,7 @@ export function VideoGroup({
             </TooltipContent>
           </Tooltip>
 
-          <DialogContent className="flex flex-col w-72 p-4 gap-4">
+          <DialogContent className="flex flex-col w-xl p-4 gap-4">
             <DialogTitle>Face Swap Options</DialogTitle>
             {lowCredits === true && (
               <div className="text-sm text-destructive">
@@ -255,84 +256,112 @@ export function VideoGroup({
 
             {obsCameraExists && vbInputExists && (
               <>
+                <DialogDescription className="text-sm text-muted-foreground">
+                  <span className="font-medium">IMPORTANT:</span> During video calls, make sure to
+                  select{' '}
+                  <ul className="list-disc ml-5">
+                    <li>
+                      <span className="font-medium italic">OBS Virtual Camera</span> as video input
+                      device
+                    </li>
+                    <li>
+                      <span className="font-medium italic">
+                        CABLE Output (VB-Audio Virtual Cable)
+                      </span>{' '}
+                      as voice input device
+                    </li>
+                  </ul>
+                  in the meeting platform (e.g. Zoom, Teams or Google Meet).
+                  <br />
+                  <span className="italic mt-1 block">
+                    Do not select your physical camera or microphone.
+                  </span>
+                </DialogDescription>
+
                 {/* Camera Preview */}
                 <video
                   ref={videoPreviewRef}
                   autoPlay
                   muted
                   playsInline
-                  className="w-full h-32 bg-black rounded-md object-contain"
+                  className="w-72 h-32 mx-auto bg-black rounded-md object-contain"
                 />
 
-                {/* Camera Device Select */}
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Camera Device</label>
-                  <Select
-                    value={`${config?.cameraDeviceName}`}
-                    onValueChange={(v) => updateConfig({ cameraDeviceName: v })}
-                  >
-                    <SelectTrigger className="h-8 w-full text-xs">
-                      <SelectValue placeholder="Select camera" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {usableVideoDevices.map((device) => (
-                        <SelectItem key={device.label} value={device.label}>
-                          {device.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Camera Device Select */}
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">
+                      Camera Device
+                    </label>
+                    <Select
+                      value={`${config?.cameraDeviceName}`}
+                      onValueChange={(v) => updateConfig({ cameraDeviceName: v })}
+                    >
+                      <SelectTrigger className="h-8 w-full text-xs">
+                        <SelectValue placeholder="Select camera" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {usableVideoDevices.map((device) => (
+                          <SelectItem key={device.label} value={device.label}>
+                            {device.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                {/* Resolution Select */}
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Resolution</label>
-                  <Select
-                    value={`${config?.videoWidth}x${config?.videoHeight}`}
-                    onValueChange={(v) => {
-                      const [w, h] = v.split('x').map(Number);
-                      updateConfig({ videoWidth: w, videoHeight: h });
-                    }}
-                  >
-                    <SelectTrigger className="h-8 w-full text-xs">
-                      <SelectValue placeholder="Select resolution" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {['640x360', '640x480', '1280x720'].map((res) => (
-                        <SelectItem key={res} value={res}>
-                          {res}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                  {/* Resolution Select */}
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Resolution</label>
+                    <Select
+                      value={`${config?.videoWidth}x${config?.videoHeight}`}
+                      onValueChange={(v) => {
+                        const [w, h] = v.split('x').map(Number);
+                        updateConfig({ videoWidth: w, videoHeight: h });
+                      }}
+                    >
+                      <SelectTrigger className="h-8 w-full text-xs">
+                        <SelectValue placeholder="Select resolution" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {['640x360', '640x480', '1280x720'].map((res) => (
+                          <SelectItem key={res} value={res}>
+                            {res}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                {/* Face Enhance Toggle */}
-                <div className="flex items-center justify-between">
-                  <span className="text-xs">Face Enhance</span>
-                  <Button
-                    variant={config?.enableFaceEnhance ? 'default' : 'outline'}
-                    size="sm"
-                    className="w-16"
-                    onClick={() => updateConfig({ enableFaceEnhance: !config?.enableFaceEnhance })}
-                  >
-                    {config?.enableFaceEnhance ? 'On' : 'Off'}
-                  </Button>
-                </div>
+                  {/* Audio Delay */}
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">
+                      Audio Sync Delay (ms)
+                    </label>
+                    <Input
+                      type="number"
+                      value={config?.audioDelayMs ?? ''}
+                      onChange={(e) => updateConfig({ audioDelayMs: Number(e.target.value) || 0 })}
+                      className="w-full h-8 px-2 text-xs border rounded-md bg-background"
+                      min={0}
+                      step={10}
+                    />
+                  </div>
 
-                {/* Audio Delay */}
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">
-                    Audio Sync Delay (ms)
-                  </label>
-                  <Input
-                    type="number"
-                    value={config?.audioDelayMs ?? ''}
-                    onChange={(e) => updateConfig({ audioDelayMs: Number(e.target.value) || 0 })}
-                    className="w-full h-8 px-2 text-xs border rounded-md bg-background"
-                    min={0}
-                    step={10}
-                  />
+                  {/* Face Enhance Toggle */}
+                  <div className="flex items-center justify-between mt-4">
+                    <span className="text-sm">Face Enhance</span>
+                    <Button
+                      variant={config?.enableFaceEnhance ? 'default' : 'outline'}
+                      size="sm"
+                      className="w-16"
+                      onClick={() =>
+                        updateConfig({ enableFaceEnhance: !config?.enableFaceEnhance })
+                      }
+                    >
+                      {config?.enableFaceEnhance ? 'On' : 'Off'}
+                    </Button>
+                  </div>
                 </div>
               </>
             )}
