@@ -1,3 +1,4 @@
+import { Moon, Sun } from 'lucide-react';
 import { useState } from 'react';
 
 import faviconSvg from '/favicon.svg';
@@ -5,11 +6,14 @@ import DocumentationDialog from '@/components/custom/documentation-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAppState } from '@/hooks/use-app-state';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
+import { useThemeStore } from '@/hooks/use-theme-store';
 import { CREDITS_PER_MINUTE } from '@/lib/consts';
 import { cn, getElectron } from '@/lib/utils';
 
 export default function Titlebar() {
   const isStealth = useIsStealthMode();
+
+  const { isDark, toggleTheme } = useThemeStore();
 
   const handleClose = () => {
     const api = window.electronAPI;
@@ -79,22 +83,6 @@ export default function Titlebar() {
               >
                 Credits: {appState?.credits} ({availableTime})
               </div>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => setIsDocsOpen(true)}
-                    aria-label="Documentation"
-                    className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
-                    // eslint-disable-next-line
-                    style={{ WebkitAppRegion: 'no-drag' } as any}
-                  >
-                    <span className="font-medium text-muted-foreground mb-px">?</span>
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Documentation</p>
-                </TooltipContent>
-              </Tooltip>
 
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -130,7 +118,40 @@ export default function Titlebar() {
             </>
           ) : null}
 
-          {/* Maximize button removed by request */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => toggleTheme()}
+                aria-label="Toggle theme"
+                className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
+                // eslint-disable-next-line
+                style={{ WebkitAppRegion: 'no-drag' } as any}
+              >
+                {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Toggle theme</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => setIsDocsOpen(true)}
+                aria-label="Documentation"
+                className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
+                // eslint-disable-next-line
+                style={{ WebkitAppRegion: 'no-drag' } as any}
+              >
+                <span className="font-medium text-muted-foreground mb-px">?</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Documentation</p>
+            </TooltipContent>
+          </Tooltip>
+
           <Tooltip>
             <TooltipTrigger asChild>
               <button
