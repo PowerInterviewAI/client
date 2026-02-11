@@ -67,7 +67,7 @@ export default function Titlebar() {
           // eslint-disable-next-line
           style={{ WebkitAppRegion: 'no-drag' } as any}
         >
-          {appState?.isLoggedIn && (
+          {appState?.isLoggedIn && appState?.credits !== undefined && (
             <div
               className={cn(
                 'text-xs font-bold mr-2',
@@ -80,7 +80,7 @@ export default function Titlebar() {
               // eslint-disable-next-line
               style={{ WebkitAppRegion: 'drag' } as any}
             >
-              {appState?.credits.toLocaleString()} credits ({availableTime})
+              {appState?.credits?.toLocaleString()} credits ({availableTime})
             </div>
           )}
 
