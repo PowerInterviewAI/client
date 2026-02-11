@@ -207,8 +207,9 @@ export default function BuyCreditsTab({ credits, onPaymentCreated }: BuyCreditsT
               <CardHeader>
                 <CardTitle>Payment Details</CardTitle>
                 <CardDescription>
-                  Complete your purchase of {selectedPlan.credits.toLocaleString()} credits for $
-                  {selectedPlan.priceUsd} USD
+                  Complete your purchase of{' '}
+                  <span className="font-bold">{selectedPlan.credits.toLocaleString()} credits</span>{' '}
+                  for <span className="font-bold">${selectedPlan.priceUsd} USD</span>
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
