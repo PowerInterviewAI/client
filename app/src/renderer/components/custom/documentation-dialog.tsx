@@ -43,11 +43,6 @@ export default function DocumentationDialog({ open, onOpenChange }: Documentatio
               Power Interview is an AI-powered tool designed to assist with technical interviews by
               providing real-time reply suggestions and screen-based code suggestions.
             </p>
-            <p>
-              Live face swap is a feature that allows users to replace their face with a virtual
-              avatar during video calls, enhancing privacy and adding a fun element to online
-              interactions.
-            </p>
           </DialogDescription>
         </DialogHeader>
 
