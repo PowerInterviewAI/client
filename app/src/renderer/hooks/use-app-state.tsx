@@ -39,7 +39,7 @@ class AppStateManager {
       transcripts: raw.transcripts ?? [],
       replySuggestions: raw.replySuggestions ?? [],
       codeSuggestions: raw.codeSuggestions ?? [],
-      credits: raw.credits ?? 0,
+      credits: raw.credits,
     };
   }
 

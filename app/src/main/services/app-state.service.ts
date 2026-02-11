@@ -17,7 +17,7 @@ const DEFAULT_STATE: AppState = {
   transcripts: [],
   replySuggestions: [],
   codeSuggestions: [],
-  credits: 0,
+  credits: undefined,
 };
 
 export class AppStateService {

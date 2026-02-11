@@ -16,5 +16,5 @@ export interface AppState {
   transcripts: Transcript[];
   replySuggestions: ReplySuggestion[];
   codeSuggestions: CodeSuggestion[];
-  credits: number;
+  credits?: number;
 }
