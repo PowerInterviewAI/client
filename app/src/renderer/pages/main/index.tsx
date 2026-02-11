@@ -193,7 +193,7 @@ export default function MainPage() {
 
   // Show loading if auth status is unknown
   if (appState?.isLoggedIn === null) {
-    return <LoadingPage disclaimer="Checking authentication status…" />;
+    return <LoadingPage disclaimer="Authenticating…" />;
   }
 
   // Show loading if config or app state is not loaded yet

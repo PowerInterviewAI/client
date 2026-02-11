@@ -25,7 +25,10 @@ export class HealthCheckService {
     appStateService.updateState({ isLoggedIn: null });
     try {
       const res = await this.client.pingClient();
-      appStateService.updateState({ isLoggedIn: res.status === 200 });
+      appStateService.updateState({
+        isLoggedIn: res.status === 200,
+        credits: res.data?.credits ?? 0,
+      });
     } catch (error) {
       console.error('[HealthCheckService] Initial client ping error:', error);
       appStateService.updateState({ isLoggedIn: false });
