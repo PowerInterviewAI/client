@@ -76,7 +76,8 @@ export default function ConfigurationDialog({ isOpen, onOpenChange }: Configurat
         <DialogHeader>
           <DialogTitle>Configuration</DialogTitle>
           <DialogDescription>
-            Update your configuration: profile photo, username, CV/resume and job description.
+            Update your configuration: profile photo, username, profile information (e.g. CV/resume)
+            and interview context (e.g. job description).
           </DialogDescription>
         </DialogHeader>
 
