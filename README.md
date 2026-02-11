@@ -253,7 +253,7 @@ Power Interview's advanced face swap technology allows you to transform your app
 
 <div align="center">
 
-https://github.com/user-attachments/assets/face.victor.mp4
+![Victor - Real Person](assets/face.victor.gif)
 
 _Victor - Real person without face swap_
 
@@ -271,7 +271,7 @@ _Reference photo for Tonny's face swap_
 
 <div align="center">
 
-https://github.com/user-attachments/assets/face.tonny.mp4
+![Tonny Face Swap Demo](assets/face.tonny.gif)
 
 _Face swap demonstration with Tonny_
 
@@ -279,7 +279,7 @@ _Face swap demonstration with Tonny_
 
 <div align="center">
 
-https://github.com/user-attachments/assets/meeting.tonny.mp4
+![Tonny Live Interview](assets/meeting.tonny.gif)
 
 _Live interview with Tonny face swap_
 
@@ -297,7 +297,7 @@ _Reference photo for Henry's face swap_
 
 <div align="center">
 
-https://github.com/user-attachments/assets/face.henrry.mp4
+![Henry Face Swap Demo](assets/face.henrry.gif)
 
 _Face swap demonstration with Henry_
 
@@ -305,7 +305,7 @@ _Face swap demonstration with Henry_
 
 <div align="center">
 
-https://github.com/user-attachments/assets/meeting.henry.mp4
+![Henry Live Interview](assets/meeting.henry.gif)
 
 _Live interview with Henry face swap_
 
@@ -369,7 +369,7 @@ _Live interview with real-time AI suggestions and Tonny face swap_
 
 <div align="center">
 
-https://github.com/user-attachments/assets/live.interview.assistant.mp4
+![Live Interview Assistant Workflow](assets/live.interview.assistant.gif)
 
 _Watch the complete interview assistance workflow_
 
@@ -381,7 +381,7 @@ Get intelligent code suggestions by capturing your screen during technical inter
 
 <div align="center">
 
-https://github.com/user-attachments/assets/code.test.mp4
+![Code Suggestion Feature](assets/code.test.gif)
 
 _Code suggestion feature analyzing coding problems_
 
