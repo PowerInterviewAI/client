@@ -245,6 +245,36 @@ This will build both the Python agents and the Electron app in one step.
 
 ## Examples
 
+### Live Interview Assistance
+
+<div align="center">
+
+![Live Interview Assistant Workflow](assets/live.interview.assistant.gif)
+
+_Watch the complete interview assistance workflow_
+
+</div>
+
+### Code Suggestions
+
+Get intelligent code suggestions by capturing your screen during technical interviews.
+
+<div align="center">
+
+![Code Suggestion Feature](assets/code.test.gif)
+
+_Code suggestion feature analyzing coding problems_
+
+</div>
+
+<div align="center">
+
+![Live Interview Assistant](assets/meeting.tonny.face.liveassist.png)
+
+_Live interview with real-time AI suggestions and Tonny face swap_
+
+</div>
+
 ### Face Swap Technology
 
 Power Interview's advanced face swap technology allows you to transform your appearance during live interviews. Here's Victor (the real person) and examples of face-swapped interviews with Tonny and Henry.
@@ -352,38 +382,6 @@ _Configure your microphone and audio routing for transcription_
 ![Meeting Video Device](assets/meeting-video-device.png)
 
 _Select your camera and virtual camera output_
-
-</div>
-
-### Live Interview Assistance
-
-Real-time AI-powered suggestions during interviews with face swap enabled.
-
-<div align="center">
-
-![Live Interview Assistant](assets/meeting.tonny.face.liveassist.png)
-
-_Live interview with real-time AI suggestions and Tonny face swap_
-
-</div>
-
-<div align="center">
-
-![Live Interview Assistant Workflow](assets/live.interview.assistant.gif)
-
-_Watch the complete interview assistance workflow_
-
-</div>
-
-### Code Suggestions
-
-Get intelligent code suggestions by capturing your screen during technical interviews.
-
-<div align="center">
-
-![Code Suggestion Feature](assets/code.test.gif)
-
-_Code suggestion feature analyzing coding problems_
 
 </div>
 
