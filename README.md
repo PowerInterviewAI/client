@@ -7,6 +7,8 @@
 [![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)](https://github.com/PowerInterviewAI/power-interview-assistant/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
+📧 [Email](mailto:power-interview@protonmail.com) | 🌐 [Website](https://powerinterviewai.github.io/hero/) | 💬 [Telegram](https://t.me/power_interview_ai) | 💭 [Discord](https://discord.gg/HZ9sHsh2U7)
+
 </div>
 
 ## Overview
@@ -490,8 +492,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For issues, questions, or suggestions:
 
-- Open an issue on GitHub
-- Contact: power-interview@protonmail.com
+- 📧 **Email**: [power-interview@protonmail.com](mailto:power-interview@protonmail.com)
+- 🌐 **Website**: [https://powerinterviewai.github.io/hero/](https://powerinterviewai.github.io/hero/)
+- 💬 **Telegram**: [https://t.me/power_interview_ai](https://t.me/power_interview_ai)
+- 💭 **Discord**: [https://discord.gg/HZ9sHsh2U7](https://discord.gg/HZ9sHsh2U7)
+- **GitHub**: Open an issue for bug reports and feature requests
 
 ---
 
@@ -499,6 +504,6 @@ For issues, questions, or suggestions:
 
 **Made to help you ace your interviews while protecting your privacy**
 
-[Website](https://powerinterviewai.github.io/hero/)
+📧 [Email](mailto:power-interview@protonmail.com) | 🌐 [Website](https://powerinterviewai.github.io/hero/) | 💬 [Telegram](https://t.me/power_interview_ai) | 💭 [Discord](https://discord.gg/HZ9sHsh2U7)
 
 </div>
