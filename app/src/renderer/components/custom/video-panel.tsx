@@ -472,7 +472,7 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
         <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-contain" />
 
         {!isStreaming && (
-          <div className="absolute inset-0 flex items-center justify-center bg-linear-to-b from-gray-200 to-white dark:from-slate-900 dark:to-black">
+          <div className="absolute inset-0 flex items-center justify-center bg-linear-to-b from-gray-200 to-white dark:from-orange-950/50 dark:to-orange-950/20">
             <div className="text-center">
               <UserCircle2 className="mx-auto h-12 w-12 font-thin text-gray-500 dark:text-gray-400" />
               <p className="text-gray-500 dark:text-gray-400 text-xs">{videoMessage}</p>
