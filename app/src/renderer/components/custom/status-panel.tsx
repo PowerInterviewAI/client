@@ -15,9 +15,9 @@ export default function StatusPanel({ runningState, credits }: Props) {
   const availableTime =
     availableMinutes <= 0
       ? credits > 0
-        ? 'Available for less than 1 min'
+        ? 'Less than 1 min'
         : 'No credits left'
-      : `Available for ${availableMinutes} min${availableMinutes > 1 ? 's' : ''}`;
+      : `${availableMinutes.toLocaleString()} min${availableMinutes > 1 ? 's' : ''}`;
 
   return (
     <div
@@ -37,7 +37,7 @@ export default function StatusPanel({ runningState, credits }: Props) {
                   : 'text-destructive animate-pulse'
             )}
           >
-            Credits: {credits} ({availableTime})
+            {credits.toLocaleString()} credits ({availableTime})
           </div>
         </div>
         <div className="hidden sm:flex gap-x-2 gap-y-1 flex-wrap">
