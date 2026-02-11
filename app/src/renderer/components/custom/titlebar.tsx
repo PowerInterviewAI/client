@@ -1,4 +1,4 @@
-import { Moon, Sun } from 'lucide-react';
+import { FileQuestion, Moon, Sun } from 'lucide-react';
 import { useState } from 'react';
 
 import faviconSvg from '/favicon.svg';
@@ -67,56 +67,22 @@ export default function Titlebar() {
           // eslint-disable-next-line
           style={{ WebkitAppRegion: 'no-drag' } as any}
         >
-          {appState?.isLoggedIn ? (
-            <>
-              <div
-                className={cn(
-                  'text-xs font-bold mr-2',
-                  availableMinutes >= 5
-                    ? 'text-muted-foreground'
-                    : availableMinutes >= 1
-                      ? 'text-yellow-600 animate-pulse'
-                      : 'text-destructive animate-pulse'
-                )}
-                // eslint-disable-next-line
-                style={{ WebkitAppRegion: 'drag' } as any}
-              >
-                Credits: {appState?.credits} ({availableTime})
-              </div>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={handleToggleStealth}
-                    aria-label="Toggle stealth mode"
-                    title="Toggle stealth mode"
-                    className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
-                    // eslint-disable-next-line
-                    style={{ WebkitAppRegion: 'no-drag' } as any}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <circle cx="12" cy="12" r="3" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Toggle stealth</p>
-                </TooltipContent>
-              </Tooltip>
-            </>
-          ) : null}
+          {appState?.isLoggedIn && (
+            <div
+              className={cn(
+                'text-xs font-bold mr-2',
+                availableMinutes >= 5
+                  ? 'text-muted-foreground'
+                  : availableMinutes >= 1
+                    ? 'text-yellow-600 animate-pulse'
+                    : 'text-destructive animate-pulse'
+              )}
+              // eslint-disable-next-line
+              style={{ WebkitAppRegion: 'drag' } as any}
+            >
+              Credits: {appState?.credits} ({availableTime})
+            </div>
+          )}
 
           <Tooltip>
             <TooltipTrigger asChild>
@@ -135,6 +101,40 @@ export default function Titlebar() {
             </TooltipContent>
           </Tooltip>
 
+          {appState?.isLoggedIn && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={handleToggleStealth}
+                  aria-label="Toggle stealth mode"
+                  title="Toggle stealth mode"
+                  className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
+                  // eslint-disable-next-line
+                  style={{ WebkitAppRegion: 'no-drag' } as any}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <circle cx="12" cy="12" r="3" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Toggle stealth</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+
           <Tooltip>
             <TooltipTrigger asChild>
               <button
@@ -144,7 +144,7 @@ export default function Titlebar() {
                 // eslint-disable-next-line
                 style={{ WebkitAppRegion: 'no-drag' } as any}
               >
-                <span className="font-medium text-muted-foreground mb-px">?</span>
+                <FileQuestion className="h-4 w-4" />
               </button>
             </TooltipTrigger>
             <TooltipContent>
@@ -157,7 +157,7 @@ export default function Titlebar() {
               <button
                 onClick={handleClose}
                 aria-label="Close"
-                className="h-7 w-7 flex items-center justify-center rounded hover:bg-destructive/50"
+                className="h-7 w-12 flex items-center justify-center rounded hover:bg-destructive/50"
                 // eslint-disable-next-line
                 style={{ WebkitAppRegion: 'no-drag' } as any}
               >
