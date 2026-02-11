@@ -1,3 +1,4 @@
+import { DialogDescription } from '@radix-ui/react-dialog';
 import { Mic } from 'lucide-react';
 import { useState } from 'react';
 
@@ -68,6 +69,9 @@ export function AudioGroup({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="flex flex-col w-72 p-4">
           <DialogTitle>Audio Options</DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground">
+            Select physical microphone that you use.
+          </DialogDescription>
 
           {/* Microphone Select */}
           <div className="mb-3">
