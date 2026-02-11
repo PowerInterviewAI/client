@@ -39,7 +39,7 @@ export function VideoGroup({
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
   const previewStreamRef = useRef<MediaStream | null>(null);
   const videoDevices = useVideoDevices();
-  const lowCredits = (appState?.credits ?? 0) <= 0;
+  const lowCredits = appState?.credits === undefined ? null : appState?.credits <= 0;
 
   const OBS_CAMERA_PREFIX = 'OBS Virtual';
   const obsCameraExists =
@@ -64,7 +64,7 @@ export function VideoGroup({
   }, [obsCameraExists, vbInputExists, config?.faceSwap, updateConfig]);
 
   useEffect(() => {
-    if (lowCredits && config?.faceSwap) {
+    if (lowCredits === true && config?.faceSwap) {
       updateConfig({ faceSwap: false });
       toast.error('Credits depleted — disabling Face Swap');
     }
@@ -173,7 +173,7 @@ export function VideoGroup({
               disabled={
                 getDisabled(runningState) ||
                 ((!obsCameraExists || !vbInputExists) && !config?.faceSwap) ||
-                (appState?.credits ?? 0) <= 0
+                lowCredits === true
               }
               onClick={() => {
                 const tryingToEnable = !config?.faceSwap;
@@ -214,7 +214,7 @@ export function VideoGroup({
 
           <DialogContent className="flex flex-col w-72 p-4 gap-4">
             <DialogTitle>Face Swap Options</DialogTitle>
-            {lowCredits && (
+            {lowCredits === true && (
               <div className="text-sm text-destructive">
                 Credits depleted.
                 <br />
