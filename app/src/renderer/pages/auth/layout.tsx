@@ -27,18 +27,6 @@ export default function AuthLayout() {
           </div>
 
           <Outlet />
-
-          <div className="text-center mt-4 text-xs text-muted-foreground">
-            By signing in you agree to the{' '}
-            <Link to="/terms" className="underline">
-              Terms
-            </Link>{' '}
-            and{' '}
-            <Link to="/privacy" className="underline">
-              Privacy
-            </Link>
-            .
-          </div>
         </div>
       </div>
     );
