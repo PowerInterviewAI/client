@@ -4,7 +4,7 @@
 
 **Your Personal AI-Powered Interview Coach with Real-Time Face Swap Technology**
 
-[![Version](https://img.shields.io/badge/version-0.10.1-blue.svg)](https://github.com/PowerInterviewAI/power-interview-assistant/releases/latest)
+[![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)](https://github.com/PowerInterviewAI/power-interview-assistant/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 </div>
@@ -243,6 +243,150 @@ This will build both the Python agents and the Electron app in one step.
 - Control your video appearance
 - Maintain professionalism while staying anonymous
 
+## Examples
+
+### Face Swap Technology
+
+Power Interview's advanced face swap technology allows you to transform your appearance during live interviews. Here's Victor (the real person) and examples of face-swapped interviews with Tonny and Henry.
+
+#### Original Face - Victor
+
+<div align="center">
+
+https://github.com/user-attachments/assets/face.victor.mp4
+
+_Victor - Real person without face swap_
+
+</div>
+
+#### Face Swap with Tonny
+
+<div align="center">
+
+![Tonny's Face](assets/face.tonny.jpg)
+
+_Reference photo for Tonny's face swap_
+
+</div>
+
+<div align="center">
+
+https://github.com/user-attachments/assets/face.tonny.mp4
+
+_Face swap demonstration with Tonny_
+
+</div>
+
+<div align="center">
+
+https://github.com/user-attachments/assets/meeting.tonny.mp4
+
+_Live interview with Tonny face swap_
+
+</div>
+
+#### Face Swap with Henry
+
+<div align="center">
+
+![Henry's Face](assets/face.henrry.jpg)
+
+_Reference photo for Henry's face swap_
+
+</div>
+
+<div align="center">
+
+https://github.com/user-attachments/assets/face.henrry.mp4
+
+_Face swap demonstration with Henry_
+
+</div>
+
+<div align="center">
+
+https://github.com/user-attachments/assets/meeting.henry.mp4
+
+_Live interview with Henry face swap_
+
+</div>
+
+### Settings & Configuration
+
+Configure your profile, face swap photos, and interview context for personalized AI assistance.
+
+#### Setting Up Face Swap with Tonny
+
+<div align="center">
+
+![Tonny Settings](assets/setting.tonny.png)
+
+_Configure your profile with face swap photo and interview details_
+
+</div>
+
+#### Setting Up Face Swap with Henry
+
+<div align="center">
+
+![Henry Settings](assets/setting.henry.png)
+
+_Upload your chosen face photo and personalize your interview context_
+
+</div>
+
+### Audio & Video Device Configuration
+
+Select the right audio and video devices for optimal performance.
+
+<div align="center">
+
+![Meeting Audio Device](assets/meeting-audio-device.png)
+
+_Configure your microphone and audio routing for transcription_
+
+</div>
+
+<div align="center">
+
+![Meeting Video Device](assets/meeting-video-device.png)
+
+_Select your camera and virtual camera output_
+
+</div>
+
+### Live Interview Assistance
+
+Real-time AI-powered suggestions during interviews with face swap enabled.
+
+<div align="center">
+
+![Live Interview Assistant](assets/meeting.tonny.face.liveassist.png)
+
+_Live interview with real-time AI suggestions and Tonny face swap_
+
+</div>
+
+<div align="center">
+
+https://github.com/user-attachments/assets/live.interview.assistant.mp4
+
+_Watch the complete interview assistance workflow_
+
+</div>
+
+### Code Suggestions
+
+Get intelligent code suggestions by capturing your screen during technical interviews.
+
+<div align="center">
+
+https://github.com/user-attachments/assets/code.test.mp4
+
+_Code suggestion feature analyzing coding problems_
+
+</div>
+
 ## Security & Privacy
 
 ### Local Data Storage
@@ -358,5 +502,5 @@ For issues, questions, or suggestions:
 **Made to help you ace your interviews while protecting your privacy**
 
 [Website](https://powerinterviewai.github.io/hero/)
-</div>
 
+</div>
