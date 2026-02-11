@@ -2,8 +2,8 @@
  * Buy Credits Tab Component
  */
 
-import { useCallback, useRef, useState } from 'react';
 import { Check } from 'lucide-react';
+import { useCallback, useRef, useState } from 'react';
 
 import { Loading } from '@/components/custom/loading';
 import { Button } from '@/components/ui/button';
