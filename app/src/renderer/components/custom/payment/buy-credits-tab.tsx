@@ -215,14 +215,13 @@ export default function BuyCreditsTab({ credits, onPaymentCreated }: BuyCreditsT
               <CardContent className="space-y-4">
                 <div>
                   <label className="text-sm font-medium mb-2 block">
-                    Payment Currency (Optional)
+                    Payment Currency <span className="text-destructive">*</span>
                   </label>
                   <Select value={selectedCurrency} onValueChange={setSelectedCurrency}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Auto-select best currency" />
+                      <SelectValue placeholder="Select a currency" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="#">Auto-select</SelectItem>
                       {currencies.map((currency: AvailableCurrency) => (
                         <SelectItem key={currency.code} value={currency.code}>
                           <div className="flex items-center gap-2">
@@ -237,7 +236,11 @@ export default function BuyCreditsTab({ credits, onPaymentCreated }: BuyCreditsT
                   </Select>
                 </div>
 
-                <Button className="w-full" onClick={handleCreatePayment} disabled={creating}>
+                <Button
+                  className="w-full"
+                  onClick={handleCreatePayment}
+                  disabled={creating || !selectedCurrency}
+                >
                   {creating ? 'Creating Payment...' : 'Create Payment'}
                 </Button>
               </CardContent>
