@@ -27,13 +27,15 @@ class WebSocketASRClient:
     def __init__(
         self,
         backend_url: str,
-        audio_capture: AudioCapture,
-        on_partial: Callable[[str], None] | None = None,
-        on_final: Callable[[str], None] | None = None,
+        audio_capture_l: AudioCapture,
+        audio_capture_r: AudioCapture,
+        on_partial: Callable[[str, str], None] | None = None,
+        on_final: Callable[[str, str], None] | None = None,
         session_token: str | None = None,
     ) -> None:
         self.backend_url = backend_url
-        self.audio_capture = audio_capture
+        self.audio_capture_l = audio_capture_l
+        self.audio_capture_r = audio_capture_r
         self.on_partial = on_partial
         self.on_final = on_final
         self.session_token = session_token
@@ -49,24 +51,40 @@ class WebSocketASRClient:
         self.transcripts_received = 0
 
     async def get_next_audio(self) -> bytes:
-        """Get next audio chunk from audio capture queue."""
-        loop = asyncio.get_running_loop()
-
+        """Get next audio chunk from both capture channels and mix to stereo."""
         while True:
             if self.stop_event.is_set():
                 msg = "Stop requested"
                 raise asyncio.CancelledError(msg)
 
-            # Get audio frame with timeout
-            data_np = await loop.run_in_executor(
-                None,
-                lambda: self.audio_capture.get_frame(timeout=0.1),
-            )
+            # Fetch both channels concurrently
+            data_l = self.audio_capture_l.get_frame_nowait()
+            data_r = self.audio_capture_r.get_frame_nowait()
 
-            if data_np is not None:
-                # Convert to PCM16 bytes
-                pcm16 = (data_np * 32767).astype(np.int16).tobytes()
-                return pcm16  # noqa: RET504
+            if data_l is None and data_r is None:
+                await asyncio.sleep(0.01)  # No audio available, wait briefly before retrying
+                continue  # No audio available, will trigger silence frame in send loop
+
+            if data_l is None:
+                data_l = np.zeros_like(data_r)
+            if data_r is None:
+                data_r = np.zeros_like(data_l)
+
+            # Ensure same length (important!)
+            n = min(len(data_l), len(data_r))
+            data_l = data_l[:n]
+            data_r = data_r[:n]
+
+            # Convert to PCM16
+            pcm16_l = (data_l * 32767).astype(np.int16)
+            pcm16_r = (data_r * 32767).astype(np.int16)
+
+            # Mix to stereo (interleaved L/R samples)
+            stereo = np.empty((pcm16_l.size + pcm16_r.size,), dtype=np.int16)
+            stereo[0::2] = pcm16_l
+            stereo[1::2] = pcm16_r
+
+            return stereo.tobytes()
 
     async def send_audio_loop(self, ws: ClientConnection) -> None:
         """Send audio frames to websocket."""
@@ -124,21 +142,23 @@ class WebSocketASRClient:
                 # Parse JSON transcript
                 try:
                     result = json.loads(msg)
+                    logger.debug(f"Received transcript message: {result}")
                     result_type = result.get("type", "")
                     content = result.get("content", "")
+                    channel_id = result.get("channel_id", "unknown")
 
                     self.transcripts_received += 1
 
                     if result_type == "final":
-                        logger.info(f"FINAL: {content}")
+                        logger.info(f"{channel_id}::FINAL::{content}")
                         if self.on_final:
-                            self.on_final(content)
+                            self.on_final(channel_id, content)
                     elif result_type == "partial":
-                        logger.debug(f"PARTIAL: {content}")
+                        logger.debug(f"{channel_id}::PARTIAL::{content}")
                         if self.on_partial:
-                            self.on_partial(content)
+                            self.on_partial(channel_id, content)
                     elif result_type == "error":
-                        logger.error(f"ASR Error: {content}")
+                        logger.error(f"ASR Error::{channel_id}::{content}")
                     else:
                         logger.debug(f"Unknown message type: {result}")
 
@@ -159,6 +179,9 @@ class WebSocketASRClient:
         logger.info(f"Connecting to backend websocket: {self.backend_url}")
 
         try:
+            self.audio_capture_l.clear_queue()
+            self.audio_capture_r.clear_queue()
+
             # Prepare headers for authenticated connection if token provided
             additional_headers: dict[str, str] = {}
             if self.session_token:

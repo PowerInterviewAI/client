@@ -1,4 +1,4 @@
-import { FileQuestion, Moon, Sun } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import { useState } from 'react';
 
 import faviconSvg from '/favicon.svg';
@@ -144,7 +144,7 @@ export default function Titlebar() {
                 // eslint-disable-next-line
                 style={{ WebkitAppRegion: 'no-drag' } as any}
               >
-                <FileQuestion className="h-4 w-4" />
+                <span className="font-medium">?</span>
               </button>
             </TooltipTrigger>
             <TooltipContent>

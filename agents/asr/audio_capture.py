@@ -15,8 +15,8 @@ from agents.shared.audio_device_service import AudioDeviceService
 
 # Audio configuration constants
 TARGET_SAMPLE_RATE = 16000
-AUDIO_BLOCK_DURATION = 0.1
-AUDIO_QUEUE_MAXSIZE = 40
+AUDIO_BLOCK_DURATION = 0.05
+AUDIO_QUEUE_MAXSIZE = 4
 
 
 class AudioCapture:
@@ -155,10 +155,10 @@ class AudioCapture:
                 logger.debug(f"Error terminating PyAudio: {e}")
             self.pa = None
 
-    def get_frame(self, timeout: float = 0.1) -> np.ndarray[Any, Any] | None:
-        """Get next audio frame from queue."""
+    def get_frame_nowait(self) -> np.ndarray[Any, Any] | None:
+        """Get next audio frame from queue without blocking."""
         try:
-            return self.audio_queue.get(timeout=timeout)
+            return self.audio_queue.get_nowait()
         except queue.Empty:
             return None
 
