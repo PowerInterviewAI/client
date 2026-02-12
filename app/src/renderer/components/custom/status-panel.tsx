@@ -25,7 +25,7 @@ export default function StatusPanel({ runningState, credits }: Props) {
       className="flex items-center justify-between text-muted-foreground bg-white dark:bg-black rounded-md p-2"
     >
       <div className="space-y-1">
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
           <RunningIndicator runningState={runningState} />
           <div
             className={cn(
