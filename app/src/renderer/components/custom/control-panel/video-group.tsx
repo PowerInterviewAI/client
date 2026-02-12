@@ -197,7 +197,7 @@ export function VideoGroup({
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Toggle Face Swap</p>
+            <p>Toggle Face Swap ({config?.faceSwap ? 'Enabled' : 'Disabled'})</p>
           </TooltipContent>
         </Tooltip>
 
@@ -357,7 +357,9 @@ export function VideoGroup({
 
                   {/* Face Enhance Toggle */}
                   <div className="flex items-center justify-between mt-4">
-                    <span className="text-sm">Face Enhance</span>
+                    <span className="text-sm">
+                      Face Enhance ({config?.enableFaceEnhance ? 'Enabled' : 'Disabled'})
+                    </span>
                     <Button
                       variant={config?.enableFaceEnhance ? 'default' : 'outline'}
                       size="sm"
