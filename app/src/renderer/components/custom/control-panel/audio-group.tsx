@@ -37,6 +37,13 @@ export function AudioGroup({
     return true;
   });
 
+  // If no audio input device is selected but there are available devices, select the first one by default
+  if ((config?.audioInputDeviceName ?? '') === '') {
+    if (usableAudioInputDevices.length > 0) {
+      updateConfig({ audioInputDeviceName: usableAudioInputDevices[0].name });
+    }
+  }
+
   return (
     <div className="flex items-center">
       <div className="relative">

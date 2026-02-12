@@ -77,6 +77,13 @@ export function VideoGroup({
     return true;
   });
 
+  // If no video device is selected but there are available devices, select the first one by default
+  if ((config?.cameraDeviceName ?? '') === '') {
+    if (usableVideoDevices.length > 0) {
+      updateConfig({ cameraDeviceName: usableVideoDevices[0].label });
+    }
+  }
+
   useEffect(() => {
     // Only run when dialog is open
     if (!isVideoDialogOpen) return;
@@ -274,7 +281,7 @@ export function VideoGroup({
                   in the meeting platform (e.g. Zoom, Teams or Google Meet).
                   <br />
                   <span className="italic mt-1 block">
-                    Do not select your physical camera or microphone.
+                    Do not select your physical camera or microphone for video calls.
                   </span>
                 </DialogDescription>
 
