@@ -12,9 +12,8 @@ import {
   BACKEND_BASE_URL,
   TRANSCRIPT_INTER_TRANSCRIPT_GAP_MS,
   TRANSCRIPT_MAX_RESTART_COUNT,
-  TRANSCRIPT_OTHER_ZMQ_PORT,
   TRANSCRIPT_RESTART_DELAY_MS,
-  TRANSCRIPT_SELF_ZMQ_PORT,
+  TRANSCRIPT_ZMQ_PORT,
 } from '../consts.js';
 import { configStore } from '../store/config.store.js';
 import { Speaker, Transcript } from '../types/app-state.js';
@@ -26,15 +25,13 @@ interface AgentProcess {
   process: ChildProcess;
   socket: zmq.Subscriber | null;
   port: number;
-  speaker: Speaker;
   restartCount: number;
   isRestarting: boolean;
   shouldRestart?: boolean;
 }
 
 class TranscriptService {
-  private selfAgent: AgentProcess | null = null;
-  private otherAgent: AgentProcess | null = null;
+  private agent: AgentProcess | null = null;
 
   private selfTranscripts: Transcript[] = [];
   private selfPartialTranscript: Transcript | null = null;
@@ -42,90 +39,49 @@ class TranscriptService {
   private otherPartialTranscript: Transcript | null = null;
 
   /**
-   * Start self transcription (user's audio)
+   * Start transcription
    */
-  private async startSelfTranscription(): Promise<void> {
-    if (this.selfAgent) {
-      console.log('Self transcription already active');
+  private async startTranscription(): Promise<void> {
+    if (this.agent) {
+      console.log('Transcription already active');
       return;
     }
 
-    console.log('Starting self transcription...');
+    console.log('Starting transcription...');
 
     // Get audio device from config
     const config = configStore.getConfig();
     const audioDevice = config.audioInputDeviceName || 'loopback';
 
     try {
-      this.selfAgent = await this.startAgent(TRANSCRIPT_SELF_ZMQ_PORT, audioDevice, Speaker.Self);
-      console.log('Self transcription started successfully');
+      this.agent = await this.startAgent(TRANSCRIPT_ZMQ_PORT, audioDevice);
+      console.log('Transcription started successfully');
     } catch (error) {
-      console.error('Failed to start self transcription:', error);
-      this.selfAgent = null;
+      console.error('Failed to start transcription:', error);
+      this.agent = null;
       throw error;
     }
   }
 
   /**
-   * Stop self transcription
+   * Stop transcription
    */
-  private async stopSelfTranscription(): Promise<void> {
-    if (!this.selfAgent) {
-      console.log('Self transcription not active');
+  private async stopTranscription(): Promise<void> {
+    if (!this.agent) {
+      console.log('Transcription not active');
       return;
     }
 
-    console.log('Stopping self transcription...');
-    await this.stopAgent(this.selfAgent);
-    this.selfAgent = null;
-    console.log('Self transcription stopped');
-  }
-
-  /**
-   * Start other party transcription (remote audio via loopback)
-   */
-  private async startOtherTranscription(): Promise<void> {
-    if (this.otherAgent) {
-      console.log('Other transcription already active');
-      return;
-    }
-
-    console.log('Starting other party transcription...');
-
-    try {
-      // Other party always uses loopback
-      this.otherAgent = await this.startAgent(TRANSCRIPT_OTHER_ZMQ_PORT, 'loopback', Speaker.Other);
-      console.log('Other transcription started successfully');
-    } catch (error) {
-      console.error('Failed to start other transcription:', error);
-      this.otherAgent = null;
-      throw error;
-    }
-  }
-
-  /**
-   * Stop other party transcription
-   */
-  private async stopOtherTranscription(): Promise<void> {
-    if (!this.otherAgent) {
-      console.log('Other transcription not active');
-      return;
-    }
-
-    console.log('Stopping other party transcription...');
-    await this.stopAgent(this.otherAgent);
-    this.otherAgent = null;
-    console.log('Other transcription stopped');
+    console.log('Stopping transcription...');
+    await this.stopAgent(this.agent);
+    this.agent = null;
+    console.log('Transcription stopped');
   }
 
   /**
    * Start an ASR agent process
    */
-  private async startAgent(
-    port: number,
-    audioSource: string,
-    speaker: Speaker
-  ): Promise<AgentProcess> {
+  private async startAgent(port: number, audioSource: string): Promise<AgentProcess> {
     // Get agent executable path
     const { command, args: baseArgs } = this.getAgentCommand();
     const serverUrl = BACKEND_BASE_URL.replace(/\/+$/, ''); // Remove trailing slash
@@ -135,7 +91,7 @@ class TranscriptService {
     const sessionToken = configStore.getConfig().sessionToken;
 
     console.log(`Starting ASR agent: ${command}`);
-    console.log(`Audio source: ${audioSource}, Port: ${port}, Speaker: ${speaker}`);
+    console.log(`Audio source: ${audioSource}, Port: ${port}`);
 
     // Build arguments
     const args = [
@@ -161,18 +117,17 @@ class TranscriptService {
 
     // Log agent output
     proc.stdout?.on('data', (data) => {
-      console.log(`[ASR ${speaker}]`, data.toString().trim());
+      console.log(`[ASR]`, data.toString().trim());
     });
 
     proc.stderr?.on('data', (data) => {
-      console.error(`[ASR ${speaker}]`, data.toString().trim());
+      console.error(`[ASR]`, data.toString().trim());
     });
 
     const agentProcess: AgentProcess = {
       process: proc,
       socket: null,
       port,
-      speaker,
       restartCount: 0,
       isRestarting: false,
       shouldRestart: true,
@@ -183,12 +138,12 @@ class TranscriptService {
 
     // Handle process exit
     proc.on('exit', (code, signal) => {
-      console.log(`ASR agent (${speaker}) exited: code=${code}, signal=${signal}`);
+      console.log(`ASR agent exited: code=${code}, signal=${signal}`);
       this.handleAgentExit(agentProcess);
     });
 
     proc.on('error', (error) => {
-      console.error(`ASR agent (${speaker}) process error:`, error);
+      console.error(`ASR agent process error:`, error);
     });
 
     return agentProcess;
@@ -224,18 +179,20 @@ class TranscriptService {
     try {
       for await (const [msg] of agent.socket) {
         const message = msg.toString();
-        console.log(`[ZMQ ${agent.speaker}] Received:`, message);
+        console.log(`[ZMQ] Received:`, message);
 
-        // Parse message format: "FINAL: text" or "PARTIAL: text"
-        const isFinal = message.startsWith('FINAL:');
-        const text = message.replace(/^(FINAL|PARTIAL):\s*/, '').trim();
+        // Parse message format: "ch_0::PARTIAL::So I'll fix it then, ..."
+        const [channel, type, ...rest] = message.split('::');
+        const isFinal = type.toLowerCase() === 'final';
+        const text = rest.join('::').trim();
+        const speaker = channel.toLowerCase() === 'ch_0' ? Speaker.Other : Speaker.Self;
 
         if (text) {
           const transcript: Transcript = {
             timestamp: new Date().getTime(),
             text,
             isFinal,
-            speaker: agent.speaker,
+            speaker,
             endTimestamp: new Date().getTime(),
           };
 
@@ -313,7 +270,7 @@ class TranscriptService {
       }
     } catch (error) {
       if (agent.socket) {
-        console.error(`Error receiving ZMQ messages for ${agent.speaker}:`, error);
+        console.error(`Error receiving ZMQ messages:`, error);
       }
     }
   }
@@ -377,14 +334,14 @@ class TranscriptService {
 
     // Check if we should restart (skip if stopped intentionally)
     if (agent.shouldRestart === false) {
-      console.log(`Agent ${agent.speaker} exit was intentional; not restarting`);
+      console.log(`Agent exit was intentional; not restarting`);
       return;
     }
 
     // Check restart conditions
     if (!agent.isRestarting && agent.restartCount < TRANSCRIPT_MAX_RESTART_COUNT) {
       console.log(
-        `Agent ${agent.speaker} will restart (attempt ${agent.restartCount + 1}/${TRANSCRIPT_MAX_RESTART_COUNT})`
+        `Agent will restart (attempt ${agent.restartCount + 1}/${TRANSCRIPT_MAX_RESTART_COUNT})`
       );
       agent.isRestarting = true;
       agent.restartCount++;
@@ -395,32 +352,26 @@ class TranscriptService {
       try {
         // Determine audio source based on speaker
         const config = configStore.getConfig();
-        const audioSource =
-          agent.speaker === Speaker.Self ? config.audioInputDeviceName || 'loopback' : 'loopback';
+        const audioSource = config.audioInputDeviceName || 'loopback';
 
         // Start new agent
-        const newAgent = await this.startAgent(agent.port, audioSource, agent.speaker);
+        const newAgent = await this.startAgent(agent.port, audioSource);
         newAgent.restartCount = agent.restartCount;
 
         // Update reference
-        if (agent.speaker === Speaker.Self) {
-          this.selfAgent = newAgent;
-        } else {
-          this.otherAgent = newAgent;
-        }
+        this.agent = newAgent;
 
-        console.log(`Agent ${agent.speaker} restarted successfully`);
+        console.log(`Agent  restarted successfully`);
       } catch (error) {
-        console.error(`Failed to restart agent ${agent.speaker}:`, error);
+        console.error(`Failed to restart agent:`, error);
         agent.isRestarting = false;
       }
     } else if (agent.restartCount >= TRANSCRIPT_MAX_RESTART_COUNT) {
-      console.error(`Agent ${agent.speaker} exceeded max restart attempts`);
+      console.error(`Agent exceeded max restart attempts`);
       // Notify renderer about failure
       const windows = BrowserWindow.getAllWindows();
       if (windows.length > 0) {
         windows[0].webContents.send('transcription-error', {
-          speaker: agent.speaker,
           error: 'Agent crashed and exceeded max restart attempts',
         });
       }
@@ -448,14 +399,14 @@ class TranscriptService {
    * Start all transcription services
    */
   async start(): Promise<void> {
-    await Promise.all([this.startSelfTranscription(), this.startOtherTranscription()]);
+    await this.startTranscription();
   }
 
   /**
    * Stop all transcription services
    */
   async stop(): Promise<void> {
-    await Promise.all([this.stopSelfTranscription(), this.stopOtherTranscription()]);
+    await this.stopTranscription();
   }
 
   /**
