@@ -41,7 +41,7 @@ export function RunningIndicator({ runningState, compact = false, className = ''
 
   return (
     <div className={`flex items-center gap-2 px-2 py-1 w-24 rounded-md bg-muted/50 ${className}`}>
-      <div className={`h-2 w-2 rounded-full ${dotClass}`} />
+      <div className={`h-2.5 w-2.5 rounded-full ${dotClass}`} />
       <span className={`text-xs font-bold uppercase ${labelClass}`}>{label}</span>
     </div>
   );
