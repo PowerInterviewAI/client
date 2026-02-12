@@ -50,6 +50,10 @@ export const useAssistantService = create<AssistantService>((set, get) => ({
       // Start transcription services
       await electron.transcription.start();
 
+      // Sleep 3 seconds to ensure the assistant has fully started before allowing stop actions
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+
+      // Update running state to Running after successful start
       electron.appState.update({ runningState: RunningState.Running });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to start assistant';
@@ -87,9 +91,13 @@ export const useAssistantService = create<AssistantService>((set, get) => ({
         electron.codeSuggestion.stop(),
       ]);
 
-      electron.appState.update({ runningState: RunningState.Idle });
-
       electron.setStealth(false); // Ensure stealth mode is turned off when stopping assistant
+
+      // Sleep 3 seconds to ensure the assistant has fully stopped before allowing start actions
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+
+      // Update running state to Idle after successful stop
+      electron.appState.update({ runningState: RunningState.Idle });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to stop assistant';
       set({
