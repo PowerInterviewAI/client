@@ -66,20 +66,20 @@ class ZMQPublisher:
 
         self.connected = False
 
-    def publish(self, text: str, is_final: bool = False) -> None:  # noqa: FBT001, FBT002
+    def publish(self, channel_id: str, text: str, is_final: bool) -> None:  # noqa: FBT001
         """Publish transcript to ZeroMQ with automatic reconnection on failure."""
         # Try to reconnect if not connected
         if (not self.connected or self.socket is None) and not self._attempt_reconnect():
             return
 
         try:
-            message = f"{'FINAL' if is_final else 'PARTIAL'}: {text}"
+            message = f"{channel_id}::{'FINAL' if is_final else 'PARTIAL'}::{text}"
             self.socket.send_string(message, flags=zmq.NOBLOCK)  # type: ignore  # noqa: PGH003
             self.published_count += 1
             logger.info(f"Published: {message}")
         except zmq.ZMQError as e:
             self.failed_count += 1
-            logger.error(f"Failed to publish (ZMQ error {e.errno}): {e}")
+            logger.error(f"Failed to publish::{channel_id}::{text} (ZMQ error {e.errno}): {e}")
             self.connected = False
 
             # Try immediate reconnection for recoverable errors
@@ -87,7 +87,7 @@ class ZMQPublisher:
                 self._attempt_reconnect()
         except Exception as e:
             self.failed_count += 1
-            logger.error(f"Failed to publish: {e}")
+            logger.error(f"Failed to publish::{channel_id}::{text}: {e}")
             self.connected = False
 
     def _attempt_reconnect(self) -> bool:
