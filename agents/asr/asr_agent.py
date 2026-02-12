@@ -35,7 +35,9 @@ class ASRAgent:
         self.session_token = session_token
 
         # Components
+        self.audio_capture_loopback = AudioCapture()
         self.audio_capture = AudioCapture(audio_source=audio_source)
+
         self.zmq_publisher = ZMQPublisher(port=zmq_port)
         self.ws_client: WebSocketASRClient | None = None
 
@@ -45,20 +47,21 @@ class ASRAgent:
         # Threads
         self.ws_thread: threading.Thread | None = None
 
-    def _on_partial_transcript(self, text: str) -> None:
+    def _on_partial_transcript(self, channel_id: str, text: str) -> None:
         """Callback for partial transcripts."""
-        self.zmq_publisher.publish(text, is_final=False)
+        self.zmq_publisher.publish(channel_id, text, is_final=False)
 
-    def _on_final_transcript(self, text: str) -> None:
+    def _on_final_transcript(self, channel_id: str, text: str) -> None:
         """Callback for final transcripts."""
-        self.zmq_publisher.publish(text, is_final=True)
+        self.zmq_publisher.publish(channel_id, text, is_final=True)
 
     def _websocket_thread_func(self) -> None:
         """WebSocket thread function with reconnection logic."""
         # Create WebSocket client once
         self.ws_client = WebSocketASRClient(
             backend_url=self.backend_url,
-            audio_capture=self.audio_capture,
+            audio_capture_l=self.audio_capture_loopback,
+            audio_capture_r=self.audio_capture,
             on_partial=self._on_partial_transcript,
             on_final=self._on_final_transcript,
             session_token=self.session_token,
@@ -77,13 +80,19 @@ class ASRAgent:
         logger.info("Starting ASR Agent...")
 
         # Initialize audio capture
+        if not self.audio_capture_loopback.start():
+            logger.error("Failed to initialize loopback audio capture")
+            return False
+
         if not self.audio_capture.start():
             logger.error("Failed to initialize audio capture")
+            self.audio_capture_loopback.stop()
             return False
 
         # Initialize ZeroMQ
         if not self.zmq_publisher.connect():
             logger.error("Failed to initialize ZeroMQ")
+            self.audio_capture_loopback.stop()
             self.audio_capture.stop()
             return False
 
@@ -118,6 +127,7 @@ class ASRAgent:
                 logger.warning("WebSocket thread did not stop in time")
 
         # Clean up resources
+        self.audio_capture_loopback.stop()
         self.audio_capture.stop()
         self.zmq_publisher.disconnect()
 
