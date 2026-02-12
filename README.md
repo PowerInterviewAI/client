@@ -7,7 +7,7 @@
 [![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)](https://github.com/PowerInterviewAI/power-interview-assistant/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-📧 [Email](mailto:power-interview@protonmail.com) | 🌐 [Website](https://powerinterviewai.github.io/hero/) | 💬 [Telegram](https://t.me/power_interview_ai) | 💭 [Discord](https://discord.gg/HZ9sHsh2U7)
+📧 [Email](mailto:power-interview@protonmail.com) | 🌐 [Website](https://powerinterviewai.github.io/hero/) | 💬 [Telegram](https://t.me/+uQuuBdrsIYBjY2Qx) | 💭 [Discord](https://discord.gg/pkKAqMsETH)
 
 </div>
 
@@ -494,8 +494,8 @@ For issues, questions, or suggestions:
 
 - 📧 **Email**: [power-interview@protonmail.com](mailto:power-interview@protonmail.com)
 - 🌐 **Website**: [https://powerinterviewai.github.io/hero/](https://powerinterviewai.github.io/hero/)
-- 💬 **Telegram**: [https://t.me/power_interview_ai](https://t.me/power_interview_ai)
-- 💭 **Discord**: [https://discord.gg/HZ9sHsh2U7](https://discord.gg/HZ9sHsh2U7)
+- 💬 **Telegram**: [https://t.me/+uQuuBdrsIYBjY2Qx](https://t.me/+uQuuBdrsIYBjY2Qx)
+- 💭 **Discord**: [https://discord.gg/pkKAqMsETH](https://discord.gg/pkKAqMsETH)
 - **GitHub**: Open an issue for bug reports and feature requests
 
 ---
@@ -504,6 +504,6 @@ For issues, questions, or suggestions:
 
 **Made to help you ace your interviews while protecting your privacy**
 
-📧 [Email](mailto:power-interview@protonmail.com) | 🌐 [Website](https://powerinterviewai.github.io/hero/) | 💬 [Telegram](https://t.me/power_interview_ai) | 💭 [Discord](https://discord.gg/HZ9sHsh2U7)
+📧 [Email](mailto:power-interview@protonmail.com) | 🌐 [Website](https://powerinterviewai.github.io/hero/) | 💬 [Telegram](https://t.me/+uQuuBdrsIYBjY2Qx) | 💭 [Discord](https://discord.gg/pkKAqMsETH)
 
 </div>
