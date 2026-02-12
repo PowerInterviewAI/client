@@ -70,17 +70,29 @@ class WebSocketASRClient:
                 lambda: self.audio_capture_r.get_frame(timeout=0.1),
             )
 
-            if data_l is not None and data_r is not None:
-                # Convert to PCM16
-                pcm16_l = (data_l * 32767).astype(np.int16)
-                pcm16_r = (data_r * 32767).astype(np.int16)
+            if data_l is None and data_r is None:
+                continue  # No audio available, will trigger silence frame in send loop
 
-                # Mix to stereo (interleaved L/R samples)
-                stereo = np.empty((pcm16_l.size + pcm16_r.size,), dtype=np.int16)
-                stereo[0::2] = pcm16_l
-                stereo[1::2] = pcm16_r
+            if data_l is None:
+                data_l = np.zeros_like(data_r)
+            if data_r is None:
+                data_r = np.zeros_like(data_l)
 
-                return stereo.tobytes()
+            # Ensure same length (important!)
+            n = min(len(data_l), len(data_r))
+            data_l = data_l[:n]
+            data_r = data_r[:n]
+
+            # Convert to PCM16
+            pcm16_l = (data_l * 32767).astype(np.int16)
+            pcm16_r = (data_r * 32767).astype(np.int16)
+
+            # Mix to stereo (interleaved L/R samples)
+            stereo = np.empty((pcm16_l.size + pcm16_r.size,), dtype=np.int16)
+            stereo[0::2] = pcm16_l
+            stereo[1::2] = pcm16_r
+
+            return stereo.tobytes()
 
     async def send_audio_loop(self, ws: ClientConnection) -> None:
         """Send audio frames to websocket."""
