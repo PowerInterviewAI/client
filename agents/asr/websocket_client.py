@@ -61,8 +61,8 @@ class WebSocketASRClient:
 
             # Fetch both channels concurrently
             data_l, data_r = await asyncio.gather(
-                loop.run_in_executor(None, lambda: self.audio_capture_l.get_frame(timeout=0.01)),
-                loop.run_in_executor(None, lambda: self.audio_capture_r.get_frame(timeout=0.01)),
+                loop.run_in_executor(None, lambda: self.audio_capture_l.get_frame(timeout=0.1)),
+                loop.run_in_executor(None, lambda: self.audio_capture_r.get_frame(timeout=0.1)),
             )
 
             if data_l is None and data_r is None:
