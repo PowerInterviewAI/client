@@ -59,15 +59,10 @@ class WebSocketASRClient:
                 msg = "Stop requested"
                 raise asyncio.CancelledError(msg)
 
-            # Get audio frames from both channels with timeout
-            data_l = await loop.run_in_executor(
-                None,
-                lambda: self.audio_capture_l.get_frame(timeout=0.1),
-            )
-
-            data_r = await loop.run_in_executor(
-                None,
-                lambda: self.audio_capture_r.get_frame(timeout=0.1),
+            # Fetch both channels concurrently
+            data_l, data_r = await asyncio.gather(
+                loop.run_in_executor(None, lambda: self.audio_capture_l.get_frame(timeout=0.01)),
+                loop.run_in_executor(None, lambda: self.audio_capture_r.get_frame(timeout=0.01)),
             )
 
             if data_l is None and data_r is None:
@@ -187,6 +182,9 @@ class WebSocketASRClient:
         logger.info(f"Connecting to backend websocket: {self.backend_url}")
 
         try:
+            self.audio_capture_l.clear_queue()
+            self.audio_capture_r.clear_queue()
+
             # Prepare headers for authenticated connection if token provided
             additional_headers: dict[str, str] = {}
             if self.session_token:
