@@ -284,7 +284,7 @@ export function VideoGroup({
                   autoPlay
                   muted
                   playsInline
-                  className="w-72 h-32 mx-auto bg-black rounded-md object-contain"
+                  className="w-64 h-36 mx-auto bg-black rounded-md object-contain"
                 />
 
                 <div className="grid grid-cols-2 gap-4">
@@ -368,7 +368,7 @@ export function VideoGroup({
           </DialogContent>
         </Dialog>
       </div>
-      {videoDeviceNotFound && (
+      {videoDeviceNotFound && config?.faceSwap && (
         <Badge
           variant="destructive"
           className="absolute -bottom-1 -right-1 h-4 min-w-4 rounded-full px-1 flex items-center justify-center text-[10px] border"
