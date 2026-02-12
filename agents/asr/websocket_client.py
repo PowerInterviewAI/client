@@ -52,20 +52,17 @@ class WebSocketASRClient:
 
     async def get_next_audio(self) -> bytes:
         """Get next audio chunk from both capture channels and mix to stereo."""
-        loop = asyncio.get_running_loop()
-
         while True:
             if self.stop_event.is_set():
                 msg = "Stop requested"
                 raise asyncio.CancelledError(msg)
 
             # Fetch both channels concurrently
-            data_l, data_r = await asyncio.gather(
-                loop.run_in_executor(None, lambda: self.audio_capture_l.get_frame(timeout=0.1)),
-                loop.run_in_executor(None, lambda: self.audio_capture_r.get_frame(timeout=0.1)),
-            )
+            data_l = self.audio_capture_l.get_frame_nowait()
+            data_r = self.audio_capture_r.get_frame_nowait()
 
             if data_l is None and data_r is None:
+                await asyncio.sleep(0.01)  # No audio available, wait briefly before retrying
                 continue  # No audio available, will trigger silence frame in send loop
 
             if data_l is None:
