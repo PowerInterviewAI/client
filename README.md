@@ -7,7 +7,7 @@
 [![Version](https://img.shields.io/badge/version-1.0.3-blue.svg)](https://github.com/PowerInterviewAI/power-interview-assistant/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-📧 [Email](mailto:power-interview@protonmail.com) | 🌐 [Website](https://powerinterviewai.github.io/hero/) | 💬 [Telegram](https://t.me/+uQuuBdrsIYBjY2Qx) | 💭 [Discord](https://discord.gg/BB3mSBa9hZ)
+📧 [Email](mailto:power-interview@protonmail.com) | 🌐 [Website](https://www.powerinterviewai.com/) | 🌐 [GitHub Pages](https://powerinterviewai.github.io/hero/) | 💬 [Telegram](https://t.me/+uQuuBdrsIYBjY2Qx) | 💭 [Discord](https://discord.gg/BB3mSBa9hZ)
 
 </div>
 
@@ -493,7 +493,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 For issues, questions, or suggestions:
 
 - 📧 **Email**: [power-interview@protonmail.com](mailto:power-interview@protonmail.com)
-- 🌐 **Website**: [https://powerinterviewai.github.io/hero/](https://powerinterviewai.github.io/hero/)
+- 🌐 **Website**: [https://www.powerinterviewai.com/](https://www.powerinterviewai.com/)
+- 🌐 **GitHub Pages**: [https://powerinterviewai.github.io/hero/](https://powerinterviewai.github.io/hero/)
 - 💬 **Telegram**: [https://t.me/+uQuuBdrsIYBjY2Qx](https://t.me/+uQuuBdrsIYBjY2Qx)
 - 💭 **Discord**: [https://discord.gg/BB3mSBa9hZ](https://discord.gg/BB3mSBa9hZ)
 - **GitHub**: Open an issue for bug reports and feature requests
@@ -504,7 +505,6 @@ For issues, questions, or suggestions:
 
 **Made to help you ace your interviews while protecting your privacy**
 
-📧 [Email](mailto:power-interview@protonmail.com) | 🌐 [Website](https://powerinterviewai.github.io/hero/) | 💬 [Telegram](https://t.me/+uQuuBdrsIYBjY2Qx) | 💭 [Discord](https://discord.gg/BB3mSBa9hZ)
+📧 [Email](mailto:power-interview@protonmail.com) | 🌐 [Website](https://www.powerinterviewai.com/) | 🌐 [GitHub Pages](https://powerinterviewai.github.io/hero/) | 💬 [Telegram](https://t.me/+uQuuBdrsIYBjY2Qx) | 💭 [Discord](https://discord.gg/BB3mSBa9hZ)
 
 </div>
-
