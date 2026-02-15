@@ -1,8 +1,8 @@
 import { EnvUtil } from './utils/env.js';
 
 export const BACKEND_BASE_URL = EnvUtil.isDev()
-  ? 'http://localhost:8000'
-  : 'http://5.181.0.143:8080';
+  ? 'http://localhost:8080'
+  : 'https://api.powerinterviewai.com';
 
 // Transcript agent constants
 export const TRANSCRIPT_ZMQ_PORT = 50002;
