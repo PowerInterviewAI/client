@@ -189,7 +189,7 @@ export function VideoGroup({
                   alert('OBS Virtual Camera or VB-Audio Input not found. Face Swap requires both.');
                   return;
                 }
-                toast.success(config?.faceSwap ? 'Face Swap disabled' : 'Face Swap enabled');
+                toast.success(config?.faceSwap ? 'Face Swap is Off' : 'Face Swap is On');
                 updateConfig({ faceSwap: !config?.faceSwap });
               }}
             >
@@ -197,7 +197,7 @@ export function VideoGroup({
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Toggle Face Swap ({config?.faceSwap ? 'Enabled' : 'Disabled'})</p>
+            <p>Toggle Face Swap ({config?.faceSwap ? 'On' : 'Off'})</p>
           </TooltipContent>
         </Tooltip>
 
