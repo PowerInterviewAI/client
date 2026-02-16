@@ -39,7 +39,8 @@ export class AuthService {
 
   /**
    * Attempt to log a user in with `email` and `password`.
-   * On success, updates `configStore` with credentials and session token.
+   * On success, updates `configStore` with credentials and session token
+   * if rememberMe is enabled.
    */
   async login(email: string, password: string): Promise<{ success: boolean; error?: string }> {
     if (email && password) {
@@ -49,8 +50,13 @@ export class AuthService {
           return { success: false, error: response.error.message || 'Login failed' };
         }
 
-        // persist credentials and session token in the config store
-        configStore.updateConfig({ email, password });
+        // persist credentials in the config store only if rememberMe is enabled
+        const config = configStore.getConfig();
+        if (config.rememberMe) {
+          configStore.updateConfig({ email, password });
+        } else {
+          configStore.updateConfig({ email: '', password: '' });
+        }
         configStore.updateConfig({ sessionToken: response.data?.session_token });
 
         // update app state to logged in
@@ -81,6 +87,12 @@ export class AuthService {
       // clear session token and update app state
       configStore.updateConfig({ sessionToken: '' });
       appStateService.updateState({ isLoggedIn: false });
+
+      // clear credentials if remember me is not checked
+      const config = configStore.getConfig();
+      if (!config.rememberMe) {
+        configStore.updateConfig({ email: '', password: '' });
+      }
     }
   }
 

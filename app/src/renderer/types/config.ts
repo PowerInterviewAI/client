@@ -17,6 +17,7 @@ export interface Config {
   sessionToken: string;
   email: string;
   password: string;
+  rememberMe: boolean;
 
   // Transcription options
   audioInputDeviceName: string;

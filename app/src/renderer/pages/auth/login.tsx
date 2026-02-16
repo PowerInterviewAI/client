@@ -4,15 +4,17 @@ import { Link } from 'react-router-dom';
 import { InputPassword } from '@/components/custom/input-password';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import useAuth from '@/hooks/use-auth';
 import { useConfigStore } from '@/hooks/use-config-store';
 
 export default function LoginPage() {
   const { login, loading, error, setError } = useAuth();
-  const { config, loadConfig } = useConfigStore();
+  const { config, loadConfig, updateConfig } = useConfigStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
 
   // Load config on mount
   useEffect(() => {
@@ -26,8 +28,11 @@ export default function LoginPage() {
         try {
           const conf = await window.electronAPI.config.get();
           if (conf) {
-            setEmail(conf.email || '');
-            setPassword(conf.password || '');
+            setRememberMe(conf.rememberMe ?? false);
+            if (conf.rememberMe) {
+              setEmail(conf.email || '');
+              setPassword(conf.password || '');
+            }
           }
         } catch (error) {
           console.error('Failed to load saved credentials:', error);
@@ -40,18 +45,29 @@ export default function LoginPage() {
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
+
+    // Save remember me preference and credentials if checked
+    await updateConfig({
+      rememberMe,
+      email: rememberMe ? email.trim() : '',
+      password: rememberMe ? password : '',
+    });
+
     await login(email.trim(), password);
   };
 
   useEffect(() => {
     // Pre-fill email from config (fallback if Electron API not available)
-    if (config?.email) {
-      setEmail(config.email);
+    if (config?.rememberMe) {
+      setRememberMe(config.rememberMe);
+      if (config?.email) {
+        setEmail(config.email);
+      }
+      if (config?.password) {
+        setPassword(config.password);
+      }
     }
-    if (config?.password) {
-      setPassword(config.password);
-    }
-  }, [config?.email, config?.password]);
+  }, [config?.email, config?.password, config?.rememberMe]);
 
   return (
     <Card className="max-w-md mx-auto">
@@ -75,9 +91,23 @@ export default function LoginPage() {
             />
           </div>
 
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="remember-me"
+              checked={rememberMe}
+              onCheckedChange={(checked) => setRememberMe(checked === true)}
+            />
+            <label
+              htmlFor="remember-me"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+            >
+              Remember me
+            </label>
+          </div>
+
           {error && <div className="text-sm text-red-600">{error}</div>}
 
-          <Button type="submit" disabled={loading} className="w-full">
+          <Button type="submit" disabled={loading} className="w-full mt-2">
             {loading ? 'Signing in…' : 'Sign in'}
           </Button>
 

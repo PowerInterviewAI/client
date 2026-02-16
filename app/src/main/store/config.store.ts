@@ -15,6 +15,7 @@ export interface RuntimeConfig {
   };
   language: string;
   sessionToken: string;
+  rememberMe: boolean;
   email: string;
   password: string;
   audioInputDeviceName: string;
@@ -36,6 +37,7 @@ const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
   },
   language: 'en',
   sessionToken: '',
+  rememberMe: true,
   email: '',
   password: '',
   audioInputDeviceName: '',
