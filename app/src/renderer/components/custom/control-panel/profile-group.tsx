@@ -79,7 +79,9 @@ export function ProfileGroup({
                     : '?'}
                 </div>
               )}
-              <p className="text-sm font-medium">{config?.interviewConf?.username ?? '?'}</p>
+              <p className="text-sm font-medium truncate">
+                {config?.interviewConf?.username ?? '?'}
+              </p>
               <ChevronUp className="h-4 w-4" />
             </div>
           </Button>
