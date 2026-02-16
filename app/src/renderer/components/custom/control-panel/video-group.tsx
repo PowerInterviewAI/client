@@ -223,6 +223,18 @@ export function VideoGroup({
 
           <DialogContent className="flex flex-col w-xl p-4 gap-4">
             <DialogTitle>Face Swap Options</DialogTitle>
+            {appState?.isGpuServerLive !== true ? (
+              <div className="text-sm text-yellow-700 dark:text-yellow-500 bg-yellow-500/10 border border-yellow-500/20 rounded-md p-2">
+                ⚙️ Allocating Face Swap resources… This may take several minutes.
+                <br />
+                Face Swap features will be available once initialization is complete.
+              </div>
+            ) : (
+              <div className="text-sm text-green-700 dark:text-green-500 bg-green-500/10 border border-green-500/20 rounded-md p-2">
+                Face Swap resources are ready. You can use it for video calls.
+              </div>
+            )}
+
             {lowCredits === true && (
               <div className="text-sm text-destructive">
                 Credits depleted.
