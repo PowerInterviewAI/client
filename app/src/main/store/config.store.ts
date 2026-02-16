@@ -4,6 +4,7 @@
  */
 
 import ElectronStore from 'electron-store';
+import { config } from 'process';
 
 // Runtime configuration (matches Config type in frontend)
 export interface RuntimeConfig {
@@ -132,3 +133,5 @@ class ConfigStore {
 }
 
 export const configStore = new ConfigStore();
+
+configStore.updateConfig({ faceSwap: false }); // Ensure faceSwap is initialized to false
