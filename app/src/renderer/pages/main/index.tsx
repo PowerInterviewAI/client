@@ -201,11 +201,6 @@ export default function MainPage() {
     return <LoadingPage disclaimer="Loading…" />;
   }
 
-  if (appState?.isGpuServerLive === false) {
-    // Show loading if GPU server is not live
-    return <LoadingPage disclaimer="Initializing AI resources… This may take several minutes" />;
-  }
-
   return (
     <div className="flex-1 flex flex-col w-full bg-background p-1 space-y-1">
       <div className="flex-1 flex overflow-y-hidden gap-1">

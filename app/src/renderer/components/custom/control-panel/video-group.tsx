@@ -181,7 +181,8 @@ export function VideoGroup({
               disabled={
                 getDisabled(runningState) ||
                 ((!obsCameraExists || !vbInputExists) && !config?.faceSwap) ||
-                lowCredits === true
+                lowCredits === true ||
+                appState?.isGpuServerLive !== true
               }
               onClick={() => {
                 const tryingToEnable = !config?.faceSwap;
