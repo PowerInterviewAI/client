@@ -75,7 +75,7 @@ export function ProfileGroup({
               ) : (
                 <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-md font-semibold uppercase text-muted-foreground border">
                   {config?.interviewConf?.username
-                    ? (config?.interviewConf?.username).charAt(0)
+                    ? config?.interviewConf?.username.charAt(0)
                     : '?'}
                 </div>
               )}
