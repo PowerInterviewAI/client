@@ -53,13 +53,13 @@ export default function ControlPanel({ onProfileClick, onSignOut }: ControlPanel
           await stopAssistant();
         }
       },
-      className: 'bg-primary hover:bg-primary/90',
+      className: 'bg-blue-600 hover:bg-blue-600/90',
       icon: <Play className="h-3.5 w-3.5" />,
       label: 'Start',
     },
     [RunningState.Starting]: {
       onClick: () => {},
-      className: 'bg-primary hover:bg-primary/90',
+      className: 'bg-blue-600 hover:bg-blue-600/90',
       icon: <Ellipsis className="h-3.5 w-3.5 animate-pulse" />,
       label: 'Starting...',
     },
