@@ -86,7 +86,9 @@ export class HealthCheckService {
 
         try {
           const pingResponse = await this.client.pingClient();
-          appStateService.updateState({ credits: pingResponse.data?.credits ?? 0 });
+          if (pingResponse.data?.credits !== undefined) {
+            appStateService.updateState({ credits: pingResponse.data?.credits });
+          }
         } catch (error) {
           console.error('[HealthCheckService] Client ping error:', error);
           nextInterval = FAILURE_INTERVAL;
