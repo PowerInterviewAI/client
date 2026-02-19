@@ -2,6 +2,7 @@
 // This is the standard approach for Electron preload scripts
 import { clear } from 'console';
 import { contextBridge, ipcRenderer } from 'electron';
+import { get } from 'http';
 
 // Build the API object once so it can be exposed under multiple names
 const electronApi = {
@@ -81,6 +82,7 @@ const electronApi = {
   // Media management
   webRtc: {
     offer: (offer: any) => ipcRenderer.invoke('webrtc:offer', offer),
+    getTurnCredentials: () => ipcRenderer.invoke('webrtc:turn-credentials'),
     startAgents: () => ipcRenderer.invoke('webrtc:start-agents'),
     stopAgents: () => ipcRenderer.invoke('webrtc:stop-agents'),
     putVideoFrame: (frameData: ArrayBuffer) =>

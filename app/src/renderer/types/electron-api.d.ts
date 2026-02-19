@@ -91,6 +91,7 @@ declare global {
     webRtc: {
       // eslint-disable-next-line
       offer: (any) => Promise<any>;
+      getTurnCredentials: () => Promise<any>;
       startAgents: () => Promise<void>;
       stopAgents: () => Promise<void>;
       putVideoFrame: (frameData: ArrayBuffer) => Promise<void>;

@@ -7,6 +7,10 @@ export function registerWebRTCHandlers() {
     return await webRtcService.offer(offer);
   });
 
+  ipcMain.handle('webrtc:turn-credentials', async () => {
+    return await webRtcService.getTurnCredentials();
+  });
+
   ipcMain.handle('webrtc:start-agents', async () => {
     await webRtcService.startAgents();
   });

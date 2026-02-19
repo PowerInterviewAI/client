@@ -142,7 +142,21 @@ export const VideoPanel = forwardRef<VideoPanelHandle, VideoPanelProps>(
       try {
         setVideoMessage('Waiting for processed video stream...');
 
-        const pc = new RTCPeerConnection();
+        // Force use of TURN (relay) and register the provided TURN server
+        const turnRes = await electron.webRtc.getTurnCredentials();
+        const creds = turnRes.data;
+        console.log('Received TURN credentials:', creds);
+        if (!creds || !creds.username || !creds.credential || !creds.urls) {
+          toast.error('Failed to get TURN server credentials');
+          throw new Error('Invalid TURN credentials received');
+        }
+
+        const rtcConfig: RTCConfiguration = {
+          iceServers: [creds],
+          iceTransportPolicy: 'relay',
+        };
+
+        const pc = new RTCPeerConnection(rtcConfig);
         pcRef.current = pc;
 
         // Monitor connection state for reconnection

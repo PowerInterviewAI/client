@@ -51,6 +51,10 @@ class WebRTCService {
     } as OfferRequest);
   }
 
+  async getTurnCredentials(): Promise<any> {
+    return await new ApiClient().get('/api/webrtc/turn-credentials');
+  }
+
   /**
    * Start vcam and audio control agents
    */
