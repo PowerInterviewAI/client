@@ -51,6 +51,7 @@ class WebRTCService {
     } as OfferRequest);
   }
 
+  // eslint-disable-next-line
   async getTurnCredentials(): Promise<any> {
     return await new ApiClient().get('/api/webrtc/turn-credentials');
   }
