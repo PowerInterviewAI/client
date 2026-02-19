@@ -10,6 +10,7 @@ import * as zmq from 'zeromq';
 
 import {
   BACKEND_BASE_URL,
+  REPLY_SUGGESTION_GAP_MS,
   TRANSCRIPT_INTER_TRANSCRIPT_GAP_MS,
   TRANSCRIPT_MAX_RESTART_COUNT,
   TRANSCRIPT_RESTART_DELAY_MS,
@@ -182,10 +183,11 @@ class TranscriptService {
         console.log(`[ZMQ] Received:`, message);
 
         // Parse message format: "ch_0::PARTIAL::So I'll fix it then, ..."
-        const [channel, type, ...rest] = message.split('::');
-        const isFinal = type.toLowerCase() === 'final';
+        // Be defensive: protect against malformed messages (missing parts).
+        const [channelRaw = '', rawType = '', ...rest] = message.split('::');
+        const isFinal = String(rawType).toLowerCase() === 'final';
         const text = rest.join('::').trim();
-        const speaker = channel.toLowerCase() === 'ch_0' ? Speaker.Other : Speaker.Self;
+        const speaker = String(channelRaw).toLowerCase() === 'ch_0' ? Speaker.Other : Speaker.Self;
 
         if (text) {
           const transcript: Transcript = {
@@ -208,6 +210,10 @@ class TranscriptService {
               } else {
                 this.selfPartialTranscript = transcript;
               }
+
+              // User started speaking — cancel any in-progress reply-suggestion so
+              // suggestions are not produced while the user is talking.
+              replySuggestionService.stop();
             }
           } else {
             if (isFinal) {
@@ -259,9 +265,26 @@ class TranscriptService {
             }
           }
 
+          // Determine the last final SELF transcript (if any)
+          const lastSelf = cleaned.filter((t) => t.speaker === Speaker.Self).slice(-1)[0];
+
           // Generate reply suggestions
+          // - Do NOT generate while the user is currently speaking (self partial exists)
+          // - Skip generating if the most recent SELF final is too recent (within gap)
           if (transcript.speaker === Speaker.Other && transcript.isFinal) {
-            await replySuggestionService.startGenerateSuggestion(cleaned);
+            if (this.selfPartialTranscript) {
+              console.log('Skipping reply-suggestion: SELF partial active');
+            } else {
+              const skipDueToRecentSelf =
+                !!lastSelf &&
+                lastSelf.isFinal &&
+                new Date().getTime() - lastSelf.endTimestamp <= REPLY_SUGGESTION_GAP_MS;
+              if (!skipDueToRecentSelf) {
+                await replySuggestionService.startGenerateSuggestion(cleaned);
+              } else {
+                console.log('Skipping suggestion generation due to recent self transcript');
+              }
+            }
           }
 
           // Update application state
