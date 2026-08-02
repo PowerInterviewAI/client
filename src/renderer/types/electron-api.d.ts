@@ -54,6 +54,7 @@ declare global {
         profileData: string,
         context: string
       ) => Promise<{ success: boolean; error?: string }>;
+      refresh: () => Promise<{ success: boolean; error?: string }>;
     };
 
     // Payment management

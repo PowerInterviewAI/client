@@ -25,6 +25,7 @@ const DEFAULT_STATE: AppState = {
   userRole: undefined,
   providedLLMModel: undefined,
   interviewConfig: { fullName: '', profileData: '', context: '' },
+  interviewConfigLoaded: false,
 };
 
 export class AppStateService {

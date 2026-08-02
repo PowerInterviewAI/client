@@ -1,4 +1,5 @@
 import { UsersApi } from '../api/users.js';
+import { clearLegacyInterviewConf, legacyInterviewConf } from '../store/config.store.js';
 import { appStateService } from './app-state.service.js';
 
 /**
@@ -24,17 +25,45 @@ export class AccountService {
       }
 
       const interviewConfig = response.data.interview_config;
+
+      // Pre-sync builds kept this config on local disk only. If the account has none yet,
+      // adopt the leftover local copy instead of presenting the user an empty profile.
+      if (!interviewConfig) {
+        const migrated = await this.migrateLegacyConfig();
+        if (migrated) return { success: true };
+      }
+
       appStateService.updateState({
         interviewConfig: {
           fullName: interviewConfig?.full_name ?? '',
           profileData: interviewConfig?.profile_data ?? '',
           context: interviewConfig?.context ?? '',
         },
+        interviewConfigLoaded: true,
       });
+      if (interviewConfig) clearLegacyInterviewConf();
       return { success: true };
     } catch {
       return { success: false, error: 'Failed to fetch account' };
     }
+  }
+
+  /**
+   * Push a pre-sync local config up to the account, once. The local copy is only
+   * dropped after the backend confirms the write, so a failed migration is retried
+   * on the next launch rather than losing the user's profile.
+   */
+  private async migrateLegacyConfig(): Promise<boolean> {
+    const fullName = legacyInterviewConf?.username ?? '';
+    const profileData = legacyInterviewConf?.profileData ?? '';
+    const context = legacyInterviewConf?.jobDescription ?? '';
+    if (!fullName && !profileData && !context) return false;
+
+    const result = await this.updateConfig(fullName, profileData, context);
+    if (!result.success) return false;
+
+    clearLegacyInterviewConf();
+    return true;
   }
 
   /**
@@ -56,7 +85,10 @@ export class AccountService {
         return { success: false, error: response.error.message || 'Failed to update account' };
       }
 
-      appStateService.updateState({ interviewConfig: { fullName, profileData, context } });
+      appStateService.updateState({
+        interviewConfig: { fullName, profileData, context },
+        interviewConfigLoaded: true,
+      });
       return { success: true };
     } catch {
       return { success: false, error: 'Failed to update account' };

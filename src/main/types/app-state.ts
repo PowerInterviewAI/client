@@ -69,4 +69,6 @@ export interface AppState {
   userRole?: UserRole;
   providedLLMModel?: string;
   interviewConfig: InterviewConfig;
+  /** False until the account's config has been read this session; editing is unsafe before then. */
+  interviewConfigLoaded: boolean;
 }

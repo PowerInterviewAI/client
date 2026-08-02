@@ -185,15 +185,30 @@ export const configStore = new ConfigStore();
 
 // interviewConf (full name, profile, context) used to be cached here, but it's now
 // backend-persisted and lives only in-memory (see AccountService/AppStateService).
-// Drop any leftover local copy so it doesn't linger in the store file.
-(() => {
+export interface LegacyInterviewConf {
+  username?: string;
+  profileData?: string;
+  jobDescription?: string;
+}
+
+type StoredRuntime = Partial<RuntimeConfig> & { interviewConf?: LegacyInterviewConf };
+
+// Read (but do not yet delete) any leftover local copy, so AccountService can migrate it
+// onto the account. Deleting here unconditionally would destroy the only copy whenever the
+// first launch after upgrade happens to be offline.
+export const legacyInterviewConf: LegacyInterviewConf | null = (() => {
   // eslint-disable-next-line
-  const raw = (configStore as any).store.get('runtime') as
-    | (Partial<RuntimeConfig> & { interviewConf?: unknown })
-    | undefined;
+  const raw = (configStore as any).store.get('runtime') as StoredRuntime | undefined;
+  return raw?.interviewConf ?? null;
+})(); // read legacy local interviewConf
+
+// Called once the account is known to hold the config, so it stops lingering on disk.
+export function clearLegacyInterviewConf(): void {
+  // eslint-disable-next-line
+  const raw = (configStore as any).store.get('runtime') as StoredRuntime | undefined;
   if (raw && 'interviewConf' in raw) {
     delete raw.interviewConf;
     // eslint-disable-next-line
     (configStore as any).store.set('runtime', raw);
   }
-})(); // drop legacy local interviewConf
+}

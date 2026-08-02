@@ -31,4 +31,5 @@ export interface AppState {
   userRole?: UserRole;
   providedLLMModel?: string;
   interviewConfig: InterviewConfig;
+  interviewConfigLoaded: boolean;
 }

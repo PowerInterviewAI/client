@@ -10,4 +10,9 @@ export function registerAccountHandlers(): void {
       return accountService.updateConfig(fullName, profileData, context);
     }
   );
+
+  // Retry the initial pull when it failed at startup (offline, backend down)
+  ipcMain.handle('account:refresh', async () => {
+    return accountService.pullFromBackend();
+  });
 }
