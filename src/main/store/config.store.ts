@@ -196,14 +196,22 @@ type StoredRuntime = Partial<RuntimeConfig> & { interviewConf?: LegacyInterviewC
 // Read (but do not yet delete) any leftover local copy, so AccountService can migrate it
 // onto the account. Deleting here unconditionally would destroy the only copy whenever the
 // first launch after upgrade happens to be offline.
-export const legacyInterviewConf: LegacyInterviewConf | null = (() => {
+let legacyInterviewConf: LegacyInterviewConf | null = (() => {
   // eslint-disable-next-line
   const raw = (configStore as any).store.get('runtime') as StoredRuntime | undefined;
   return raw?.interviewConf ?? null;
 })(); // read legacy local interviewConf
 
+export function getLegacyInterviewConf(): LegacyInterviewConf | null {
+  return legacyInterviewConf;
+}
+
 // Called once the account is known to hold the config, so it stops lingering on disk.
+// The in-memory copy goes too: it outlives sign-out, so leaving it would let a later
+// sign-in on the same process migrate one user's CV onto a different account.
 export function clearLegacyInterviewConf(): void {
+  legacyInterviewConf = null;
+
   // eslint-disable-next-line
   const raw = (configStore as any).store.get('runtime') as StoredRuntime | undefined;
   if (raw && 'interviewConf' in raw) {

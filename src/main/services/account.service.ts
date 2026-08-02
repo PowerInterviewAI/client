@@ -1,5 +1,5 @@
 import { UsersApi } from '../api/users.js';
-import { clearLegacyInterviewConf, legacyInterviewConf } from '../store/config.store.js';
+import { clearLegacyInterviewConf, getLegacyInterviewConf } from '../store/config.store.js';
 import { appStateService } from './app-state.service.js';
 
 /**
@@ -11,6 +11,9 @@ import { appStateService } from './app-state.service.js';
  */
 export class AccountService {
   private client = new UsersApi();
+
+  /** Account the leftover pre-sync config was offered to; see migrateLegacyConfig(). */
+  private migrationOwnerId: string | null = null;
 
   /**
    * Pull the authenticated user's persisted interview config from the backend
@@ -24,12 +27,13 @@ export class AccountService {
         return { success: false, error: response.error?.message || 'Failed to fetch account' };
       }
 
-      const interviewConfig = response.data.interview_config;
+      const account = response.data;
+      const interviewConfig = account.interview_config;
 
       // Pre-sync builds kept this config on local disk only. If the account has none yet,
       // adopt the leftover local copy instead of presenting the user an empty profile.
       if (!interviewConfig) {
-        const migration = await this.migrateLegacyConfig();
+        const migration = await this.migrateLegacyConfig(account._id);
         if (migration === 'migrated') return { success: true };
         if (migration === 'failed') {
           return { success: false, error: 'Failed to migrate local configuration' };
@@ -58,12 +62,22 @@ export class AccountService {
    *
    * 'none' means there was nothing local to migrate, which is distinct from a push
    * that failed: only the former should leave the user looking at a blank profile.
+   *
+   * The leftover copy is device-scoped, not account-scoped, so the first account offered
+   * it claims it and it is never pushed anywhere else. Without that claim, a second
+   * sign-in on the same process - a new signup, or another user on a shared machine -
+   * would inherit the first user's CV, because a failed push deliberately keeps the copy
+   * around for retry.
    */
-  private async migrateLegacyConfig(): Promise<'migrated' | 'failed' | 'none'> {
-    const fullName = legacyInterviewConf?.username ?? '';
-    const profileData = legacyInterviewConf?.profileData ?? '';
-    const context = legacyInterviewConf?.jobDescription ?? '';
+  private async migrateLegacyConfig(accountId: string): Promise<'migrated' | 'failed' | 'none'> {
+    const legacy = getLegacyInterviewConf();
+    const fullName = legacy?.username ?? '';
+    const profileData = legacy?.profileData ?? '';
+    const context = legacy?.jobDescription ?? '';
     if (!fullName && !profileData && !context) return 'none';
+
+    this.migrationOwnerId ??= accountId;
+    if (this.migrationOwnerId !== accountId) return 'none';
 
     const result = await this.updateConfig(fullName, profileData, context);
     if (!result.success) {
