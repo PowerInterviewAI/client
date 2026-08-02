@@ -51,7 +51,7 @@ export class AccountService {
         },
         interviewConfigLoaded: true,
       });
-      if (interviewConfig) clearLegacyInterviewConf();
+      if (interviewConfig) this.discardLegacyConfigIfOwned(account._id);
       return { success: true };
     } catch {
       return { success: false, error: 'Failed to fetch account' };
@@ -103,6 +103,20 @@ export class AccountService {
   }
 
   /**
+   * Drop the pre-sync copy now that this account carries its own config.
+   *
+   * Gated on the claim: an unclaimed copy belongs to the first account offered it, same rule
+   * migrateLegacyConfig applies, so this account may discard it. A copy claimed by a different
+   * account is a migration that has not finished - a failed push deliberately keeps it for
+   * retry - and deleting it here would lose that user's CV on a shared machine.
+   */
+  private discardLegacyConfigIfOwned(accountId: string): void {
+    const owner = getLegacyInterviewConfOwner();
+    if (owner !== null && owner !== accountId) return;
+    clearLegacyInterviewConf();
+  }
+
+  /**
    * Push local interview config changes to the backend, then mirror the
    * saved values into app state.
    */
@@ -143,8 +157,11 @@ export class AccountService {
    *
    * Always refreshes first: a save replaces the whole config, so editing a copy another device
    * has since changed would silently discard that change. `success` reports whether the values
-   * are safe to save over - false when nothing was ever loaded this session, in which case the
-   * data returned is a local leftover or blank and must not be pushed back to the account.
+   * are safe to save over, and requires *this* refresh to have succeeded - not just that
+   * something was loaded earlier in the session. `interviewConfigLoaded` survives a failed pull
+   * by design (it gates Start, which should keep working on a blip), so trusting it alone would
+   * hand the dialog a stale copy with Save enabled and no warning, which is exactly how a newer
+   * config saved on another device gets overwritten.
    */
   async getEditableConfig(): Promise<{
     success: boolean;
@@ -153,12 +170,12 @@ export class AccountService {
   }> {
     const pull = await this.pullFromBackend();
     const state = appStateService.getState();
-    const loaded = state.interviewConfigLoaded;
+    const fresh = pull.success && state.interviewConfigLoaded;
 
     return {
-      success: loaded,
+      success: fresh,
       data: state.interviewConfig,
-      error: loaded ? undefined : pull.error || 'Failed to load configuration',
+      error: fresh ? undefined : pull.error || 'Failed to load configuration',
     };
   }
 
