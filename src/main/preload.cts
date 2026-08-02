@@ -57,6 +57,7 @@ const electronApi = {
     update: (fullName: string, profileData: string, context: string) =>
       ipcRenderer.invoke('account:update', fullName, profileData, context),
     refresh: () => ipcRenderer.invoke('account:refresh'),
+    get: () => ipcRenderer.invoke('account:get'),
   },
 
   payment: {

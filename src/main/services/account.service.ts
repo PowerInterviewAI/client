@@ -1,5 +1,11 @@
 import { UsersApi } from '../api/users.js';
-import { clearLegacyInterviewConf, getLegacyInterviewConf } from '../store/config.store.js';
+import {
+  claimLegacyInterviewConf,
+  clearLegacyInterviewConf,
+  getLegacyInterviewConf,
+  getLegacyInterviewConfOwner,
+} from '../store/config.store.js';
+import { InterviewConfig } from '../types/app-state.js';
 import { appStateService } from './app-state.service.js';
 
 /**
@@ -11,9 +17,6 @@ import { appStateService } from './app-state.service.js';
  */
 export class AccountService {
   private client = new UsersApi();
-
-  /** Account the leftover pre-sync config was offered to; see migrateLegacyConfig(). */
-  private migrationOwnerId: string | null = null;
 
   /**
    * Pull the authenticated user's persisted interview config from the backend
@@ -65,9 +68,9 @@ export class AccountService {
    *
    * The leftover copy is device-scoped, not account-scoped, so the first account offered
    * it claims it and it is never pushed anywhere else. Without that claim, a second
-   * sign-in on the same process - a new signup, or another user on a shared machine -
-   * would inherit the first user's CV, because a failed push deliberately keeps the copy
-   * around for retry.
+   * sign-in - a new signup, or another user on a shared machine - would inherit the first
+   * user's CV, because a failed push deliberately keeps the copy around for retry. The
+   * claim is persisted, since that retry can happen in a later run of the app.
    */
   private async migrateLegacyConfig(accountId: string): Promise<'migrated' | 'failed' | 'none'> {
     const legacy = getLegacyInterviewConf();
@@ -76,8 +79,12 @@ export class AccountService {
     const context = legacy?.jobDescription ?? '';
     if (!fullName && !profileData && !context) return 'none';
 
-    this.migrationOwnerId ??= accountId;
-    if (this.migrationOwnerId !== accountId) return 'none';
+    const owner = getLegacyInterviewConfOwner();
+    if (owner === null) {
+      claimLegacyInterviewConf(accountId);
+    } else if (owner !== accountId) {
+      return 'none';
+    }
 
     const result = await this.updateConfig(fullName, profileData, context);
     if (!result.success) {
@@ -114,14 +121,45 @@ export class AccountService {
         return { success: false, error: response.error.message || 'Failed to update account' };
       }
 
+      // Mirror what the backend stored, not what was sent: it truncates oversized fields,
+      // so echoing the request would leave the app showing a value the account does not have.
+      const saved = response.data?.interview_config;
       appStateService.updateState({
-        interviewConfig: { fullName, profileData, context },
+        interviewConfig: {
+          fullName: saved?.full_name ?? fullName,
+          profileData: saved?.profile_data ?? profileData,
+          context: saved?.context ?? context,
+        },
         interviewConfigLoaded: true,
       });
       return { success: true };
     } catch {
       return { success: false, error: 'Failed to update account' };
     }
+  }
+
+  /**
+   * Full interview config for the configuration dialog.
+   *
+   * Always refreshes first: a save replaces the whole config, so editing a copy another device
+   * has since changed would silently discard that change. `success` reports whether the values
+   * are safe to save over - false when nothing was ever loaded this session, in which case the
+   * data returned is a local leftover or blank and must not be pushed back to the account.
+   */
+  async getEditableConfig(): Promise<{
+    success: boolean;
+    data: InterviewConfig;
+    error?: string;
+  }> {
+    const pull = await this.pullFromBackend();
+    const state = appStateService.getState();
+    const loaded = state.interviewConfigLoaded;
+
+    return {
+      success: loaded,
+      data: state.interviewConfig,
+      error: loaded ? undefined : pull.error || 'Failed to load configuration',
+    };
   }
 
   /**

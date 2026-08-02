@@ -41,7 +41,7 @@ class AppStateManager {
       credits: raw.credits,
       userRole: raw.userRole,
       providedLLMModel: raw.providedLLMModel,
-      interviewConfig: raw.interviewConfig ?? { fullName: '', profileData: '', context: '' },
+      interviewConfig: raw.interviewConfig ?? { fullName: '', hasProfileData: false },
       interviewConfigLoaded: raw.interviewConfigLoaded ?? false,
     };
   }

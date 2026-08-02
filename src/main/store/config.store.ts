@@ -42,6 +42,16 @@ const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
   autoScrollTranscript: true,
 };
 
+// interviewConf (full name, profile, context) used to be cached under `runtime`, but it's now
+// backend-persisted and lives only in-memory (see AccountService/AppStateService).
+export interface LegacyInterviewConf {
+  username?: string;
+  profileData?: string;
+  jobDescription?: string;
+}
+
+type StoredRuntime = Partial<RuntimeConfig> & { interviewConf?: LegacyInterviewConf };
+
 interface StoredConfig {
   window?: {
     bounds?: { x: number; y: number; width: number; height: number };
@@ -49,7 +59,10 @@ interface StoredConfig {
     zoomFactor?: number;
     opacityLevel?: number;
   };
-  runtime?: Partial<RuntimeConfig>;
+  runtime?: StoredRuntime;
+
+  /** Account id that claimed the leftover pre-sync config; see AccountService.migrateLegacyConfig. */
+  legacyInterviewConfOwner?: string;
 }
 
 class ConfigStore {
@@ -65,22 +78,54 @@ class ConfigStore {
   }
 
   /**
-   * Get runtime configuration from local store
+   * Get runtime configuration from local store.
+   *
+   * `interviewConf` is stripped: it is a pre-sync leftover awaiting migration, and this object
+   * is handed to the renderer over `config:get`. The CV reaches the renderer only through
+   * `account:get`.
    */
   getConfig(): RuntimeConfig {
-    const config = this.store.get('runtime', DEFAULT_RUNTIME_CONFIG);
-    return { ...DEFAULT_RUNTIME_CONFIG, ...config } as RuntimeConfig;
+    const stored: StoredRuntime = { ...this.store.get('runtime', DEFAULT_RUNTIME_CONFIG) };
+    delete stored.interviewConf;
+    return { ...DEFAULT_RUNTIME_CONFIG, ...stored } as RuntimeConfig;
   }
 
   /**
-   * Update runtime configuration in local store
+   * Update runtime configuration in local store.
+   *
+   * Merges onto the raw stored object rather than `getConfig()`, so a leftover `interviewConf`
+   * survives the write instead of being dropped before AccountService can migrate it.
    */
   updateConfig(updates: Partial<RuntimeConfig>): RuntimeConfig {
-    const current = this.getConfig();
-    const updated = { ...current, ...updates };
+    const stored = this.getStoredRuntime() ?? {};
+    this.store.set('runtime', { ...DEFAULT_RUNTIME_CONFIG, ...stored, ...updates });
+    return this.getConfig();
+  }
 
-    this.store.set('runtime', updated);
-    return updated;
+  /**
+   * Raw stored runtime object, without default backfill.
+   *
+   * Needed by migrations that must distinguish "absent on disk" from "set to the default",
+   * and to reach keys that are no longer part of `RuntimeConfig`.
+   */
+  getStoredRuntime(): StoredRuntime | undefined {
+    return this.store.get('runtime');
+  }
+
+  setStoredRuntime(runtime: StoredRuntime): void {
+    this.store.set('runtime', runtime);
+  }
+
+  getLegacyInterviewConfOwner(): string | undefined {
+    return this.store.get('legacyInterviewConfOwner');
+  }
+
+  setLegacyInterviewConfOwner(accountId: string): void {
+    this.store.set('legacyInterviewConfOwner', accountId);
+  }
+
+  clearLegacyInterviewConfOwner(): void {
+    this.store.delete('legacyInterviewConfOwner');
   }
 
   /**
@@ -165,8 +210,7 @@ export const configStore = new ConfigStore();
 // restart, which is why autoScroll was bouncing back to true.
 (() => {
   // read the raw stored object so we can test for undefined values
-  // eslint-disable-next-line
-  const raw = (configStore as any).store.get('runtime') as Partial<RuntimeConfig> | undefined;
+  const raw = configStore.getStoredRuntime();
   const migration: Partial<RuntimeConfig> = {};
   if (raw?.autoScrollLiveSuggestions === undefined) {
     migration.autoScrollLiveSuggestions = true;
@@ -183,27 +227,29 @@ export const configStore = new ConfigStore();
   }
 })(); // migration block
 
-// interviewConf (full name, profile, context) used to be cached here, but it's now
-// backend-persisted and lives only in-memory (see AccountService/AppStateService).
-export interface LegacyInterviewConf {
-  username?: string;
-  profileData?: string;
-  jobDescription?: string;
-}
-
-type StoredRuntime = Partial<RuntimeConfig> & { interviewConf?: LegacyInterviewConf };
-
 // Read (but do not yet delete) any leftover local copy, so AccountService can migrate it
 // onto the account. Deleting here unconditionally would destroy the only copy whenever the
 // first launch after upgrade happens to be offline.
-let legacyInterviewConf: LegacyInterviewConf | null = (() => {
-  // eslint-disable-next-line
-  const raw = (configStore as any).store.get('runtime') as StoredRuntime | undefined;
-  return raw?.interviewConf ?? null;
-})(); // read legacy local interviewConf
+let legacyInterviewConf: LegacyInterviewConf | null =
+  configStore.getStoredRuntime()?.interviewConf ?? null;
 
 export function getLegacyInterviewConf(): LegacyInterviewConf | null {
   return legacyInterviewConf;
+}
+
+/**
+ * Account id that claimed the leftover pre-sync config.
+ *
+ * Persisted rather than held in memory: a failed migration deliberately keeps the local copy
+ * for retry, and an in-process-only claim is lost on restart. Without this, a second user
+ * signing in first after that restart would inherit the first user's CV.
+ */
+export function getLegacyInterviewConfOwner(): string | null {
+  return configStore.getLegacyInterviewConfOwner() ?? null;
+}
+
+export function claimLegacyInterviewConf(accountId: string): void {
+  configStore.setLegacyInterviewConfOwner(accountId);
 }
 
 // Called once the account is known to hold the config, so it stops lingering on disk.
@@ -211,12 +257,11 @@ export function getLegacyInterviewConf(): LegacyInterviewConf | null {
 // sign-in on the same process migrate one user's CV onto a different account.
 export function clearLegacyInterviewConf(): void {
   legacyInterviewConf = null;
+  configStore.clearLegacyInterviewConfOwner();
 
-  // eslint-disable-next-line
-  const raw = (configStore as any).store.get('runtime') as StoredRuntime | undefined;
+  const raw = configStore.getStoredRuntime();
   if (raw && 'interviewConf' in raw) {
     delete raw.interviewConf;
-    // eslint-disable-next-line
-    (configStore as any).store.set('runtime', raw);
+    configStore.setStoredRuntime(raw);
   }
 }

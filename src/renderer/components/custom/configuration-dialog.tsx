@@ -4,7 +4,6 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { useAppState } from '@/hooks/use-app-state';
 import { getElectron } from '@/lib/utils';
 
 import {
@@ -25,39 +24,48 @@ interface ConfigurationDialogProps {
 }
 
 export default function ConfigurationDialog({ isOpen, onOpenChange }: ConfigurationDialogProps) {
-  const { appState } = useAppState();
-
-  // Depend on the values, not the object. Main broadcasts the whole app state every few
-  // seconds (backend ping), which hands the renderer a fresh interviewConfig object each
-  // time - keying the effect on that identity re-ran it mid-edit and wiped the form.
-  const storedName = appState?.interviewConfig?.fullName ?? '';
-  const storedProfileData = appState?.interviewConfig?.profileData ?? '';
-  const storedContext = appState?.interviewConfig?.context ?? '';
-  const configLoaded = appState?.interviewConfigLoaded ?? false;
-
   const [name, setName] = useState('');
   const [profileData, setProfileData] = useState('');
   const [context, setContext] = useState('');
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [configLoaded, setConfigLoaded] = useState(false);
 
-  // Initialize form values when dialog opens - runs before paint
+  // Load once per open, straight from main, rather than tracking app state. A save replaces
+  // the whole config, so this both refreshes what another device may have changed and keeps
+  // a late-arriving update from overwriting what the user is currently typing.
   useEffect(() => {
     if (!isOpen) return;
 
-    // Queue state updates in a single microtask to avoid cascading renders
-    Promise.resolve().then(() => {
-      setName(storedName);
-      setProfileData(storedProfileData);
-      setContext(storedContext);
-    });
-  }, [isOpen, storedName, storedProfileData, storedContext]);
+    let cancelled = false;
+    setLoading(true);
+    setConfigLoaded(false);
 
-  // A save fully replaces the stored config, so retry a failed startup pull before
-  // letting the user edit - otherwise they would overwrite the account with blanks.
-  useEffect(() => {
-    if (!isOpen || configLoaded) return;
-    void getElectron()?.account?.refresh();
-  }, [isOpen, configLoaded]);
+    void (async () => {
+      try {
+        const result = await getElectron()?.account?.get();
+        if (cancelled) return;
+
+        // Show whatever main has even when the refresh failed, so the user is not staring at a
+        // blank form - but only mark it loaded (and thus safe to save over) when it succeeded.
+        if (result?.data) {
+          setName(result.data.fullName);
+          setProfileData(result.data.profileData);
+          setContext(result.data.context);
+        }
+        setConfigLoaded(result?.success ?? false);
+      } catch (error) {
+        console.error('Failed to load configuration:', error);
+        if (!cancelled) setConfigLoaded(false);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -138,7 +146,8 @@ export default function ConfigurationDialog({ isOpen, onOpenChange }: Configurat
 
         <DialogFooter>
           <div className="flex items-center justify-end gap-2 w-full">
-            {!configLoaded && (
+            {loading && <p className="mr-auto text-xs text-muted-foreground">Loading...</p>}
+            {!loading && !configLoaded && (
               <p className="mr-auto text-xs text-destructive">
                 Could not load your saved configuration. Reconnect before editing.
               </p>
@@ -150,7 +159,13 @@ export default function ConfigurationDialog({ isOpen, onOpenChange }: Configurat
               size="sm"
               onClick={handleSave}
               className="bg-primary hover:bg-primary/90"
-              disabled={saving || !configLoaded || name.trim() === '' || profileData.trim() === ''}
+              disabled={
+                saving ||
+                loading ||
+                !configLoaded ||
+                name.trim() === '' ||
+                profileData.trim() === ''
+              }
             >
               {saving ? 'Saving...' : 'Save Changes'}
             </Button>

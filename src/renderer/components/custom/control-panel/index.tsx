@@ -43,24 +43,28 @@ export default function ControlPanel({ onProfileClick, onSignOut }: ControlPanel
   if (isStealth) return null;
 
   const checkCanStart = () => {
-    const checks: { ok: boolean; message: string }[] = [
+    const checks: { ok: boolean; message: string; onFail?: () => void }[] = [
       // Checked first: an unsynced config reads as empty, and blaming the user for not
       // setting a name they did set sends them into a dialog that cannot save either.
       {
         ok: appState?.interviewConfigLoaded ?? false,
-        message: 'Could not load your saved configuration. Reconnect and try again.',
+        message: 'Could not load your saved configuration. Reconnecting - try again in a moment.',
+        // Nothing else re-pulls after a failed startup fetch, so "try again" has to actually
+        // retry: without this the same toast repeats forever however often Start is pressed.
+        onFail: () => void getElectron()?.account?.refresh(),
       },
       { ok: !!appState?.interviewConfig?.fullName, message: 'Full name is not set' },
-      { ok: !!appState?.interviewConfig?.profileData, message: 'Profile data is not set' },
+      { ok: appState?.interviewConfig?.hasProfileData ?? false, message: 'Profile data is not set' },
       {
         ok: !audioInputDeviceNotFound,
         message: `Audio input device "${config?.audioInputDeviceName}" is not found`,
       },
     ];
 
-    for (const { ok, message } of checks) {
+    for (const { ok, message, onFail } of checks) {
       if (!ok) {
         toast.error(message);
+        onFail?.();
         return false;
       }
     }

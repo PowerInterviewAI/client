@@ -68,7 +68,9 @@ electron-updater publishes to GitHub Releases under `PowerInterviewAI/client` (c
 
 ## Privacy Model
 
-- CV, job description, and config stay on the user's device (Electron Store)
+- Interview configuration (full name, CV/profile, context) is stored on the backend against the
+  user's account so it follows them across devices - it is not kept on local disk
+- Device-specific settings (audio device, window bounds, scroll preferences) stay on the device
 - Only the minimum data needed for AI suggestions is sent to the backend
 - No transcript storage on external servers
 - Credentials encrypted via Electron Store

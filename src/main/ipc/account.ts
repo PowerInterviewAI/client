@@ -15,4 +15,10 @@ export function registerAccountHandlers(): void {
   ipcMain.handle('account:refresh', async () => {
     return accountService.pullFromBackend();
   });
+
+  // Full config for the configuration dialog; kept out of the app-state broadcast because
+  // the profile and context can run to hundreds of KB.
+  ipcMain.handle('account:get', async () => {
+    return accountService.getEditableConfig();
+  });
 }
