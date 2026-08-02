@@ -44,6 +44,12 @@ export default function ControlPanel({ onProfileClick, onSignOut }: ControlPanel
 
   const checkCanStart = () => {
     const checks: { ok: boolean; message: string }[] = [
+      // Checked first: an unsynced config reads as empty, and blaming the user for not
+      // setting a name they did set sends them into a dialog that cannot save either.
+      {
+        ok: appState?.interviewConfigLoaded ?? false,
+        message: 'Could not load your saved configuration. Reconnect and try again.',
+      },
       { ok: !!appState?.interviewConfig?.fullName, message: 'Full name is not set' },
       { ok: !!appState?.interviewConfig?.profileData, message: 'Profile data is not set' },
       {
