@@ -100,7 +100,10 @@ export class AuthService {
         // update app state to logged in
         appStateService.updateState({ isLoggedIn: true });
 
-        // pull this account's synced config (full name, profile, context) from the backend
+        // pull this account's synced config (full name, profile, context) from the backend.
+        // Cleared first so a failed pull leaves the config unloaded rather than whatever
+        // the previously signed-in account left behind.
+        accountService.clearState();
         await accountService.pullFromBackend();
 
         return { success: true };
@@ -129,6 +132,7 @@ export class AuthService {
       // clear session token and update app state
       configStore.updateConfig({ sessionToken: '' });
       appStateService.updateState({ isLoggedIn: false });
+      accountService.clearState();
 
       // clear credentials if remember me is not checked
       const config = configStore.getConfig();

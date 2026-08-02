@@ -29,8 +29,11 @@ export class AccountService {
       // Pre-sync builds kept this config on local disk only. If the account has none yet,
       // adopt the leftover local copy instead of presenting the user an empty profile.
       if (!interviewConfig) {
-        const migrated = await this.migrateLegacyConfig();
-        if (migrated) return { success: true };
+        const migration = await this.migrateLegacyConfig();
+        if (migration === 'migrated') return { success: true };
+        if (migration === 'failed') {
+          return { success: false, error: 'Failed to migrate local configuration' };
+        }
       }
 
       appStateService.updateState({
@@ -52,18 +55,30 @@ export class AccountService {
    * Push a pre-sync local config up to the account, once. The local copy is only
    * dropped after the backend confirms the write, so a failed migration is retried
    * on the next launch rather than losing the user's profile.
+   *
+   * 'none' means there was nothing local to migrate, which is distinct from a push
+   * that failed: only the former should leave the user looking at a blank profile.
    */
-  private async migrateLegacyConfig(): Promise<boolean> {
+  private async migrateLegacyConfig(): Promise<'migrated' | 'failed' | 'none'> {
     const fullName = legacyInterviewConf?.username ?? '';
     const profileData = legacyInterviewConf?.profileData ?? '';
     const context = legacyInterviewConf?.jobDescription ?? '';
-    if (!fullName && !profileData && !context) return false;
+    if (!fullName && !profileData && !context) return 'none';
 
     const result = await this.updateConfig(fullName, profileData, context);
-    if (!result.success) return false;
+    if (!result.success) {
+      // Surface the local copy rather than an empty form, but leave it unloaded so the
+      // dialog keeps Save disabled and retries the pull instead of letting the user
+      // overwrite the account from a half-migrated state.
+      appStateService.updateState({
+        interviewConfig: { fullName, profileData, context },
+        interviewConfigLoaded: false,
+      });
+      return 'failed';
+    }
 
     clearLegacyInterviewConf();
-    return true;
+    return 'migrated';
   }
 
   /**
@@ -93,6 +108,18 @@ export class AccountService {
     } catch {
       return { success: false, error: 'Failed to update account' };
     }
+  }
+
+  /**
+   * Drop the signed-out account's config from memory. Nothing else resets it, so
+   * without this the next user on this device inherits the previous user's profile
+   * whenever their post-login pull fails, and can overwrite their own account with it.
+   */
+  clearState(): void {
+    appStateService.updateState({
+      interviewConfig: { fullName: '', profileData: '', context: '' },
+      interviewConfigLoaded: false,
+    });
   }
 }
 
