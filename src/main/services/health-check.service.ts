@@ -26,20 +26,16 @@ export class HealthCheckService {
     this.running = true;
 
     appStateService.updateState({ isLoggedIn: null });
+    let loggedIn = false;
     try {
       const res = await this.client.pingClient();
+      loggedIn = res.status === 200;
       appStateService.updateState({
-        isLoggedIn: res.status === 200,
+        isLoggedIn: loggedIn,
         credits: res.data?.credits,
         userRole: res.data?.user_role,
         providedLLMModel: res.data?.provided_llm_model,
       });
-
-      // Remembered sessions log the user in here without going through authService.login(),
-      // so this is where a returning device needs to pull its synced account config.
-      if (res.status === 200) {
-        await accountService.pullFromBackend();
-      }
     } catch (error) {
       console.error('[HealthCheckService] Initial client ping error:', error);
       appStateService.updateState({ isLoggedIn: false });
@@ -47,6 +43,14 @@ export class HealthCheckService {
 
     this.startBackendLoop();
     this.startClientLoop();
+
+    // Remembered sessions log the user in here without going through authService.login(),
+    // so this is where a returning device needs to pull its synced account config. Kicked
+    // off after the loops and left unawaited on purpose: a slow /users/me must not keep
+    // backend liveness and session-expiry monitoring from ever starting.
+    if (loggedIn) {
+      void accountService.pullFromBackend();
+    }
   }
 
   /**
