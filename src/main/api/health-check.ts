@@ -7,10 +7,14 @@ import { RunningState } from '../types/app-state.js';
 import { ClientPingRequest, ClientPingResponse } from '../types/health-check.js';
 import { ApiClient, ApiResponse } from './client.js';
 
-// Shorter than the 5s success interval, so a stalled socket cannot outlive a tick. The initial
-// pingClient() is awaited before the liveness and 401 loops start, and HealthCheckService.start()
-// is itself awaited during app startup, so without this a single stall holds both back.
-const PING_TIMEOUT_MS = 4_000;
+// The initial pingClient() is awaited before the liveness and 401 loops start, and
+// HealthCheckService.start() is itself awaited during app startup, so without a bound here a
+// single stalled socket holds both back for as long as the runtime's default allows.
+//
+// Generous rather than tight: the loops await each ping and only then sleep, so this never
+// overlaps a tick, and ping-client authenticates against the database. Cutting it close to the
+// 5s interval would report a slow-but-alive backend as down on a high-latency connection.
+const PING_TIMEOUT_MS = 10_000;
 
 export class HealthCheckApi extends ApiClient {
   /**
