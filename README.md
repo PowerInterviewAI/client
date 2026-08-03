@@ -15,18 +15,18 @@
 
 ## Overview
 
-Power Interview is a privacy-first AI assistant designed to help you ace technical and behavioral interviews. With real-time transcription and intelligent suggestions, you'll have the confidence and support you need during live interviews-all while maintaining your privacy.
+Power Interview is a privacy-first AI assistant designed to help you ace technical and behavioral interviews. With real-time transcription and intelligent suggestions, you'll have the confidence and support you need during live interviews - all while keeping you in control of your data.
 
-## Privacy First
+## Privacy
 
-**Your data stays with you.** Power Interview is built with privacy as a core principle:
+Power Interview is built with privacy as a core principle. Here is exactly what is stored where:
 
-- **Client-Side Application**: Desktop client for account management and UI
-- **Secure Storage**: Credentials and personal info stored using Electron Store
-- **AI Processing**: Handled by secure backend services
-- **No Data Mining**: No selling or sharing personal data
-- **Minimal Data Transfer**: Only necessary data sent for AI suggestions
-- **Your Control**: CV, profile, and configs remain on your device
+- **Your interview configuration is stored on your account**: full name, CV/profile, and context are saved to the backend so they follow you across devices. You can change or clear them at any time from the configuration dialog
+- **Transcripts are never stored**: interview audio is relayed through the backend to the ASR provider for live transcription and is not retained; transcripts exist only in memory for the duration of the session
+- **Device settings stay on the device**: audio device, window bounds, and scroll preferences are local-only
+- **Local storage**: credentials and local settings are written by Electron Store to your OS user-data directory as a plain JSON file, protected by filesystem permissions
+- **No Data Mining**: no selling or sharing of personal data
+- **Minimal Data Transfer**: only the data needed for an active AI request, or an explicit configuration update, is sent to the backend
 
 ## Key Features
 
@@ -51,14 +51,14 @@ Stay on top of the conversation with live ASR:
 #### Action Suggestions
 
 - Screenshot-based problem understanding
-- Multi-image support (up to 3)
+- Multi-image support (up to 4)
 - LLM-powered solutions
 - Syntax-highlighted code output
 
 ### Smart Configuration
 
-- Profile management (CV, job description, etc.)
-- Audio device selection
+- Profile management (CV, job description, etc.), synced to your account across devices
+- Audio device selection (local to each device)
 - Language support (English)
 - Persistent settings
 
@@ -96,20 +96,29 @@ Power Interview follows a **client-server architecture**.
 
 ### Prerequisites
 
-- Node.js v18+ (v20 recommended)
+- Node.js v22.15+ (required by the main-process test runner)
+- pnpm (the repo pins `pnpm@11.1.3` via `packageManager`)
 
 ### Installation
 
 ```bash
 git clone https://github.com/PowerInterviewAI/client-app
-cd client
-npm install
+cd client-app
+pnpm install
 ```
 
 ### Run
 
 ```bash
-npm run start
+pnpm start
+```
+
+### Checks
+
+```bash
+pnpm lint          # ESLint
+pnpm build         # tsc + vite build (renderer)
+pnpm test:main     # main-process checks
 ```
 
 ### Configuration
@@ -138,10 +147,10 @@ npm run start
 
 ## Security & Privacy
 
-- Local encrypted storage
-- HTTPS + secure WebSockets
-- No external transcript storage
-- Full user control
+- HTTPS + secure WebSockets for all backend traffic
+- Interview configuration stored against your account; transcripts never persisted server-side
+- Local settings and credentials stored in your OS user-data directory
+- Full user control - configuration can be edited or cleared at any time
 
 ## Technology Stack
 
@@ -154,13 +163,17 @@ npm run start
 
 ### Backend
 
-- WebSocket
+- FastAPI (Python 3.12), MongoDB, Redis
+- REST over HTTPS and WebSocket streaming for ASR
 
 ## Project Structure
 
 ```
 power-interview-client/
 ├── src/
+│   ├── main/       Electron main process
+│   └── renderer/   React renderer
+├── test/           Main-process checks (pnpm test:main)
 ├── public/
 ├── build/
 ```
