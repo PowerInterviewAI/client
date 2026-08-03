@@ -137,6 +137,12 @@ export class AccountService {
    * migrateLegacyConfig applies, so this account may discard it. A copy claimed by a different
    * account is a migration that has not finished - a failed push deliberately keeps it for
    * retry - and deleting it here would lose that user's CV on a shared machine.
+   *
+   * Discarding an unclaimed copy does lose it: a user who upgrades a second device whose
+   * account already synced from the first never sees that device's older local CV again. That
+   * is the intended trade. Keeping it would leave it eligible for migration, and the next
+   * account to sign in with an empty config would claim and inherit it - the cross-account
+   * leak the claim exists to prevent. Losing a superseded copy beats leaking a live one.
    */
   private discardLegacyConfigIfOwned(accountId: string): void {
     const owner = getLegacyInterviewConfOwner();

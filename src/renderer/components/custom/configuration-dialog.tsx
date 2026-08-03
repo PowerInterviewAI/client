@@ -17,6 +17,8 @@ import {
 
 // Kept in sync with the backend's MAX_PROFILE_DATA_LENGTH / MAX_CONTEXT_LENGTH (app/cfg/llm.py)
 const MAX_FIELD_LENGTH = 128_000;
+// Kept in sync with the backend's MAX_USERNAME_LENGTH (app/cfg/llm.py)
+const MAX_NAME_LENGTH = 1_000;
 
 interface ConfigurationDialogProps {
   isOpen: boolean;
@@ -112,7 +114,7 @@ export default function ConfigurationDialog({ isOpen, onOpenChange }: Configurat
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Enter your profile name"
                 className="text-sm"
-                maxLength={100}
+                maxLength={MAX_NAME_LENGTH}
               />
             </div>
 

@@ -103,8 +103,14 @@ export class AuthService {
         // pull this account's synced config (full name, profile, context) from the backend.
         // Cleared first so a failed pull leaves the config unloaded rather than whatever
         // the previously signed-in account left behind.
+        //
+        // Left unawaited for the same reason HealthCheckService.start() does not await it: the
+        // request carries a full CV and runs to a 30s timeout, and awaiting it here would hold
+        // the login button on a spinner that long whenever the socket stalls. Nothing needs the
+        // config to be loaded before the main screen appears - Start gates on
+        // `interviewConfigLoaded` and retries the pull itself, and the dialog refreshes on open.
         accountService.clearState();
-        await accountService.pullFromBackend();
+        void accountService.pullFromBackend();
 
         return { success: true };
       } catch {
