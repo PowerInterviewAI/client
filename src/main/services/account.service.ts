@@ -18,16 +18,27 @@ import { appStateService } from './app-state.service.js';
 export class AccountService {
   private client = new UsersApi();
 
-  /**
-   * Bumped by every write to the config in app state.
-   *
-   * The startup pull is deliberately unawaited and can take up to the 30s request timeout, so
-   * it can still be in flight when the user saves from the dialog. Applying its response then
-   * would put the pre-save config back, and nothing shows it: the dialog is already closed, and
-   * the suggestion services read the config straight out of app state, so the rest of the
-   * session runs on the old CV.
-   */
+  /** Bumped by every write to the config in app state. See `applyIfCurrent`. */
   private generation = 0;
+
+  /**
+   * Write a config read into app state, unless something newer landed while it was in flight.
+   *
+   * The startup pull is deliberately unawaited and can take up to the 30s request timeout, so a
+   * save from the dialog, a logout, or a second pull can all land first. Applying the older read
+   * afterwards shows nothing: the dialog is closed by then, and the suggestion services read the
+   * config straight out of app state, so the rest of the session would run on the stale CV.
+   *
+   * Writes the caller already knows to be authoritative (`updateConfig`, `clearState`) bump the
+   * generation directly instead of going through here.
+   */
+  private applyIfCurrent(generation: number, config: InterviewConfig, loaded: boolean): boolean {
+    if (generation !== this.generation) return false;
+
+    this.generation++;
+    appStateService.updateState({ interviewConfig: config, interviewConfigLoaded: loaded });
+    return true;
+  }
 
   /**
    * Pull the authenticated user's persisted interview config from the backend
@@ -48,28 +59,24 @@ export class AccountService {
       // Pre-sync builds kept this config on local disk only. If the account has none yet,
       // adopt the leftover local copy instead of presenting the user an empty profile.
       if (!interviewConfig) {
-        const migration = await this.migrateLegacyConfig(account._id);
+        const migration = await this.migrateLegacyConfig(account._id, generation);
         if (migration === 'migrated') return { success: true };
         if (migration === 'failed') {
           return { success: false, error: 'Failed to migrate local configuration' };
         }
       }
 
-      // A save, a logout or a later pull landed while this request was in flight. Its result is
-      // the newer one, so drop this response rather than reverting to what the account held
-      // when this pull started. Reported as success: the fetch itself worked, and the config
-      // in state is loaded and current.
-      if (generation !== this.generation) return { success: true };
-      this.generation++;
-
-      appStateService.updateState({
-        interviewConfig: {
+      // Success either way: the fetch itself worked, and if this read was superseded then what
+      // is in state is newer than what this response carried.
+      this.applyIfCurrent(
+        generation,
+        {
           fullName: interviewConfig?.full_name ?? '',
           profileData: interviewConfig?.profile_data ?? '',
           context: interviewConfig?.context ?? '',
         },
-        interviewConfigLoaded: true,
-      });
+        true
+      );
       if (interviewConfig) this.discardLegacyConfigIfOwned(account._id);
       return { success: true };
     } catch {
@@ -91,7 +98,10 @@ export class AccountService {
    * user's CV, because a failed push deliberately keeps the copy around for retry. The
    * claim is persisted, since that retry can happen in a later run of the app.
    */
-  private async migrateLegacyConfig(accountId: string): Promise<'migrated' | 'failed' | 'none'> {
+  private async migrateLegacyConfig(
+    accountId: string,
+    generation: number
+  ): Promise<'migrated' | 'failed' | 'none'> {
     const legacy = getLegacyInterviewConf();
     const fullName = legacy?.username ?? '';
     const profileData = legacy?.profileData ?? '';
@@ -109,11 +119,10 @@ export class AccountService {
     if (!result.success) {
       // Surface the local copy rather than an empty form, but leave it unloaded so the
       // dialog keeps Save disabled and retries the pull instead of letting the user
-      // overwrite the account from a half-migrated state.
-      appStateService.updateState({
-        interviewConfig: { fullName, profileData, context },
-        interviewConfigLoaded: false,
-      });
+      // overwrite the account from a half-migrated state. Guarded like any other read: two
+      // pulls can both reach this on first launch after upgrade, and a failed one must not
+      // put Save back behind a lock the successful one just released.
+      this.applyIfCurrent(generation, { fullName, profileData, context }, false);
       return 'failed';
     }
 
