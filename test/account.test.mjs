@@ -1,10 +1,11 @@
 /**
- * Two silent data-loss paths in the account sync.
+ * Three silent data-loss paths in the account sync.
  *
- * Both only bite when a pull fails or a second account signs in, so nothing surfaces in normal
- * use: the dialog would enable Save over a copy it failed to refresh (overwriting a newer config
- * saved on another device), and a pull for one account would delete another account's
- * not-yet-migrated CV off a shared machine.
+ * All only bite when a pull fails, stalls, or a second account signs in, so nothing surfaces in
+ * normal use: the dialog would enable Save over a copy it failed to refresh (overwriting a newer
+ * config saved on another device), a pull for one account would delete another account's
+ * not-yet-migrated CV off a shared machine, and a slow startup pull would revert a save made
+ * while it was still in flight.
  */
 import { createChecker, loadMain } from './helpers.mjs';
 
@@ -85,6 +86,36 @@ export async function run() {
   getMe = async () => account('account-A', CONFIG);
   await accountService.pullFromBackend();
   check('the owning account drops the claim', store.getLegacyInterviewConfOwner() === null);
+
+  // HealthCheckService.start() leaves the startup pull unawaited, so it can still be running
+  // when the user saves. Applying its response afterwards would put the pre-save config back
+  // with nothing to show for it: the dialog is closed, and the suggestion services read the
+  // config out of app state, so the rest of the session would run on the old CV.
+  let releasePull;
+  const stalled = new Promise((resolve) => {
+    releasePull = resolve;
+  });
+  getMe = async () => {
+    await stalled;
+    return account('account-A', CONFIG); // what the account held before the save
+  };
+  accountService.client.updateInterviewConfig = async (body) => account('account-A', { ...body });
+
+  const startupPull = accountService.pullFromBackend();
+  await accountService.updateConfig('Jane', 'NEWER CV', 'NEWER JD');
+  check('the save lands', appStateService.getState().interviewConfig.profileData === 'NEWER CV');
+
+  releasePull();
+  const late = await startupPull;
+  check(
+    'a late startup pull does not revert the save',
+    appStateService.getState().interviewConfig.profileData === 'NEWER CV'
+  );
+  check('the superseded pull still reports success', late.success === true);
+  check(
+    'the config stays loaded so Start is not blocked',
+    appStateService.getState().interviewConfigLoaded === true
+  );
 
   return failures;
 }

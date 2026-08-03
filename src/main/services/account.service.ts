@@ -19,11 +19,23 @@ export class AccountService {
   private client = new UsersApi();
 
   /**
+   * Bumped by every write to the config in app state.
+   *
+   * The startup pull is deliberately unawaited and can take up to the 30s request timeout, so
+   * it can still be in flight when the user saves from the dialog. Applying its response then
+   * would put the pre-save config back, and nothing shows it: the dialog is already closed, and
+   * the suggestion services read the config straight out of app state, so the rest of the
+   * session runs on the old CV.
+   */
+  private generation = 0;
+
+  /**
    * Pull the authenticated user's persisted interview config from the backend
    * into app state. Called after login so a device shows the same config the
    * user last saved anywhere.
    */
   async pullFromBackend(): Promise<{ success: boolean; error?: string }> {
+    const generation = this.generation;
     try {
       const response = await this.client.getMe();
       if (response.error || !response.data) {
@@ -42,6 +54,13 @@ export class AccountService {
           return { success: false, error: 'Failed to migrate local configuration' };
         }
       }
+
+      // A save, a logout or a later pull landed while this request was in flight. Its result is
+      // the newer one, so drop this response rather than reverting to what the account held
+      // when this pull started. Reported as success: the fetch itself worked, and the config
+      // in state is loaded and current.
+      if (generation !== this.generation) return { success: true };
+      this.generation++;
 
       appStateService.updateState({
         interviewConfig: {
@@ -138,6 +157,7 @@ export class AccountService {
       // Mirror what the backend stored, not what was sent: it truncates oversized fields,
       // so echoing the request would leave the app showing a value the account does not have.
       const saved = response.data?.interview_config;
+      this.generation++;
       appStateService.updateState({
         interviewConfig: {
           fullName: saved?.full_name ?? fullName,
@@ -185,6 +205,7 @@ export class AccountService {
    * whenever their post-login pull fails, and can overwrite their own account with it.
    */
   clearState(): void {
+    this.generation++;
     appStateService.updateState({
       interviewConfig: { fullName: '', profileData: '', context: '' },
       interviewConfigLoaded: false,

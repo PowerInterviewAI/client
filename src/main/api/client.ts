@@ -107,9 +107,9 @@ export class ApiClient {
     }
   }
 
-  async post<T>(path: string, body?: unknown): Promise<ApiResponse<T>> {
+  async post<T>(path: string, body?: unknown, timeoutMs?: number): Promise<ApiResponse<T>> {
     const url = this.buildUrl(path);
-    return this.request<T>('POST', url, body);
+    return this.request<T>('POST', url, body, timeoutMs);
   }
 
   async postStream(path: string, body?: unknown): Promise<ReadableStream<Uint8Array> | null> {
