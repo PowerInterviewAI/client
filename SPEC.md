@@ -61,7 +61,7 @@ Full name, profile/CV, and context are stored on the user's backend account and 
 
 ### Credits and Payments
 
-Purchase and usage tracking via the payment API. Route: `/payment`.
+Purchase and usage tracking via the payment API. Route: `/payment`. Plans and the credit balance are always served by the backend (`/api/payment/plans`, `/api/payment/credits`, plus the balance carried on every 5-second `/api/health-check/ping-client`); the client holds no local pricing, so a failed plan fetch surfaces as an error rather than falling back to stale figures.
 
 ### Auto-Updates
 
