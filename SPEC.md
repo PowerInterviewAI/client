@@ -4,7 +4,7 @@ Project specification for Power Interview AI - a privacy-first AI-powered interv
 
 ## Overview
 
-Power Interview is an Electron desktop application that provides real-time transcription and AI suggestions during live job interviews. It runs entirely on the user's machine; no interview audio or transcripts are stored on external servers.
+Power Interview is an Electron desktop application that provides real-time transcription and AI suggestions during live job interviews. Audio is relayed through the backend to the ASR provider for transcription, but no interview audio or transcript is stored on external servers - transcripts exist only in memory for the duration of the session.
 
 ## Tech Stack
 
@@ -15,7 +15,8 @@ Power Interview is an Electron desktop application that provides real-time trans
 | Styling         | Tailwind CSS v4, shadcn/ui                  |
 | State           | Zustand (config), React Context (app state) |
 | Data fetching   | TanStack Query v5                           |
-| Persistence     | Electron Store                              |
+| HTTP            | Native `fetch`, main process only           |
+| Persistence     | Electron Store (local settings), backend account (interview config) |
 | Build/dist      | electron-builder, GitHub Releases           |
 | Package manager | pnpm                                        |
 
@@ -24,37 +25,43 @@ Power Interview is an Electron desktop application that provides real-time trans
 ```
 src/
   main/          Electron main process (Node.js)
-    api/         HTTP clients (AuthApi, LLMApi, PaymentApi, HealthCheckApi)
+    api/         HTTP clients (AuthApi, LLMApi, PaymentApi, HealthCheckApi, UsersApi)
     ipc/         IPC handler files, one per domain
     services/    Business logic called by IPC handlers
+    store/       config.store.ts - electron-store wrapper for local settings
     preload.cts  Exposes window.electronAPI to renderer
     consts.ts    Backend URL and other constants
   renderer/      React/Vite frontend
     hooks/       use-app-state.tsx (AppState), use-config-store.ts (ConfigStore)
     router.tsx   Hash-based router
+test/            Node-based checks for the main process (pnpm test:main)
 ```
 
 ## IPC Namespaces
 
-`window.electronAPI` exposes: `config`, `auth`, `payment`, `llm`, `appState`, `transcription`, `liveSuggestion`, `actionSuggestion`, `tools`, `window`, `autoUpdater`, `external`.
+`window.electronAPI` exposes the namespaces `config`, `auth`, `account`, `payment`, `llm`, `appState`, `transcription`, `liveSuggestion`, `actionSuggestion`, `tools`, `autoUpdater`, `zoom`, and `permissions`, plus flat window controls (`close`, `minimize`, `maximize`) and shell helpers (`openExternal`, `openFile`, `showInFolder`).
 
 ## Key Features
 
 ### Dual-Channel Transcription
 
-Real-time ASR via WebSocket streaming on two separate channels - speaker (system audio loopback) and interviewer (microphone). Service: [src/main/services/transcript-service.ts](src/main/services/transcript-service.ts).
+Real-time ASR via WebSocket streaming on two separate channels - the interviewer (`ch_0`, captured via system audio loopback) and the user (`ch_1`, captured via microphone). Service: [src/main/services/transcript.service.ts](src/main/services/transcript.service.ts).
 
 ### Live Suggestions
 
-Streaming AI responses generated from the user's CV and job description, triggered by live transcript context. Service: [src/main/services/live-suggestion-service.ts](src/main/services/live-suggestion-service.ts).
+Streaming AI responses generated from the user's CV and job description, triggered by live transcript context. Service: [src/main/services/suggestion-live.service.ts](src/main/services/suggestion-live.service.ts).
 
 ### Action Suggestions
 
-Screenshot-based problem solving. Accepts up to 3 images, sends them to the LLM backend, returns syntax-highlighted code output. Service: [src/main/services/action-suggestion-service.ts](src/main/services/action-suggestion-service.ts).
+Screenshot-based problem solving. Accepts up to 4 images, sends them to the LLM backend, returns syntax-highlighted code output. Service: [src/main/services/suggestion-action.service.ts](src/main/services/suggestion-action.service.ts).
+
+### Interview Config Sync
+
+Full name, profile/CV, and context are stored on the user's backend account and pulled on login or a remembered session, so the setup follows the user across devices. Service: [src/main/services/account.service.ts](src/main/services/account.service.ts). The full values are kept in the main process and fetched on demand over `account:get`; the app-state broadcast carries only a `{ fullName, hasProfileData }` summary, since the profile and context can each run to 128,000 characters.
 
 ### Credits and Payments
 
-Purchase and usage tracking via the payment API. Route: `/payment`.
+Purchase and usage tracking via the payment API. Route: `/payment`. Plans and the credit balance are always served by the backend (`/api/payment/plans`, `/api/payment/credits`, plus the balance carried on every 5-second `/api/health-check/ping-client`); the client holds no local pricing, so a failed plan fetch surfaces as an error rather than falling back to stale figures.
 
 ### Auto-Updates
 
@@ -62,16 +69,18 @@ electron-updater publishes to GitHub Releases under `PowerInterviewAI/client` (c
 
 ## Backend Communication
 
-- REST (HTTP): auth, payment, LLM suggestions
+- REST (HTTP): auth, account / interview config (`/api/users`), payment, LLM suggestions
 - WebSocket: real-time transcription streaming
-- API client: [src/main/api/client.ts](src/main/api/client.ts) - fetch-based, Bearer token auth, streaming support
+- API client: [src/main/api/client.ts](src/main/api/client.ts) - fetch-based, Bearer token auth, streaming support. Request timeouts are opt-in per call via `timeoutMs` (health-check pings use 10s, `UsersApi` 30s); `requestStream` is deliberately untimed, since suggestion streams are long-lived
 
 ## Privacy Model
 
-- CV, job description, and config stay on the user's device (Electron Store)
+- Interview configuration (full name, CV/profile, context) is stored on the backend against the
+  user's account so it follows them across devices - it is not kept on local disk
+- Device-specific settings (audio device, window bounds, scroll preferences) stay on the device
 - Only the minimum data needed for AI suggestions is sent to the backend
-- No transcript storage on external servers
-- Credentials encrypted via Electron Store
+- No transcript storage on external servers - transcripts stay in memory for the session
+- Credentials are stored locally by Electron Store in the OS user-data directory. No encryption key is configured, so the file is plain JSON protected by filesystem permissions
 
 ## Platform Support
 
@@ -85,6 +94,7 @@ power-interview-client/
   src/
     main/
     renderer/
+  test/           Main-process checks, run with `pnpm test:main` (needs Node >= 22.15)
   public/
   build/          Build resources (icons, entitlements)
   release/        electron-builder output (gitignored)

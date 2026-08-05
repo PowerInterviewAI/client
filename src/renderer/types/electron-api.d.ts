@@ -47,6 +47,21 @@ declare global {
       ) => Promise<{ success: boolean; error?: string }>;
     };
 
+    // Account config management (full name, profile, context) - synced with the backend
+    account: {
+      update: (
+        fullName: string,
+        profileData: string,
+        context: string
+      ) => Promise<{ success: boolean; error?: string }>;
+      refresh: () => Promise<{ success: boolean; error?: string }>;
+      get: () => Promise<{
+        success: boolean;
+        data: { fullName: string; profileData: string; context: string };
+        error?: string;
+      }>;
+    };
+
     // Payment management
     payment: {
       getPlans: () => Promise<{ success: boolean; data?: CreditPlanInfo[]; error?: string }>;

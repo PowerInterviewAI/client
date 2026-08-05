@@ -51,6 +51,24 @@ export interface ActionSuggestion {
   error: string;
 }
 
+export interface InterviewConfig {
+  fullName: string;
+  profileData: string;
+  context: string;
+}
+
+/**
+ * What the renderer is told about the interview config.
+ *
+ * The profile and context hold a full CV and job description (up to 128k chars each) and the
+ * whole app state is broadcast on every change, so the bulk stays in the main process. The
+ * configuration dialog fetches the full values on demand over `account:get`.
+ */
+export interface InterviewConfigSummary {
+  fullName: string;
+  hasProfileData: boolean;
+}
+
 export interface AppState {
   isStealth: boolean;
   isBackendLive: boolean | null;
@@ -62,4 +80,12 @@ export interface AppState {
   credits?: number;
   userRole?: UserRole;
   providedLLMModel?: string;
+  interviewConfig: InterviewConfig;
+  /** False until the account's config has been read this session; editing is unsafe before then. */
+  interviewConfigLoaded: boolean;
 }
+
+/** The app state as sent to the renderer, with the interview config reduced to a summary. */
+export type RendererAppState = Omit<AppState, 'interviewConfig'> & {
+  interviewConfig: InterviewConfigSummary;
+};

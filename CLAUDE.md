@@ -26,7 +26,13 @@ pnpm electron:build            # Full distribution build via electron-builder
 
 pnpm lint                      # ESLint check
 pnpm format                    # Prettier + ESLint auto-fix
+
+pnpm test:main                 # Main-process checks (builds first; needs Node >= 22.15)
 ```
+
+`.github/workflows/ci.yml` runs eslint, both `tsc` configs, the renderer build, and `pnpm test:main` on every pull request to `main`. Run the same locally first; CI is a backstop, not the first check. Releases are separate: `.github/workflows/release.yml` is `workflow_dispatch` only, so merging never publishes a build.
+
+Prettier is not enforced anywhere, and a number of files do not currently satisfy it, so `pnpm format` produces unrelated churn. Format the files you touch, not the tree.
 
 ## Architecture
 
@@ -46,7 +52,11 @@ Handler registration lives in [src/main/ipc/](src/main/ipc/) - one file per doma
 
 **AppState** ([src/renderer/hooks/use-app-state.tsx](src/renderer/hooks/use-app-state.tsx)) is read-only in the renderer. An `AppStateManager` singleton (pinned to `globalThis` to survive HMR) subscribes to `app-state-updated` push events from main; it falls back to 1-second polling when that API is unavailable. Never mutate AppState from the renderer - call the appropriate IPC method on main instead.
 
+`AppState` and what the renderer receives are not the same object. `appStateService.getRendererState()` reduces `interviewConfig` to a `{ fullName, hasProfileData }` summary, because the whole state is broadcast on every change and the profile and context can each run to 128,000 characters. Never put the full CV back into the broadcast - `test/app-state.test.mjs` pins this. The configuration dialog fetches the real values on demand over `account:get`.
+
 **ConfigStore** ([src/renderer/hooks/use-config-store.ts](src/renderer/hooks/use-config-store.ts)) is a Zustand store backed by the main-process Electron Store ([src/main/store/config.store.ts](src/main/store/config.store.ts)). Mutations call `window.electronAPI.config.update(...)` via IPC. A runtime migration IIFE at the bottom of the main store backfills newly-added keys on first launch.
+
+**Interview config** (full name, profile/CV, context) is *not* in ConfigStore - the backend account is its durable store, managed by [src/main/services/account.service.ts](src/main/services/account.service.ts) and pulled on login or a remembered session. A pre-sync `runtime.interviewConf` may still exist on disk from older builds; it is migrated onto the account and only deleted once the backend confirms the write, so do not drop it eagerly (`test/config-store.test.mjs` pins this).
 
 ### Transcription and Suggestion Flow
 

@@ -8,35 +8,11 @@ import {
   AvailableCurrency,
   CreatePaymentRequest,
   CreatePaymentResponse,
-  CreditPlan,
   CreditPlanInfo,
   PaymentHistory,
   PaymentStatusResponse,
 } from '../types/payment.js';
 import { appStateService } from './app-state.service.js';
-
-// Default credit plans
-const DEFAULT_CREDIT_PLANS: CreditPlanInfo[] = [
-  {
-    plan: CreditPlan.Starter,
-    credits: 600,
-    priceUsd: 20,
-    description: 'Starter Pack - Perfect for trying out',
-  },
-  {
-    plan: CreditPlan.Pro,
-    credits: 6000,
-    priceUsd: 100,
-    popular: true,
-    description: 'Popular Choice - Best value for regular users',
-  },
-  {
-    plan: CreditPlan.Enterprise,
-    credits: 60000,
-    priceUsd: 500,
-    description: 'Pro Pack - For power users',
-  },
-];
 
 export class PaymentService {
   private api: PaymentApi;
@@ -46,7 +22,10 @@ export class PaymentService {
   }
 
   /**
-   * Get available credit plans
+   * Get available credit plans.
+   *
+   * Pricing is never synthesized locally: a stale hardcoded plan would quote the user one price
+   * and charge another. Failures surface as errors so the UI can say so.
    */
   async getPlans(): Promise<{ success: boolean; data?: CreditPlanInfo[]; error?: string }> {
     try {
@@ -54,27 +33,22 @@ export class PaymentService {
 
       if (response.error) {
         console.error('[PaymentService] Failed to get plans:', response.error);
-        // Return default plans on error
-        return { success: true, data: DEFAULT_CREDIT_PLANS };
+        return { success: false, error: response.error.message || 'Failed to get plans' };
       }
 
       // Map backend plans to frontend format
       const plans: CreditPlanInfo[] =
-        response.data?.map((plan) => {
-          const defaultPlan = DEFAULT_CREDIT_PLANS.find((p) => p.plan === plan.plan);
-          return {
-            plan: plan.plan,
-            credits: plan.credits,
-            priceUsd: plan.price_usd,
-            popular: defaultPlan?.popular,
-            description: defaultPlan?.description,
-          };
-        }) || [];
+        response.data?.map((plan) => ({
+          plan: plan.plan,
+          credits: plan.credits,
+          priceUsd: plan.price_usd,
+          popular: plan.popular,
+        })) || [];
 
       return { success: true, data: plans };
     } catch (error) {
       console.error('[PaymentService] Failed to get plans:', error);
-      return { success: true, data: DEFAULT_CREDIT_PLANS };
+      return { success: false, error: 'Failed to get plans' };
     }
   }
 

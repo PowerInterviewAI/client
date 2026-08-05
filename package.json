@@ -16,6 +16,7 @@
     "electron:build": "pnpm electron:build-main && pnpm build && electron-builder",
     "lint": "eslint .",
     "format": "prettier --write . && eslint --fix .",
+    "test:main": "pnpm electron:build-main && node test/run.mjs",
     "start": "pnpm electron:dev-hide"
   },
   "dependencies": {

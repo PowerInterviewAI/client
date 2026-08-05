@@ -51,9 +51,13 @@ export class ApiClient {
     delete this.headers['Authorization'];
   }
 
-  async get<T>(path: string, params?: Record<string, unknown>): Promise<ApiResponse<T>> {
+  async get<T>(
+    path: string,
+    params?: Record<string, unknown>,
+    timeoutMs?: number
+  ): Promise<ApiResponse<T>> {
     const url = this.buildUrl(path, params);
-    return this.request<T>('GET', url);
+    return this.request<T>('GET', url, undefined, timeoutMs);
   }
 
   async postFormData<T>(path: string, formData: FormData): Promise<ApiResponse<T>> {
@@ -103,9 +107,9 @@ export class ApiClient {
     }
   }
 
-  async post<T>(path: string, body?: unknown): Promise<ApiResponse<T>> {
+  async post<T>(path: string, body?: unknown, timeoutMs?: number): Promise<ApiResponse<T>> {
     const url = this.buildUrl(path);
-    return this.request<T>('POST', url, body);
+    return this.request<T>('POST', url, body, timeoutMs);
   }
 
   async postStream(path: string, body?: unknown): Promise<ReadableStream<Uint8Array> | null> {
@@ -118,12 +122,22 @@ export class ApiClient {
     return this.request<T>('PUT', url, body);
   }
 
+  async patch<T>(path: string, body?: unknown, timeoutMs?: number): Promise<ApiResponse<T>> {
+    const url = this.buildUrl(path);
+    return this.request<T>('PATCH', url, body, timeoutMs);
+  }
+
   async delete<T>(path: string): Promise<ApiResponse<T>> {
     const url = this.buildUrl(path);
     return this.request<T>('DELETE', url);
   }
 
-  private async request<T>(method: string, url: string, body?: unknown): Promise<ApiResponse<T>> {
+  private async request<T>(
+    method: string,
+    url: string,
+    body?: unknown,
+    timeoutMs?: number
+  ): Promise<ApiResponse<T>> {
     try {
       const sessionToken = configStore.getConfig().sessionToken;
       if (sessionToken) {
@@ -134,6 +148,7 @@ export class ApiClient {
         method,
         headers: this.headers,
         body: body ? JSON.stringify(body) : undefined,
+        signal: timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined,
       });
 
       const respBody = await response.json().catch(() => ({}));
@@ -154,11 +169,16 @@ export class ApiClient {
         data: respBody,
       };
     } catch (error: unknown) {
+      const timedOut = error instanceof Error && error.name === 'TimeoutError';
       return {
         status: 0,
         error: {
-          code: 'NETWORK_ERROR',
-          message: error instanceof Error ? error.message : 'Network request failed',
+          code: timedOut ? 'TIMEOUT' : 'NETWORK_ERROR',
+          message: timedOut
+            ? 'The request timed out'
+            : error instanceof Error
+              ? error.message
+              : 'Network request failed',
         },
       };
     }
