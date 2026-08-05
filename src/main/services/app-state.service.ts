@@ -88,7 +88,11 @@ export class AppStateService {
       ...rest,
       interviewConfig: {
         fullName: interviewConfig.fullName,
-        hasProfileData: interviewConfig.profileData.trim() !== '',
+        // Length first: this runs on every broadcast, and trimming a 128,000-character CV to
+        // learn it is non-empty copies the whole string. The empty case is the only one that
+        // needs the trim at all, to keep whitespace from reading as a set profile.
+        hasProfileData:
+          interviewConfig.profileData.length > 0 && interviewConfig.profileData.trim() !== '',
       },
     };
   }
