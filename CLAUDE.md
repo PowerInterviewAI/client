@@ -30,7 +30,9 @@ pnpm format                    # Prettier + ESLint auto-fix
 pnpm test:main                 # Main-process checks (builds first; needs Node >= 22.15)
 ```
 
-There is no CI on push or pull request - `.github/workflows/release.yml` is `workflow_dispatch` only. Run lint, both `tsc` configs, and `pnpm test:main` locally before opening a PR.
+`.github/workflows/ci.yml` runs eslint, both `tsc` configs, the renderer build, and `pnpm test:main` on every pull request to `main`. Run the same locally first; CI is a backstop, not the first check. Releases are separate: `.github/workflows/release.yml` is `workflow_dispatch` only, so merging never publishes a build.
+
+Prettier is not enforced anywhere, and a number of files do not currently satisfy it, so `pnpm format` produces unrelated churn. Format the files you touch, not the tree.
 
 ## Architecture
 
