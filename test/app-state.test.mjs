@@ -62,5 +62,17 @@ export async function run() {
     appStateService.getRendererState().interviewConfig.hasProfileData === false
   );
 
+  // Clear resets the state through setPlaceholderState. It is the one mutator that used to skip
+  // the broadcast, so the reset landed in main and the renderer kept showing the old content
+  // until something unrelated happened to broadcast.
+  appStateService.updateState({ transcripts: [{ timestamp: 1, text: 'stale', speaker: 'self' }] });
+  const beforeClear = sent.length;
+  appStateService.setPlaceholderState();
+  check('clearing broadcasts to the renderer', sent.length === beforeClear + 1);
+  check(
+    'the broadcast carries the cleared transcripts',
+    sent.at(-1).payload.transcripts?.[0]?.text === 'Transcripts will be here'
+  );
+
   return failures;
 }
