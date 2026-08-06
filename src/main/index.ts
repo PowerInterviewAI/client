@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Import modules
-import { MIN_HEIGHT, MIN_WIDTH } from './consts.js';
+import { DEFAULT_HEIGHT, DEFAULT_WIDTH, MIN_HEIGHT, MIN_WIDTH } from './consts.js';
 import { registerGlobalHotkeys, unregisterHotkeys } from './hotkeys.js';
 import { registerAccountHandlers } from './ipc/account.js';
 import { registerAppStateHandlers } from './ipc/app-state.js';
@@ -90,8 +90,8 @@ if (!gotLock) {
 // -------------------------------------------------------------
 async function createWindow() {
   const savedBounds = configStore.getWindowBounds() || {
-    width: 1024,
-    height: 640,
+    width: DEFAULT_WIDTH,
+    height: DEFAULT_HEIGHT,
   };
 
   // Clamp to minimum so persisted tiny/invalid bounds don't create unusable windows

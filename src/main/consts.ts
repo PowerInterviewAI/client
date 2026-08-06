@@ -4,9 +4,16 @@ export const BACKEND_BASE_URL = EnvUtil.isDev()
   ? 'http://localhost:8080'
   : 'https://api.powerinterviewai.com';
 
-// minimum allowed dimensions for window bounds
+// Minimum allowed dimensions for window bounds. 540 was sized when transcription was a fixed
+// 320px left column and cost width, not height. It now docks at the bottom and takes a band out
+// of the same vertical budget as the suggestion panels, so the minimum grows by the dock's own
+// floor plus the gap above it (TRANSCRIPT_DOCK_MIN_HEIGHT 120 + 4, both in renderer/lib/consts).
 export const MIN_WIDTH = 900;
-export const MIN_HEIGHT = 540;
+export const MIN_HEIGHT = 664;
+
+// Bounds a first launch starts with, before the user resizes and we persist their choice.
+export const DEFAULT_WIDTH = 1024;
+export const DEFAULT_HEIGHT = 768;
 
 // Transcript constants
 export const TRANSCRIPT_INTER_TRANSCRIPT_GAP_MS = 5000;
