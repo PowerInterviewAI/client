@@ -22,6 +22,7 @@ declare global {
 
     // Hotkey stop assistant event
     onHotkeyStopAssistant: (callback: () => void) => () => void;
+    onHotkeyToggleTranscript: (callback: () => void) => () => void;
 
     // Configuration management
     config: {

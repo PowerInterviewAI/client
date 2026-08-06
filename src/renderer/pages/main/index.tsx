@@ -17,7 +17,14 @@ import { useAssistantService } from '@/hooks/use-assistant-service';
 import useAuth from '@/hooks/use-auth';
 import { useConfigStore } from '@/hooks/use-config-store';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
-import { isMac } from '@/lib/consts';
+import { useTranscriptPanel } from '@/hooks/use-transcript-panel';
+import {
+  isMac,
+  SUGGESTION_MIN_HEIGHT,
+  TRANSCRIPT_DOCK_MAX_HEIGHT,
+  TRANSCRIPT_DOCK_MIN_HEIGHT,
+  TRANSCRIPT_DOCK_RATIO,
+} from '@/lib/consts';
 import { getElectron } from '@/lib/utils';
 import { RunningState, UserRole } from '@/types/app-state';
 import { type ActionSuggestion, type LiveSuggestion } from '@/types/suggestion';
@@ -41,6 +48,8 @@ export default function MainPage() {
   // App state from context
   const { appState } = useAppState();
 
+  const { visible: transcriptDockEnabled, toggle: toggleTranscriptDock } = useTranscriptPanel();
+
   // Listen for hotkey to stop assistant
   useEffect(() => {
     if (!window?.electronAPI?.onHotkeyStopAssistant) return;
@@ -54,6 +63,14 @@ export default function MainPage() {
     return cleanup;
   }, [stopAssistant]);
 
+  // Listen for hotkey to toggle the transcription dock. Stealth mode hides the control panel
+  // that carries the button, so the hotkey is the only way to reach the dock there.
+  useEffect(() => {
+    if (!window?.electronAPI?.onHotkeyToggleTranscript) return;
+
+    return window.electronAPI.onHotkeyToggleTranscript(toggleTranscriptDock);
+  }, [toggleTranscriptDock]);
+
   // Load config on mount
   useEffect(() => {
     loadConfig();
@@ -62,13 +79,15 @@ export default function MainPage() {
   const hasLiveSuggestions = liveSuggestions.length > 0;
   const hasActionSuggestions = actionSuggestions.length > 0;
   const hasTranscripts = transcripts.length > 0;
+  // An empty transcript dock is not worth the vertical space while screenshots need it.
   const hideTranscriptPanel = hasActionSuggestions && !hasTranscripts;
 
   const hasSuggestions = hasLiveSuggestions || hasActionSuggestions;
-  const suggestionPanelCount = (hasLiveSuggestions ? 1 : 0) + (hasActionSuggestions ? 1 : 0);
+
+  const showTranscriptDock = transcriptDockEnabled && !hideTranscriptPanel;
 
   // stable compute function so other effects can trigger a recompute
-  // include `suggestionPanelCount` in deps to avoid stale closure
+  // include the panel flags in deps to avoid stale closure
   const computeAvailable = useCallback(() => {
     if (typeof window === 'undefined') return;
     const title = document.getElementById('titlebar')?.getBoundingClientRect().height || 0;
@@ -79,18 +98,29 @@ export default function MainPage() {
     if (status > 0) status += 4; // account for border
     if (control > 0) control += 4; // account for border
 
-    setTranscriptHeight(Math.max(100, window.innerHeight - (title + status + control + extra)));
-    if (suggestionPanelCount > 0) {
-      setSuggestionHeight(
-        Math.max(
-          100,
-          window.innerHeight - (title + status + control + extra) - (suggestionPanelCount - 1) * 4
-        ) / suggestionPanelCount
-      );
-    } else {
-      setSuggestionHeight(0);
+    const available = Math.max(100, window.innerHeight - (title + status + control + extra));
+
+    // Docked alone the transcript takes everything; sharing, it takes a slice and never
+    // squeezes the suggestion row below SUGGESTION_MIN_HEIGHT.
+    let dock = 0;
+    if (showTranscriptDock) {
+      dock = !hasSuggestions
+        ? available
+        : Math.min(
+            Math.max(
+              TRANSCRIPT_DOCK_MIN_HEIGHT,
+              Math.min(TRANSCRIPT_DOCK_MAX_HEIGHT, Math.round(available * TRANSCRIPT_DOCK_RATIO))
+            ),
+            Math.max(0, available - SUGGESTION_MIN_HEIGHT)
+          );
     }
-  }, [suggestionPanelCount]);
+    setTranscriptHeight(dock);
+
+    // Suggestion panels sit side by side, so they share the full height left above the dock.
+    setSuggestionHeight(
+      hasSuggestions ? Math.max(SUGGESTION_MIN_HEIGHT, available - dock - (dock > 0 ? 4 : 0)) : 0
+    );
+  }, [hasSuggestions, showTranscriptDock]);
 
   const isStealth = useIsStealthMode();
 
@@ -134,7 +164,14 @@ export default function MainPage() {
   // Recompute when panels mount/unmount
   useEffect(() => {
     computeAvailable();
-  }, [hasActionSuggestions, hasLiveSuggestions, hasTranscripts, hideTranscriptPanel, computeAvailable]);
+  }, [
+    hasActionSuggestions,
+    hasLiveSuggestions,
+    hasTranscripts,
+    hideTranscriptPanel,
+    showTranscriptDock,
+    computeAvailable,
+  ]);
 
   // Recompute when stealth mode toggles
   useEffect(() => {
@@ -209,52 +246,54 @@ export default function MainPage() {
     <div className="flex-1 flex flex-col w-full bg-background p-1 space-y-1">
       {appState.isBackendLive === false && <ConnectingNotice />}
 
-      <div className="flex-1 flex overflow-y-hidden gap-1">
-        {/* Left Column: Transcription */}
-        <div
-          className={`flex flex-col ${hasSuggestions ? 'w-80' : 'flex-1'} gap-1`}
-          hidden={hideTranscriptPanel}
-        >
-          {/* Transcription Panel - Fill remaining space with scroll */}
-          {!hideTranscriptPanel && (
-            <TranscriptPanel
-              transcripts={transcripts}
-              style={transcriptStyle}
-              isRunning={appState?.runningState === RunningState.Running}
-            />
-          )}
-        </div>
+      <div className="flex-1 flex flex-col overflow-y-hidden gap-1">
+        {/* Top: Suggestions, side by side */}
+        {hasSuggestions && (
+          <div className="flex-1 min-h-0 flex gap-1">
+            {hasLiveSuggestions && (
+              <div className="flex-1 min-w-0">
+                <LiveSuggestionsPanel
+                  suggestions={liveSuggestions}
+                  style={suggestionStyle}
+                  isRunning={appState?.runningState === RunningState.Running}
+                />
+              </div>
+            )}
+            {hasActionSuggestions && (
+              <div className="flex-1 min-w-0">
+                <ActionSuggestionsPanel
+                  actionSuggestions={actionSuggestions}
+                  style={suggestionStyle}
+                  isRunning={appState?.runningState === RunningState.Running}
+                />
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Show trial user notice */}
         {appState?.userRole === UserRole.TrialUser && !trialNoticeClosed && (
           <TrialUserNotice onClick={() => setTrialNoticeClosed(true)} />
         )}
 
-        {/* Right Column: Main Suggestions Panel */}
-        {(hasLiveSuggestions || hasActionSuggestions) && (
-          <div className="flex-1 flex flex-col gap-1 h-full overflow-auto">
-            {hasActionSuggestions && (
-              <ActionSuggestionsPanel
-                actionSuggestions={actionSuggestions}
-                style={suggestionStyle}
-                isRunning={appState?.runningState === RunningState.Running}
-              />
-            )}
-            {hasLiveSuggestions && (
-              <LiveSuggestionsPanel
-                suggestions={liveSuggestions}
-                style={suggestionStyle}
-                isRunning={appState?.runningState === RunningState.Running}
-              />
-            )}
+        {!hasSuggestions && !showTranscriptDock && (
+          <div className="flex-1 flex items-center justify-center">
+            <p className="text-sm text-muted-foreground">Transcription is hidden</p>
+          </div>
+        )}
+
+        {/* Bottom dock: Transcription, spanning the full width */}
+        {showTranscriptDock && (
+          <div className="shrink-0" style={transcriptStyle}>
+            <TranscriptPanel
+              transcripts={transcripts}
+              isRunning={appState?.runningState === RunningState.Running}
+            />
           </div>
         )}
       </div>
 
-      <ControlPanel
-        onProfileClick={() => setIsProfileOpen(true)}
-        onSignOut={handleSignOut}
-      />
+      <ControlPanel onProfileClick={() => setIsProfileOpen(true)} onSignOut={handleSignOut} />
 
       {isStealth && (
         <StatusPanel

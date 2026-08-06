@@ -141,11 +141,11 @@ function ActionSuggestionsPanel({
 
   return (
     <Card
-      className="relative flex flex-col w-full h-full bg-card p-0 rounded-md gap-2"
+      className="relative flex flex-col w-full h-full bg-card p-0 rounded-md gap-1"
       style={style}
     >
       {/* Header */}
-      <div className="border-b border-border p-2 shrink-0 flex items-center justify-between gap-4">
+      <div className="px-2 py-1.5 shrink-0 flex items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           {isRunning && (
             <span
@@ -176,7 +176,7 @@ function ActionSuggestionsPanel({
       </div>
 
       {/* Scrollable Content */}
-      <div ref={containerRef} className="flex-1 overflow-y-auto mb-2">
+      <div ref={containerRef} className="flex-1 overflow-y-auto">
         {!hasItems && (
           <div className="flex items-center justify-center h-full text-center p-4">
             <div>
@@ -186,7 +186,7 @@ function ActionSuggestionsPanel({
         )}
 
         {hasItems && (
-          <div className="p-2 space-y-3">
+          <div className="px-2 pt-1 pb-2 space-y-3">
             {actionSuggestions.map((s, idx) => (
               <div
                 key={idx}

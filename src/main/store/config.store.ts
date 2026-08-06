@@ -23,6 +23,9 @@ export interface RuntimeConfig {
   autoScrollLiveSuggestions: boolean;
   autoScrollActionSuggestions: boolean;
   autoScrollTranscript: boolean;
+
+  // transcription bottom dock visibility
+  showTranscriptPanel: boolean;
 }
 
 // Default runtime configuration
@@ -40,6 +43,8 @@ const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
   autoScrollLiveSuggestions: true,
   autoScrollActionSuggestions: true,
   autoScrollTranscript: true,
+
+  showTranscriptPanel: true,
 };
 
 // interviewConf (full name, profile, context) used to be cached under `runtime`, but it's now
@@ -220,6 +225,9 @@ export const configStore = new ConfigStore();
   }
   if (raw?.autoScrollTranscript === undefined) {
     migration.autoScrollTranscript = true;
+  }
+  if (raw?.showTranscriptPanel === undefined) {
+    migration.showTranscriptPanel = true;
   }
   // perform migration only if there are values to set
   if (Object.keys(migration).length > 0) {

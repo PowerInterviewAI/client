@@ -72,6 +72,10 @@ export class AppStateService {
         },
       ],
     };
+    // Clear reaches main and resets the state here, but the renderer only ever learns about
+    // state through this broadcast - it does not poll while the push API exists. Without this
+    // the panels keep rendering pre-Clear content until some unrelated change broadcasts.
+    this.notifyRenderer();
   }
 
   getState(): AppState {

@@ -22,4 +22,7 @@ export interface Config {
   autoScrollLiveSuggestions: boolean;
   autoScrollActionSuggestions: boolean;
   autoScrollTranscript: boolean;
+
+  // Transcription bottom dock visibility (persisted between sessions)
+  showTranscriptPanel: boolean;
 }

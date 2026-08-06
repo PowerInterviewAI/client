@@ -10,13 +10,16 @@ import { Speaker, type Transcript } from '@/types/transcript';
 import { Button } from '../../ui/button';
 import { Checkbox } from '../../ui/checkbox';
 
+// Every entry is from the same session, so the date carries no information and its width is
+// what would push the speaker onto a line of its own.
+const timeFormat = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' });
+
 interface TranscriptPanelProps {
   transcripts: Transcript[];
-  style?: React.CSSProperties;
   isRunning?: boolean;
 }
 
-function TranscriptPanel({ transcripts, style, isRunning = false }: TranscriptPanelProps) {
+function TranscriptPanel({ transcripts, isRunning = false }: TranscriptPanelProps) {
   const { config, updateConfig } = useConfigStore();
   const { appState } = useAppState();
   const username = appState?.interviewConfig?.fullName ?? '';
@@ -38,8 +41,8 @@ function TranscriptPanel({ transcripts, style, isRunning = false }: TranscriptPa
   }, [transcripts, autoScroll]);
 
   return (
-    <Card className="relative flex flex-col h-full bg-card p-0 rounded-md gap-2" style={style}>
-      <div className="border-b border-border p-2 shrink-0 flex items-center justify-between gap-4">
+    <Card className="relative flex flex-col w-full h-full bg-card p-0 rounded-md gap-1">
+      <div className="px-2 py-1.5 shrink-0 flex items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           {isRunning && (
             <span
@@ -69,31 +72,36 @@ function TranscriptPanel({ transcripts, style, isRunning = false }: TranscriptPa
         )}
       </div>
 
-      <div ref={containerRef} className="flex-1 overflow-y-auto mb-2">
+      <div ref={containerRef} className="flex-1 overflow-y-auto">
         {transcripts.length === 0 ? (
           <div className="flex items-center justify-center h-full text-center p-4">
             <p className="text-sm text-muted-foreground">No transcripts yet</p>
           </div>
         ) : (
-          <div className="space-y-2 p-2">
-            {transcripts.map((item, idx) => (
-              <div key={idx} className="space-y-1 pb-1 border-b border-border/50 last:border-0">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-semibold text-primary">
-                    {item.speaker === Speaker.Self ? username : 'Interviewer'}
-                  </span>
-                  <span className="text-xs text-muted-foreground shrink-0">
-                    {new Date(item.timestamp).toLocaleString()}
-                  </span>
+          <>
+            <div className="divide-y divide-border/50 px-2 py-1">
+              {transcripts.map((item, idx) => (
+                <div key={idx} className="flex items-baseline gap-2 py-1">
+                  {/* The dock is wide and short, so the speaker rides inline with the words
+                      rather than spending a line of its own on them. */}
+                  <p className="flex-1 text-sm text-foreground/90 leading-snug text-wrap">
+                    <span className="text-xs font-semibold text-primary mr-1.5">
+                      {item.speaker === Speaker.Self ? username : 'Interviewer'}
+                    </span>
+                    {item.text}
+                  </p>
+                  <time
+                    dateTime={new Date(item.timestamp).toISOString()}
+                    className="text-xs text-muted-foreground tabular-nums shrink-0"
+                  >
+                    {timeFormat.format(item.timestamp)}
+                  </time>
                 </div>
-                <div className="text-sm text-foreground/90 leading-relaxed text-wrap">
-                  {item.text}
-                </div>
-              </div>
-            ))}
-            {/* This invisible div acts as scroll target */}
+              ))}
+            </div>
+            {/* Kept out of the divided list, or it would take a divider of its own */}
             <div ref={endRef} />
-          </div>
+          </>
         )}
       </div>
 
