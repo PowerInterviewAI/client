@@ -13,7 +13,12 @@ import { stubElectron } from './helpers.mjs';
 const userDataDir = stubElectron();
 
 const failures = [];
-for (const module of ['./config-store.test.mjs', './app-state.test.mjs', './account.test.mjs']) {
+for (const module of [
+  './config-store.test.mjs',
+  './app-state.test.mjs',
+  './account.test.mjs',
+  './stealth-surface.test.mjs',
+]) {
   const { run } = await import(module);
   failures.push(...(await run(userDataDir)));
 }

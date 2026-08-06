@@ -66,6 +66,24 @@ export function getWindowReference(): BrowserWindow | null {
 }
 
 /**
+ * Restore and focus the window.
+ * With `skipTaskbar` there is no taskbar button to click, so a minimized window
+ * is only reachable through this.
+ */
+export function restoreWindow(): void {
+  if (!win || win.isDestroyed()) return;
+
+  try {
+    if (win.isMinimized()) win.restore();
+    if (!win.isVisible()) win.show();
+    // Stealth mode makes the window non-focusable; focusing it there would be a no-op anyway.
+    if (!_stealth) win.focus();
+  } catch (err) {
+    console.warn('⚠️ restoreWindow failed:', err);
+  }
+}
+
+/**
  * Set window bounds with minimum size enforcement
  */
 export function setWindowBounds(bounds: Partial<WindowBounds>): void {

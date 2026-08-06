@@ -93,6 +93,9 @@ async function createWindow() {
     title: 'Power Interview AI',
     ...savedBounds,
     titleBarStyle: 'hidden',
+    // A labelled taskbar button defeats stealth mode the moment a screen is shared.
+    // Restore after minimize is hotkey-only (see registerGlobalHotkeys).
+    skipTaskbar: true,
     // Center traffic lights vertically in the h-9 (36px) titlebar.
     // Default y=7 puts button centers at 13px; (36-12)/2=12 is exact center.
     trafficLightPosition: { x: 7, y: 12 },

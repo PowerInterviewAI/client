@@ -128,7 +128,7 @@
       "perMachine": false,
       "allowElevation": false,
       "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
+      "createDesktopShortcut": false,
       "createStartMenuShortcut": true,
       "deleteAppDataOnUninstall": false,
       "installerLanguages": [

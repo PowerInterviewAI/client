@@ -75,6 +75,8 @@ Hash-based router (required for Electron `file://` protocol). Routes: `/` (index
 
 The main window reference is passed to `windowControlService` and `zoomService` after creation. Window bounds persist to Electron Store on `close` and are restored on next launch with minimum-size clamping (`MIN_WIDTH` / `MIN_HEIGHT` from [src/main/consts.ts](src/main/consts.ts)).
 
+The window is created with `skipTaskbar: true` and the NSIS installer creates no desktop shortcut, so the app is not advertised on surfaces a screen share exposes. Consequence: a minimized window has no taskbar button to click, and `Ctrl+Shift+R` (`Ctrl+Opt+R` on macOS) is the only way back - `test/stealth-surface.test.mjs` pins all three.
+
 Stealth mode hides the window from screen capture via `setContentProtection`. The main process emits `stealth-changed`; the preload script toggles a `stealth` CSS class on `document.body`. Content protection is on by default; pass `--disable-content-protection` at launch to disable it (dev/testing only).
 
 Background throttling is disabled globally (via `app.commandLine` switches and `backgroundThrottling: false` in `webPreferences`) so audio keeps running when the window is occluded.
