@@ -72,7 +72,9 @@ export default function TitlebarMenu({ style }: { style?: React.CSSProperties })
 
   return (
     <>
-      <DropdownMenu>
+      {/* Non-modal: a modal menu locks body pointer events, and items here change route or open a
+          dialog, either of which can unmount the menu before it releases the lock. */}
+      <DropdownMenu modal={false}>
         <Tooltip>
           <TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
@@ -148,21 +150,19 @@ export default function TitlebarMenu({ style }: { style?: React.CSSProperties })
         </DropdownMenuContent>
       </DropdownMenu>
 
+      {/* Rendered unconditionally: gating these on isLoggedIn would unmount an open dialog the
+          moment a session ends, stranding the pointer-events lock it holds. */}
       <DocumentationDialog open={isDocsOpen} onOpenChange={setIsDocsOpen} />
 
-      {isLoggedIn && (
-        <>
-          <ConfigurationDialog isOpen={isConfigOpen} onOpenChange={setIsConfigOpen} />
+      <ConfigurationDialog isOpen={isConfigOpen} onOpenChange={setIsConfigOpen} />
 
-          <ChangePasswordDialog
-            open={isChangePasswordOpen}
-            onOpenChange={setIsChangePasswordOpen}
-            onChangePassword={handleChangePassword}
-            loading={loading}
-            error={error}
-          />
-        </>
-      )}
+      <ChangePasswordDialog
+        open={isChangePasswordOpen}
+        onOpenChange={setIsChangePasswordOpen}
+        onChangePassword={handleChangePassword}
+        loading={loading}
+        error={error}
+      />
     </>
   );
 }
