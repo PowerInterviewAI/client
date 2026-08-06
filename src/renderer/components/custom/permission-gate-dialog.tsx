@@ -1,4 +1,4 @@
-import { CheckCircle, Loader2, Mic, Monitor, XCircle } from 'lucide-react';
+import { CheckCircle, Loader, Mic, Monitor, XCircle } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -142,7 +142,7 @@ function PermissionRow({
           {status === 'granted' ? (
             <CheckCircle className="h-3.5 w-3.5 text-green-500 shrink-0" />
           ) : status === 'unknown' ? (
-            <Loader2 className="h-3.5 w-3.5 text-muted-foreground/40 animate-spin shrink-0" />
+            <Loader className="h-3.5 w-3.5 text-muted-foreground/40 animate-spin shrink-0" />
           ) : status === 'not-determined' ? (
             <CheckCircle className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
           ) : (

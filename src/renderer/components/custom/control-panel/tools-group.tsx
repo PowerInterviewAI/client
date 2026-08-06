@@ -27,15 +27,17 @@ interface ToolsGroupProps {
 
 export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
   const { runningState } = useAppState();
-  const { exporting, exportTranscript, setPlaceholderData } = useTools();
+  const { exporting, exportTranscript, clearAll, setPlaceholderData } = useTools();
   const { visible: transcriptVisible, toggle: onToggleTranscript } = useTranscriptPanel();
   const [clearing, setClearing] = useState(false);
 
   const onClear = async () => {
     setClearing(true);
     try {
+      // Placeholder state only rewrites what the renderer sees. The service buffers keep the
+      // real transcripts and suggestions until clearAll drops them, so Clear has to do both.
+      await clearAll();
       await setPlaceholderData();
-      toast.info('Clearing...');
     } catch (error) {
       console.error(error);
       toast.error('Failed to clear');

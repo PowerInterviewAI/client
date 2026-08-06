@@ -1,9 +1,10 @@
-import { ArrowUp, ImageUp, Loader2, PauseCircle, Zap } from 'lucide-react';
+import { ArrowUp, ImageUp, Loader, PauseCircle, Zap } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Card } from '@/components/ui/card';
 import { useConfigStore } from '@/hooks/use-config-store';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
+import { newestTimestamp } from '@/lib/suggestions';
 import { type ActionSuggestion, SuggestionState } from '@/types/suggestion';
 
 // when a question is too long we truncate it in the middle to keep the UI compact
@@ -17,6 +18,15 @@ function truncateMiddle(text: string, maxLen: number): string {
 import { Button } from '../../ui/button';
 import { Checkbox } from '../../ui/checkbox';
 import { SafeMarkdown } from '../safe-markdown';
+import SuggestionReveal from './suggestion-reveal';
+
+// the screenshot tray is re-created with a fresh timestamp on every broadcast, so it needs a
+// key of its own or it would remount - and replay its reveal - on each capture
+const PENDING_PROMPT_KEY = 'pending-prompt';
+
+function isPendingPrompt(s: ActionSuggestion): boolean {
+  return s.state === SuggestionState.Idle || s.state === SuggestionState.Uploading;
+}
 
 interface ActionSuggestionsPanelProps {
   actionSuggestions?: ActionSuggestion[];
@@ -35,6 +45,15 @@ function ActionSuggestionsPanel({
   const orderedSuggestions = useMemo(() => [...actionSuggestions].reverse(), [actionSuggestions]);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // anything newer than this reveals itself on arrival; whatever was already on screen when the
+  // panel mounted does not. Bumped after commit so the entering item gets one render as "new".
+  const [lastRevealedAt, setLastRevealedAt] = useState(() => newestTimestamp(actionSuggestions));
+
+  useEffect(() => {
+    const newest = newestTimestamp(actionSuggestions);
+    setLastRevealedAt((prev) => (newest > prev ? newest : prev));
+  }, [actionSuggestions]);
 
   const { config, updateConfig } = useConfigStore();
 
@@ -188,77 +207,80 @@ function ActionSuggestionsPanel({
         )}
 
         {hasItems && (
-          <div className="px-2 pt-1 pb-2 space-y-3">
+          <div className="px-2 pb-2">
             {orderedSuggestions.map((s, idx) => (
-              <div
-                key={orderedSuggestions.length - 1 - idx}
-                className="flex gap-3 pb-3 border-b border-border/40 last:border-0"
+              <SuggestionReveal
+                key={isPendingPrompt(s) ? PENDING_PROMPT_KEY : s.timestamp}
+                animate={s.timestamp > lastRevealedAt}
+                className="border-b border-border/40 last:border-0"
               >
-                {idx === 0 &&
-                (s.state === SuggestionState.Pending || s.state === SuggestionState.Loading) ? (
-                  <Loader2 className="h-4 w-4 mt-px text-accent shrink-0 animate-spin" />
-                ) : s.state === SuggestionState.Stopped ? (
-                  <PauseCircle className="h-4 w-4 mt-px text-muted-foreground shrink-0" />
-                ) : (
-                  <Zap className="h-4 w-4 mt-px text-accent shrink-0" />
-                )}
-
-                <div>
-                  {s.last_question && s.last_question.trim() !== '' && (
-                    <div className="flex text-xs text-muted-foreground mb-2">
-                      <span>{truncateMiddle(s.last_question, MAX_QUESTION_LENGTH)}</span>
-                    </div>
+                <div className="flex gap-3 py-3">
+                  {idx === 0 &&
+                  (s.state === SuggestionState.Pending || s.state === SuggestionState.Loading) ? (
+                    <Loader className="h-4 w-4 mt-px text-accent shrink-0 animate-spin" />
+                  ) : s.state === SuggestionState.Stopped ? (
+                    <PauseCircle className="h-4 w-4 mt-px text-muted-foreground shrink-0" />
+                  ) : (
+                    <Zap className="h-4 w-4 mt-px text-accent shrink-0" />
                   )}
 
-                  {s.image_urls && s.image_urls.length > 0 && (
-                    <div className="flex shrink-0 mb-2">
-                      <div className="flex gap-2 overflow-x-auto">
-                        {s.image_urls.map((url, i) =>
-                          url ? (
-                            <img
-                              key={i}
-                              src={url}
-                              className="h-12 w-16 object-cover rounded-md border border-blue-400 bg-muted"
-                              alt={`thumb-${i}`}
-                            />
-                          ) : (
-                            <div
-                              key={i}
-                              className="h-12 w-16 flex items-center justify-center rounded-md border border-blue-400 bg-muted"
-                            >
-                              <ImageUp className="h-4 w-4 text-muted-foreground" />
-                            </div>
-                          )
-                        )}
+                  <div>
+                    {s.last_question && s.last_question.trim() !== '' && (
+                      <div className="flex text-xs text-muted-foreground mb-2">
+                        <span>{truncateMiddle(s.last_question, MAX_QUESTION_LENGTH)}</span>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  <div className="flex-1">
-                    {(s.state === SuggestionState.Loading ||
-                      s.state === SuggestionState.Success) && (
-                      <div className="text-sm text-foreground/90 leading-relaxed">
-                        <div className="text-sm">
-                          <SafeMarkdown content={s.answer} />
+                    {s.image_urls && s.image_urls.length > 0 && (
+                      <div className="flex shrink-0 mb-2">
+                        <div className="flex gap-2 overflow-x-auto">
+                          {s.image_urls.map((url, i) =>
+                            url ? (
+                              <img
+                                key={i}
+                                src={url}
+                                className="h-12 w-16 object-cover rounded-md border border-blue-400 bg-muted"
+                                alt={`thumb-${i}`}
+                              />
+                            ) : (
+                              <div
+                                key={i}
+                                className="h-12 w-16 flex items-center justify-center rounded-md border border-blue-400 bg-muted"
+                              >
+                                <ImageUp className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                            )
+                          )}
                         </div>
                       </div>
                     )}
 
-                    {s.state === SuggestionState.Stopped && (
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                        <PauseCircle className="h-4 w-4" />
-                        <span>Suggestion canceled</span>
-                      </div>
-                    )}
+                    <div className="flex-1">
+                      {(s.state === SuggestionState.Loading ||
+                        s.state === SuggestionState.Success) && (
+                        <div className="text-sm text-foreground/90 leading-relaxed">
+                          <div className="text-sm">
+                            <SafeMarkdown content={s.answer} />
+                          </div>
+                        </div>
+                      )}
 
-                    {s.state === SuggestionState.Error && (
-                      <div className="bg-destructive/10 border border-destructive/20 rounded-md p-2 mt-1">
-                        <p className="text-xs text-destructive">{s.error}</p>
-                      </div>
-                    )}
+                      {s.state === SuggestionState.Stopped && (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                          <PauseCircle className="h-4 w-4" />
+                          <span>Suggestion canceled</span>
+                        </div>
+                      )}
+
+                      {s.state === SuggestionState.Error && (
+                        <div className="bg-destructive/10 border border-destructive/20 rounded-md p-2 mt-1">
+                          <p className="text-xs text-destructive">{s.error}</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
+              </SuggestionReveal>
             ))}
           </div>
         )}

@@ -207,6 +207,26 @@
   background: rgba(0, 0, 0, 0.03);
 }
 
+/* newest suggestion tints briefly as it expands, so the eye lands on the top of the list */
+@keyframes suggestion-flash {
+  from {
+    background-color: color-mix(in oklch, var(--accent) 20%, transparent);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+.suggestion-flash {
+  animation: suggestion-flash 1.4s ease-out both;
+  border-radius: var(--radius-md);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .suggestion-flash {
+    animation: none;
+  }
+}
+
 /* utility class for hiding scrollbars while retaining scrollability */
 .hide-scrollbar {
   -ms-overflow-style: none; /* IE and Edge */
