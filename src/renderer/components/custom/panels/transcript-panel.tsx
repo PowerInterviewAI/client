@@ -41,7 +41,7 @@ function TranscriptPanel({ transcripts, isRunning = false }: TranscriptPanelProp
   }, [transcripts, autoScroll]);
 
   return (
-    <Card className="relative flex flex-col w-full h-full bg-card p-0 rounded-md gap-2">
+    <Card className="relative flex flex-col w-full h-full bg-card p-0 rounded-md gap-1">
       <div className="px-2 py-1.5 shrink-0 flex items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           {isRunning && (

@@ -141,7 +141,7 @@ function ActionSuggestionsPanel({
 
   return (
     <Card
-      className="relative flex flex-col w-full h-full bg-card p-0 rounded-md gap-2"
+      className="relative flex flex-col w-full h-full bg-card p-0 rounded-md gap-1"
       style={style}
     >
       {/* Header */}
@@ -186,7 +186,7 @@ function ActionSuggestionsPanel({
         )}
 
         {hasItems && (
-          <div className="p-2 space-y-3">
+          <div className="px-2 pt-1 pb-2 space-y-3">
             {actionSuggestions.map((s, idx) => (
               <div
                 key={idx}
