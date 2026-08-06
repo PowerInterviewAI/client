@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import ConfigurationDialog from '@/components/custom/configuration-dialog';
 import ConnectingNotice from '@/components/custom/connecting-notice';
 import ControlPanel from '@/components/custom/control-panel';
 import { LoadingPage } from '@/components/custom/loading';
@@ -14,7 +13,6 @@ import { TransitionOverlay } from '@/components/custom/transition-overlay';
 import TrialUserNotice from '@/components/custom/trial-user-notice';
 import { useAppState } from '@/hooks/use-app-state';
 import { useAssistantService } from '@/hooks/use-assistant-service';
-import useAuth from '@/hooks/use-auth';
 import { useConfigStore } from '@/hooks/use-config-store';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { useTranscriptPanel } from '@/hooks/use-transcript-panel';
@@ -31,11 +29,8 @@ import { type ActionSuggestion, type LiveSuggestion } from '@/types/suggestion';
 import { type Transcript } from '@/types/transcript';
 
 export default function MainPage() {
-  const { logout } = useAuth();
-
   const navigate = useNavigate();
 
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { config, isLoading: configLoading, loadConfig } = useConfigStore();
   const { stopAssistant } = useAssistantService();
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
@@ -183,11 +178,6 @@ export default function MainPage() {
     computeAvailable();
   }, [appState?.runningState, appState, computeAvailable]);
 
-  // Sign out handling
-  const handleSignOut = async () => {
-    await logout();
-  };
-
   // Memoized styles to prevent unnecessary re-renders
   const transcriptStyle = useMemo(
     () => ((transcriptHeight ?? 0) > 0 ? { height: `${transcriptHeight}px` } : undefined),
@@ -293,7 +283,7 @@ export default function MainPage() {
         )}
       </div>
 
-      <ControlPanel onProfileClick={() => setIsProfileOpen(true)} onSignOut={handleSignOut} />
+      <ControlPanel />
 
       {isStealth && (
         <StatusPanel
@@ -304,7 +294,6 @@ export default function MainPage() {
         />
       )}
 
-      <ConfigurationDialog isOpen={isProfileOpen} onOpenChange={setIsProfileOpen} />
       <PermissionGateDialog
         open={startupPermGateOpen}
         onOpenChange={setStartupPermGateOpen}

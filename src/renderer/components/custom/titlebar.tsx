@@ -1,16 +1,13 @@
-import { EyeOff, Moon, Sun } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
 import faviconSvg from '/favicon.svg';
 import CreditsDisplay from '@/components/custom/credits-display';
-import DocumentationDialog from '@/components/custom/documentation-dialog';
+import TitlebarMenu from '@/components/custom/titlebar-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAppState } from '@/hooks/use-app-state';
 import { useConfigStore } from '@/hooks/use-config-store';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
-import { useThemeStore } from '@/hooks/use-theme-store';
 import { APP_NAME, isMac } from '@/lib/consts';
-import { Hotkey, HOTKEYS } from '@/lib/hotkeys';
 import { getElectron } from '@/lib/utils';
 
 // WebkitAppRegion is an Electron-specific CSS property not included in React.CSSProperties
@@ -44,19 +41,8 @@ export default function Titlebar() {
   const handleMaximize = () => window.electronAPI?.maximize();
   const handleClose = () => window.electronAPI?.close();
 
-  const [isDocsOpen, setIsDocsOpen] = useState(false);
-  const handleToggleStealth = () => {
-    const electron = getElectron();
-    if (electron) {
-      electron.toggleStealth();
-    } else {
-      console.warn('Electron API not available for toggling stealth mode');
-    }
-  };
-
   const { appState } = useAppState();
   const { config } = useConfigStore();
-  const { isDark, toggleTheme } = useThemeStore();
 
   if (isStealth) return null;
 
@@ -94,54 +80,7 @@ export default function Titlebar() {
             </>
           )}
 
-          {appState?.isLoggedIn && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={handleToggleStealth}
-                  aria-label="Toggle stealth mode"
-                  title="Toggle stealth mode"
-                  className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
-                  style={NO_DRAG}
-                >
-                  <EyeOff className="h-4 w-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Toggle stealth mode ({HOTKEYS[Hotkey.ToggleStealth].combo})</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={toggleTheme}
-                aria-label="Toggle theme"
-                className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
-                style={NO_DRAG}
-              >
-                {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{isDark ? 'Light mode' : 'Dark mode'}</p>
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={() => setIsDocsOpen(true)}
-                aria-label="Documentation"
-                className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
-                style={NO_DRAG}
-              >
-                <span className="font-medium">?</span>
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Documentation</p>
-            </TooltipContent>
-          </Tooltip>
+          <TitlebarMenu style={NO_DRAG} />
 
           {!isMac && (
             <>
@@ -221,8 +160,6 @@ export default function Titlebar() {
           </Tooltip>
         </div>
       </div>
-
-      <DocumentationDialog open={isDocsOpen} onOpenChange={setIsDocsOpen} />
     </>
   );
 }

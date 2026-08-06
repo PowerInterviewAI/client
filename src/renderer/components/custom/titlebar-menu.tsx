@@ -1,0 +1,171 @@
+import { CreditCard, EyeOff, Key, LogOut, Mail, Menu, Moon, SettingsIcon, Sun } from 'lucide-react';
+import React, { useState } from 'react';
+
+import ConfigurationDialog from '@/components/custom/configuration-dialog';
+import DocumentationDialog from '@/components/custom/documentation-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useAppState } from '@/hooks/use-app-state';
+import useAuth from '@/hooks/use-auth';
+import { useConfigStore } from '@/hooks/use-config-store';
+import { useThemeStore } from '@/hooks/use-theme-store';
+import { Hotkey, HOTKEYS } from '@/lib/hotkeys';
+import { getElectron } from '@/lib/utils';
+import { router } from '@/router';
+import { RunningState } from '@/types/app-state';
+
+import { ChangePasswordDialog } from './change-password-dialog';
+
+export default function TitlebarMenu({ style }: { style?: React.CSSProperties }) {
+  const { appState, runningState } = useAppState();
+  const { config } = useConfigStore();
+  const { isDark, toggleTheme } = useThemeStore();
+  const { logout, changePassword, loading, error, setError } = useAuth();
+  const [isDocsOpen, setIsDocsOpen] = useState(false);
+  const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+
+  const isLoggedIn = appState?.isLoggedIn ?? false;
+  // Account actions rewrite state the running assistant depends on; theme, docs and stealth do not.
+  const disabled = runningState !== RunningState.Idle;
+
+  const handleToggleStealth = () => {
+    const electron = getElectron();
+    if (electron) {
+      electron.toggleStealth();
+    } else {
+      console.warn('Electron API not available for toggling stealth mode');
+    }
+  };
+
+  const handleChangePassword = async (
+    currentPassword: string,
+    newPassword: string
+  ): Promise<boolean> => {
+    let res = false;
+    try {
+      if (await changePassword(currentPassword, newPassword)) {
+        res = true;
+      }
+    } catch (err) {
+      // Error is handled by the useAuth hook
+      console.error('Password change failed:', err);
+    }
+    return res;
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await logout();
+    } catch (err) {
+      console.error('Sign out failed:', err);
+    }
+  };
+
+  return (
+    <>
+      <DropdownMenu>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger asChild>
+              <button
+                aria-label="Menu"
+                className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
+                style={style}
+              >
+                <Menu className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Menu</p>
+          </TooltipContent>
+        </Tooltip>
+        <DropdownMenuContent align="end" side="bottom">
+          {isLoggedIn && (
+            <DropdownMenuItem onClick={handleToggleStealth}>
+              <EyeOff className="mr-2 h-4 w-4" />
+              Stealth mode ({HOTKEYS[Hotkey.ToggleStealth].combo})
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem onClick={() => toggleTheme()}>
+            {isDark ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+            {isDark ? 'Light mode' : 'Dark mode'}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setIsDocsOpen(true)}>
+            <span className="mr-2 w-4 text-center font-medium">?</span>
+            Documentation
+          </DropdownMenuItem>
+
+          {isLoggedIn && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => !disabled && setIsConfigOpen(true)}
+                disabled={disabled}
+              >
+                <SettingsIcon className="mr-2 h-4 w-4" />
+                Configuration
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  if (disabled) return;
+                  setError(null);
+                  setIsChangePasswordOpen(true);
+                }}
+                disabled={disabled}
+              >
+                <Key className="mr-2 h-4 w-4" />
+                Change password
+              </DropdownMenuItem>
+              {/* Titlebar sits outside RouterProvider, so navigation goes through the router instance. */}
+              <DropdownMenuItem
+                onClick={() => void router.navigate('/payment')}
+                disabled={disabled}
+              >
+                <CreditCard className="mr-2 h-4 w-4" />
+                Buy Credits
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => !disabled && void handleSignOut()}
+                disabled={disabled}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign out
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="flex items-center">
+                <Mail className="mr-2 h-4 w-4" />
+                {config?.email}
+              </DropdownMenuLabel>
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <DocumentationDialog open={isDocsOpen} onOpenChange={setIsDocsOpen} />
+
+      {isLoggedIn && (
+        <>
+          <ConfigurationDialog isOpen={isConfigOpen} onOpenChange={setIsConfigOpen} />
+
+          <ChangePasswordDialog
+            open={isChangePasswordOpen}
+            onOpenChange={setIsChangePasswordOpen}
+            onChangePassword={handleChangePassword}
+            loading={loading}
+            error={error}
+          />
+        </>
+      )}
+    </>
+  );
+}
