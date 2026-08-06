@@ -1,5 +1,6 @@
 import { CreditCard, EyeOff, Key, LogOut, Mail, Menu, Moon, SettingsIcon, Sun } from 'lucide-react';
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import ConfigurationDialog from '@/components/custom/configuration-dialog';
 import DocumentationDialog from '@/components/custom/documentation-dialog';
@@ -18,12 +19,12 @@ import { useConfigStore } from '@/hooks/use-config-store';
 import { useThemeStore } from '@/hooks/use-theme-store';
 import { Hotkey, HOTKEYS } from '@/lib/hotkeys';
 import { getElectron } from '@/lib/utils';
-import { router } from '@/router';
 import { RunningState } from '@/types/app-state';
 
 import { ChangePasswordDialog } from './change-password-dialog';
 
 export default function TitlebarMenu({ style }: { style?: React.CSSProperties }) {
+  const navigate = useNavigate();
   const { appState, runningState } = useAppState();
   const { config } = useConfigStore();
   const { isDark, toggleTheme } = useThemeStore();
@@ -125,11 +126,7 @@ export default function TitlebarMenu({ style }: { style?: React.CSSProperties })
                 <Key className="mr-2 h-4 w-4" />
                 Change password
               </DropdownMenuItem>
-              {/* Titlebar sits outside RouterProvider, so navigation goes through the router instance. */}
-              <DropdownMenuItem
-                onClick={() => void router.navigate('/payment')}
-                disabled={disabled}
-              >
+              <DropdownMenuItem onClick={() => navigate('/payment')} disabled={disabled}>
                 <CreditCard className="mr-2 h-4 w-4" />
                 Buy Credits
               </DropdownMenuItem>

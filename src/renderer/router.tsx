@@ -1,5 +1,6 @@
-import { createHashRouter } from 'react-router-dom';
+import { createHashRouter, Outlet } from 'react-router-dom';
 
+import MainFrame from './components/custom/main-frame';
 import AuthLayout from './pages/auth/layout';
 import LoginPage from './pages/auth/login';
 import SignupPage from './pages/auth/signup';
@@ -7,31 +8,42 @@ import IndexPage from './pages/index';
 import MainPage from './pages/main/index';
 import PaymentPage from './pages/payment';
 
+// MainFrame is a layout route rather than a wrapper around RouterProvider so that the chrome it
+// renders - the titlebar and its menu - sits inside the router and can navigate with useNavigate.
 export const router = createHashRouter([
   {
-    path: '/',
-    element: <IndexPage />,
-  },
-  {
-    path: '/main',
-    element: <MainPage />,
-  },
-  {
-    path: '/auth',
-    element: <AuthLayout />,
+    element: (
+      <MainFrame>
+        <Outlet />
+      </MainFrame>
+    ),
     children: [
       {
-        path: 'login',
-        element: <LoginPage />,
+        path: '/',
+        element: <IndexPage />,
       },
       {
-        path: 'signup',
-        element: <SignupPage />,
+        path: '/main',
+        element: <MainPage />,
+      },
+      {
+        path: '/auth',
+        element: <AuthLayout />,
+        children: [
+          {
+            path: 'login',
+            element: <LoginPage />,
+          },
+          {
+            path: 'signup',
+            element: <SignupPage />,
+          },
+        ],
+      },
+      {
+        path: '/payment',
+        element: <PaymentPage />,
       },
     ],
-  },
-  {
-    path: '/payment',
-    element: <PaymentPage />,
   },
 ]);
