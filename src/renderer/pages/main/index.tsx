@@ -250,19 +250,19 @@ export default function MainPage() {
         {/* Top: Suggestions, side by side */}
         {hasSuggestions && (
           <div className="flex-1 min-h-0 flex gap-1">
-            {hasActionSuggestions && (
+            {hasLiveSuggestions && (
               <div className="flex-1 min-w-0">
-                <ActionSuggestionsPanel
-                  actionSuggestions={actionSuggestions}
+                <LiveSuggestionsPanel
+                  suggestions={liveSuggestions}
                   style={suggestionStyle}
                   isRunning={appState?.runningState === RunningState.Running}
                 />
               </div>
             )}
-            {hasLiveSuggestions && (
+            {hasActionSuggestions && (
               <div className="flex-1 min-w-0">
-                <LiveSuggestionsPanel
-                  suggestions={liveSuggestions}
+                <ActionSuggestionsPanel
+                  actionSuggestions={actionSuggestions}
                   style={suggestionStyle}
                   isRunning={appState?.runningState === RunningState.Running}
                 />
