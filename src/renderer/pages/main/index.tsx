@@ -35,7 +35,7 @@ export default function MainPage() {
   const navigate = useNavigate();
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const { config, isLoading: configLoading, loadConfig, updateConfig } = useConfigStore();
+  const { config, isLoading: configLoading, loadConfig } = useConfigStore();
   const { stopAssistant } = useAssistantService();
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const [liveSuggestions, setLiveSuggestions] = useState<LiveSuggestion[]>([]);
@@ -178,12 +178,6 @@ export default function MainPage() {
     await logout();
   };
 
-  const handleHideTranscriptDock = useCallback(() => {
-    updateConfig({ showTranscriptPanel: false }).catch((e) =>
-      console.error('Failed to persist transcription panel visibility', e)
-    );
-  }, [updateConfig]);
-
   // Memoized styles to prevent unnecessary re-renders
   const transcriptStyle = useMemo(
     () => ((transcriptHeight ?? 0) > 0 ? { height: `${transcriptHeight}px` } : undefined),
@@ -284,7 +278,6 @@ export default function MainPage() {
             <TranscriptPanel
               transcripts={transcripts}
               isRunning={appState?.runningState === RunningState.Running}
-              onHide={handleHideTranscriptDock}
             />
           </div>
         )}
