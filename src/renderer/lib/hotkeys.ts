@@ -95,7 +95,7 @@ export const HOTKEYS: Record<Hotkey, HotkeyInfo> = {
     description: 'Place window in a specific corner, side, or center',
   },
   [Hotkey.RestoreWin]: {
-    combo: `${BASE}R`,
+    combo: `${BASE}F8`,
     title: 'Restore Window',
     description: 'Bring the window back after minimizing - it is kept off the taskbar',
   },
