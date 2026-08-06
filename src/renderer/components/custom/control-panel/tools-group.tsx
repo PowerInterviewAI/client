@@ -1,10 +1,21 @@
-import { CircleCheck, FileIcon, FolderOpenIcon, Loader, Save, Trash2, XIcon } from 'lucide-react';
+import {
+  Captions,
+  CaptionsOff,
+  CircleCheck,
+  FileIcon,
+  FolderOpenIcon,
+  Loader,
+  Save,
+  Trash2,
+  XIcon,
+} from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAppState } from '@/hooks/use-app-state';
+import { useConfigStore } from '@/hooks/use-config-store';
 import useTools from '@/hooks/use-tools';
 import { getElectron } from '@/lib/utils';
 import { RunningState } from '@/types/app-state';
@@ -16,7 +27,17 @@ interface ToolsGroupProps {
 export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
   const { runningState } = useAppState();
   const { exporting, exportTranscript, setPlaceholderData } = useTools();
+  const { config, updateConfig } = useConfigStore();
   const [clearing, setClearing] = useState(false);
+
+  const transcriptVisible = config?.showTranscriptPanel !== false;
+
+  const onToggleTranscript = () => {
+    updateConfig({ showTranscriptPanel: !transcriptVisible }).catch((e) => {
+      console.error(e);
+      toast.error('Failed to save transcription panel setting');
+    });
+  };
 
   const onClear = async () => {
     setClearing(true);
@@ -102,6 +123,27 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
 
   return (
     <div className="flex items-center space-x-2">
+      {/* View-only preference, so it stays available while the assistant runs */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="secondary"
+            onClick={onToggleTranscript}
+            size="sm"
+            className="h-8 w-8 text-xs rounded-xl cursor-pointer"
+            aria-pressed={transcriptVisible}
+          >
+            {transcriptVisible ? (
+              <Captions className="h-4 w-4" />
+            ) : (
+              <CaptionsOff className="h-4 w-4" />
+            )}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{transcriptVisible ? 'Hide Transcription' : 'Show Transcription'}</p>
+        </TooltipContent>
+      </Tooltip>
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
