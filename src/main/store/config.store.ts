@@ -23,9 +23,6 @@ export interface RuntimeConfig {
   autoScrollLiveSuggestions: boolean;
   autoScrollActionSuggestions: boolean;
   autoScrollTranscript: boolean;
-
-  /** Keep the window above other apps outside stealth mode. */
-  alwaysOnTop: boolean;
 }
 
 // Default runtime configuration
@@ -43,9 +40,6 @@ const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
   autoScrollLiveSuggestions: true,
   autoScrollActionSuggestions: true,
   autoScrollTranscript: true,
-
-  // an interview overlay is useless behind the meeting window
-  alwaysOnTop: true,
 };
 
 // interviewConf (full name, profile, context) used to be cached under `runtime`, but it's now
@@ -226,9 +220,6 @@ export const configStore = new ConfigStore();
   }
   if (raw?.autoScrollTranscript === undefined) {
     migration.autoScrollTranscript = true;
-  }
-  if (raw?.alwaysOnTop === undefined) {
-    migration.alwaysOnTop = true;
   }
   // perform migration only if there are values to set
   if (Object.keys(migration).length > 0) {

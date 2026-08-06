@@ -4,7 +4,6 @@ export enum Hotkey {
   StopAll = 'StopAll',
   ToggleStealth = 'ToggleStealth',
   Opacity = 'Opacity',
-  AlwaysOnTop = 'AlwaysOnTop',
   PlaceWin = 'PlaceWin',
   RestoreWin = 'RestoreWin',
   MoveWin = 'MoveWin',
@@ -36,7 +35,6 @@ export const HOTKEY_GROUPS: HotkeyGroup[] = [
   {
     label: 'Window Management',
     keys: [
-      Hotkey.AlwaysOnTop,
       Hotkey.PlaceWin,
       Hotkey.RestoreWin,
       Hotkey.MoveWin,
@@ -90,11 +88,6 @@ export const HOTKEYS: Record<Hotkey, HotkeyInfo> = {
     combo: `${BASE}N`,
     title: 'Toggle Opacity',
     description: 'Toggle window opacity in stealth mode',
-  },
-  [Hotkey.AlwaysOnTop]: {
-    combo: `${BASE}T`,
-    title: 'Keep on Top',
-    description: 'Pin or unpin the window above other apps',
   },
   [Hotkey.PlaceWin]: {
     combo: `${BASE}1-9`,

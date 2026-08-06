@@ -1,11 +1,10 @@
-import { EyeOff, Moon, Pin, PinOff, Sun } from 'lucide-react';
+import { EyeOff, Moon, Sun } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
 import faviconSvg from '/favicon.svg';
 import CreditsDisplay from '@/components/custom/credits-display';
 import DocumentationDialog from '@/components/custom/documentation-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import useAlwaysOnTop from '@/hooks/use-always-on-top';
 import { useAppState } from '@/hooks/use-app-state';
 import { useConfigStore } from '@/hooks/use-config-store';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
@@ -58,7 +57,6 @@ export default function Titlebar() {
   const { appState } = useAppState();
   const { config } = useConfigStore();
   const { isDark, toggleTheme } = useThemeStore();
-  const { alwaysOnTop, toggle: toggleAlwaysOnTop } = useAlwaysOnTop();
 
   if (isStealth) return null;
 
@@ -114,29 +112,6 @@ export default function Titlebar() {
               </TooltipContent>
             </Tooltip>
           )}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={toggleAlwaysOnTop}
-                aria-label={alwaysOnTop ? 'Unpin window from top' : 'Pin window on top'}
-                aria-pressed={alwaysOnTop}
-                className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
-                style={NO_DRAG}
-              >
-                {alwaysOnTop ? (
-                  <Pin className="h-4 w-4" />
-                ) : (
-                  <PinOff className="h-4 w-4 text-muted-foreground" />
-                )}
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>
-                {alwaysOnTop ? 'Unpin from top' : 'Keep on top'} ({HOTKEYS[Hotkey.AlwaysOnTop].combo}
-                )
-              </p>
-            </TooltipContent>
-          </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
               <button

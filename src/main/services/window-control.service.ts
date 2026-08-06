@@ -70,54 +70,30 @@ export function getWindowReference(): BrowserWindow | null {
 // use - so the persistent setting runs one level down.
 const BASE_ALWAYS_ON_TOP_LEVEL = 'floating' as const;
 
-function notifyAlwaysOnTop(enabled: boolean): void {
-  try {
-    if (win && !win.isDestroyed()) {
-      win.webContents.send('window:always-on-top-changed', enabled);
-    }
-  } catch (e) {
-    console.warn('Failed to send window:always-on-top-changed event:', e);
-  }
-}
-
 /**
- * Apply the persisted always-on-top preference.
+ * Pin the window above other windows.
  *
- * No-op while stealth is on: stealth pins the window at a higher level, and `disableStealth`
- * calls this on the way out.
+ * Unconditional: an interview overlay behind the meeting window is useless, and with no taskbar
+ * button and no Dock icon a window that can be buried is a window that gets lost. Content
+ * protection is applied at creation regardless of stealth mode, so this changes what the user
+ * sees, not what a screen share shows.
+ *
+ * No-op while stealth is on, which pins at a higher level; `disableStealth` calls this on the
+ * way out.
  */
 export function applyAlwaysOnTop(): void {
   if (!win || win.isDestroyed() || _stealth) return;
 
-  const enabled = configStore.getConfig().alwaysOnTop;
   try {
-    win.setAlwaysOnTop(enabled, BASE_ALWAYS_ON_TOP_LEVEL);
+    win.setAlwaysOnTop(true, BASE_ALWAYS_ON_TOP_LEVEL);
   } catch (e) {
     console.warn('setAlwaysOnTop with level failed:', e);
     try {
-      win.setAlwaysOnTop(enabled);
+      win.setAlwaysOnTop(true);
     } catch (e) {
       console.warn('setAlwaysOnTop failed:', e);
     }
   }
-}
-
-/**
- * Persist and apply the always-on-top preference.
- */
-export function setAlwaysOnTop(enabled: boolean): void {
-  try {
-    configStore.updateConfig({ alwaysOnTop: enabled });
-  } catch (e) {
-    console.warn('Failed to save always-on-top state:', e);
-  }
-
-  applyAlwaysOnTop();
-  notifyAlwaysOnTop(enabled);
-}
-
-export function toggleAlwaysOnTop(): void {
-  setAlwaysOnTop(!configStore.getConfig().alwaysOnTop);
 }
 
 /**
