@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain } from 'electron';
+import { ipcMain } from 'electron';
 
 import { ZOOM_STEP } from '../consts.js';
 import { appStateService } from '../services/app-state.service.js';
@@ -6,16 +6,26 @@ import { pushNotificationService } from '../services/push-notification.service.j
 import * as windowControls from '../services/window-control.service.js';
 import * as zoomService from '../services/zoom.service.js';
 
-export function registerWindowHandlers(win: BrowserWindow): void {
+/**
+ * Handlers are registered once, but the window they act on can be replaced - relaunching the app
+ * recreates it if it was destroyed. Resolve it per call instead of capturing it, or every one of
+ * these silently no-ops against the old window.
+ */
+export function registerWindowHandlers(): void {
+  const window = () => windowControls.getWindowReference();
+
   ipcMain.on('window:close', () => {
+    const win = window();
     if (win && !win.isDestroyed()) win.close();
   });
 
   ipcMain.on('window:minimize', () => {
+    const win = window();
     if (win && !win.isDestroyed()) win.minimize();
   });
 
   ipcMain.on('window:maximize', () => {
+    const win = window();
     if (win && !win.isDestroyed()) {
       if (win.isMaximized()) win.unmaximize();
       else win.maximize();

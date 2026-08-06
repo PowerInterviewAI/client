@@ -72,7 +72,13 @@ if (!gotLock) {
     // Launching the app again is the recovery path when the window is out of reach, so it has to
     // survive a destroyed window rather than throwing on it.
     if (!win || win.isDestroyed()) {
-      createWindow().catch((err) => console.error('Failed to recreate window:', err));
+      createWindow()
+        // The updater holds its own reference for progress toasts; the IPC handlers resolve
+        // the window per call, so they need nothing here.
+        .then(() => {
+          if (win) autoUpdaterService.setMainWindow(win);
+        })
+        .catch((err) => console.error('Failed to recreate window:', err));
       return;
     }
     restoreWindow();
@@ -215,9 +221,9 @@ app.whenReady().then(async () => {
   await createWindow();
 
   // Register window-specific IPC handlers
-  if (win) {
-    registerWindowHandlers(win);
+  registerWindowHandlers();
 
+  if (win) {
     autoUpdaterService.setMainWindow(win);
 
     // 3s delay gives the renderer time to mount before the first toast fires
