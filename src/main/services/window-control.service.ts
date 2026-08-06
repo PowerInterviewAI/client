@@ -65,6 +65,61 @@ export function getWindowReference(): BrowserWindow | null {
   return win;
 }
 
+// Stealth uses 'screen-saver' so the overlay clears everything. Outside stealth that is far too
+// aggressive - it would sit over OS notifications and other system UI during ordinary desktop
+// use - so the persistent setting runs one level down.
+const BASE_ALWAYS_ON_TOP_LEVEL = 'floating' as const;
+
+function notifyAlwaysOnTop(enabled: boolean): void {
+  try {
+    if (win && !win.isDestroyed()) {
+      win.webContents.send('window:always-on-top-changed', enabled);
+    }
+  } catch (e) {
+    console.warn('Failed to send window:always-on-top-changed event:', e);
+  }
+}
+
+/**
+ * Apply the persisted always-on-top preference.
+ *
+ * No-op while stealth is on: stealth pins the window at a higher level, and `disableStealth`
+ * calls this on the way out.
+ */
+export function applyAlwaysOnTop(): void {
+  if (!win || win.isDestroyed() || _stealth) return;
+
+  const enabled = configStore.getConfig().alwaysOnTop;
+  try {
+    win.setAlwaysOnTop(enabled, BASE_ALWAYS_ON_TOP_LEVEL);
+  } catch (e) {
+    console.warn('setAlwaysOnTop with level failed:', e);
+    try {
+      win.setAlwaysOnTop(enabled);
+    } catch (e) {
+      console.warn('setAlwaysOnTop failed:', e);
+    }
+  }
+}
+
+/**
+ * Persist and apply the always-on-top preference.
+ */
+export function setAlwaysOnTop(enabled: boolean): void {
+  try {
+    configStore.updateConfig({ alwaysOnTop: enabled });
+  } catch (e) {
+    console.warn('Failed to save always-on-top state:', e);
+  }
+
+  applyAlwaysOnTop();
+  notifyAlwaysOnTop(enabled);
+}
+
+export function toggleAlwaysOnTop(): void {
+  setAlwaysOnTop(!configStore.getConfig().alwaysOnTop);
+}
+
 /**
  * Restore and raise the window.
  * There is no taskbar button and no Dock icon to click, so a minimized window is
@@ -322,13 +377,14 @@ export function disableStealth(): void {
     win.setIgnoreMouseEvents(false);
     win.setFocusable(true);
 
-    // Restore previous always-on-top state
-    win.setAlwaysOnTop(false);
+    // Drop back to the user's own always-on-top setting. Clearing it outright here would
+    // silently turn the preference off every time stealth is toggled or the user signs out.
+    _stealth = false;
+    applyAlwaysOnTop();
 
     // Restore full opacity
     win.setOpacity(1.0);
 
-    _stealth = false;
     try {
       configStore.setStealth(_stealth);
     } catch (e) {

@@ -28,7 +28,11 @@ import { registerWindowHandlers } from './ipc/window.js';
 import { autoUpdaterService } from './services/auto-updater.service.js';
 import { healthCheckService } from './services/health-check.service.js';
 import { transcriptService } from './services/transcript.service.js';
-import { restoreWindow, setWindowReference } from './services/window-control.service.js';
+import {
+  applyAlwaysOnTop,
+  restoreWindow,
+  setWindowReference,
+} from './services/window-control.service.js';
 import { setWindowReference as setZoomWindowReference } from './services/zoom.service.js';
 import { configStore } from './store/config.store.js';
 import { EnvUtil } from './utils/env.js';
@@ -159,6 +163,9 @@ async function createWindow() {
 
   setWindowReference(win);
   setZoomWindowReference(win);
+
+  // Applied here rather than through the constructor option, which cannot set the z-order level.
+  applyAlwaysOnTop();
 
   win.on('close', () => {
     if (win) {

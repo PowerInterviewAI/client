@@ -64,6 +64,22 @@ export function registerWindowHandlers(win: BrowserWindow): void {
     }
   });
 
+  ipcMain.on('window:set-always-on-top', (_event, enabled: boolean) => {
+    try {
+      windowControls.setAlwaysOnTop(!!enabled);
+    } catch (err) {
+      console.warn('window:set-always-on-top handler error:', err);
+    }
+  });
+
+  ipcMain.on('window:toggle-always-on-top', () => {
+    try {
+      windowControls.toggleAlwaysOnTop();
+    } catch (err) {
+      console.warn('window:toggle-always-on-top handler error:', err);
+    }
+  });
+
   ipcMain.on('window:toggle-stealth', () => {
     try {
       windowControls.toggleStealth();

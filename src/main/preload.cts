@@ -167,6 +167,14 @@ const electronApi = {
   toggleStealth: () => ipcRenderer.send('window:toggle-stealth'),
   toggleOpacity: () => ipcRenderer.send('window:toggle-opacity'),
 
+  setAlwaysOnTop: (enabled: boolean) => ipcRenderer.send('window:set-always-on-top', !!enabled),
+  toggleAlwaysOnTop: () => ipcRenderer.send('window:toggle-always-on-top'),
+  onAlwaysOnTopChanged: (callback: (enabled: boolean) => void) => {
+    const handler = (_event: unknown, enabled: boolean) => callback(enabled);
+    ipcRenderer.on('window:always-on-top-changed', handler);
+    return () => ipcRenderer.removeListener('window:always-on-top-changed', handler);
+  },
+
   ping: () => ipcRenderer.send('system:ping'),
   isElectron: true,
 };

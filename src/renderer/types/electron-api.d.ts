@@ -199,6 +199,11 @@ declare global {
 
     // Opacity toggle helper
     toggleOpacity: () => void;
+
+    // Always-on-top control. Main owns the value, so changes arrive back over the listener.
+    setAlwaysOnTop: (enabled: boolean) => void;
+    toggleAlwaysOnTop: () => void;
+    onAlwaysOnTopChanged: (callback: (enabled: boolean) => void) => () => void;
   }
 
   interface Window {

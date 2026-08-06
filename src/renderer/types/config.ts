@@ -22,4 +22,7 @@ export interface Config {
   autoScrollLiveSuggestions: boolean;
   autoScrollActionSuggestions: boolean;
   autoScrollTranscript: boolean;
+
+  // Keep the window above other apps outside stealth mode
+  alwaysOnTop: boolean;
 }
