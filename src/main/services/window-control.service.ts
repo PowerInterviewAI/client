@@ -56,6 +56,16 @@ interface WindowBounds {
  */
 export function setWindowReference(window: BrowserWindow): void {
   win = window;
+
+  // The shell re-adds the taskbar button whenever the window is re-shown or re-shaped, and most
+  // of those paths are not ours to intercept - Alt+Tab restoring a minimized window, for one.
+  // Re-assert on the events instead of at every call site.
+  if (typeof window.on === 'function') {
+    window.on('show', hideFromTaskbar);
+    window.on('restore', hideFromTaskbar);
+    window.on('maximize', hideFromTaskbar);
+    window.on('unmaximize', hideFromTaskbar);
+  }
 }
 
 /**
@@ -352,12 +362,12 @@ export function disableStealth(): void {
 
     _stealth = false;
 
-    // The taskbar button comes back on its own here: setFocusable and the z-order change drop
-    // the shell registration that hid it.
-    hideFromTaskbar();
-
     // Restore full opacity
     win.setOpacity(1.0);
+
+    // Last, after every other window mutation: setFocusable, the z-order change and dropping
+    // the layered style all hand the taskbar button back.
+    hideFromTaskbar();
 
     try {
       configStore.setStealth(_stealth);

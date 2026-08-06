@@ -13,8 +13,12 @@ export async function run() {
 
   const alwaysOnTop = [];
   const skipTaskbar = [];
+  const handlers = {};
   windowControl.setWindowReference({
     isDestroyed: () => false,
+    on: (event, handler) => {
+      handlers[event] = handler;
+    },
     setAlwaysOnTop: (enabled, level) => alwaysOnTop.push({ enabled, level }),
     setSkipTaskbar: (skip) => skipTaskbar.push(skip),
     setVisibleOnAllWorkspaces: () => {},
@@ -43,6 +47,14 @@ export async function run() {
   skipTaskbar.length = 0;
   windowControl.restoreWindow();
   check('restoring hides the taskbar button again', skipTaskbar.at(-1) === true);
+
+  // Most paths that re-show or re-shape the window are not ours to call - Alt+Tab restoring a
+  // minimized window, the titlebar maximize button - so the events have to carry the fix.
+  for (const event of ['show', 'restore', 'maximize', 'unmaximize']) {
+    skipTaskbar.length = 0;
+    handlers[event]?.();
+    check(`the ${event} event hides the taskbar button again`, skipTaskbar.at(-1) === true);
+  }
 
   return failures;
 }
