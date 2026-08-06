@@ -15,8 +15,9 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAppState } from '@/hooks/use-app-state';
-import { useConfigStore } from '@/hooks/use-config-store';
 import useTools from '@/hooks/use-tools';
+import { useTranscriptPanel } from '@/hooks/use-transcript-panel';
+import { Hotkey, HOTKEYS } from '@/lib/hotkeys';
 import { getElectron } from '@/lib/utils';
 import { RunningState } from '@/types/app-state';
 
@@ -27,17 +28,8 @@ interface ToolsGroupProps {
 export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
   const { runningState } = useAppState();
   const { exporting, exportTranscript, setPlaceholderData } = useTools();
-  const { config, updateConfig } = useConfigStore();
+  const { visible: transcriptVisible, toggle: onToggleTranscript } = useTranscriptPanel();
   const [clearing, setClearing] = useState(false);
-
-  const transcriptVisible = config?.showTranscriptPanel !== false;
-
-  const onToggleTranscript = () => {
-    updateConfig({ showTranscriptPanel: !transcriptVisible }).catch((e) => {
-      console.error(e);
-      toast.error('Failed to save transcription panel setting');
-    });
-  };
 
   const onClear = async () => {
     setClearing(true);
@@ -141,7 +133,10 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
           </Button>
         </TooltipTrigger>
         <TooltipContent>
-          <p>{transcriptVisible ? 'Hide Transcription' : 'Show Transcription'}</p>
+          <p>
+            {transcriptVisible ? 'Hide Transcription' : 'Show Transcription'} (
+            {HOTKEYS[Hotkey.ToggleTranscript].combo})
+          </p>
         </TooltipContent>
       </Tooltip>
       <Tooltip>

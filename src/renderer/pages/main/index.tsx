@@ -17,6 +17,7 @@ import { useAssistantService } from '@/hooks/use-assistant-service';
 import useAuth from '@/hooks/use-auth';
 import { useConfigStore } from '@/hooks/use-config-store';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
+import { useTranscriptPanel } from '@/hooks/use-transcript-panel';
 import {
   isMac,
   SUGGESTION_MIN_HEIGHT,
@@ -47,6 +48,8 @@ export default function MainPage() {
   // App state from context
   const { appState } = useAppState();
 
+  const { visible: transcriptDockEnabled, toggle: toggleTranscriptDock } = useTranscriptPanel();
+
   // Listen for hotkey to stop assistant
   useEffect(() => {
     if (!window?.electronAPI?.onHotkeyStopAssistant) return;
@@ -59,6 +62,14 @@ export default function MainPage() {
 
     return cleanup;
   }, [stopAssistant]);
+
+  // Listen for hotkey to toggle the transcription dock. Stealth mode hides the control panel
+  // that carries the button, so the hotkey is the only way to reach the dock there.
+  useEffect(() => {
+    if (!window?.electronAPI?.onHotkeyToggleTranscript) return;
+
+    return window.electronAPI.onHotkeyToggleTranscript(toggleTranscriptDock);
+  }, [toggleTranscriptDock]);
 
   // Load config on mount
   useEffect(() => {
@@ -73,7 +84,6 @@ export default function MainPage() {
 
   const hasSuggestions = hasLiveSuggestions || hasActionSuggestions;
 
-  const transcriptDockEnabled = config?.showTranscriptPanel !== false;
   const showTranscriptDock = transcriptDockEnabled && !hideTranscriptPanel;
 
   // stable compute function so other effects can trigger a recompute

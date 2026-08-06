@@ -45,6 +45,13 @@ export function registerGlobalHotkeys(): void {
   // system-wide, and Ctrl+Shift+R is hard-reload in every browser.
   globalShortcut.register(`${BASE}+F8`, () => restoreWindow());
 
+  // Toggle the transcription dock. F7 rather than T for the same reason as above, and it keeps
+  // the dock reachable in stealth mode, where the control panel carrying the button is hidden.
+  globalShortcut.register(`${BASE}+F7`, () => {
+    const w = BrowserWindow.getAllWindows()[0];
+    if (w && !w.isDestroyed()) w.webContents.send('hotkey:toggle-transcript');
+  });
+
   // Zoom hotkeys
   globalShortcut.register(`${BASE}+=`, () => {
     try {
@@ -161,6 +168,7 @@ export function registerGlobalHotkeys(): void {
   console.log(`  ${mod}+Q : Stop assistant`);
   console.log(`  ${mod}+M : Toggle stealth mode`);
   console.log(`  ${mod}+N : Toggle opacity (stealth only)`);
+  console.log(`  ${mod}+F7 : Toggle transcription dock`);
   console.log(`  ${mod}+F8 : Restore window (no taskbar button exists)`);
   console.log(`  ${mod}+1-9 : Place window (numpad layout)`);
   console.log('  Ctrl+Alt+Shift+Arrow : Move window');

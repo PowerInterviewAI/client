@@ -4,6 +4,7 @@ export enum Hotkey {
   StopAll = 'StopAll',
   ToggleStealth = 'ToggleStealth',
   Opacity = 'Opacity',
+  ToggleTranscript = 'ToggleTranscript',
   PlaceWin = 'PlaceWin',
   RestoreWin = 'RestoreWin',
   MoveWin = 'MoveWin',
@@ -30,7 +31,7 @@ export type HotkeyGroup = {
 export const HOTKEY_GROUPS: HotkeyGroup[] = [
   {
     label: 'General',
-    keys: [Hotkey.StopAll, Hotkey.ToggleStealth, Hotkey.Opacity],
+    keys: [Hotkey.StopAll, Hotkey.ToggleStealth, Hotkey.Opacity, Hotkey.ToggleTranscript],
   },
   {
     label: 'Window Management',
@@ -88,6 +89,11 @@ export const HOTKEYS: Record<Hotkey, HotkeyInfo> = {
     combo: `${BASE}N`,
     title: 'Toggle Opacity',
     description: 'Toggle window opacity in stealth mode',
+  },
+  [Hotkey.ToggleTranscript]: {
+    combo: `${BASE}F7`,
+    title: 'Toggle Transcription',
+    description: 'Show or hide the transcription dock - works in stealth mode too',
   },
   [Hotkey.PlaceWin]: {
     combo: `${BASE}1-9`,

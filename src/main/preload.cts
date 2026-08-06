@@ -36,6 +36,12 @@ const electronApi = {
     return () => ipcRenderer.removeListener('hotkey:stop-assistant', handler);
   },
 
+  onHotkeyToggleTranscript: (callback: () => void) => {
+    const handler = () => callback();
+    ipcRenderer.on('hotkey:toggle-transcript', handler);
+    return () => ipcRenderer.removeListener('hotkey:toggle-transcript', handler);
+  },
+
   config: {
     get: () => ipcRenderer.invoke('config:get'),
     update: (updates: Record<string, unknown>) => ipcRenderer.invoke('config:update', updates),

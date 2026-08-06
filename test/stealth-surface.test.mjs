@@ -17,13 +17,19 @@ export async function run() {
 
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
   check('installer creates no desktop shortcut', pkg.build.nsis.createDesktopShortcut === false);
-  check('installer still creates a start menu shortcut', pkg.build.nsis.createStartMenuShortcut === true);
+  check(
+    'installer still creates a start menu shortcut',
+    pkg.build.nsis.createStartMenuShortcut === true
+  );
   check('packaged mac app is an accessory app', pkg.build.mac.extendInfo.LSUIElement === true);
 
   // createDesktopShortcut only covers fresh installs; upgrades have to delete the old icon.
   const nsh = fs.readFileSync(path.join(ROOT, 'build', 'installer.nsh'), 'utf8');
   check('upgrade deletes the previous desktop shortcut', /!macro customInstall/.test(nsh));
-  check('both recorded shortcut names are removed', /\$oldDesktopLink/.test(nsh) && /\$newDesktopLink/.test(nsh));
+  check(
+    'both recorded shortcut names are removed',
+    /\$oldDesktopLink/.test(nsh) && /\$newDesktopLink/.test(nsh)
+  );
 
   // Read the compiled output rather than the source: this is what actually ships.
   const main = fs.readFileSync(path.join(ROOT, 'electron-dist', 'index.js'), 'utf8');
@@ -39,6 +45,12 @@ export async function run() {
   );
   const hotkeys = fs.readFileSync(path.join(ROOT, 'electron-dist', 'hotkeys.js'), 'utf8');
   check('a restore hotkey is registered', /restoreWindow\(\)/.test(hotkeys));
+
+  // Stealth mode hides the control panel that carries the transcription toggle, so the hotkey
+  // is the only route to it there. It takes both halves to work, and neither fails loudly.
+  check('a transcript toggle hotkey is registered', /hotkey:toggle-transcript/.test(hotkeys));
+  const preload = fs.readFileSync(path.join(ROOT, 'electron-dist', 'preload.cjs'), 'utf8');
+  check('the renderer can subscribe to it', /hotkey:toggle-transcript/.test(preload));
 
   return failures;
 }
