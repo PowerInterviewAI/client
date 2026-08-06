@@ -16,13 +16,7 @@ import ZoomControl from '../zoom-control';
 import { AudioGroup } from './audio-group';
 import { LLMGroup } from './llm-group';
 import { MainGroup } from './main-group';
-import { ProfileGroup } from './profile-group';
 import { ToolsGroup } from './tools-group';
-
-interface ControlPanelProps {
-  onProfileClick: () => void;
-  onSignOut: () => void;
-}
 
 type StateConfig = {
   onClick: () => void;
@@ -31,7 +25,7 @@ type StateConfig = {
   label: string;
 };
 
-export default function ControlPanel({ onProfileClick, onSignOut }: ControlPanelProps) {
+export default function ControlPanel() {
   const isStealth = useIsStealthMode();
   const { startAssistant, stopAssistant } = useAssistantService();
   const { runningState, appState } = useAppState();
@@ -54,7 +48,10 @@ export default function ControlPanel({ onProfileClick, onSignOut }: ControlPanel
         onFail: () => void getElectron()?.account?.refresh(),
       },
       { ok: !!appState?.interviewConfig?.fullName, message: 'Full name is not set' },
-      { ok: appState?.interviewConfig?.hasProfileData ?? false, message: 'Profile data is not set' },
+      {
+        ok: appState?.interviewConfig?.hasProfileData ?? false,
+        message: 'Profile data is not set',
+      },
       {
         ok: !audioInputDeviceNotFound,
         message: `Audio input device "${config?.audioInputDeviceName}" is not found`,
@@ -114,7 +111,9 @@ export default function ControlPanel({ onProfileClick, onSignOut }: ControlPanel
       label: 'Starting...',
     },
     [RunningState.Running]: {
-      onClick: async () => { await stopAssistant(); },
+      onClick: async () => {
+        await stopAssistant();
+      },
       className: 'bg-destructive hover:bg-destructive/90 animate-pulse',
       icon: <Square className="h-3.5 w-3.5" />,
       label: 'Stop',
@@ -138,27 +137,23 @@ export default function ControlPanel({ onProfileClick, onSignOut }: ControlPanel
 
   return (
     <>
-      <div id="control-panel" className="flex items-center justify-between gap-2 pr-1 pb-0.5">
-        <ProfileGroup
-          config={config}
-          fullName={appState?.interviewConfig?.fullName}
-          onProfileClick={onProfileClick}
-          onSignOut={onSignOut}
-          getDisabled={getDisabled}
-        />
-
-        <div className="flex flex-1 justify-center gap-2 items-center">
+      {/* Equal-basis side columns keep Start/Stop on the panel's centre line whatever they hold. */}
+      <div id="control-panel" className="flex items-center gap-2 pr-1 pb-0.5">
+        <div className="flex flex-1 basis-0 min-w-0 items-center justify-end gap-2">
           <AudioGroup
             audioInputDevices={audioInputDevices ?? []}
             audioInputDeviceNotFound={audioInputDeviceNotFound}
             getDisabled={getDisabled}
           />
           <LLMGroup getDisabled={getDisabled} />
-          <MainGroup stateConfig={{ onClick, className, icon, label }} getDisabled={getDisabled} />
-          <ToolsGroup getDisabled={getDisabled} />
         </div>
 
-        <ZoomControl />
+        <MainGroup stateConfig={{ onClick, className, icon, label }} getDisabled={getDisabled} />
+
+        <div className="flex flex-1 basis-0 min-w-0 items-center justify-between gap-2">
+          <ToolsGroup getDisabled={getDisabled} />
+          <ZoomControl />
+        </div>
       </div>
 
       {isMac && (

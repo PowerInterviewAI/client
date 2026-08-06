@@ -5,7 +5,7 @@
 
 import { ArrowLeft, CreditCard, History, Receipt } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import BuyCreditsTab from '@/components/custom/payment/buy-credits-tab';
 import PaymentHistoryTab from '@/components/custom/payment/payment-history-tab';
@@ -19,6 +19,14 @@ type PaymentTab = 'buy' | 'history' | 'status';
 
 export default function PaymentPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // A reload leaves this page as the first entry in the session history, where navigate(-1) has
+  // nowhere to go and silently does nothing. React Router marks that entry with key 'default'.
+  const handleBack = () => {
+    if (location.key === 'default') navigate('/main', { replace: true });
+    else navigate(-1);
+  };
 
   const [activeTab, setActiveTab] = useState<PaymentTab>('buy');
   const [statusPaymentId, setStatusPaymentId] = useState('');
@@ -57,7 +65,7 @@ export default function PaymentPage() {
           <Button
             variant="ghost"
             size="icon-sm"
-            onClick={() => navigate(-1)}
+            onClick={handleBack}
             className="flex items-center shrink-0"
           >
             <ArrowLeft className="h-4 w-4" />

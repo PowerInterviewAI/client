@@ -2,12 +2,15 @@ import React, { useEffect } from 'react';
 import { toast } from 'sonner';
 
 import { MainContainerContext } from '@/hooks/use-main-container';
+import usePointerLockGuard from '@/hooks/use-pointer-lock-guard';
 import type { PushNotification } from '@/types/push-notification';
 
 import Titlebar from './titlebar';
 import { UpdateNotification } from './update-notification';
 
 export default function MainFrame({ children }: { children: React.ReactNode }) {
+  usePointerLockGuard();
+
   const [container, setContainer] = React.useState<HTMLElement | null>(null);
   const mainRef = React.useCallback((el: HTMLElement | null) => {
     setContainer(el);
