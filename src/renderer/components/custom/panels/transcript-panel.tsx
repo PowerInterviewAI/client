@@ -1,7 +1,8 @@
-import { ArrowDown } from 'lucide-react';
+import { ArrowDown, ChevronDown } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 
 import { Card } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAppState } from '@/hooks/use-app-state';
 import { useConfigStore } from '@/hooks/use-config-store';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
@@ -12,11 +13,11 @@ import { Checkbox } from '../../ui/checkbox';
 
 interface TranscriptPanelProps {
   transcripts: Transcript[];
-  style?: React.CSSProperties;
   isRunning?: boolean;
+  onHide?: () => void;
 }
 
-function TranscriptPanel({ transcripts, style, isRunning = false }: TranscriptPanelProps) {
+function TranscriptPanel({ transcripts, isRunning = false, onHide }: TranscriptPanelProps) {
   const { config, updateConfig } = useConfigStore();
   const { appState } = useAppState();
   const username = appState?.interviewConfig?.fullName ?? '';
@@ -38,7 +39,7 @@ function TranscriptPanel({ transcripts, style, isRunning = false }: TranscriptPa
   }, [transcripts, autoScroll]);
 
   return (
-    <Card className="relative flex flex-col h-full bg-card p-0 rounded-md gap-2" style={style}>
+    <Card className="relative flex flex-col w-full h-full bg-card p-0 rounded-md gap-2">
       <div className="border-b border-border p-2 shrink-0 flex items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           {isRunning && (
@@ -51,21 +52,40 @@ function TranscriptPanel({ transcripts, style, isRunning = false }: TranscriptPa
         </div>
 
         {!isStealth && (
-          <label className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Checkbox
-              checked={autoScroll}
-              onCheckedChange={(v) => {
-                const enabled = v === true;
-                setAutoScroll(enabled);
-                updateConfig({ autoScrollTranscript: enabled }).catch((e) =>
-                  console.error('Failed to persist auto-scroll setting', e)
-                );
-              }}
-              className="h-4 w-4 rounded border-border bg-background"
-              aria-label="Enable auto-scroll"
-            />
-            <span className="select-none">Auto-scroll</span>
-          </label>
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Checkbox
+                checked={autoScroll}
+                onCheckedChange={(v) => {
+                  const enabled = v === true;
+                  setAutoScroll(enabled);
+                  updateConfig({ autoScrollTranscript: enabled }).catch((e) =>
+                    console.error('Failed to persist auto-scroll setting', e)
+                  );
+                }}
+                className="h-4 w-4 rounded border-border bg-background"
+                aria-label="Enable auto-scroll"
+              />
+              <span className="select-none">Auto-scroll</span>
+            </label>
+
+            {onHide && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="size-6 text-muted-foreground"
+                    onClick={onHide}
+                    aria-label="Hide transcription panel"
+                  >
+                    <ChevronDown className="size-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Hide transcription</TooltipContent>
+              </Tooltip>
+            )}
+          </div>
         )}
       </div>
 
