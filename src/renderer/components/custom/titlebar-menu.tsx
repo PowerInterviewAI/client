@@ -1,4 +1,15 @@
-import { CreditCard, EyeOff, Key, LogOut, Mail, Menu, Moon, SettingsIcon, Sun } from 'lucide-react';
+import {
+  BookOpen,
+  CreditCard,
+  EyeOff,
+  Key,
+  LogOut,
+  Mail,
+  Menu,
+  Moon,
+  SettingsIcon,
+  Sun,
+} from 'lucide-react';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -93,22 +104,11 @@ export default function TitlebarMenu({ style }: { style?: React.CSSProperties })
         </Tooltip>
         <DropdownMenuContent align="end" side="bottom">
           {isLoggedIn && (
-            <DropdownMenuItem onClick={handleToggleStealth}>
-              <EyeOff className="mr-2 h-4 w-4" />
-              Stealth mode ({HOTKEYS[Hotkey.ToggleStealth].combo})
-            </DropdownMenuItem>
-          )}
-          <DropdownMenuItem onClick={() => toggleTheme()}>
-            {isDark ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
-            {isDark ? 'Light mode' : 'Dark mode'}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setIsDocsOpen(true)}>
-            <span className="mr-2 w-4 text-center font-medium">?</span>
-            Documentation
-          </DropdownMenuItem>
-
-          {isLoggedIn && (
             <>
+              <DropdownMenuLabel className="flex items-center">
+                <Mail className="mr-2 h-4 w-4" />
+                {config?.email}
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => !disabled && setIsConfigOpen(true)}
@@ -133,6 +133,25 @@ export default function TitlebarMenu({ style }: { style?: React.CSSProperties })
                 Buy Credits
               </DropdownMenuItem>
               <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleToggleStealth}>
+                <EyeOff className="mr-2 h-4 w-4" />
+                Stealth mode ({HOTKEYS[Hotkey.ToggleStealth].combo})
+              </DropdownMenuItem>
+            </>
+          )}
+          <DropdownMenuItem onClick={() => toggleTheme()}>
+            {isDark ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+            {isDark ? 'Light mode' : 'Dark mode'}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => setIsDocsOpen(true)}>
+            <BookOpen className="mr-2 h-4 w-4" />
+            Documentation
+          </DropdownMenuItem>
+
+          {isLoggedIn && (
+            <>
+              <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => !disabled && void handleSignOut()}
                 disabled={disabled}
@@ -140,11 +159,6 @@ export default function TitlebarMenu({ style }: { style?: React.CSSProperties })
                 <LogOut className="mr-2 h-4 w-4" />
                 Sign out
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel className="flex items-center">
-                <Mail className="mr-2 h-4 w-4" />
-                {config?.email}
-              </DropdownMenuLabel>
             </>
           )}
         </DropdownMenuContent>
