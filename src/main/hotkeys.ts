@@ -6,6 +6,7 @@ import {
   moveWindowByArrow,
   moveWindowToCorner,
   resizeWindowByArrow,
+  restoreWindow,
   toggleOpacity,
   toggleStealth,
   WindowPosition,
@@ -38,6 +39,11 @@ export function registerGlobalHotkeys(): void {
 
   // Opacity toggle: cycle opacity when in stealth mode
   globalShortcut.register(`${BASE}+N`, () => toggleOpacity());
+
+  // Restore the window. The window is kept off the taskbar, so this is the only way back after
+  // minimizing that does not put the app's name on a shared screen. F8 rather than R: these are
+  // system-wide, and Ctrl+Shift+R is hard-reload in every browser.
+  globalShortcut.register(`${BASE}+F8`, () => restoreWindow());
 
   // Zoom hotkeys
   globalShortcut.register(`${BASE}+=`, () => {
@@ -155,6 +161,7 @@ export function registerGlobalHotkeys(): void {
   console.log(`  ${mod}+Q : Stop assistant`);
   console.log(`  ${mod}+M : Toggle stealth mode`);
   console.log(`  ${mod}+N : Toggle opacity (stealth only)`);
+  console.log(`  ${mod}+F8 : Restore window (no taskbar button exists)`);
   console.log(`  ${mod}+1-9 : Place window (numpad layout)`);
   console.log('  Ctrl+Alt+Shift+Arrow : Move window');
   console.log(isMac ? '  Ctrl+Opt+Cmd+Arrow : Resize window' : '  Ctrl+Win+Shift+Arrow : Resize window');

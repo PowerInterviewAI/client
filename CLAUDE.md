@@ -75,6 +75,14 @@ Hash-based router (required for Electron `file://` protocol). Routes: `/` (index
 
 The main window reference is passed to `windowControlService` and `zoomService` after creation. Window bounds persist to Electron Store on `close` and are restored on next launch with minimum-size clamping (`MIN_WIDTH` / `MIN_HEIGHT` from [src/main/consts.ts](src/main/consts.ts)).
 
+The app keeps itself off the surfaces a screen share exposes: `skipTaskbar: true` on the window, no desktop shortcut from the NSIS installer (and `build/installer.nsh` deletes one left by an older install), and on macOS an accessory activation policy - `LSUIElement` in the packaged Info.plist, `app.setActivationPolicy('accessory')` for dev runs - so there is no Dock icon and no Cmd+Tab entry.
+
+Two consequences follow from having no taskbar button and no Dock icon. A minimized window can only be brought back by relaunching the app (the single instance lock routes to `restoreWindow()`) or with `Ctrl+Shift+F8` (`Ctrl+Opt+F8` on macOS) - F8 because these shortcuts are system-wide and `Ctrl+Shift+R` is hard-reload in every browser. And `window-all-closed` quits on every platform including macOS, because a windowless process would otherwise sit there holding the global hotkeys unreachable. `test/stealth-surface.test.mjs` pins all of it.
+
+Always-on-top belongs to stealth mode only (`'screen-saver'` level), and is dropped again on the way out.
+
+Hiding the taskbar button is *registration* state (`ITaskbarList::DeleteTab` on Windows), not a window style, so the `skipTaskbar` constructor option does not survive `setFocusable` or z-order changes - the button reappears after a stealth toggle. `hideFromTaskbar()` re-asserts it, and anything that reshapes or re-shows the window must call it. `test/stealth-toggle.test.mjs` pins that.
+
 Stealth mode hides the window from screen capture via `setContentProtection`. The main process emits `stealth-changed`; the preload script toggles a `stealth` CSS class on `document.body`. Content protection is on by default; pass `--disable-content-protection` at launch to disable it (dev/testing only).
 
 Background throttling is disabled globally (via `app.commandLine` switches and `backgroundThrottling: false` in `webPreferences`) so audio keeps running when the window is occluded.
