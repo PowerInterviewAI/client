@@ -79,7 +79,9 @@ The app keeps itself off the surfaces a screen share exposes: `skipTaskbar: true
 
 Two consequences follow from having no taskbar button and no Dock icon. A minimized window can only be brought back with `Ctrl+Shift+R` (`Ctrl+Opt+R` on macOS), and `window-all-closed` quits on every platform including macOS, because a windowless process would otherwise sit there holding the global hotkeys unreachable. `test/stealth-surface.test.mjs` pins all of it.
 
-The window is always on top, at the `'floating'` level via `applyAlwaysOnTop()`. There is no setting and no control for it: an overlay behind the meeting window is useless, and with no taskbar button or Dock icon a window that can be buried is a window that gets lost. Stealth mode pins at `'screen-saver'` instead, and `disableStealth()` calls `applyAlwaysOnTop()` on the way out rather than clearing the property - clearing it left the window unpinned for the rest of the session after a single stealth toggle or sign-out. `test/always-on-top.test.mjs` pins that.
+Always-on-top belongs to stealth mode only (`'screen-saver'` level), and is dropped again on the way out.
+
+Hiding the taskbar button is *registration* state (`ITaskbarList::DeleteTab` on Windows), not a window style, so the `skipTaskbar` constructor option does not survive `setFocusable` or z-order changes - the button reappears after a stealth toggle. `hideFromTaskbar()` re-asserts it, and anything that reshapes or re-shows the window must call it. `test/stealth-toggle.test.mjs` pins that.
 
 Stealth mode hides the window from screen capture via `setContentProtection`. The main process emits `stealth-changed`; the preload script toggles a `stealth` CSS class on `document.body`. Content protection is on by default; pass `--disable-content-protection` at launch to disable it (dev/testing only).
 

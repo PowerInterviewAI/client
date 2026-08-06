@@ -65,34 +65,22 @@ export function getWindowReference(): BrowserWindow | null {
   return win;
 }
 
-// Stealth uses 'screen-saver' so the overlay clears everything. Outside stealth that is far too
-// aggressive - it would sit over OS notifications and other system UI during ordinary desktop
-// use - so the persistent setting runs one level down.
-const BASE_ALWAYS_ON_TOP_LEVEL = 'floating' as const;
-
 /**
- * Pin the window above other windows.
+ * Re-assert that the window stays out of the taskbar.
  *
- * Unconditional: an interview overlay behind the meeting window is useless, and with no taskbar
- * button and no Dock icon a window that can be buried is a window that gets lost. Content
- * protection is applied at creation regardless of stealth mode, so this changes what the user
- * sees, not what a screen share shows.
- *
- * No-op while stealth is on, which pins at a higher level; `disableStealth` calls this on the
- * way out.
+ * The constructor option is not sticky: hiding the button is registration state
+ * (`ITaskbarList::DeleteTab` on Windows), not a window style, and the shell re-adds the button
+ * when the window's styles change underneath it - which is exactly what toggling stealth does
+ * through `setFocusable` and the z-order level. Anything that reshapes or re-shows the window
+ * has to call this afterwards.
  */
-export function applyAlwaysOnTop(): void {
-  if (!win || win.isDestroyed() || _stealth) return;
+function hideFromTaskbar(): void {
+  if (!win || win.isDestroyed()) return;
 
   try {
-    win.setAlwaysOnTop(true, BASE_ALWAYS_ON_TOP_LEVEL);
+    win.setSkipTaskbar(true);
   } catch (e) {
-    console.warn('setAlwaysOnTop with level failed:', e);
-    try {
-      win.setAlwaysOnTop(true);
-    } catch (e) {
-      console.warn('setAlwaysOnTop failed:', e);
-    }
+    console.warn('setSkipTaskbar failed:', e);
   }
 }
 
@@ -111,6 +99,7 @@ export function restoreWindow(): void {
     // app on macOS. Pulling focus out of the call the user is in is the one thing it must not do.
     if (_stealth) {
       if (!win.isVisible()) win.showInactive();
+      hideFromTaskbar();
       return;
     }
 
@@ -118,6 +107,8 @@ export function restoreWindow(): void {
     // alone does not bring it forward there.
     win.show();
     win.focus();
+    // Restoring from minimized re-registers the window with the shell.
+    hideFromTaskbar();
   } catch (err) {
     console.warn('⚠️ restoreWindow failed:', err);
   }
@@ -322,6 +313,9 @@ export function enableStealth(): void {
     // Make the window semi-transparent using last-used opacity level
     win.setOpacity(configStore.getOpacityLevel());
 
+    // Same reason as on the way out: setFocusable(false) can hand the button back.
+    hideFromTaskbar();
+
     _stealth = true;
     try {
       configStore.setStealth(_stealth);
@@ -353,10 +347,14 @@ export function disableStealth(): void {
     win.setIgnoreMouseEvents(false);
     win.setFocusable(true);
 
-    // Drop back to the user's own always-on-top setting. Clearing it outright here would
-    // silently turn the preference off every time stealth is toggled or the user signs out.
+    // Restore previous always-on-top state
+    win.setAlwaysOnTop(false);
+
     _stealth = false;
-    applyAlwaysOnTop();
+
+    // The taskbar button comes back on its own here: setFocusable and the z-order change drop
+    // the shell registration that hid it.
+    hideFromTaskbar();
 
     // Restore full opacity
     win.setOpacity(1.0);

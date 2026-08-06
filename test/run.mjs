@@ -18,7 +18,7 @@ for (const module of [
   './app-state.test.mjs',
   './account.test.mjs',
   './stealth-surface.test.mjs',
-  './always-on-top.test.mjs',
+  './stealth-toggle.test.mjs',
 ]) {
   const { run } = await import(module);
   failures.push(...(await run(userDataDir)));
