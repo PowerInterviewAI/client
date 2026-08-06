@@ -1,4 +1,4 @@
-import { ArrowUp, ImageUp, Loader2, PauseCircle, Zap } from 'lucide-react';
+import { ArrowUp, ImageUp, Loader, PauseCircle, Zap } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Card } from '@/components/ui/card';
@@ -217,7 +217,7 @@ function ActionSuggestionsPanel({
                 <div className="flex gap-3 py-3">
                   {idx === 0 &&
                   (s.state === SuggestionState.Pending || s.state === SuggestionState.Loading) ? (
-                    <Loader2 className="h-4 w-4 mt-px text-accent shrink-0 animate-spin" />
+                    <Loader className="h-4 w-4 mt-px text-accent shrink-0 animate-spin" />
                   ) : s.state === SuggestionState.Stopped ? (
                     <PauseCircle className="h-4 w-4 mt-px text-muted-foreground shrink-0" />
                   ) : (
