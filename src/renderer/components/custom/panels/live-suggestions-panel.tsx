@@ -1,5 +1,5 @@
-import { ArrowDown, Loader2, PauseCircle, Zap } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import { ArrowUp, Loader2, PauseCircle, Zap } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useConfigStore } from '@/hooks/use-config-store';
 
@@ -31,8 +31,10 @@ function LiveSuggestionsPanel({
 }: LiveSuggestionsPanelProps) {
   const hasItems = suggestions.length > 0;
 
+  // newest first: the incoming array is chronological, the panel renders it reversed
+  const orderedSuggestions = useMemo(() => [...suggestions].reverse(), [suggestions]);
+
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const lastItemRef = useRef<HTMLDivElement | null>(null);
 
   const { config, updateConfig } = useConfigStore();
 
@@ -59,11 +61,11 @@ function LiveSuggestionsPanel({
     suggestions.length > 0 ? suggestions[suggestions.length - 1].answer : ''
   );
 
-  // helper: scroll last item into view at the bottom of container (conventional for newest)
+  // the newest suggestion sits at the top of the list
   const scrollToLatest = (behavior: ScrollBehavior = 'smooth') => {
-    const last = lastItemRef.current;
-    if (!last) return;
-    last.scrollIntoView({ behavior, block: 'start', inline: 'nearest' });
+    const container = containerRef.current;
+    if (!container) return;
+    container.scrollTo({ top: 0, behavior });
   };
 
   // auto-scroll when suggestions change
@@ -111,7 +113,7 @@ function LiveSuggestionsPanel({
         if (!container) return;
 
         if (direction === 'end') {
-          // scroll to bottom where latest suggestion lives
+          // scroll to top where latest suggestion lives
           scrollToLatest('smooth');
           return;
         }
@@ -185,13 +187,12 @@ function LiveSuggestionsPanel({
 
         {hasItems && (
           <div className="px-2 pt-1 pb-2 space-y-3">
-            {suggestions.map((s, idx) => (
+            {orderedSuggestions.map((s, idx) => (
               <div
-                key={idx}
-                ref={idx === suggestions.length - 1 ? lastItemRef : null}
+                key={orderedSuggestions.length - 1 - idx}
                 className="flex gap-3 pb-3 border-b border-border/40 last:border-0"
               >
-                {idx === suggestions.length - 1 &&
+                {idx === 0 &&
                 (s.state === SuggestionState.Pending || s.state === SuggestionState.Loading) ? (
                   <Loader2 className="h-4 w-4 mt-px text-accent shrink-0 animate-spin" />
                 ) : s.state === SuggestionState.Stopped ? (
@@ -239,9 +240,9 @@ function LiveSuggestionsPanel({
           size="icon-sm"
           className="absolute bottom-3 right-3 rounded-full shadow-md bg-blue-600 text-white hover:bg-blue-600/90"
           onClick={() => scrollToLatest('smooth')}
-          aria-label="Scroll to bottom"
+          aria-label="Scroll to top"
         >
-          <ArrowDown className="size-4" />
+          <ArrowUp className="size-4" />
         </Button>
       )}
     </Card>

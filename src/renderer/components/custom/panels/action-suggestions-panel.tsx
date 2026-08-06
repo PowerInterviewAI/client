@@ -1,5 +1,5 @@
-import { ArrowDown, ImageUp, Loader2, PauseCircle, Zap } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import { ArrowUp, ImageUp, Loader2, PauseCircle, Zap } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Card } from '@/components/ui/card';
 import { useConfigStore } from '@/hooks/use-config-store';
@@ -31,8 +31,10 @@ function ActionSuggestionsPanel({
 }: ActionSuggestionsPanelProps) {
   const hasItems = actionSuggestions.length > 0;
 
+  // newest first: the incoming array is chronological, the panel renders it reversed
+  const orderedSuggestions = useMemo(() => [...actionSuggestions].reverse(), [actionSuggestions]);
+
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const lastItemRef = useRef<HTMLDivElement | null>(null);
 
   const { config, updateConfig } = useConfigStore();
 
@@ -61,11 +63,11 @@ function ActionSuggestionsPanel({
     actionSuggestions.length > 0 ? actionSuggestions[actionSuggestions.length - 1].answer : ''
   );
 
-  // scroll the final list item into view at the bottom of the container
+  // the newest suggestion sits at the top of the list
   const scrollToLatest = (behavior: ScrollBehavior = 'smooth') => {
-    const last = lastItemRef.current;
-    if (!last) return;
-    last.scrollIntoView({ behavior, block: 'end', inline: 'nearest' });
+    const container = containerRef.current;
+    if (!container) return;
+    container.scrollTo({ top: 0, behavior });
   };
 
   useEffect(() => {
@@ -113,7 +115,7 @@ function ActionSuggestionsPanel({
 
         // choose scroll behavior based on direction
         if (direction === 'end') {
-          // jump to bottom where the most recent element lives
+          // jump to top where the most recent element lives
           scrollToLatest('smooth');
           return;
         }
@@ -187,13 +189,12 @@ function ActionSuggestionsPanel({
 
         {hasItems && (
           <div className="px-2 pt-1 pb-2 space-y-3">
-            {actionSuggestions.map((s, idx) => (
+            {orderedSuggestions.map((s, idx) => (
               <div
-                key={idx}
-                ref={idx === actionSuggestions.length - 1 ? lastItemRef : null}
+                key={orderedSuggestions.length - 1 - idx}
                 className="flex gap-3 pb-3 border-b border-border/40 last:border-0"
               >
-                {idx === actionSuggestions.length - 1 &&
+                {idx === 0 &&
                 (s.state === SuggestionState.Pending || s.state === SuggestionState.Loading) ? (
                   <Loader2 className="h-4 w-4 mt-px text-accent shrink-0 animate-spin" />
                 ) : s.state === SuggestionState.Stopped ? (
@@ -268,9 +269,9 @@ function ActionSuggestionsPanel({
           size="icon-sm"
           className="absolute bottom-3 right-3 rounded-full shadow-md bg-blue-600 text-white hover:bg-blue-600/90"
           onClick={() => scrollToLatest('smooth')}
-          aria-label="Scroll to bottom"
+          aria-label="Scroll to top"
         >
-          <ArrowDown className="size-4" />
+          <ArrowUp className="size-4" />
         </Button>
       )}
     </Card>
