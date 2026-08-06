@@ -13,10 +13,12 @@ function truncateMiddle(text: string, maxLen: number): string {
 
 import { Card } from '@/components/ui/card';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
+import { newestTimestamp } from '@/lib/suggestions';
 import { type LiveSuggestion, SuggestionState } from '@/types/suggestion';
 
 import { Button } from '../../ui/button';
 import { Checkbox } from '../../ui/checkbox';
+import SuggestionReveal from './suggestion-reveal';
 
 interface LiveSuggestionsPanelProps {
   suggestions?: LiveSuggestion[];
@@ -35,6 +37,15 @@ function LiveSuggestionsPanel({
   const orderedSuggestions = useMemo(() => [...suggestions].reverse(), [suggestions]);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // anything newer than this reveals itself on arrival; whatever was already on screen when the
+  // panel mounted does not. Bumped after commit so the entering item gets one render as "new".
+  const [lastRevealedAt, setLastRevealedAt] = useState(() => newestTimestamp(suggestions));
+
+  useEffect(() => {
+    const newest = newestTimestamp(suggestions);
+    setLastRevealedAt((prev) => (newest > prev ? newest : prev));
+  }, [suggestions]);
 
   const { config, updateConfig } = useConfigStore();
 
@@ -186,50 +197,54 @@ function LiveSuggestionsPanel({
         )}
 
         {hasItems && (
-          <div className="px-2 pt-1 pb-2 space-y-3">
+          <div className="px-2 pb-2">
             {orderedSuggestions.map((s, idx) => (
-              <div
-                key={orderedSuggestions.length - 1 - idx}
-                className="flex gap-3 pb-3 border-b border-border/40 last:border-0"
+              <SuggestionReveal
+                key={s.timestamp}
+                animate={s.timestamp > lastRevealedAt}
+                className="border-b border-border/40 last:border-0"
               >
-                {idx === 0 &&
-                (s.state === SuggestionState.Pending || s.state === SuggestionState.Loading) ? (
-                  <Loader2 className="h-4 w-4 mt-px text-accent shrink-0 animate-spin" />
-                ) : s.state === SuggestionState.Stopped ? (
-                  <PauseCircle className="h-4 w-4 mt-px text-muted-foreground shrink-0" />
-                ) : (
-                  <Zap className="h-4 w-4 mt-px text-accent shrink-0" />
-                )}
-                <div>
-                  <div className="text-xs text-muted-foreground mb-2">
-                    {truncateMiddle(s.last_question, MAX_QUESTION_LENGTH)}
+                <div className="flex gap-3 py-3">
+                  {idx === 0 &&
+                  (s.state === SuggestionState.Pending || s.state === SuggestionState.Loading) ? (
+                    <Loader2 className="h-4 w-4 mt-px text-accent shrink-0 animate-spin" />
+                  ) : s.state === SuggestionState.Stopped ? (
+                    <PauseCircle className="h-4 w-4 mt-px text-muted-foreground shrink-0" />
+                  ) : (
+                    <Zap className="h-4 w-4 mt-px text-accent shrink-0" />
+                  )}
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-2">
+                      {truncateMiddle(s.last_question, MAX_QUESTION_LENGTH)}
+                    </div>
+
+                    {(s.state === SuggestionState.Loading ||
+                      s.state === SuggestionState.Success) && (
+                      <div className="text-sm font-semibold text-foreground/90 leading-relaxed whitespace-pre-wrap">
+                        🪄 {s.answer}
+                      </div>
+                    )}
+
+                    {s.state === SuggestionState.Stopped && (
+                      <div className="text-sm font-semibold text-foreground/90 leading-relaxed whitespace-pre-wrap">
+                        🪄 {s.answer} ...
+                      </div>
+                    )}
+
+                    {s.state === SuggestionState.Error && (
+                      <div className="bg-destructive/10 border border-destructive/20 rounded-md p-2 mt-1">
+                        <p className="text-xs text-destructive">{s.error}</p>
+                      </div>
+                    )}
+
+                    {s.state === SuggestionState.Idle && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Idle - no generation yet
+                      </div>
+                    )}
                   </div>
-
-                  {(s.state === SuggestionState.Loading || s.state === SuggestionState.Success) && (
-                    <div className="text-sm font-semibold text-foreground/90 leading-relaxed whitespace-pre-wrap">
-                      🪄 {s.answer}
-                    </div>
-                  )}
-
-                  {s.state === SuggestionState.Stopped && (
-                    <div className="text-sm font-semibold text-foreground/90 leading-relaxed whitespace-pre-wrap">
-                      🪄 {s.answer} ...
-                    </div>
-                  )}
-
-                  {s.state === SuggestionState.Error && (
-                    <div className="bg-destructive/10 border border-destructive/20 rounded-md p-2 mt-1">
-                      <p className="text-xs text-destructive">{s.error}</p>
-                    </div>
-                  )}
-
-                  {s.state === SuggestionState.Idle && (
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Idle - no generation yet
-                    </div>
-                  )}
                 </div>
-              </div>
+              </SuggestionReveal>
             ))}
           </div>
         )}
