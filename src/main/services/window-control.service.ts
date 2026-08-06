@@ -66,18 +66,27 @@ export function getWindowReference(): BrowserWindow | null {
 }
 
 /**
- * Restore and focus the window.
- * With `skipTaskbar` there is no taskbar button to click, so a minimized window
- * is only reachable through this.
+ * Restore and raise the window.
+ * There is no taskbar button and no Dock icon to click, so a minimized window is
+ * only reachable through this.
  */
 export function restoreWindow(): void {
   if (!win || win.isDestroyed()) return;
 
   try {
     if (win.isMinimized()) win.restore();
-    if (!win.isVisible()) win.show();
-    // Stealth mode makes the window non-focusable; focusing it there would be a no-op anyway.
-    if (!_stealth) win.focus();
+
+    // In stealth mode the window is click-through and non-focusable, and `show()` activates the
+    // app on macOS. Pulling focus out of the call the user is in is the one thing it must not do.
+    if (_stealth) {
+      if (!win.isVisible()) win.showInactive();
+      return;
+    }
+
+    // `show()` also raises and activates, which an accessory app on macOS needs - `focus()`
+    // alone does not bring it forward there.
+    win.show();
+    win.focus();
   } catch (err) {
     console.warn('⚠️ restoreWindow failed:', err);
   }

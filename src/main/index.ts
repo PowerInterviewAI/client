@@ -28,7 +28,7 @@ import { registerWindowHandlers } from './ipc/window.js';
 import { autoUpdaterService } from './services/auto-updater.service.js';
 import { healthCheckService } from './services/health-check.service.js';
 import { transcriptService } from './services/transcript.service.js';
-import { setWindowReference } from './services/window-control.service.js';
+import { restoreWindow, setWindowReference } from './services/window-control.service.js';
 import { setWindowReference as setZoomWindowReference } from './services/zoom.service.js';
 import { configStore } from './store/config.store.js';
 import { EnvUtil } from './utils/env.js';
@@ -69,10 +69,13 @@ if (!gotLock) {
   app.quit();
 } else {
   app.on('second-instance', () => {
-    if (win) {
-      if (win.isMinimized()) win.restore();
-      win.focus();
+    // Launching the app again is the recovery path when the window is out of reach, so it has to
+    // survive a destroyed window rather than throwing on it.
+    if (!win || win.isDestroyed()) {
+      createWindow().catch((err) => console.error('Failed to recreate window:', err));
+      return;
     }
+    restoreWindow();
   });
 }
 
@@ -182,6 +185,17 @@ async function createWindow() {
 // APP LIFECYCLE
 // -------------------------------------------------------------
 app.whenReady().then(async () => {
+  // macOS counterpart of skipTaskbar: an accessory app has no Dock icon and does not appear in
+  // Cmd+Tab. LSUIElement in the packaged Info.plist does the same thing from launch (no icon
+  // flash); this call is what makes dev runs behave the same, since dev uses Electron's plist.
+  if (process.platform === 'darwin') {
+    try {
+      app.setActivationPolicy('accessory');
+    } catch (err) {
+      console.warn('Failed to set accessory activation policy:', err);
+    }
+  }
+
   // Register all IPC handlers
   registerConfigHandlers();
   registerAppStateHandlers();
@@ -235,10 +249,11 @@ app.on('will-quit', async () => {
   unregisterHotkeys();
 });
 
+// The usual macOS "stay alive with no windows" behavior assumed a Dock icon to click. As an
+// accessory app there is none, so a windowless process would just sit there holding the global
+// hotkeys with no way to reach it. Closing the window means quitting, on every platform.
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
+  app.quit();
 });
 
 app.on('activate', () => {

@@ -75,7 +75,9 @@ Hash-based router (required for Electron `file://` protocol). Routes: `/` (index
 
 The main window reference is passed to `windowControlService` and `zoomService` after creation. Window bounds persist to Electron Store on `close` and are restored on next launch with minimum-size clamping (`MIN_WIDTH` / `MIN_HEIGHT` from [src/main/consts.ts](src/main/consts.ts)).
 
-The window is created with `skipTaskbar: true` and the NSIS installer creates no desktop shortcut, so the app is not advertised on surfaces a screen share exposes. Consequence: a minimized window has no taskbar button to click, and `Ctrl+Shift+R` (`Ctrl+Opt+R` on macOS) is the only way back - `test/stealth-surface.test.mjs` pins all three.
+The app keeps itself off the surfaces a screen share exposes: `skipTaskbar: true` on the window, no desktop shortcut from the NSIS installer (and `build/installer.nsh` deletes one left by an older install), and on macOS an accessory activation policy - `LSUIElement` in the packaged Info.plist, `app.setActivationPolicy('accessory')` for dev runs - so there is no Dock icon and no Cmd+Tab entry.
+
+Two consequences follow from having no taskbar button and no Dock icon. A minimized window can only be brought back with `Ctrl+Shift+R` (`Ctrl+Opt+R` on macOS), and `window-all-closed` quits on every platform including macOS, because a windowless process would otherwise sit there holding the global hotkeys unreachable. `test/stealth-surface.test.mjs` pins all of it.
 
 Stealth mode hides the window from screen capture via `setContentProtection`. The main process emits `stealth-changed`; the preload script toggles a `stealth` CSS class on `document.body`. Content protection is on by default; pass `--disable-content-protection` at launch to disable it (dev/testing only).
 
