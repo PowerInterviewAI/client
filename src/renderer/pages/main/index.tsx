@@ -72,7 +72,6 @@ export default function MainPage() {
   const hideTranscriptPanel = hasActionSuggestions && !hasTranscripts;
 
   const hasSuggestions = hasLiveSuggestions || hasActionSuggestions;
-  const suggestionPanelCount = (hasLiveSuggestions ? 1 : 0) + (hasActionSuggestions ? 1 : 0);
 
   const transcriptDockEnabled = config?.showTranscriptPanel !== false;
   const showTranscriptDock = transcriptDockEnabled && !hideTranscriptPanel;
@@ -92,31 +91,26 @@ export default function MainPage() {
     const available = Math.max(100, window.innerHeight - (title + status + control + extra));
 
     // Docked alone the transcript takes everything; sharing, it takes a slice and never
-    // squeezes the suggestion column below SUGGESTION_MIN_HEIGHT.
+    // squeezes the suggestion row below SUGGESTION_MIN_HEIGHT.
     let dock = 0;
     if (showTranscriptDock) {
-      dock =
-        suggestionPanelCount === 0
-          ? available
-          : Math.min(
-              Math.max(
-                TRANSCRIPT_DOCK_MIN_HEIGHT,
-                Math.min(TRANSCRIPT_DOCK_MAX_HEIGHT, Math.round(available * TRANSCRIPT_DOCK_RATIO))
-              ),
-              Math.max(0, available - SUGGESTION_MIN_HEIGHT)
-            );
+      dock = !hasSuggestions
+        ? available
+        : Math.min(
+            Math.max(
+              TRANSCRIPT_DOCK_MIN_HEIGHT,
+              Math.min(TRANSCRIPT_DOCK_MAX_HEIGHT, Math.round(available * TRANSCRIPT_DOCK_RATIO))
+            ),
+            Math.max(0, available - SUGGESTION_MIN_HEIGHT)
+          );
     }
     setTranscriptHeight(dock);
 
-    if (suggestionPanelCount > 0) {
-      const gaps = suggestionPanelCount - 1 + (dock > 0 ? 1 : 0);
-      setSuggestionHeight(
-        Math.max(SUGGESTION_MIN_HEIGHT, available - dock - gaps * 4) / suggestionPanelCount
-      );
-    } else {
-      setSuggestionHeight(0);
-    }
-  }, [suggestionPanelCount, showTranscriptDock]);
+    // Suggestion panels sit side by side, so they share the full height left above the dock.
+    setSuggestionHeight(
+      hasSuggestions ? Math.max(SUGGESTION_MIN_HEIGHT, available - dock - (dock > 0 ? 4 : 0)) : 0
+    );
+  }, [hasSuggestions, showTranscriptDock]);
 
   const isStealth = useIsStealthMode();
 
@@ -249,22 +243,26 @@ export default function MainPage() {
       {appState.isBackendLive === false && <ConnectingNotice />}
 
       <div className="flex-1 flex flex-col overflow-y-hidden gap-1">
-        {/* Top: Suggestions, full width */}
+        {/* Top: Suggestions, side by side */}
         {hasSuggestions && (
-          <div className="flex-1 min-h-0 flex flex-col gap-1 overflow-auto">
+          <div className="flex-1 min-h-0 flex gap-1">
             {hasActionSuggestions && (
-              <ActionSuggestionsPanel
-                actionSuggestions={actionSuggestions}
-                style={suggestionStyle}
-                isRunning={appState?.runningState === RunningState.Running}
-              />
+              <div className="flex-1 min-w-0">
+                <ActionSuggestionsPanel
+                  actionSuggestions={actionSuggestions}
+                  style={suggestionStyle}
+                  isRunning={appState?.runningState === RunningState.Running}
+                />
+              </div>
             )}
             {hasLiveSuggestions && (
-              <LiveSuggestionsPanel
-                suggestions={liveSuggestions}
-                style={suggestionStyle}
-                isRunning={appState?.runningState === RunningState.Running}
-              />
+              <div className="flex-1 min-w-0">
+                <LiveSuggestionsPanel
+                  suggestions={liveSuggestions}
+                  style={suggestionStyle}
+                  isRunning={appState?.runningState === RunningState.Running}
+                />
+              </div>
             )}
           </div>
         )}
