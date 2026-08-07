@@ -84,12 +84,12 @@ function TranscriptPanel({ transcripts, isRunning = false }: TranscriptPanelProp
                 const speaker = item.speaker === Speaker.Self ? username : 'Interviewer';
                 return (
                   // content-visibility skips style, layout and paint for rows scrolled out of
-                  // view, which is the cost that grew with transcript length. Fixed row height
-                  // (single-line, truncated) keeps contain-intrinsic-size accurate without
-                  // measurement plumbing.
+                  // view, which is the cost that grew with transcript length. `auto` in
+                  // contain-intrinsic-size remembers each row's last rendered size, so scroll
+                  // position and scrollIntoView stay accurate without measurement plumbing.
                   <div
                     key={idx}
-                    className="flex items-baseline gap-2 py-1 max-w-3xl mx-auto [content-visibility:auto] [contain-intrinsic-size:auto_1.5rem]"
+                    className="flex items-baseline gap-2 py-1 max-w-3xl mx-auto [content-visibility:auto] [contain-intrinsic-size:auto_2rem]"
                   >
                     {/* Fixed-width column so wrapped/adjacent rows keep a stable left edge
                         regardless of speaker name length; long names truncate rather than
@@ -100,13 +100,7 @@ function TranscriptPanel({ transcripts, isRunning = false }: TranscriptPanelProp
                     >
                       {speaker}
                     </span>
-                    {/* Single-line with end truncation, not wrap: keeps every row the same
-                        height (the density goal of the wide, short dock) and readable at any
-                        window width. Full text on hover. */}
-                    <p
-                      className="flex-1 min-w-0 truncate text-sm text-foreground/90 leading-snug"
-                      title={item.text}
-                    >
+                    <p className="flex-1 min-w-0 text-sm text-foreground/90 leading-snug text-wrap">
                       {item.text}
                     </p>
                     <time
