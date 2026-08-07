@@ -3,7 +3,9 @@ import {
   CaptionsOff,
   CircleCheck,
   FileIcon,
+  FileText,
   FolderOpenIcon,
+  Hash,
   Loader,
   Save,
   Trash2,
@@ -13,6 +15,12 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAppState } from '@/hooks/use-app-state';
 import useTools from '@/hooks/use-tools';
@@ -20,6 +28,7 @@ import { useTranscriptPanel } from '@/hooks/use-transcript-panel';
 import { Hotkey, HOTKEYS } from '@/lib/hotkeys';
 import { getElectron } from '@/lib/utils';
 import { RunningState } from '@/types/app-state';
+import type { ExportFormat } from '@/types/export';
 
 interface ToolsGroupProps {
   getDisabled: (state: RunningState, disableOnRunning?: boolean) => boolean;
@@ -46,9 +55,9 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
     }
   };
 
-  const onExportTranscript = async () => {
+  const onExportTranscript = async (format: ExportFormat) => {
     try {
-      const filePath = await exportTranscript();
+      const filePath = await exportTranscript(format);
       if (!filePath) return;
       const electron = getElectron();
       const toastId = `export-${Date.now()}`;
@@ -63,7 +72,9 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
             }}
           >
             <CircleCheck className="h-4 w-4 shrink-0" />
-            <span className="flex-1 text-sm font-medium">Interview exported</span>
+            <span className="flex-1 text-sm font-medium">
+              Interview exported as {format === 'md' ? 'Markdown' : 'Word'}
+            </span>
             <div className="flex items-center gap-1">
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -161,22 +172,44 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
           <p>Clear</p>
         </TooltipContent>
       </Tooltip>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="secondary"
-            onClick={onExportTranscript}
-            size="sm"
-            className="h-8 w-8 text-xs rounded-xl cursor-pointer"
-            disabled={getDisabled(runningState) || exporting}
-          >
-            {exporting ? <Loader className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>Export Interview</p>
-        </TooltipContent>
-      </Tooltip>
+      {/* Non-modal for the same reason as the titlebar menu: a modal menu locks body pointer
+          events, and picking a format unmounts the menu before it releases the lock. */}
+      <DropdownMenu modal={false}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="h-8 w-8 text-xs rounded-xl cursor-pointer"
+                disabled={getDisabled(runningState) || exporting}
+              >
+                {exporting ? (
+                  <Loader className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Export Interview</p>
+          </TooltipContent>
+        </Tooltip>
+        {/* Opens upward, and not just for looks: the menu is portalled into the overflow-hidden
+            <main> from main-frame, and the control panel is the bottom-most thing in it, so a
+            downward menu would open past that edge and get clipped rather than merely flipped. */}
+        <DropdownMenuContent align="end" side="top">
+          <DropdownMenuItem onClick={() => void onExportTranscript('docx')}>
+            <FileText className="mr-2 h-4 w-4" />
+            Word Document (.docx)
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => void onExportTranscript('md')}>
+            <Hash className="mr-2 h-4 w-4" />
+            Markdown (.md)
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

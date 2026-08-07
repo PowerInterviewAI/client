@@ -126,7 +126,8 @@ const electronApi = {
   },
 
   tools: {
-    exportTranscript: () => ipcRenderer.invoke('tools:export-transcript'),
+    exportTranscript: (format: 'docx' | 'md') =>
+      ipcRenderer.invoke('tools:export-transcript', format),
     clearAll: () => ipcRenderer.invoke('tools:clear-all'),
     setPlaceholderData: () => ipcRenderer.invoke('tools:set-placeholder-data'),
     saveImage: (opts: { filename: string; data: number[] }) =>

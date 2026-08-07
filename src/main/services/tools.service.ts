@@ -4,8 +4,9 @@ import fs from 'fs/promises';
 
 import { LLMApi } from '../api/llm.js';
 import { configStore } from '../store/config.store.js';
-import { Speaker } from '../types/app-state.js';
+import { ExportFormat } from '../types/export.js';
 import { GenerateSummarizeRequest } from '../types/llm.js';
+import { buildExportMarkdown, generateExportFilename } from '../utils/export-markdown.js';
 import { appStateService } from './app-state.service.js';
 import { actionSuggestionService } from './suggestion-action.service.js';
 import { liveSuggestionService } from './suggestion-live.service.js';
@@ -14,22 +15,7 @@ import { transcriptService } from './transcript.service.js';
 class ToolsService {
   private llmApi: LLMApi = new LLMApi();
 
-  private generateFilename(): string {
-    const d = new Date();
-
-    const pad = (n: number) => String(n).padStart(2, '0');
-
-    const yyyy = d.getFullYear();
-    const mm = pad(d.getMonth() + 1);
-    const dd = pad(d.getDate());
-    const hh = pad(d.getHours());
-    const min = pad(d.getMinutes());
-    const ss = pad(d.getSeconds());
-
-    return `report-${yyyy}-${mm}-${dd}_${hh}-${min}-${ss}.docx`;
-  }
-
-  async exportTranscript(): Promise<string | null> {
+  async exportTranscript(format: ExportFormat = 'docx'): Promise<string | null> {
     // Prepare request data
     const username = appStateService.getState().interviewConfig.fullName;
     const transcripts = appStateService.getState().transcripts;
@@ -45,43 +31,30 @@ class ToolsService {
       throw new Error(response.error.message);
     }
 
-    const summaryPartRaw = response.data ?? '';
+    const fullMarkdown = buildExportMarkdown({
+      username,
+      summary: response.data ?? '',
+      transcripts,
+      suggestions,
+    });
 
-    // Add Date/Time to summary (insert after first line)
-    let summaryPart = summaryPartRaw;
-    if (summaryPart) {
-      const lines = summaryPart.split('\n');
-      if (lines.length > 0) {
-        const datetimeNow = new Date().toLocaleString();
-        lines.splice(1, 0, `\n##### Date/Time: ${datetimeNow}`);
-        summaryPart = lines.join('\n');
-      }
+    const isMarkdown = format === 'md';
+
+    const { canceled, filePath } = await dialog.showSaveDialog({
+      title: 'Save Transcript',
+      defaultPath: generateExportFilename(format),
+      filters: isMarkdown
+        ? [{ name: 'Markdown', extensions: ['md'] }]
+        : [{ name: 'Word Document', extensions: ['docx'] }],
+    });
+
+    if (canceled || !filePath) return null;
+
+    if (isMarkdown) {
+      await fs.writeFile(filePath, fullMarkdown, 'utf8');
+      return filePath;
     }
 
-    // Build Transcripts section
-    const transcriptLines: string[] = [];
-    for (const t of transcripts) {
-      const timeStr = new Date(t.timestamp).toLocaleString();
-      const speakerName = t.speaker === Speaker.Self ? username : 'Interviewer';
-      transcriptLines.push(`#### ***${timeStr} | ${speakerName}***\n${t.text}\n`);
-    }
-    const transcriptsPart = `# **Transcripts**\n\n${transcriptLines.join('\n')}`;
-
-    // Build Suggestions section
-    const suggestionLines: string[] = [];
-    for (const s of suggestions) {
-      const timeStr = new Date(s.timestamp).toLocaleString();
-      suggestionLines.push(
-        `#### ***${timeStr} | Interviewer***\n${s.last_question}\n\n#### ***Suggestion***\n${s.answer}\n`
-      );
-    }
-    const suggestionsPart = `# **Suggestions**\n\n${suggestionLines.join('\n')}`;
-
-    // Combine all parts into final Markdown content
-    const fullMarkdown =
-      `${summaryPart}\n\n${transcripts.length > 0 ? transcriptsPart : ''}\n\n${suggestions.length > 0 ? suggestionsPart : ''}`.trim();
-
-    // Convert Markdown to DOCX
     const docxBlob = await convertMarkdownToDocx(fullMarkdown, {
       documentType: 'document',
       style: {
@@ -89,14 +62,6 @@ class ToolsService {
         heading5Alignment: 'CENTER',
       },
     });
-
-    const { canceled, filePath } = await dialog.showSaveDialog({
-      title: 'Save Transcript',
-      defaultPath: this.generateFilename(),
-      filters: [{ name: 'Word Document', extensions: ['docx'] }],
-    });
-
-    if (canceled || !filePath) return null;
 
     await fs.writeFile(filePath, Buffer.from(await docxBlob.arrayBuffer()));
     return filePath;
