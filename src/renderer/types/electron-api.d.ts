@@ -34,10 +34,7 @@ declare global {
     // Authentication management
     auth: {
       sendVerificationCode: (email: string) => Promise<{ success: boolean; error?: string }>;
-      verifyEmailCode: (
-        email: string,
-        code: string
-      ) => Promise<{ success: boolean; error?: string }>;
+      verifyEmailCode: (email: string, code: string) => Promise<{ success: boolean; error?: string }>;
       signup: (
         username: string,
         email: string,
