@@ -214,7 +214,9 @@ function ActionSuggestionsPanel({
                 animate={s.timestamp > lastRevealedAt}
                 className="border-b border-border/40 last:border-0"
               >
-                <div className="flex gap-3 py-3">
+                {/* Same as the live panel: skip off-screen work. Worth more per card here,
+                    since these carry screenshots and markdown with code blocks. */}
+                <div className="flex gap-3 py-3 [content-visibility:auto] [contain-intrinsic-size:auto_8rem]">
                   {idx === 0 &&
                   (s.state === SuggestionState.Pending || s.state === SuggestionState.Loading) ? (
                     <Loader className="h-4 w-4 mt-px text-accent shrink-0 animate-spin" />
