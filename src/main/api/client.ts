@@ -239,7 +239,11 @@ export class ApiClient {
 
       // A supersede or stall abort is deliberate. Let it through untouched so callers can
       // read `signal.reason` to tell the two apart, and do not log it as a failure.
-      if (error instanceof Error && error.name === 'AbortError') {
+      //
+      // Keyed on the signal, not the error name: an abort rejects with the *reason*, so a
+      // stall abort surfaces as `TimeoutError` rather than `AbortError` and a name check
+      // would miss it and wrap it as a network failure.
+      if (signal?.aborted) {
         throw error;
       }
 

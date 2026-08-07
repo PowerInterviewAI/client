@@ -284,8 +284,11 @@ export class ActionSuggestionService {
         reader.releaseLock();
       }
     } catch (error) {
-      const aborted = error instanceof Error && error.name === 'AbortError';
+      // See the live-suggestion service: an abort rejects with the reason, so the signal is
+      // the reliable source, not the error name.
+      const aborted = controller.signal.aborted;
       const stalled =
+        aborted &&
         controller.signal.reason instanceof Error &&
         controller.signal.reason.name === 'TimeoutError';
 

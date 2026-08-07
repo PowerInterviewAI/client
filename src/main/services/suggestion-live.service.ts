@@ -143,8 +143,12 @@ class LiveSuggestionService {
         reader.releaseLock();
       }
     } catch (error) {
-      const aborted = error instanceof Error && error.name === 'AbortError';
+      // Keyed on the signal rather than the error name. An abort rejects with the *reason*,
+      // so a stall surfaces as TimeoutError and a check for AbortError would miss it and
+      // report a deliberate cancellation as a network failure.
+      const aborted = controller.signal.aborted;
       const stalled =
+        aborted &&
         controller.signal.reason instanceof Error &&
         controller.signal.reason.name === 'TimeoutError';
 
