@@ -85,6 +85,8 @@ Hiding the taskbar button is *registration* state (`ITaskbarList::DeleteTab` on 
 
 The Dock half has a failure mode of its own: **macOS drops a Dock call made within one second of the previous one**, silently. Toggling stealth twice quickly would otherwise leave the icon on screen for the rest of the session. `applyDockVisibility()` therefore skips no-op calls (so window events do not spend the one-second budget), and when a call does land inside the window it schedules a re-assert `DOCK_RATE_LIMIT_MS` later that re-reads `_stealth`. The activation policy carries no such limit and is applied immediately, so the icon still goes away at once in the swallowed case. `test/stealth-dock.test.mjs` pins this; it loads a second copy of the service through `loadMainAs('darwin', ...)`, since these branches are dead code on the Linux runner CI uses.
 
+Whether the *shell* actually acts on `setSkipTaskbar` is not something a unit test can reach, and it fails without an error. `test/manual/taskbar-probe.mjs` drives the real service in a real Electron process and reads the taskbar back through UI Automation - Windows only, run by hand (`pnpm exec electron test/manual/taskbar-probe.mjs`), deliberately not in `test/run.mjs`.
+
 Stealth mode hides the window from screen capture via `setContentProtection`. The main process emits `stealth-changed`; the preload script toggles a `stealth` CSS class on `document.body`. Content protection is on by default; pass `--disable-content-protection` at launch to disable it (dev/testing only).
 
 Background throttling is disabled globally (via `app.commandLine` switches and `backgroundThrottling: false` in `webPreferences`) so audio keeps running when the window is occluded.
