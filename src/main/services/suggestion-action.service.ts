@@ -7,7 +7,9 @@ import {
   ACTION_SUGGESTION_TTFB_MS,
   ACTION_TIMEOUT_MS,
   BACKEND_BASE_URL,
+  CAPTURE_MAX_EDGE_PX,
   SUGGESTION_STALL_MS,
+  TRANSCRIPT_UPLOAD_LIMIT,
 } from '../consts.js';
 import { configStore } from '../store/config.store.js';
 import {
@@ -209,7 +211,7 @@ export class ActionSuggestionService {
       config: conf.llmConf,
       profile_data: interviewConfig.profileData,
       context: interviewConfig.context,
-      transcripts: transcripts,
+      transcripts: transcripts.slice(-TRANSCRIPT_UPLOAD_LIMIT),
       image_names: [...this.uploadedImageNames],
     };
 
@@ -323,12 +325,19 @@ export class ActionSuggestionService {
       const physicalWidth = Math.round(targetDisplay.size.width * targetDisplay.scaleFactor);
       const physicalHeight = Math.round(targetDisplay.size.height * targetDisplay.scaleFactor);
 
+      // Scale at capture time rather than after. thumbnail.toPNG() below is synchronous and
+      // runs on the main process, so shrinking the bitmap first is what keeps it from stalling
+      // the event loop; doing it in sharp afterwards would be too late.
+      const scale = Math.min(1, CAPTURE_MAX_EDGE_PX / Math.max(physicalWidth, physicalHeight));
+      const captureWidth = Math.round(physicalWidth * scale);
+      const captureHeight = Math.round(physicalHeight * scale);
+
       // desktopCapturer is Electron's built-in screen-capture API.
       // A timeout guards against indefinite hangs on restricted or virtual display adapters.
       const sources = await Promise.race([
         desktopCapturer.getSources({
           types: ['screen'],
-          thumbnailSize: { width: physicalWidth, height: physicalHeight },
+          thumbnailSize: { width: captureWidth, height: captureHeight },
         }),
         new Promise<never>((_, reject) =>
           setTimeout(

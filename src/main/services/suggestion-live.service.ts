@@ -3,6 +3,7 @@ import {
   LIVE_SUGGESTION_NO_SUGGESTION,
   LIVE_SUGGESTION_TTFB_MS,
   SUGGESTION_STALL_MS,
+  TRANSCRIPT_UPLOAD_LIMIT,
 } from '../consts.js';
 import { configStore } from '../store/config.store.js';
 import { LiveSuggestion, Speaker, SuggestionState, Transcript } from '../types/app-state.js';
@@ -89,7 +90,7 @@ class LiveSuggestionService {
         config: conf.llmConf,
         profile_data: interviewConfig.profileData,
         context: interviewConfig.context,
-        transcripts: transcripts,
+        transcripts: transcripts.slice(-TRANSCRIPT_UPLOAD_LIMIT),
       };
 
       armStallTimer(LIVE_SUGGESTION_TTFB_MS);

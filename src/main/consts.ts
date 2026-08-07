@@ -25,11 +25,30 @@ export const TRANSCRIPT_INTER_TRANSCRIPT_GAP_MS = 5000;
 // stop suggestions firing over someone mid-answer, so a short value would regress that.
 export const SELF_PARTIAL_STALE_MS = 15_000;
 
+// Most recent transcript entries sent with a suggestion request. The backend already slices to
+// its own MAX_TRANSCRIPTS_NUM before building the prompt, so everything beyond this was upload
+// cost for no effect - and it grew for the whole interview.
+//
+// Deliberately larger than the backend's window, so a change there does not silently starve the
+// prompt. This does NOT bound retained history: the end-of-interview summary and .docx export
+// read the full transcript from app state.
+export const TRANSCRIPT_UPLOAD_LIMIT = 60;
+
 // Suggestion constants
 export const LIVE_SUGGESTION_GAP_MS = 2000;
 export const LIVE_SUGGESTION_NO_SUGGESTION = 'NO_SUGGESTION_NEEDED';
 export const ACTION_SUGGESTION_MAX_CAPTURES = 4;
 export const ACTION_TIMEOUT_MS = 30_000; // 30 seconds
+
+// Longest edge a screenshot is captured at. Capturing at full physical resolution meant
+// NativeImage.toPNG() - which is synchronous, on the main process - ran on a 4K bitmap and
+// stalled the event loop for hundreds of milliseconds per capture, blocking IPC, transcript
+// ingest and any in-flight suggestion stream. It also drove the request payload, which the
+// backend then base64-inflates by a third.
+//
+// Not lower than this: the model has to read code and stack traces off these screenshots, and
+// the failure mode of over-shrinking is silent - a confident answer about a blurry image.
+export const CAPTURE_MAX_EDGE_PX = 1920;
 
 // Time to first byte. Separate budgets: an action request uploads up to four screenshots and
 // the backend base64-encodes them before the provider emits a token, so it starts far slower

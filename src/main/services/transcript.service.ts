@@ -109,6 +109,37 @@ class TranscriptService {
     appStateService.updateState({ transcripts: cleaned });
   }
 
+  /**
+   * Promote an in-flight partial to a final when its ASR socket drops.
+   *
+   * A reconnect opens a brand-new backend session, so the final for the interrupted utterance
+   * is never sent. Without this the partial is orphaned: for `ch_1` it gates every live
+   * suggestion until the candidate next finishes speaking, and its text is silently overwritten
+   * by the next utterance rather than kept.
+   */
+  handleChannelDisconnected(channelRaw: string): void {
+    if (!this.isActive) return;
+
+    const speaker = String(channelRaw).toLowerCase() === 'ch_0' ? Speaker.Other : Speaker.Self;
+    const partial =
+      speaker === Speaker.Self ? this.selfPartialTranscript : this.otherPartialTranscript;
+    if (!partial) return;
+
+    // Keep the original endTimestamp. Stamping it with the current time would make this the
+    // "recent self" the suggestion gate measures against, suppressing the next suggestion for
+    // LIVE_SUGGESTION_GAP_MS at exactly the moment the user is recovering from a dropped socket.
+    partial.isFinal = true;
+    if (speaker === Speaker.Self) {
+      this.selfTranscripts.push(partial);
+      this.selfPartialTranscript = null;
+    } else {
+      this.otherTranscripts.push(partial);
+      this.otherPartialTranscript = null;
+    }
+
+    console.info(`[TranscriptService] promoted orphaned ${channelRaw} partial after disconnect`);
+  }
+
   async start(): Promise<void> {
     this.isActive = true;
   }
