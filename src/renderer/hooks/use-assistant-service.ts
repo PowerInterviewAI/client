@@ -47,6 +47,15 @@ export const useAssistantService = create<AssistantService>((set) => ({
       // Update running state to Running after successful start
       electron.appState.update({ runningState: RunningState.Running });
     } catch (error) {
+      // Tear down before resetting state. `electron.transcription.start()` may already have
+      // succeeded, and leaving it active while runningState goes back to Idle strands the app
+      // in a state where transcripts keep flowing (so live suggestions still fire) but every
+      // action-suggestion hotkey refuses forever, because those gate on runningState.
+      await Promise.allSettled([
+        liveTranscriptionService.stop(),
+        electron.transcription.stop(),
+      ]);
+
       // Reset state to Idle so the button doesn't stay stuck on "Starting..."
       electron.appState.update({ runningState: RunningState.Idle });
       const errorMessage = error instanceof Error ? error.message : 'Failed to start assistant';

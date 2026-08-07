@@ -1,4 +1,8 @@
-import { LIVE_SUGGESTION_GAP_MS, TRANSCRIPT_INTER_TRANSCRIPT_GAP_MS } from '../consts.js';
+import {
+  LIVE_SUGGESTION_GAP_MS,
+  SELF_PARTIAL_STALE_MS,
+  TRANSCRIPT_INTER_TRANSCRIPT_GAP_MS,
+} from '../consts.js';
 import { Speaker, Transcript } from '../types/app-state.js';
 import { appStateService } from './app-state.service.js';
 import { liveSuggestionService } from './suggestion-live.service.js';
@@ -77,12 +81,27 @@ class TranscriptService {
     }
 
     const lastSelf = cleaned.filter((t) => t.speaker === Speaker.Self).slice(-1)[0];
-    if (transcript.speaker === Speaker.Other && transcript.isFinal && !this.selfPartialTranscript) {
+    if (transcript.speaker === Speaker.Other && transcript.isFinal) {
+      // These two conditions are the only ways a suggestion is silently suppressed, and
+      // neither surfaces anywhere. Logged so a field or local repro can distinguish
+      // "the request was never made" from "the request was made and stalled".
+      // A partial that has gone quiet is almost certainly orphaned by a dropped ASR socket.
+      // Treat it as absent rather than letting it gate suggestions indefinitely.
+      const blockedByPartial =
+        !!this.selfPartialTranscript &&
+        now - this.selfPartialTranscript.endTimestamp <= SELF_PARTIAL_STALE_MS;
       const skipDueToRecentSelf =
         !!lastSelf &&
         lastSelf.isFinal &&
         Date.now() - lastSelf.endTimestamp <= LIVE_SUGGESTION_GAP_MS;
-      if (!skipDueToRecentSelf) {
+
+      console.info(
+        `[TranscriptService] suggestion gate: blockedByPartial=${blockedByPartial}` +
+          ` skipDueToRecentSelf=${skipDueToRecentSelf}` +
+          ` lastSelfAgeMs=${lastSelf ? Date.now() - lastSelf.endTimestamp : 'none'}`
+      );
+
+      if (!blockedByPartial && !skipDueToRecentSelf) {
         await liveSuggestionService.startGenerateSuggestion(cleaned);
       }
     }

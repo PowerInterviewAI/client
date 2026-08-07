@@ -112,9 +112,13 @@ export class ApiClient {
     return this.request<T>('POST', url, body, timeoutMs);
   }
 
-  async postStream(path: string, body?: unknown): Promise<ReadableStream<Uint8Array> | null> {
+  async postStream(
+    path: string,
+    body?: unknown,
+    signal?: AbortSignal
+  ): Promise<ReadableStream<Uint8Array> | null> {
     const url = this.buildUrl(path);
-    return this.requestStream('POST', url, body);
+    return this.requestStream('POST', url, body, signal);
   }
 
   async put<T>(path: string, body?: unknown): Promise<ApiResponse<T>> {
@@ -184,10 +188,14 @@ export class ApiClient {
     }
   }
 
+  // No `timeoutMs` here on purpose: AbortSignal.timeout is a total wall-clock deadline, which
+  // would truncate a long-but-healthy generation mid-stream. Callers pass a signal driven by a
+  // stall timer that resets on every chunk instead.
   async requestStream(
     method: string,
     url: string,
-    body?: unknown
+    body?: unknown,
+    signal?: AbortSignal
   ): Promise<ReadableStream<Uint8Array> | null> {
     try {
       const sessionToken = configStore.getConfig().sessionToken;
@@ -199,6 +207,7 @@ export class ApiClient {
         method,
         headers: this.headers,
         body: body ? JSON.stringify(body) : undefined,
+        signal,
       });
       if (!response.ok) {
         const responseContent = await response.text().catch(() => '');
@@ -225,6 +234,12 @@ export class ApiClient {
           status: error.status,
           content: error.content,
         });
+        throw error;
+      }
+
+      // A supersede or stall abort is deliberate. Let it through untouched so callers can
+      // read `signal.reason` to tell the two apart, and do not log it as a failure.
+      if (error instanceof Error && error.name === 'AbortError') {
         throw error;
       }
 
