@@ -89,7 +89,7 @@ function TranscriptPanel({ transcripts, isRunning = false }: TranscriptPanelProp
                   // measurement plumbing.
                   <div
                     key={idx}
-                    className="flex items-baseline gap-2 py-1 max-w-3xl [content-visibility:auto] [contain-intrinsic-size:auto_1.5rem]"
+                    className="flex items-baseline gap-2 py-1 max-w-3xl mx-auto [content-visibility:auto] [contain-intrinsic-size:auto_1.5rem]"
                   >
                     {/* Fixed-width column so wrapped/adjacent rows keep a stable left edge
                         regardless of speaker name length; long names truncate rather than
