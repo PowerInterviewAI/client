@@ -7,6 +7,11 @@
  * streamed token and every ASR partial, and each one clones a transcript array that grows for
  * the whole interview. So these checks flush explicitly rather than counting one send per
  * mutation. The two invariants above are unaffected and are what this file pins.
+ *
+ * Flushing explicitly is also the one path production never takes, so the coalesced path gets
+ * its own check below. Every check here used to flush synchronously while the timer was still
+ * pending - the single arrangement in which the send worked - and that blind spot let a release
+ * ship in which the renderer received no state update at all, ever.
  */
 import { createChecker, loadMain } from './helpers.mjs';
 
@@ -65,6 +70,14 @@ export async function run() {
   appStateService.flushRenderer();
   check('a real change still broadcasts', sent.length === baseline + 1);
   check('the change is applied', appStateService.getState().isBackendLive === false);
+
+  // Nothing in src/ ever calls flushRenderer - the app relies entirely on the timer firing on
+  // its own. So let it, with no flush at all, and check the send actually lands.
+  const beforeCoalesced = sent.length;
+  appStateService.updateState({ isBackendLive: true });
+  await new Promise((resolve) => setTimeout(resolve, 200));
+  check('a coalesced broadcast reaches the renderer', sent.length === beforeCoalesced + 1);
+  check('the coalesced broadcast carries the change', sent.at(-1).payload.isBackendLive === true);
 
   appStateService.updateState({ interviewConfig: { fullName: 'Jane', profileData: '   ', context: '' } });
   check(
