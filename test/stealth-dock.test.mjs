@@ -37,6 +37,7 @@ export async function run() {
 
   const calls = app.dockCalls;
   const skipTaskbar = [];
+  const windowButtonVisible = [];
   const handlers = {};
   windowControl.setWindowReference({
     isDestroyed: () => false,
@@ -45,6 +46,7 @@ export async function run() {
     },
     setAlwaysOnTop: () => {},
     setSkipTaskbar: (skip) => skipTaskbar.push(skip),
+    setWindowButtonVisibility: (visible) => windowButtonVisible.push(visible),
     setVisibleOnAllWorkspaces: () => {},
     setIgnoreMouseEvents: () => {},
     setFocusable: () => {},
@@ -59,6 +61,7 @@ export async function run() {
   });
 
   check('the app starts with a Dock icon', surfaceIs(calls, 'visible'));
+  check('the app starts with traffic lights visible', windowButtonVisible.at(-1) === true);
 
   // Five cycles back to back, all inside the one-second window, so every one of them hits the
   // rate limit. This is the sequence a user produces by mashing the stealth hotkey.
@@ -68,10 +71,18 @@ export async function run() {
       `cycle ${i + 1}: entering stealth asks for the Dock icon to go`,
       surfaceIs(calls, 'hidden')
     );
+    check(
+      `cycle ${i + 1}: entering stealth hides the traffic lights`,
+      windowButtonVisible.at(-1) === false
+    );
     windowControl.disableStealth();
     check(
       `cycle ${i + 1}: leaving stealth asks for the Dock icon back`,
       surfaceIs(calls, 'visible')
+    );
+    check(
+      `cycle ${i + 1}: leaving stealth shows the traffic lights again`,
+      windowButtonVisible.at(-1) === true
     );
   }
 
@@ -91,12 +102,18 @@ export async function run() {
   // next real toggle needs, so a no-op has to stay a no-op.
   const beforeEvents = calls.length;
   skipTaskbar.length = 0;
+  windowButtonVisible.length = 0;
   for (const event of ['show', 'restore', 'maximize', 'unmaximize']) handlers[event]?.();
   check('window events touch the Dock only when the state changed', calls.length === beforeEvents);
   check('window events still re-assert the taskbar button', skipTaskbar.at(-1) === true);
+  check(
+    'window events still re-assert the hidden traffic lights',
+    windowButtonVisible.at(-1) === false
+  );
 
   windowControl.disableStealth();
   check('leaving stealth asks for the Dock icon back', surfaceIs(calls, 'visible'));
+  check('leaving stealth shows the traffic lights', windowButtonVisible.at(-1) === true);
 
   await wait(1300);
   check('it settles visible', surfaceIs(calls, 'visible'));

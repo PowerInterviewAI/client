@@ -22,6 +22,7 @@ export async function run() {
     },
     setAlwaysOnTop: (enabled, level) => alwaysOnTop.push({ enabled, level }),
     setSkipTaskbar: (skip) => skipTaskbar.push(skip),
+    setWindowButtonVisibility: () => {},
     setVisibleOnAllWorkspaces: () => {},
     setIgnoreMouseEvents: () => {},
     setFocusable: () => {},
