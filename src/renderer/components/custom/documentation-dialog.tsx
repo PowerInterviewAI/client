@@ -65,9 +65,10 @@ export default function DocumentationDialog({ open, onOpenChange }: Documentatio
         <div className="py-2 overflow-auto flex-1">
           <h3 className="text-sm font-semibold mb-2">Lost the window?</h3>
           <p className="text-sm text-muted-foreground mb-4">
-            {APP_NAME} stays out of the taskbar and the macOS Dock so it is not visible when you
-            share your screen, which also means a minimized window has no button to click. Just
-            launch {APP_NAME} again: it does not start a second copy, it brings this window back.
+            In stealth mode {APP_NAME} leaves the taskbar and the macOS Dock so it is not visible
+            when you share your screen, which also means a minimized window has no button to click.
+            Just launch {APP_NAME} again: it does not start a second copy, it brings this window
+            back. Outside stealth mode the usual taskbar button and Dock icon are there.
           </p>
 
           <h3 className="text-sm font-semibold mb-2">Hotkeys</h3>

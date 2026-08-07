@@ -19,6 +19,7 @@ export async function run() {
   const sent = [];
   windowControl.setWindowReference({
     isDestroyed: () => false,
+    setSkipTaskbar: () => {},
     webContents: { send: (channel, payload) => sent.push({ channel, payload }) },
   });
 

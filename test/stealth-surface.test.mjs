@@ -1,6 +1,7 @@
 /**
  * Stealth mode hides the window from screen capture, but the surfaces around it - a desktop
- * shortcut, a taskbar button, a Dock icon - are what a screen share exposes first. These are
+ * shortcut, a taskbar button, a Dock icon - are what a screen share exposes first. The taskbar
+ * button and the Dock icon follow stealth mode; the desktop shortcut is never created. These are
  * one-line settings that a merge can silently flip back, and none of them show up until someone
  * builds an installer on the right OS.
  */
@@ -21,7 +22,9 @@ export async function run() {
     'installer still creates a start menu shortcut',
     pkg.build.nsis.createStartMenuShortcut === true
   );
-  check('packaged mac app is an accessory app', pkg.build.mac.extendInfo.LSUIElement === true);
+  // LSUIElement would make the packaged app an accessory app from launch, with no Dock icon at
+  // all. The Dock icon now belongs to normal mode, so the policy is switched at runtime instead.
+  check('packaged mac app is not pinned to accessory', !pkg.build.mac.extendInfo.LSUIElement);
 
   // createDesktopShortcut only covers fresh installs; upgrades have to delete the old icon.
   const nsh = fs.readFileSync(path.join(ROOT, 'build', 'installer.nsh'), 'utf8');
@@ -33,11 +36,22 @@ export async function run() {
 
   // Read the compiled output rather than the source: this is what actually ships.
   const main = fs.readFileSync(path.join(ROOT, 'electron-dist', 'index.js'), 'utf8');
-  check('window is created with skipTaskbar', /skipTaskbar:\s*true/.test(main));
-  check('dev runs get the accessory policy too', /setActivationPolicy\('accessory'\)/.test(main));
+  check('window is not pinned off the taskbar at creation', !/skipTaskbar:\s*true/.test(main));
 
-  // No taskbar button and no Dock icon: without these, closing or minimizing the window
-  // leaves a running process with no way back to it.
+  // Both halves of the macOS switch have to be there: dock.hide() alone does not lift the app
+  // back out of accessory, and the policy alone leaves a stale icon behind.
+  const windowControl = fs.readFileSync(
+    path.join(ROOT, 'electron-dist', 'services', 'window-control.service.js'),
+    'utf8'
+  );
+  check('stealth drops the Dock icon', /dock\?\.hide\(\)/.test(windowControl));
+  check('stealth makes the app an accessory app', /'accessory'/.test(windowControl));
+  check('normal mode brings the Dock icon back', /dock\?\.show\(\)/.test(windowControl));
+  check('normal mode makes the app a regular app', /'regular'/.test(windowControl));
+  check('the taskbar button follows stealth', /setSkipTaskbar\(_?stealth\)/.test(windowControl));
+
+  // In stealth mode there is no taskbar button and no Dock icon: without this, closing or
+  // minimizing the window leaves a running process with no way back to it.
   const onAllClosed = main.slice(main.indexOf("'window-all-closed'"));
   check(
     'closing the last window quits on every platform',
