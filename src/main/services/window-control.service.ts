@@ -1,13 +1,24 @@
-import { BrowserWindow, screen } from 'electron';
+import { app, BrowserWindow, screen } from 'electron';
 
 import { MIN_HEIGHT, MIN_WIDTH, OPACITY_LEVELS } from '../consts.js';
 import { configStore } from '../store/config.store.js';
 import { appStateService } from './app-state.service.js';
 import { pushNotificationService } from './push-notification.service.js';
 
+const isMac = process.platform === 'darwin';
+
+// macOS ignores a Dock call made within one second of the previous one, so a quick stealth
+// toggle can silently leave the icon in the wrong state. 1100ms is the documented workaround.
+const DOCK_RATE_LIMIT_MS = 1100;
+
 // Global reference to the main window
 let win: BrowserWindow | null = null;
 let _stealth = configStore.getStealth();
+
+// Last Dock state we asked macOS for, and when. `null` means nothing has been applied yet.
+let dockVisible: boolean | null = null;
+let lastDockCallAt = 0;
+let dockRecheckTimer: NodeJS.Timeout | null = null;
 
 // helper: return the display the window mostly occupies (fallback to primary)
 function getCurrentDisplay(): Electron.Display {
@@ -57,15 +68,17 @@ interface WindowBounds {
 export function setWindowReference(window: BrowserWindow): void {
   win = window;
 
-  // The shell re-adds the taskbar button whenever the window is re-shown or re-shaped, and most
-  // of those paths are not ours to intercept - Alt+Tab restoring a minimized window, for one.
+  // The shell re-registers the taskbar button whenever the window is re-shown or re-shaped, and
+  // most of those paths are not ours to intercept - Alt+Tab restoring a minimized window, for one.
   // Re-assert on the events instead of at every call site.
   if (typeof window.on === 'function') {
-    window.on('show', hideFromTaskbar);
-    window.on('restore', hideFromTaskbar);
-    window.on('maximize', hideFromTaskbar);
-    window.on('unmaximize', hideFromTaskbar);
+    window.on('show', applySurfaceVisibility);
+    window.on('restore', applySurfaceVisibility);
+    window.on('maximize', applySurfaceVisibility);
+    window.on('unmaximize', applySurfaceVisibility);
   }
+
+  applySurfaceVisibility();
 }
 
 /**
@@ -76,28 +89,83 @@ export function getWindowReference(): BrowserWindow | null {
 }
 
 /**
- * Re-assert that the window stays out of the taskbar.
+ * Put the taskbar button and the macOS Dock icon in step with stealth mode: present in normal
+ * mode, gone in stealth, where a labelled button or Dock icon is the first thing a shared screen
+ * gives the app away with.
  *
- * The constructor option is not sticky: hiding the button is registration state
+ * This cannot be set once and left alone. Hiding the taskbar button is registration state
  * (`ITaskbarList::DeleteTab` on Windows), not a window style, and the shell re-adds the button
  * when the window's styles change underneath it - which is exactly what toggling stealth does
  * through `setFocusable` and the z-order level. Anything that reshapes or re-shows the window
  * has to call this afterwards.
  */
-function hideFromTaskbar(): void {
-  if (!win || win.isDestroyed()) return;
+function applySurfaceVisibility(): void {
+  if (win && !win.isDestroyed()) {
+    try {
+      win.setSkipTaskbar(_stealth);
+    } catch (e) {
+      console.warn('setSkipTaskbar failed:', e);
+    }
+  }
+
+  if (isMac) applyDockVisibility();
+}
+
+/**
+ * macOS counterpart of the taskbar button. An accessory app has no Dock icon and no Cmd+Tab
+ * entry, a regular one has both. The activation policy is what actually moves the app between
+ * the two - `dock.show()` alone does not lift an accessory app back out - so both are set.
+ *
+ * `dock.hide()` is rate limited: macOS drops a Dock call made within a second of the previous
+ * one. Toggling stealth twice in quick succession therefore leaves the icon on screen with no
+ * error of any kind, so a swallowed call schedules a re-assert once the window has passed.
+ * The activation policy carries no such limit, which is why it is applied on the spot rather
+ * than deferred with the Dock call - the icon goes away immediately even in the swallowed case.
+ */
+function applyDockVisibility(): void {
+  const wantVisible = !_stealth;
+
+  // Window events (show, restore, maximize) land here too. Skipping the no-op keeps them from
+  // spending the one-second budget that a real stealth toggle needs.
+  if (dockVisible === wantVisible) return;
+
+  const swallowed = dockVisible !== null && Date.now() - lastDockCallAt < DOCK_RATE_LIMIT_MS;
 
   try {
-    win.setSkipTaskbar(true);
+    if (wantVisible) {
+      app.setActivationPolicy('regular');
+      void app.dock?.show();
+    } else {
+      app.setActivationPolicy('accessory');
+      app.dock?.hide();
+    }
   } catch (e) {
-    console.warn('setSkipTaskbar failed:', e);
+    console.warn('Failed to update Dock visibility:', e);
   }
+
+  dockVisible = wantVisible;
+  lastDockCallAt = Date.now();
+
+  if (dockRecheckTimer) {
+    clearTimeout(dockRecheckTimer);
+    dockRecheckTimer = null;
+  }
+  if (!swallowed) return;
+
+  dockRecheckTimer = setTimeout(() => {
+    dockRecheckTimer = null;
+    // Forget what we asked for so the re-assert is not skipped as a no-op, then apply whatever
+    // stealth is by now - the user may have toggled again while this was pending.
+    dockVisible = null;
+    applyDockVisibility();
+  }, DOCK_RATE_LIMIT_MS);
+  dockRecheckTimer.unref?.();
 }
 
 /**
  * Restore and raise the window.
- * There is no taskbar button and no Dock icon to click, so a minimized window is
- * only reachable through this.
+ * In stealth mode there is no taskbar button and no Dock icon to click, so a minimized window is
+ * only reachable through this - relaunching the app routes here through the single instance lock.
  */
 export function restoreWindow(): void {
   if (!win || win.isDestroyed()) return;
@@ -109,16 +177,16 @@ export function restoreWindow(): void {
     // app on macOS. Pulling focus out of the call the user is in is the one thing it must not do.
     if (_stealth) {
       if (!win.isVisible()) win.showInactive();
-      hideFromTaskbar();
+      applySurfaceVisibility();
       return;
     }
 
-    // `show()` also raises and activates, which an accessory app on macOS needs - `focus()`
-    // alone does not bring it forward there.
+    // `show()` also raises and activates - `focus()` alone does not always bring the window
+    // forward on macOS.
     win.show();
     win.focus();
     // Restoring from minimized re-registers the window with the shell.
-    hideFromTaskbar();
+    applySurfaceVisibility();
   } catch (err) {
     console.warn('⚠️ restoreWindow failed:', err);
   }
@@ -323,10 +391,12 @@ export function enableStealth(): void {
     // Make the window semi-transparent using last-used opacity level
     win.setOpacity(configStore.getOpacityLevel());
 
-    // Same reason as on the way out: setFocusable(false) can hand the button back.
-    hideFromTaskbar();
-
     _stealth = true;
+
+    // After every other window mutation, and after _stealth is set - this reads it. setFocusable
+    // and the z-order change both hand the taskbar button back.
+    applySurfaceVisibility();
+
     try {
       configStore.setStealth(_stealth);
     } catch (e) {
@@ -366,8 +436,8 @@ export function disableStealth(): void {
     win.setOpacity(1.0);
 
     // Last, after every other window mutation: setFocusable, the z-order change and dropping
-    // the layered style all hand the taskbar button back.
-    hideFromTaskbar();
+    // the layered style all reshuffle the taskbar registration.
+    applySurfaceVisibility();
 
     try {
       configStore.setStealth(_stealth);

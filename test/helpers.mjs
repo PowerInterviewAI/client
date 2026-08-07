@@ -28,12 +28,21 @@ export function stubElectron() {
         format: 'module',
         shortCircuit: true,
         source: `
+// Records every Dock/activation-policy call in order so the macOS surface can be asserted on
+// any platform. See test/stealth-dock.test.mjs.
+const dockCalls = [];
 const app = {
   getPath: () => ${JSON.stringify(userData)},
   getName: () => 'pia-test',
   getVersion: () => '0.0.0',
   on: () => {},
   whenReady: () => Promise.resolve(),
+  setActivationPolicy: (policy) => dockCalls.push(policy),
+  dock: {
+    show: async () => { dockCalls.push('dock.show'); },
+    hide: () => { dockCalls.push('dock.hide'); },
+  },
+  dockCalls,
 };
 const ipcMain = { on: () => {}, handle: () => {} };
 const screen = { getPrimaryDisplay: () => ({ workAreaSize: { width: 1920, height: 1080 } }), getAllDisplays: () => [] };
@@ -50,6 +59,25 @@ export default { app, ipcMain, screen, shell };`,
 /** Import a compiled main-process module by its path under electron-dist/. */
 export function loadMain(relativePath) {
   return import(pathToFileURL(path.join(DIST, relativePath)).href);
+}
+
+/**
+ * Import a fresh copy of a compiled module while `process.platform` reports `platform`.
+ *
+ * The macOS-only branches read `process.platform` once at module scope, so they are dead code on
+ * the Linux runner CI uses - which is exactly where the Dock behaviour would go unnoticed. The
+ * ESM cache is keyed by URL, so a query string yields a second, separately initialised instance;
+ * its own relative imports carry no query and keep sharing the already-loaded singletons.
+ */
+export async function loadMainAs(platform, relativePath) {
+  const original = Object.getOwnPropertyDescriptor(process, 'platform');
+  Object.defineProperty(process, 'platform', { value: platform, configurable: true });
+  try {
+    const url = `${pathToFileURL(path.join(DIST, relativePath)).href}?platform=${platform}`;
+    return await import(url);
+  } finally {
+    Object.defineProperty(process, 'platform', original);
+  }
 }
 
 export function createChecker(name) {

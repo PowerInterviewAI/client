@@ -6,7 +6,6 @@ export enum Hotkey {
   Opacity = 'Opacity',
   ToggleTranscript = 'ToggleTranscript',
   PlaceWin = 'PlaceWin',
-  RestoreWin = 'RestoreWin',
   MoveWin = 'MoveWin',
   ResizeWin = 'ResizeWin',
   ZoomInOutReset = 'ZoomInOutReset',
@@ -35,13 +34,7 @@ export const HOTKEY_GROUPS: HotkeyGroup[] = [
   },
   {
     label: 'Window Management',
-    keys: [
-      Hotkey.PlaceWin,
-      Hotkey.RestoreWin,
-      Hotkey.MoveWin,
-      Hotkey.ResizeWin,
-      Hotkey.ZoomInOutReset,
-    ],
+    keys: [Hotkey.PlaceWin, Hotkey.MoveWin, Hotkey.ResizeWin, Hotkey.ZoomInOutReset],
   },
   {
     label: 'Scroll Panels',
@@ -91,7 +84,7 @@ export const HOTKEYS: Record<Hotkey, HotkeyInfo> = {
     description: 'Toggle window opacity in stealth mode',
   },
   [Hotkey.ToggleTranscript]: {
-    combo: `${BASE}F7`,
+    combo: `${BASE}F8`,
     title: 'Toggle Transcription',
     description: 'Show or hide the transcription dock - works in stealth mode too',
   },
@@ -99,11 +92,6 @@ export const HOTKEYS: Record<Hotkey, HotkeyInfo> = {
     combo: `${BASE}1-9`,
     title: 'Place Window',
     description: 'Place window in a specific corner, side, or center',
-  },
-  [Hotkey.RestoreWin]: {
-    combo: `${BASE}F8`,
-    title: 'Restore Window',
-    description: 'Bring the window back after minimizing - it is kept off the taskbar',
   },
   [Hotkey.MoveWin]: {
     combo: `${MOVE}[↑↓←→]`,
