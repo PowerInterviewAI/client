@@ -2,10 +2,11 @@ import { dialog, ipcMain } from 'electron';
 import fs from 'fs/promises';
 
 import { toolsService } from '../services/tools.service.js';
+import { ExportFormat } from '../types/export.js';
 
 export function registerToolsHandlers(): void {
-  ipcMain.handle('tools:export-transcript', async () => {
-    return toolsService.exportTranscript();
+  ipcMain.handle('tools:export-transcript', async (_event, format: ExportFormat = 'docx') => {
+    return toolsService.exportTranscript(format);
   });
   ipcMain.handle('tools:clear-all', async () => {
     await toolsService.clearAll();

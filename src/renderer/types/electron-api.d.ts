@@ -1,5 +1,6 @@
 import type { AppState } from './app-state';
 import type { Config } from './config';
+import type { ExportFormat } from './export';
 import type { LLMConfig, LLMConfigValidationResult, LLMModelInfo } from './llm';
 import type {
   AvailableCurrency,
@@ -33,7 +34,10 @@ declare global {
     // Authentication management
     auth: {
       sendVerificationCode: (email: string) => Promise<{ success: boolean; error?: string }>;
-      verifyEmailCode: (email: string, code: string) => Promise<{ success: boolean; error?: string }>;
+      verifyEmailCode: (
+        email: string,
+        code: string
+      ) => Promise<{ success: boolean; error?: string }>;
       signup: (
         username: string,
         email: string,
@@ -131,7 +135,7 @@ declare global {
 
     // Tools management
     tools: {
-      exportTranscript: () => Promise<string | null>;
+      exportTranscript: (format: ExportFormat) => Promise<string | null>;
       clearAll: () => Promise<void>;
       setPlaceholderData: () => Promise<void>;
       saveImage: (opts: {

@@ -48,7 +48,8 @@ const electronApi = {
   },
 
   auth: {
-    sendVerificationCode: (email: string) => ipcRenderer.invoke('auth:send-verification-code', email),
+    sendVerificationCode: (email: string) =>
+      ipcRenderer.invoke('auth:send-verification-code', email),
     verifyEmailCode: (email: string, code: string) =>
       ipcRenderer.invoke('auth:verify-email-code', email, code),
     signup: (username: string, email: string, password: string, verificationCode: string) =>
@@ -126,7 +127,8 @@ const electronApi = {
   },
 
   tools: {
-    exportTranscript: () => ipcRenderer.invoke('tools:export-transcript'),
+    exportTranscript: (format: 'docx' | 'md') =>
+      ipcRenderer.invoke('tools:export-transcript', format),
     clearAll: () => ipcRenderer.invoke('tools:clear-all'),
     setPlaceholderData: () => ipcRenderer.invoke('tools:set-placeholder-data'),
     saveImage: (opts: { filename: string; data: number[] }) =>

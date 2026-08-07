@@ -1,18 +1,19 @@
 import { useState } from 'react';
 
 import { getElectron } from '@/lib/utils';
+import type { ExportFormat } from '@/types/export';
 
 export default function useTools() {
   const [exporting, setExporting] = useState(false);
 
-  const exportTranscript = async (): Promise<string | null> => {
+  const exportTranscript = async (format: ExportFormat): Promise<string | null> => {
     setExporting(true);
     try {
       const electron = getElectron();
       if (!electron) {
         throw new Error('Electron API not available');
       }
-      return await electron.tools.exportTranscript();
+      return await electron.tools.exportTranscript(format);
     } catch (error) {
       console.error('Failed to export transcript:', error);
       throw error;
