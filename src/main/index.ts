@@ -20,10 +20,7 @@ import { registerPermissionHandlers } from './ipc/permissions.js';
 import { registerActionSuggestionHandlers } from './ipc/suggestion-action.js';
 import { registerLiveSuggestionHandlers } from './ipc/suggestion-live.js';
 import { registerToolsHandlers } from './ipc/tools.js';
-import {
-  initializeAudioLoopback,
-  registerTranscriptHandlers,
-} from './ipc/transcript.js';
+import { initializeAudioLoopback, registerTranscriptHandlers } from './ipc/transcript.js';
 import { registerWindowHandlers } from './ipc/window.js';
 import { autoUpdaterService } from './services/auto-updater.service.js';
 import { healthCheckService } from './services/health-check.service.js';
@@ -102,9 +99,9 @@ async function createWindow() {
     title: 'Power Interview AI',
     ...savedBounds,
     titleBarStyle: 'hidden',
-    // A labelled taskbar button defeats stealth mode the moment a screen is shared. Not sticky:
-    // see hideFromTaskbar() in window-control.service, which re-asserts it.
-    skipTaskbar: true,
+    // No skipTaskbar here: the taskbar button and the Dock icon follow stealth mode instead, and
+    // the app starts in normal mode. See applySurfaceVisibility() in window-control.service.
+    //
     // Center traffic lights vertically in the h-9 (36px) titlebar.
     // Default y=7 puts button centers at 13px; (36-12)/2=12 is exact center.
     trafficLightPosition: { x: 7, y: 12 },
@@ -191,17 +188,6 @@ async function createWindow() {
 // APP LIFECYCLE
 // -------------------------------------------------------------
 app.whenReady().then(async () => {
-  // macOS counterpart of skipTaskbar: an accessory app has no Dock icon and does not appear in
-  // Cmd+Tab. LSUIElement in the packaged Info.plist does the same thing from launch (no icon
-  // flash); this call is what makes dev runs behave the same, since dev uses Electron's plist.
-  if (process.platform === 'darwin') {
-    try {
-      app.setActivationPolicy('accessory');
-    } catch (err) {
-      console.warn('Failed to set accessory activation policy:', err);
-    }
-  }
-
   // Register all IPC handlers
   registerConfigHandlers();
   registerAppStateHandlers();
@@ -255,9 +241,9 @@ app.on('will-quit', async () => {
   unregisterHotkeys();
 });
 
-// The usual macOS "stay alive with no windows" behavior assumed a Dock icon to click. As an
-// accessory app there is none, so a windowless process would just sit there holding the global
-// hotkeys with no way to reach it. Closing the window means quitting, on every platform.
+// The usual macOS "stay alive with no windows" behavior assumes a Dock icon to click. In stealth
+// mode there is none, so a windowless process would just sit there holding the global hotkeys
+// with no way to reach it. Closing the window means quitting, on every platform.
 app.on('window-all-closed', () => {
   app.quit();
 });
