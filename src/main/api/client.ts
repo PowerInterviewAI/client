@@ -51,9 +51,13 @@ export class ApiClient {
     delete this.headers['Authorization'];
   }
 
-  async get<T>(path: string, params?: Record<string, unknown>): Promise<ApiResponse<T>> {
+  async get<T>(
+    path: string,
+    params?: Record<string, unknown>,
+    timeoutMs?: number
+  ): Promise<ApiResponse<T>> {
     const url = this.buildUrl(path, params);
-    return this.request<T>('GET', url);
+    return this.request<T>('GET', url, undefined, timeoutMs);
   }
 
   async postFormData<T>(path: string, formData: FormData): Promise<ApiResponse<T>> {
@@ -103,14 +107,18 @@ export class ApiClient {
     }
   }
 
-  async post<T>(path: string, body?: unknown): Promise<ApiResponse<T>> {
+  async post<T>(path: string, body?: unknown, timeoutMs?: number): Promise<ApiResponse<T>> {
     const url = this.buildUrl(path);
-    return this.request<T>('POST', url, body);
+    return this.request<T>('POST', url, body, timeoutMs);
   }
 
-  async postStream(path: string, body?: unknown): Promise<ReadableStream<Uint8Array> | null> {
+  async postStream(
+    path: string,
+    body?: unknown,
+    signal?: AbortSignal
+  ): Promise<ReadableStream<Uint8Array> | null> {
     const url = this.buildUrl(path);
-    return this.requestStream('POST', url, body);
+    return this.requestStream('POST', url, body, signal);
   }
 
   async put<T>(path: string, body?: unknown): Promise<ApiResponse<T>> {
@@ -118,12 +126,22 @@ export class ApiClient {
     return this.request<T>('PUT', url, body);
   }
 
+  async patch<T>(path: string, body?: unknown, timeoutMs?: number): Promise<ApiResponse<T>> {
+    const url = this.buildUrl(path);
+    return this.request<T>('PATCH', url, body, timeoutMs);
+  }
+
   async delete<T>(path: string): Promise<ApiResponse<T>> {
     const url = this.buildUrl(path);
     return this.request<T>('DELETE', url);
   }
 
-  private async request<T>(method: string, url: string, body?: unknown): Promise<ApiResponse<T>> {
+  private async request<T>(
+    method: string,
+    url: string,
+    body?: unknown,
+    timeoutMs?: number
+  ): Promise<ApiResponse<T>> {
     try {
       const sessionToken = configStore.getConfig().sessionToken;
       if (sessionToken) {
@@ -134,6 +152,7 @@ export class ApiClient {
         method,
         headers: this.headers,
         body: body ? JSON.stringify(body) : undefined,
+        signal: timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined,
       });
 
       const respBody = await response.json().catch(() => ({}));
@@ -154,20 +173,29 @@ export class ApiClient {
         data: respBody,
       };
     } catch (error: unknown) {
+      const timedOut = error instanceof Error && error.name === 'TimeoutError';
       return {
         status: 0,
         error: {
-          code: 'NETWORK_ERROR',
-          message: error instanceof Error ? error.message : 'Network request failed',
+          code: timedOut ? 'TIMEOUT' : 'NETWORK_ERROR',
+          message: timedOut
+            ? 'The request timed out'
+            : error instanceof Error
+              ? error.message
+              : 'Network request failed',
         },
       };
     }
   }
 
+  // No `timeoutMs` here on purpose: AbortSignal.timeout is a total wall-clock deadline, which
+  // would truncate a long-but-healthy generation mid-stream. Callers pass a signal driven by a
+  // stall timer that resets on every chunk instead.
   async requestStream(
     method: string,
     url: string,
-    body?: unknown
+    body?: unknown,
+    signal?: AbortSignal
   ): Promise<ReadableStream<Uint8Array> | null> {
     try {
       const sessionToken = configStore.getConfig().sessionToken;
@@ -179,6 +207,7 @@ export class ApiClient {
         method,
         headers: this.headers,
         body: body ? JSON.stringify(body) : undefined,
+        signal,
       });
       if (!response.ok) {
         const responseContent = await response.text().catch(() => '');
@@ -205,6 +234,16 @@ export class ApiClient {
           status: error.status,
           content: error.content,
         });
+        throw error;
+      }
+
+      // A supersede or stall abort is deliberate. Let it through untouched so callers can
+      // read `signal.reason` to tell the two apart, and do not log it as a failure.
+      //
+      // Keyed on the signal, not the error name: an abort rejects with the *reason*, so a
+      // stall abort surfaces as `TimeoutError` rather than `AbortError` and a name check
+      // would miss it and wrap it as a network failure.
+      if (signal?.aborted) {
         throw error;
       }
 

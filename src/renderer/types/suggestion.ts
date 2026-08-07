@@ -1,5 +1,6 @@
 export enum SuggestionState {
   Idle = 'idle',
+  Uploading = 'uploading',
   Pending = 'pending',
   Loading = 'loading',
   Success = 'success',

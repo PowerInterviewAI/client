@@ -1,7 +1,7 @@
 {
   "name": "power-interview-ai",
   "private": false,
-  "version": "1.5.4",
+  "version": "1.5.6",
   "description": "AI-powered live interview assistant",
   "author": "VectorLeap Pulse Innovation LTD",
   "main": "electron-dist/index.js",
@@ -16,6 +16,7 @@
     "electron:build": "pnpm electron:build-main && pnpm build && electron-builder",
     "lint": "eslint .",
     "format": "prettier --write . && eslint --fix .",
+    "test:main": "pnpm electron:build-main && node test/run.mjs",
     "start": "pnpm electron:dev-hide"
   },
   "dependencies": {
@@ -136,6 +137,7 @@
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.inherit.plist",
       "extendInfo": {
+        "LSUIElement": true,
         "NSMicrophoneUsageDescription": "Power Interview AI needs microphone access to transcribe your voice during interviews.",
         "NSScreenRecordingUsageDescription": "Power Interview AI needs screen recording access to capture system audio during interviews."
       }
@@ -145,7 +147,7 @@
       "perMachine": false,
       "allowElevation": false,
       "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
+      "createDesktopShortcut": false,
       "createStartMenuShortcut": true,
       "deleteAppDataOnUninstall": false,
       "installerLanguages": [

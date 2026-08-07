@@ -1,4 +1,8 @@
-import { LIVE_SUGGESTION_GAP_MS, TRANSCRIPT_INTER_TRANSCRIPT_GAP_MS } from '../consts.js';
+import {
+  LIVE_SUGGESTION_GAP_MS,
+  SELF_PARTIAL_STALE_MS,
+  TRANSCRIPT_INTER_TRANSCRIPT_GAP_MS,
+} from '../consts.js';
 import { Speaker, Transcript } from '../types/app-state.js';
 import { appStateService } from './app-state.service.js';
 import { liveSuggestionService } from './suggestion-live.service.js';
@@ -77,17 +81,63 @@ class TranscriptService {
     }
 
     const lastSelf = cleaned.filter((t) => t.speaker === Speaker.Self).slice(-1)[0];
-    if (transcript.speaker === Speaker.Other && transcript.isFinal && !this.selfPartialTranscript) {
+    if (transcript.speaker === Speaker.Other && transcript.isFinal) {
+      // These two conditions are the only ways a suggestion is silently suppressed, and
+      // neither surfaces anywhere. Logged so a field or local repro can distinguish
+      // "the request was never made" from "the request was made and stalled".
+
+      // A partial that has gone quiet is almost certainly orphaned by a dropped ASR socket
+      // whose final never arrived. Treat it as absent rather than gating indefinitely.
+      const blockedByPartial =
+        !!this.selfPartialTranscript &&
+        now - this.selfPartialTranscript.endTimestamp <= SELF_PARTIAL_STALE_MS;
+      const selfAgeMs = lastSelf ? now - lastSelf.endTimestamp : null;
       const skipDueToRecentSelf =
-        !!lastSelf &&
-        lastSelf.isFinal &&
-        Date.now() - lastSelf.endTimestamp <= LIVE_SUGGESTION_GAP_MS;
-      if (!skipDueToRecentSelf) {
+        !!lastSelf && lastSelf.isFinal && selfAgeMs !== null && selfAgeMs <= LIVE_SUGGESTION_GAP_MS;
+
+      console.info(
+        `[TranscriptService] suggestion gate: blockedByPartial=${blockedByPartial}` +
+          ` skipDueToRecentSelf=${skipDueToRecentSelf}` +
+          ` lastSelfAgeMs=${selfAgeMs ?? 'none'}`
+      );
+
+      if (!blockedByPartial && !skipDueToRecentSelf) {
         await liveSuggestionService.startGenerateSuggestion(cleaned);
       }
     }
 
     appStateService.updateState({ transcripts: cleaned });
+  }
+
+  /**
+   * Promote an in-flight partial to a final when its ASR socket drops.
+   *
+   * A reconnect opens a brand-new backend session, so the final for the interrupted utterance
+   * is never sent. Without this the partial is orphaned: for `ch_1` it gates every live
+   * suggestion until the candidate next finishes speaking, and its text is silently overwritten
+   * by the next utterance rather than kept.
+   */
+  handleChannelDisconnected(channelRaw: string): void {
+    if (!this.isActive) return;
+
+    const speaker = String(channelRaw).toLowerCase() === 'ch_0' ? Speaker.Other : Speaker.Self;
+    const partial =
+      speaker === Speaker.Self ? this.selfPartialTranscript : this.otherPartialTranscript;
+    if (!partial) return;
+
+    // Keep the original endTimestamp. Stamping it with the current time would make this the
+    // "recent self" the suggestion gate measures against, suppressing the next suggestion for
+    // LIVE_SUGGESTION_GAP_MS at exactly the moment the user is recovering from a dropped socket.
+    partial.isFinal = true;
+    if (speaker === Speaker.Self) {
+      this.selfTranscripts.push(partial);
+      this.selfPartialTranscript = null;
+    } else {
+      this.otherTranscripts.push(partial);
+      this.otherPartialTranscript = null;
+    }
+
+    console.info(`[TranscriptService] promoted orphaned ${channelRaw} partial after disconnect`);
   }
 
   async start(): Promise<void> {

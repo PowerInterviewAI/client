@@ -22,6 +22,7 @@ declare global {
 
     // Hotkey stop assistant event
     onHotkeyStopAssistant: (callback: () => void) => () => void;
+    onHotkeyToggleTranscript: (callback: () => void) => () => void;
 
     // Configuration management
     config: {
@@ -45,6 +46,21 @@ declare global {
         oldPassword: string,
         newPassword: string
       ) => Promise<{ success: boolean; error?: string }>;
+    };
+
+    // Account config management (full name, profile, context) - synced with the backend
+    account: {
+      update: (
+        fullName: string,
+        profileData: string,
+        context: string
+      ) => Promise<{ success: boolean; error?: string }>;
+      refresh: () => Promise<{ success: boolean; error?: string }>;
+      get: () => Promise<{
+        success: boolean;
+        data: { fullName: string; profileData: string; context: string };
+        error?: string;
+      }>;
     };
 
     // Payment management
@@ -93,6 +109,7 @@ declare global {
         text: string;
       }) => Promise<void>;
       setSessionToken: (token: string) => Promise<void>;
+      channelDisconnected: (channel: 'ch_0' | 'ch_1') => Promise<void>;
       enableLoopbackAudio: () => Promise<void>;
       disableLoopbackAudio: () => Promise<void>;
     };

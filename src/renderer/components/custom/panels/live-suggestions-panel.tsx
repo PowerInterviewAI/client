@@ -1,5 +1,5 @@
-import { ArrowDown, Loader2, PauseCircle, Zap } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import { ArrowUp, Loader, PauseCircle, Zap } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useConfigStore } from '@/hooks/use-config-store';
 
@@ -13,10 +13,12 @@ function truncateMiddle(text: string, maxLen: number): string {
 
 import { Card } from '@/components/ui/card';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
+import { newestTimestamp } from '@/lib/suggestions';
 import { type LiveSuggestion, SuggestionState } from '@/types/suggestion';
 
 import { Button } from '../../ui/button';
 import { Checkbox } from '../../ui/checkbox';
+import SuggestionReveal from './suggestion-reveal';
 
 interface LiveSuggestionsPanelProps {
   suggestions?: LiveSuggestion[];
@@ -31,8 +33,19 @@ function LiveSuggestionsPanel({
 }: LiveSuggestionsPanelProps) {
   const hasItems = suggestions.length > 0;
 
+  // newest first: the incoming array is chronological, the panel renders it reversed
+  const orderedSuggestions = useMemo(() => [...suggestions].reverse(), [suggestions]);
+
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const lastItemRef = useRef<HTMLDivElement | null>(null);
+
+  // anything newer than this reveals itself on arrival; whatever was already on screen when the
+  // panel mounted does not. Bumped after commit so the entering item gets one render as "new".
+  const [lastRevealedAt, setLastRevealedAt] = useState(() => newestTimestamp(suggestions));
+
+  useEffect(() => {
+    const newest = newestTimestamp(suggestions);
+    setLastRevealedAt((prev) => (newest > prev ? newest : prev));
+  }, [suggestions]);
 
   const { config, updateConfig } = useConfigStore();
 
@@ -59,11 +72,11 @@ function LiveSuggestionsPanel({
     suggestions.length > 0 ? suggestions[suggestions.length - 1].answer : ''
   );
 
-  // helper: scroll last item into view at the bottom of container (conventional for newest)
+  // the newest suggestion sits at the top of the list
   const scrollToLatest = (behavior: ScrollBehavior = 'smooth') => {
-    const last = lastItemRef.current;
-    if (!last) return;
-    last.scrollIntoView({ behavior, block: 'start', inline: 'nearest' });
+    const container = containerRef.current;
+    if (!container) return;
+    container.scrollTo({ top: 0, behavior });
   };
 
   // auto-scroll when suggestions change
@@ -111,7 +124,7 @@ function LiveSuggestionsPanel({
         if (!container) return;
 
         if (direction === 'end') {
-          // scroll to bottom where latest suggestion lives
+          // scroll to top where latest suggestion lives
           scrollToLatest('smooth');
           return;
         }
@@ -139,11 +152,11 @@ function LiveSuggestionsPanel({
 
   return (
     <Card
-      className="relative flex flex-col w-full h-full bg-card p-0 rounded-md gap-2"
+      className="relative flex flex-col w-full h-full bg-card p-0 rounded-md gap-1"
       style={style}
     >
       {/* Header */}
-      <div className="border-b border-border p-2 shrink-0 flex items-center justify-between gap-4">
+      <div className="px-2 py-1.5 shrink-0 flex items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           {isRunning && (
             <span
@@ -174,7 +187,7 @@ function LiveSuggestionsPanel({
       </div>
 
       {/* Scrollable Content */}
-      <div ref={containerRef} className="flex-1 overflow-y-auto mb-2">
+      <div ref={containerRef} className="flex-1 overflow-y-auto">
         {!hasItems && (
           <div className="flex items-center justify-center h-full text-center p-4">
             <div>
@@ -184,51 +197,58 @@ function LiveSuggestionsPanel({
         )}
 
         {hasItems && (
-          <div className="p-2 space-y-3">
-            {suggestions.map((s, idx) => (
-              <div
-                key={idx}
-                ref={idx === suggestions.length - 1 ? lastItemRef : null}
-                className="flex gap-3 pb-3 border-b border-border/40 last:border-0"
+          <div className="px-2 pb-2">
+            {orderedSuggestions.map((s, idx) => (
+              <SuggestionReveal
+                key={s.timestamp}
+                animate={s.timestamp > lastRevealedAt}
+                className="border-b border-border/40 last:border-0"
               >
-                {idx === suggestions.length - 1 &&
-                (s.state === SuggestionState.Pending || s.state === SuggestionState.Loading) ? (
-                  <Loader2 className="h-4 w-4 mt-px text-accent shrink-0 animate-spin" />
-                ) : s.state === SuggestionState.Stopped ? (
-                  <PauseCircle className="h-4 w-4 mt-px text-muted-foreground shrink-0" />
-                ) : (
-                  <Zap className="h-4 w-4 mt-px text-accent shrink-0" />
-                )}
-                <div>
-                  <div className="text-xs text-muted-foreground mb-2">
-                    {truncateMiddle(s.last_question, MAX_QUESTION_LENGTH)}
+                {/* Skip style, layout and paint for cards scrolled out of view. Applied here
+                    rather than on SuggestionReveal's wrapper, which is an animating grid that
+                    size containment would fight. The newest card - the streaming one - is
+                    always on screen, so containment never applies to it. */}
+                <div className="flex gap-3 py-3 [content-visibility:auto] [contain-intrinsic-size:auto_6rem]">
+                  {idx === 0 &&
+                  (s.state === SuggestionState.Pending || s.state === SuggestionState.Loading) ? (
+                    <Loader className="h-4 w-4 mt-px text-accent shrink-0 animate-spin" />
+                  ) : s.state === SuggestionState.Stopped ? (
+                    <PauseCircle className="h-4 w-4 mt-px text-muted-foreground shrink-0" />
+                  ) : (
+                    <Zap className="h-4 w-4 mt-px text-accent shrink-0" />
+                  )}
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-2">
+                      {truncateMiddle(s.last_question, MAX_QUESTION_LENGTH)}
+                    </div>
+
+                    {(s.state === SuggestionState.Loading ||
+                      s.state === SuggestionState.Success) && (
+                      <div className="text-sm font-semibold text-foreground/90 leading-relaxed whitespace-pre-wrap">
+                        🪄 {s.answer}
+                      </div>
+                    )}
+
+                    {s.state === SuggestionState.Stopped && (
+                      <div className="text-sm font-semibold text-foreground/90 leading-relaxed whitespace-pre-wrap">
+                        🪄 {s.answer} ...
+                      </div>
+                    )}
+
+                    {s.state === SuggestionState.Error && (
+                      <div className="bg-destructive/10 border border-destructive/20 rounded-md p-2 mt-1">
+                        <p className="text-xs text-destructive">{s.error}</p>
+                      </div>
+                    )}
+
+                    {s.state === SuggestionState.Idle && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Idle - no generation yet
+                      </div>
+                    )}
                   </div>
-
-                  {(s.state === SuggestionState.Loading || s.state === SuggestionState.Success) && (
-                    <div className="text-sm font-semibold text-foreground/90 leading-relaxed whitespace-pre-wrap">
-                      🪄 {s.answer}
-                    </div>
-                  )}
-
-                  {s.state === SuggestionState.Stopped && (
-                    <div className="text-sm font-semibold text-foreground/90 leading-relaxed whitespace-pre-wrap">
-                      🪄 {s.answer} ...
-                    </div>
-                  )}
-
-                  {s.state === SuggestionState.Error && (
-                    <div className="bg-destructive/10 border border-destructive/20 rounded-md p-2 mt-1">
-                      <p className="text-xs text-destructive">{s.error}</p>
-                    </div>
-                  )}
-
-                  {s.state === SuggestionState.Idle && (
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Idle - no generation yet
-                    </div>
-                  )}
                 </div>
-              </div>
+              </SuggestionReveal>
             ))}
           </div>
         )}
@@ -239,9 +259,9 @@ function LiveSuggestionsPanel({
           size="icon-sm"
           className="absolute bottom-3 right-3 rounded-full shadow-md bg-blue-600 text-white hover:bg-blue-600/90"
           onClick={() => scrollToLatest('smooth')}
-          aria-label="Scroll to bottom"
+          aria-label="Scroll to top"
         >
-          <ArrowDown className="size-4" />
+          <ArrowUp className="size-4" />
         </Button>
       )}
     </Card>

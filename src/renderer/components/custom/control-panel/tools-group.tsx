@@ -1,4 +1,14 @@
-import { CircleCheck, FileIcon, FolderOpenIcon, Loader, Save, Trash2, XIcon } from 'lucide-react';
+import {
+  Captions,
+  CaptionsOff,
+  CircleCheck,
+  FileIcon,
+  FolderOpenIcon,
+  Loader,
+  Save,
+  Trash2,
+  XIcon,
+} from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -6,6 +16,8 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAppState } from '@/hooks/use-app-state';
 import useTools from '@/hooks/use-tools';
+import { useTranscriptPanel } from '@/hooks/use-transcript-panel';
+import { Hotkey, HOTKEYS } from '@/lib/hotkeys';
 import { getElectron } from '@/lib/utils';
 import { RunningState } from '@/types/app-state';
 
@@ -15,14 +27,17 @@ interface ToolsGroupProps {
 
 export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
   const { runningState } = useAppState();
-  const { exporting, exportTranscript, setPlaceholderData } = useTools();
+  const { exporting, exportTranscript, clearAll, setPlaceholderData } = useTools();
+  const { visible: transcriptVisible, toggle: onToggleTranscript } = useTranscriptPanel();
   const [clearing, setClearing] = useState(false);
 
   const onClear = async () => {
     setClearing(true);
     try {
+      // Placeholder state only rewrites what the renderer sees. The service buffers keep the
+      // real transcripts and suggestions until clearAll drops them, so Clear has to do both.
+      await clearAll();
       await setPlaceholderData();
-      toast.info('Clearing...');
     } catch (error) {
       console.error(error);
       toast.error('Failed to clear');
@@ -102,6 +117,30 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
 
   return (
     <div className="flex items-center space-x-2">
+      {/* View-only preference, so it stays available while the assistant runs */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="secondary"
+            onClick={onToggleTranscript}
+            size="sm"
+            className="h-8 w-8 text-xs rounded-xl cursor-pointer"
+            aria-pressed={transcriptVisible}
+          >
+            {transcriptVisible ? (
+              <Captions className="h-4 w-4" />
+            ) : (
+              <CaptionsOff className="h-4 w-4" />
+            )}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>
+            {transcriptVisible ? 'Hide Transcription' : 'Show Transcription'} (
+            {HOTKEYS[Hotkey.ToggleTranscript].combo})
+          </p>
+        </TooltipContent>
+      </Tooltip>
       <Tooltip>
         <TooltipTrigger asChild>
           <Button

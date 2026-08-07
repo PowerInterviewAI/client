@@ -32,9 +32,10 @@ export class LLMApi extends ApiClient {
    * Generate Live Suggestions
    */
   async generateLiveSuggestions(
-    data: GenerateLiveSuggestionRequest
+    data: GenerateLiveSuggestionRequest,
+    signal?: AbortSignal
   ): Promise<ReadableStream<Uint8Array> | null> {
-    return this.postStream('/api/llm/live-suggestion', data);
+    return this.postStream('/api/llm/live-suggestion', data, signal);
   }
 
   /**
@@ -48,9 +49,10 @@ export class LLMApi extends ApiClient {
    * Generate Action Suggestion
    */
   async generateActionSuggestionStream(
-    payload: GenerateActionSuggestionRequest
+    payload: GenerateActionSuggestionRequest,
+    signal?: AbortSignal
   ): Promise<ReadableStream<Uint8Array> | null> {
-    return this.postStream('api/llm/action-suggestion', payload);
+    return this.postStream('api/llm/action-suggestion', payload, signal);
   }
 
   /**

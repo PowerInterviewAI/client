@@ -26,6 +26,9 @@ export function registerTranscriptHandlers(): void {
   ipcMain.handle('transcription:ingest', async (_event, payload) => {
     await transcriptService.ingest(payload?.channel, payload?.type, payload?.text);
   });
+  ipcMain.handle('transcription:channel-disconnected', async (_event, channel: string) => {
+    transcriptService.handleChannelDisconnected(channel);
+  });
   ipcMain.handle('transcription:set-session-token', async (_event, sessionToken: string) => {
     if (!sessionToken) return;
     const url = BACKEND_BASE_URL.replace(/^ws/i, 'http');

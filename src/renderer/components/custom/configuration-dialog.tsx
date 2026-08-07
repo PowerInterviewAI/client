@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { useConfigStore } from '@/hooks/use-config-store';
+import { getElectron } from '@/lib/utils';
 
 import {
   Dialog,
@@ -14,43 +15,80 @@ import {
   DialogTitle,
 } from '../ui/dialog';
 
+// Kept in sync with the backend's MAX_PROFILE_DATA_LENGTH / MAX_CONTEXT_LENGTH (app/cfg/llm.py)
+const MAX_FIELD_LENGTH = 128_000;
+// Kept in sync with the backend's MAX_USERNAME_LENGTH (app/cfg/llm.py)
+const MAX_NAME_LENGTH = 1_000;
+
 interface ConfigurationDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
 export default function ConfigurationDialog({ isOpen, onOpenChange }: ConfigurationDialogProps) {
-  const { config, updateConfig } = useConfigStore();
-
   const [name, setName] = useState('');
   const [profileData, setProfileData] = useState('');
-  const [jobDescription, setJobDescription] = useState('');
+  const [context, setContext] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [configLoaded, setConfigLoaded] = useState(false);
 
-  // Initialize form values when dialog opens - runs before paint
+  // Load once per open, straight from main, rather than tracking app state. A save replaces
+  // the whole config, so this both refreshes what another device may have changed and keeps
+  // a late-arriving update from overwriting what the user is currently typing.
   useEffect(() => {
     if (!isOpen) return;
 
-    // Queue state updates in a single microtask to avoid cascading renders
-    Promise.resolve().then(() => {
-      if (config?.interviewConf) {
-        setName(config.interviewConf.username ?? '');
-        setProfileData(config.interviewConf.profileData ?? '');
-        setJobDescription(config.interviewConf.jobDescription ?? '');
+    let cancelled = false;
+    setLoading(true);
+    setConfigLoaded(false);
+
+    void (async () => {
+      try {
+        const result = await getElectron()?.account?.get();
+        if (cancelled) return;
+
+        // Show whatever main has even when the refresh failed, so the user is not staring at a
+        // blank form - but only mark it loaded (and thus safe to save over) when it succeeded.
+        if (result?.data) {
+          setName(result.data.fullName);
+          setProfileData(result.data.profileData);
+          setContext(result.data.context);
+        }
+        setConfigLoaded(result?.success ?? false);
+      } catch (error) {
+        console.error('Failed to load configuration:', error);
+        if (!cancelled) setConfigLoaded(false);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-    });
-  }, [isOpen, config?.interviewConf]);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
 
   const handleSave = async () => {
-    const interviewConf = {
-      username: name,
-      profileData: profileData,
-      jobDescription: jobDescription,
-    };
+    setSaving(true);
     try {
-      await updateConfig({ interviewConf: interviewConf });
+      const electron = getElectron();
+      if (!electron?.account) {
+        throw new Error('Electron API not available');
+      }
+
+      const result = await electron.account.update(name, profileData, context);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to save configuration');
+      }
+
+      // Account update pushes a fresh app-state broadcast, so no manual refresh needed here
       onOpenChange(false);
     } catch (error) {
       console.error('Failed to save configuration:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to save configuration');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -76,7 +114,7 @@ export default function ConfigurationDialog({ isOpen, onOpenChange }: Configurat
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Enter your profile name"
                 className="text-sm"
-                maxLength={100}
+                maxLength={MAX_NAME_LENGTH}
               />
             </div>
 
@@ -89,7 +127,7 @@ export default function ConfigurationDialog({ isOpen, onOpenChange }: Configurat
                 onChange={(e) => setProfileData(e.target.value)}
                 placeholder="Enter your profile information. (e.g. your CV/resume, LinkedIn profile, or a brief bio)"
                 className="text-sm min-h-20 max-h-40 overflow-auto"
-                maxLength={60000}
+                maxLength={MAX_FIELD_LENGTH}
               />
             </div>
 
@@ -98,11 +136,11 @@ export default function ConfigurationDialog({ isOpen, onOpenChange }: Configurat
                 Context (Recommended)
               </label>
               <Textarea
-                value={jobDescription}
-                onChange={(e) => setJobDescription(e.target.value)}
+                value={context}
+                onChange={(e) => setContext(e.target.value)}
                 placeholder="Enter the context you are targeting. (e.g. the job description, role requirements or any other information)"
                 className="text-sm min-h-20 max-h-40 overflow-auto"
-                maxLength={60000}
+                maxLength={MAX_FIELD_LENGTH}
               />
             </div>
           </div>
@@ -110,6 +148,12 @@ export default function ConfigurationDialog({ isOpen, onOpenChange }: Configurat
 
         <DialogFooter>
           <div className="flex items-center justify-end gap-2 w-full">
+            {loading && <p className="mr-auto text-xs text-muted-foreground">Loading...</p>}
+            {!loading && !configLoaded && (
+              <p className="mr-auto text-xs text-destructive">
+                Could not load your saved configuration. Reconnect before editing.
+              </p>
+            )}
             <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
@@ -117,9 +161,15 @@ export default function ConfigurationDialog({ isOpen, onOpenChange }: Configurat
               size="sm"
               onClick={handleSave}
               className="bg-primary hover:bg-primary/90"
-              disabled={name.trim() === '' || profileData.trim() === ''}
+              disabled={
+                saving ||
+                loading ||
+                !configLoaded ||
+                name.trim() === '' ||
+                profileData.trim() === ''
+              }
             >
-              Save Changes
+              {saving ? 'Saving...' : 'Save Changes'}
             </Button>
           </div>
         </DialogFooter>

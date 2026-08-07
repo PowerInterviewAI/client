@@ -36,6 +36,12 @@ const electronApi = {
     return () => ipcRenderer.removeListener('hotkey:stop-assistant', handler);
   },
 
+  onHotkeyToggleTranscript: (callback: () => void) => {
+    const handler = () => callback();
+    ipcRenderer.on('hotkey:toggle-transcript', handler);
+    return () => ipcRenderer.removeListener('hotkey:toggle-transcript', handler);
+  },
+
   config: {
     get: () => ipcRenderer.invoke('config:get'),
     update: (updates: Record<string, unknown>) => ipcRenderer.invoke('config:update', updates),
@@ -51,6 +57,13 @@ const electronApi = {
     logout: () => ipcRenderer.invoke('auth:logout'),
     changePassword: (currentPassword: string, newPassword: string) =>
       ipcRenderer.invoke('auth:change-password', currentPassword, newPassword),
+  },
+
+  account: {
+    update: (fullName: string, profileData: string, context: string) =>
+      ipcRenderer.invoke('account:update', fullName, profileData, context),
+    refresh: () => ipcRenderer.invoke('account:refresh'),
+    get: () => ipcRenderer.invoke('account:get'),
   },
 
   payment: {
@@ -88,6 +101,8 @@ const electronApi = {
       ipcRenderer.invoke('transcription:ingest', payload),
     setSessionToken: (token: string) =>
       ipcRenderer.invoke('transcription:set-session-token', token),
+    channelDisconnected: (channel: 'ch_0' | 'ch_1') =>
+      ipcRenderer.invoke('transcription:channel-disconnected', channel),
     // Channel names set by the electron-audio-loopback package — cannot be renamed
     enableLoopbackAudio: () => ipcRenderer.invoke('enable-loopback-audio'),
     disableLoopbackAudio: () => ipcRenderer.invoke('disable-loopback-audio'),

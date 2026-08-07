@@ -41,6 +41,8 @@ class AppStateManager {
       credits: raw.credits,
       userRole: raw.userRole,
       providedLLMModel: raw.providedLLMModel,
+      interviewConfig: raw.interviewConfig ?? { fullName: '', hasProfileData: false },
+      interviewConfigLoaded: raw.interviewConfigLoaded ?? false,
     };
   }
 
@@ -51,17 +53,24 @@ class AppStateManager {
   async init() {
     if (this.initialized) return;
     this.initialized = true;
-    await this.refreshState();
 
+    // Subscribe BEFORE the first fetch. refreshState is an IPC round-trip, and main only
+    // pushes - it never replays - so any broadcast landing during that await was lost.
+    // Guarding on unsubscribeIPC rather than `initialized` also makes this idempotent under
+    // HMR, where the manager survives on globalThis and init can run again.
     if (window.electronAPI?.onAppStateUpdated) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      this.unsubscribeIPC = window.electronAPI.onAppStateUpdated((raw: any) => {
-        this.state = this.normalize(raw);
-        this.emit();
-      });
-    } else {
+      if (!this.unsubscribeIPC) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        this.unsubscribeIPC = window.electronAPI.onAppStateUpdated((raw: any) => {
+          this.state = this.normalize(raw);
+          this.emit();
+        });
+      }
+    } else if (!this.pollingId) {
       this.pollingId = window.setInterval(() => void this.refreshState(), 1000);
     }
+
+    await this.refreshState();
   }
 
   async refreshState() {
@@ -93,19 +102,10 @@ class AppStateManager {
     // emit current value synchronously
     fn(this.state);
     return () => {
+      // Deliberately keep the IPC subscription for the app's lifetime. Tearing it down at zero
+      // subscribers reopened the drop window on every re-init, and StrictMode's double mount
+      // plus ordinary route changes both drive the count to zero routinely.
       this.subscribers.delete(fn);
-      if (this.subscribers.size === 0) {
-        // stop polling/ipc when no subscribers
-        if (this.pollingId) {
-          clearInterval(this.pollingId);
-          this.pollingId = null;
-        }
-        if (this.unsubscribeIPC) {
-          this.unsubscribeIPC();
-          this.unsubscribeIPC = null;
-        }
-        this.initialized = false;
-      }
     };
   }
 }

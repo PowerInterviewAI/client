@@ -1,5 +1,6 @@
 import { AuthApi } from '../api/auth.js';
 import { configStore } from '../store/config.store.js';
+import { accountService } from './account.service.js';
 import { appStateService } from './app-state.service.js';
 import { disableStealth } from './window-control.service.js';
 
@@ -99,6 +100,18 @@ export class AuthService {
         // update app state to logged in
         appStateService.updateState({ isLoggedIn: true });
 
+        // pull this account's synced config (full name, profile, context) from the backend.
+        // Cleared first so a failed pull leaves the config unloaded rather than whatever
+        // the previously signed-in account left behind.
+        //
+        // Left unawaited for the same reason HealthCheckService.start() does not await it: the
+        // request carries a full CV and runs to a 30s timeout, and awaiting it here would hold
+        // the login button on a spinner that long whenever the socket stalls. Nothing needs the
+        // config to be loaded before the main screen appears - Start gates on
+        // `interviewConfigLoaded` and retries the pull itself, and the dialog refreshes on open.
+        accountService.clearState();
+        void accountService.pullFromBackend();
+
         return { success: true };
       } catch {
         return { success: false, error: 'Login failed' };
@@ -125,6 +138,7 @@ export class AuthService {
       // clear session token and update app state
       configStore.updateConfig({ sessionToken: '' });
       appStateService.updateState({ isLoggedIn: false });
+      accountService.clearState();
 
       // clear credentials if remember me is not checked
       const config = configStore.getConfig();

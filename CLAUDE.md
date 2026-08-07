@@ -26,7 +26,13 @@ pnpm electron:build            # Full distribution build via electron-builder
 
 pnpm lint                      # ESLint check
 pnpm format                    # Prettier + ESLint auto-fix
+
+pnpm test:main                 # Main-process checks (builds first; needs Node >= 22.15)
 ```
+
+`.github/workflows/ci.yml` runs eslint, both `tsc` configs, the renderer build, and `pnpm test:main` on every pull request to `main`. Run the same locally first; CI is a backstop, not the first check. Releases are separate: `.github/workflows/release.yml` is `workflow_dispatch` only, so merging never publishes a build.
+
+Prettier is not enforced anywhere, and a number of files do not currently satisfy it, so `pnpm format` produces unrelated churn. Format the files you touch, not the tree.
 
 ## Architecture
 
@@ -46,7 +52,11 @@ Handler registration lives in [src/main/ipc/](src/main/ipc/) - one file per doma
 
 **AppState** ([src/renderer/hooks/use-app-state.tsx](src/renderer/hooks/use-app-state.tsx)) is read-only in the renderer. An `AppStateManager` singleton (pinned to `globalThis` to survive HMR) subscribes to `app-state-updated` push events from main; it falls back to 1-second polling when that API is unavailable. Never mutate AppState from the renderer - call the appropriate IPC method on main instead.
 
+`AppState` and what the renderer receives are not the same object. `appStateService.getRendererState()` reduces `interviewConfig` to a `{ fullName, hasProfileData }` summary, because the whole state is broadcast on every change and the profile and context can each run to 128,000 characters. Never put the full CV back into the broadcast - `test/app-state.test.mjs` pins this. The configuration dialog fetches the real values on demand over `account:get`.
+
 **ConfigStore** ([src/renderer/hooks/use-config-store.ts](src/renderer/hooks/use-config-store.ts)) is a Zustand store backed by the main-process Electron Store ([src/main/store/config.store.ts](src/main/store/config.store.ts)). Mutations call `window.electronAPI.config.update(...)` via IPC. A runtime migration IIFE at the bottom of the main store backfills newly-added keys on first launch.
+
+**Interview config** (full name, profile/CV, context) is *not* in ConfigStore - the backend account is its durable store, managed by [src/main/services/account.service.ts](src/main/services/account.service.ts) and pulled on login or a remembered session. A pre-sync `runtime.interviewConf` may still exist on disk from older builds; it is migrated onto the account and only deleted once the backend confirms the write, so do not drop it eagerly (`test/config-store.test.mjs` pins this).
 
 ### Transcription and Suggestion Flow
 
@@ -64,6 +74,14 @@ Hash-based router (required for Electron `file://` protocol). Routes: `/` (index
 ### Window and Stealth Mode
 
 The main window reference is passed to `windowControlService` and `zoomService` after creation. Window bounds persist to Electron Store on `close` and are restored on next launch with minimum-size clamping (`MIN_WIDTH` / `MIN_HEIGHT` from [src/main/consts.ts](src/main/consts.ts)).
+
+The app keeps itself off the surfaces a screen share exposes: `skipTaskbar: true` on the window, no desktop shortcut from the NSIS installer (and `build/installer.nsh` deletes one left by an older install), and on macOS an accessory activation policy - `LSUIElement` in the packaged Info.plist, `app.setActivationPolicy('accessory')` for dev runs - so there is no Dock icon and no Cmd+Tab entry.
+
+Two consequences follow from having no taskbar button and no Dock icon. A minimized window can only be brought back by relaunching the app (the single instance lock routes to `restoreWindow()`) or with `Ctrl+Shift+F8` (`Ctrl+Opt+F8` on macOS) - F8 because these shortcuts are system-wide and `Ctrl+Shift+R` is hard-reload in every browser. And `window-all-closed` quits on every platform including macOS, because a windowless process would otherwise sit there holding the global hotkeys unreachable. `test/stealth-surface.test.mjs` pins all of it.
+
+Always-on-top belongs to stealth mode only (`'screen-saver'` level), and is dropped again on the way out.
+
+Hiding the taskbar button is *registration* state (`ITaskbarList::DeleteTab` on Windows), not a window style, so the `skipTaskbar` constructor option does not survive `setFocusable` or z-order changes - the button reappears after a stealth toggle. `hideFromTaskbar()` re-asserts it, and anything that reshapes or re-shows the window must call it. `test/stealth-toggle.test.mjs` pins that.
 
 Stealth mode hides the window from screen capture via `setContentProtection`. The main process emits `stealth-changed`; the preload script toggles a `stealth` CSS class on `document.body`. Content protection is on by default; pass `--disable-content-protection` at launch to disable it (dev/testing only).
 

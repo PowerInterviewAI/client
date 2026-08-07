@@ -16,13 +16,7 @@ import ZoomControl from '../zoom-control';
 import { AudioGroup } from './audio-group';
 import { LLMGroup } from './llm-group';
 import { MainGroup } from './main-group';
-import { ProfileGroup } from './profile-group';
 import { ToolsGroup } from './tools-group';
-
-interface ControlPanelProps {
-  onProfileClick: () => void;
-  onSignOut: () => void;
-}
 
 type StateConfig = {
   onClick: () => void;
@@ -31,10 +25,10 @@ type StateConfig = {
   label: string;
 };
 
-export default function ControlPanel({ onProfileClick, onSignOut }: ControlPanelProps) {
+export default function ControlPanel() {
   const isStealth = useIsStealthMode();
   const { startAssistant, stopAssistant } = useAssistantService();
-  const { runningState } = useAppState();
+  const { runningState, appState } = useAppState();
   const { config } = useConfigStore();
   const [permGateOpen, setPermGateOpen] = useState(false);
 
@@ -43,19 +37,31 @@ export default function ControlPanel({ onProfileClick, onSignOut }: ControlPanel
   if (isStealth) return null;
 
   const checkCanStart = () => {
-    const checks: { ok: boolean; message: string }[] = [
-      { ok: !!config?.interviewConf, message: 'Profile is not set' },
-      { ok: !!config?.interviewConf?.username, message: 'Username is not set' },
-      { ok: !!config?.interviewConf?.profileData, message: 'Profile data is not set' },
+    const checks: { ok: boolean; message: string; onFail?: () => void }[] = [
+      // Checked first: an unsynced config reads as empty, and blaming the user for not
+      // setting a name they did set sends them into a dialog that cannot save either.
+      {
+        ok: appState?.interviewConfigLoaded ?? false,
+        message: 'Could not load your saved configuration. Reconnecting - try again in a moment.',
+        // Nothing else re-pulls after a failed startup fetch, so "try again" has to actually
+        // retry: without this the same toast repeats forever however often Start is pressed.
+        onFail: () => void getElectron()?.account?.refresh(),
+      },
+      { ok: !!appState?.interviewConfig?.fullName, message: 'Full name is not set' },
+      {
+        ok: appState?.interviewConfig?.hasProfileData ?? false,
+        message: 'Profile data is not set',
+      },
       {
         ok: !audioInputDeviceNotFound,
         message: `Audio input device "${config?.audioInputDeviceName}" is not found`,
       },
     ];
 
-    for (const { ok, message } of checks) {
+    for (const { ok, message, onFail } of checks) {
       if (!ok) {
         toast.error(message);
+        onFail?.();
         return false;
       }
     }
@@ -105,7 +111,9 @@ export default function ControlPanel({ onProfileClick, onSignOut }: ControlPanel
       label: 'Starting...',
     },
     [RunningState.Running]: {
-      onClick: async () => { await stopAssistant(); },
+      onClick: async () => {
+        await stopAssistant();
+      },
       className: 'bg-destructive hover:bg-destructive/90 animate-pulse',
       icon: <Square className="h-3.5 w-3.5" />,
       label: 'Stop',
@@ -129,26 +137,23 @@ export default function ControlPanel({ onProfileClick, onSignOut }: ControlPanel
 
   return (
     <>
-      <div id="control-panel" className="flex items-center justify-between gap-2 pr-1 pb-0.5">
-        <ProfileGroup
-          config={config}
-          onProfileClick={onProfileClick}
-          onSignOut={onSignOut}
-          getDisabled={getDisabled}
-        />
-
-        <div className="flex flex-1 justify-center gap-2 items-center">
+      {/* Equal-basis side columns keep Start/Stop on the panel's centre line whatever they hold. */}
+      <div id="control-panel" className="flex items-center gap-2 pr-1 pb-0.5">
+        <div className="flex flex-1 basis-0 min-w-0 items-center justify-end gap-2">
           <AudioGroup
             audioInputDevices={audioInputDevices ?? []}
             audioInputDeviceNotFound={audioInputDeviceNotFound}
             getDisabled={getDisabled}
           />
           <LLMGroup getDisabled={getDisabled} />
-          <MainGroup stateConfig={{ onClick, className, icon, label }} getDisabled={getDisabled} />
-          <ToolsGroup getDisabled={getDisabled} />
         </div>
 
-        <ZoomControl />
+        <MainGroup stateConfig={{ onClick, className, icon, label }} getDisabled={getDisabled} />
+
+        <div className="flex flex-1 basis-0 min-w-0 items-center justify-between gap-2">
+          <ToolsGroup getDisabled={getDisabled} />
+          <ZoomControl />
+        </div>
       </div>
 
       {isMac && (
