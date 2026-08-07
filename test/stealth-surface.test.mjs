@@ -59,8 +59,10 @@ export async function run() {
   );
   const hotkeys = fs.readFileSync(path.join(ROOT, 'electron-dist', 'hotkeys.js'), 'utf8');
 
-  // The restore hotkey is gone: relaunching the app is the recovery path, and F8 is now free.
-  check('no F8 shortcut is registered', !/\+F8/.test(hotkeys));
+  // The restore hotkey is gone: relaunching the app is the recovery path. F8 was freed by that
+  // removal and now carries the transcript toggle, so the key itself no longer proves anything -
+  // what has to stay true is that no hotkey reaches restoreWindow.
+  check('no hotkey restores the window', !/restoreWindow/.test(hotkeys));
 
   // Stealth mode hides the control panel that carries the transcription toggle, so the hotkey
   // is the only route to it there. It takes both halves to work, and neither fails loudly.

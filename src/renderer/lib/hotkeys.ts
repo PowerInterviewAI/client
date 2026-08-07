@@ -84,7 +84,7 @@ export const HOTKEYS: Record<Hotkey, HotkeyInfo> = {
     description: 'Toggle window opacity in stealth mode',
   },
   [Hotkey.ToggleTranscript]: {
-    combo: `${BASE}F7`,
+    combo: `${BASE}F8`,
     title: 'Toggle Transcription',
     description: 'Show or hide the transcription dock - works in stealth mode too',
   },

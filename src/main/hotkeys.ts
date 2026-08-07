@@ -39,10 +39,10 @@ export function registerGlobalHotkeys(): void {
   // Opacity toggle: cycle opacity when in stealth mode
   globalShortcut.register(`${BASE}+N`, () => toggleOpacity());
 
-  // Toggle the transcription dock. F7 rather than T because these shortcuts are system-wide, and
+  // Toggle the transcription dock. F8 rather than T because these shortcuts are system-wide, and
   // it keeps the dock reachable in stealth mode, where the control panel carrying the button is
   // hidden.
-  globalShortcut.register(`${BASE}+F7`, () => {
+  globalShortcut.register(`${BASE}+F8`, () => {
     const w = BrowserWindow.getAllWindows()[0];
     if (w && !w.isDestroyed()) w.webContents.send('hotkey:toggle-transcript');
   });
@@ -173,7 +173,7 @@ export function registerGlobalHotkeys(): void {
   console.log(`  ${mod}+Q : Stop assistant`);
   console.log(`  ${mod}+M : Toggle stealth mode`);
   console.log(`  ${mod}+N : Toggle opacity (stealth only)`);
-  console.log(`  ${mod}+F7 : Toggle transcription dock`);
+  console.log(`  ${mod}+F8 : Toggle transcription dock`);
   console.log(`  ${mod}+1-9 : Place window (numpad layout)`);
   console.log('  Ctrl+Alt+Shift+Arrow : Move window');
   console.log(
