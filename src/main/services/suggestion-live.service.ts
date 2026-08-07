@@ -49,17 +49,15 @@ class LiveSuggestionService {
     });
   }
 
-  private async generateSuggestion(taskId: string, transcripts: Transcript[]): Promise<void> {
-    if (!transcripts || transcripts.length === 0) {
-      return;
-    }
-
+  private async generateSuggestion(
+    taskId: string,
+    controller: AbortController,
+    transcripts: Transcript[]
+  ): Promise<void> {
+    // No empty-transcript guard here on purpose. startGenerateSuggestion already returns
+    // before registering a task, and a second check would return ahead of the finally that
+    // clears the abort map entry, leaking it.
     const epoch = this.epoch;
-    const controller = this.abortMap.get(taskId);
-    if (!controller) {
-      return;
-    }
-
     const timestamp = DateTimeUtil.now();
     const suggestion: LiveSuggestion = {
       timestamp,
@@ -190,8 +188,9 @@ class LiveSuggestionService {
 
     // Start the background task
     const taskId = UuidUtil.generate();
-    this.abortMap.set(taskId, new AbortController());
-    void this.generateSuggestion(taskId, filteredTranscripts);
+    const controller = new AbortController();
+    this.abortMap.set(taskId, controller);
+    void this.generateSuggestion(taskId, controller, filteredTranscripts);
   }
 
   stopRunningTasks(): void {

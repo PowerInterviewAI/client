@@ -85,20 +85,20 @@ class TranscriptService {
       // These two conditions are the only ways a suggestion is silently suppressed, and
       // neither surfaces anywhere. Logged so a field or local repro can distinguish
       // "the request was never made" from "the request was made and stalled".
-      // A partial that has gone quiet is almost certainly orphaned by a dropped ASR socket.
-      // Treat it as absent rather than letting it gate suggestions indefinitely.
+
+      // A partial that has gone quiet is almost certainly orphaned by a dropped ASR socket
+      // whose final never arrived. Treat it as absent rather than gating indefinitely.
       const blockedByPartial =
         !!this.selfPartialTranscript &&
         now - this.selfPartialTranscript.endTimestamp <= SELF_PARTIAL_STALE_MS;
+      const selfAgeMs = lastSelf ? now - lastSelf.endTimestamp : null;
       const skipDueToRecentSelf =
-        !!lastSelf &&
-        lastSelf.isFinal &&
-        Date.now() - lastSelf.endTimestamp <= LIVE_SUGGESTION_GAP_MS;
+        !!lastSelf && lastSelf.isFinal && selfAgeMs !== null && selfAgeMs <= LIVE_SUGGESTION_GAP_MS;
 
       console.info(
         `[TranscriptService] suggestion gate: blockedByPartial=${blockedByPartial}` +
           ` skipDueToRecentSelf=${skipDueToRecentSelf}` +
-          ` lastSelfAgeMs=${lastSelf ? Date.now() - lastSelf.endTimestamp : 'none'}`
+          ` lastSelfAgeMs=${selfAgeMs ?? 'none'}`
       );
 
       if (!blockedByPartial && !skipDueToRecentSelf) {

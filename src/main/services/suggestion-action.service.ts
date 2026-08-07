@@ -154,12 +154,13 @@ export class ActionSuggestionService {
     this.stopRunningTasks();
 
     const taskId = UuidUtil.generate();
-    this.abortMap.set(taskId, new AbortController());
+    const controller = new AbortController();
+    this.abortMap.set(taskId, controller);
 
     // generateSuggestion owns the release, but it can throw before reaching its own try/finally
     // (config reads, state reads, the first setSuggestion). Releasing here on a synchronous
     // rejection keeps a leaked lock from disabling all three action hotkeys for the session.
-    this.generateSuggestion(taskId, appState.transcripts).catch((error) => {
+    this.generateSuggestion(taskId, controller, appState.transcripts).catch((error) => {
       console.error('[ActionSuggestionService] generateSuggestion rejected:', error);
       actionLockService.release(ActionType.CaptureSuggestion);
     });
@@ -197,12 +198,15 @@ export class ActionSuggestionService {
     return '';
   }
 
-  private async generateSuggestion(taskId: string, transcripts: Transcript[]): Promise<void> {
-    const controller = this.abortMap.get(taskId);
-    if (!controller) {
-      return;
-    }
-
+  private async generateSuggestion(
+    taskId: string,
+    controller: AbortController,
+    transcripts: Transcript[]
+  ): Promise<void> {
+    // The controller is passed in rather than looked up. A lookup needs a not-found branch,
+    // and that branch would return before reaching the finally that releases the action lock -
+    // leaking it permanently and disabling all three hotkeys, which is the exact bug this
+    // service is being fixed for.
     const timestamp = DateTimeUtil.now();
     const conf = configStore.getConfig();
     const interviewConfig = appStateService.getState().interviewConfig;
