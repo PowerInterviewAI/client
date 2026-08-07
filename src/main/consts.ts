@@ -30,8 +30,8 @@ export const SELF_PARTIAL_STALE_MS = 15_000;
 // cost for no effect - and it grew for the whole interview.
 //
 // Deliberately larger than the backend's window, so a change there does not silently starve the
-// prompt. This does NOT bound retained history: the end-of-interview summary and .docx export
-// read the full transcript from app state.
+// prompt. This does NOT bound retained history: the end-of-interview summary and the .docx/.md
+// export read the full transcript from app state.
 export const TRANSCRIPT_UPLOAD_LIMIT = 60;
 
 // Suggestion constants

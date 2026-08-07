@@ -1,5 +1,6 @@
 import type { AppState } from './app-state';
 import type { Config } from './config';
+import type { ExportFormat } from './export';
 import type { LLMConfig, LLMConfigValidationResult, LLMModelInfo } from './llm';
 import type {
   AvailableCurrency,
@@ -131,7 +132,7 @@ declare global {
 
     // Tools management
     tools: {
-      exportTranscript: () => Promise<string | null>;
+      exportTranscript: (format: ExportFormat) => Promise<string | null>;
       clearAll: () => Promise<void>;
       setPlaceholderData: () => Promise<void>;
       saveImage: (opts: {

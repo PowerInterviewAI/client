@@ -19,6 +19,7 @@ for (const module of [
   './account.test.mjs',
   './stealth-surface.test.mjs',
   './stealth-toggle.test.mjs',
+  './tools-export.test.mjs',
 ]) {
   const { run } = await import(module);
   failures.push(...(await run(userDataDir)));
