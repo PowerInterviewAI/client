@@ -8,8 +8,8 @@ export const BACKEND_BASE_URL = EnvUtil.isDev()
 // 320px left column and cost width, not height. It now docks at the bottom and takes a band out
 // of the same vertical budget as the suggestion panels, so the minimum grows by the dock's own
 // floor plus the gap above it (TRANSCRIPT_DOCK_MIN_HEIGHT 120 + 4, both in renderer/lib/consts).
-export const MIN_WIDTH = 900;
-export const MIN_HEIGHT = 664;
+export const MIN_WIDTH = 840;
+export const MIN_HEIGHT = 600;
 
 // Bounds a first launch starts with, before the user resizes and we persist their choice.
 export const DEFAULT_WIDTH = 1024;
