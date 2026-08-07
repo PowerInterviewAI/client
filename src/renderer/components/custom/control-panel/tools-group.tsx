@@ -196,8 +196,9 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
             <p>Export Interview</p>
           </TooltipContent>
         </Tooltip>
-        {/* Opens upward: the control panel is the bottom-most element, so a downward menu would
-            land past the window edge. */}
+        {/* Opens upward, and not just for looks: the menu is portalled into the overflow-hidden
+            <main> from main-frame, and the control panel is the bottom-most thing in it, so a
+            downward menu would open past that edge and get clipped rather than merely flipped. */}
         <DropdownMenuContent align="end" side="top">
           <DropdownMenuItem onClick={() => void onExportTranscript('docx')}>
             <FileText className="mr-2 h-4 w-4" />
