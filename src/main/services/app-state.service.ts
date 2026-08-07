@@ -127,7 +127,7 @@ export class AppStateService {
 
     this.broadcastTimer = setTimeout(() => {
       this.broadcastTimer = null;
-      this.flushRenderer();
+      this.sendToRenderer();
     }, BROADCAST_COALESCE_MS);
   }
 
@@ -143,7 +143,17 @@ export class AppStateService {
 
     clearTimeout(this.broadcastTimer);
     this.broadcastTimer = null;
+    this.sendToRenderer();
+  }
 
+  /**
+   * The actual send. Separate from flushRenderer because the two callers disagree about the
+   * pending check: flushRenderer needs it, the timer callback must not have it. Folding the
+   * send into flushRenderer meant the timer cleared its own handle and then called a method
+   * guarded on that handle, so the coalesced path - the only one production uses - silently
+   * sent nothing at all.
+   */
+  private sendToRenderer(): void {
     try {
       const win = getWindowReference();
       if (win && !win.isDestroyed()) {
