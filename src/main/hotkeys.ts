@@ -6,7 +6,6 @@ import {
   moveWindowByArrow,
   moveWindowToCorner,
   resizeWindowByArrow,
-  restoreWindow,
   toggleOpacity,
   toggleStealth,
   WindowPosition,
@@ -40,13 +39,9 @@ export function registerGlobalHotkeys(): void {
   // Opacity toggle: cycle opacity when in stealth mode
   globalShortcut.register(`${BASE}+N`, () => toggleOpacity());
 
-  // Restore the window. The window is kept off the taskbar, so this is the only way back after
-  // minimizing that does not put the app's name on a shared screen. F8 rather than R: these are
-  // system-wide, and Ctrl+Shift+R is hard-reload in every browser.
-  globalShortcut.register(`${BASE}+F8`, () => restoreWindow());
-
-  // Toggle the transcription dock. F7 rather than T for the same reason as above, and it keeps
-  // the dock reachable in stealth mode, where the control panel carrying the button is hidden.
+  // Toggle the transcription dock. F7 rather than T because these shortcuts are system-wide, and
+  // it keeps the dock reachable in stealth mode, where the control panel carrying the button is
+  // hidden.
   globalShortcut.register(`${BASE}+F7`, () => {
     const w = BrowserWindow.getAllWindows()[0];
     if (w && !w.isDestroyed()) w.webContents.send('hotkey:toggle-transcript');
@@ -81,16 +76,26 @@ export function registerGlobalHotkeys(): void {
   // 1 2 3
   const numToCorner = (n: number): WindowPosition => {
     switch (String(n)) {
-      case '1': return 'bottom-left';
-      case '2': return 'bottom-center';
-      case '3': return 'bottom-right';
-      case '4': return 'middle-left';
-      case '5': return 'center';
-      case '6': return 'middle-right';
-      case '7': return 'top-left';
-      case '8': return 'top-center';
-      case '9': return 'top-right';
-      default:  return 'center';
+      case '1':
+        return 'bottom-left';
+      case '2':
+        return 'bottom-center';
+      case '3':
+        return 'bottom-right';
+      case '4':
+        return 'middle-left';
+      case '5':
+        return 'center';
+      case '6':
+        return 'middle-right';
+      case '7':
+        return 'top-left';
+      case '8':
+        return 'top-center';
+      case '9':
+        return 'top-right';
+      default:
+        return 'center';
     }
   };
 
@@ -169,10 +174,11 @@ export function registerGlobalHotkeys(): void {
   console.log(`  ${mod}+M : Toggle stealth mode`);
   console.log(`  ${mod}+N : Toggle opacity (stealth only)`);
   console.log(`  ${mod}+F7 : Toggle transcription dock`);
-  console.log(`  ${mod}+F8 : Restore window (no taskbar button exists)`);
   console.log(`  ${mod}+1-9 : Place window (numpad layout)`);
   console.log('  Ctrl+Alt+Shift+Arrow : Move window');
-  console.log(isMac ? '  Ctrl+Opt+Cmd+Arrow : Resize window' : '  Ctrl+Win+Shift+Arrow : Resize window');
+  console.log(
+    isMac ? '  Ctrl+Opt+Cmd+Arrow : Resize window' : '  Ctrl+Win+Shift+Arrow : Resize window'
+  );
   console.log(`  ${mod}+J / K / L : Scroll live suggestions`);
   console.log(`  ${mod}+U / I / O : Scroll action suggestions`);
   console.log(`  ${mod}+F9/F10/F11/F12 : Capture / Clear / Trigger / Capture+Trigger`);

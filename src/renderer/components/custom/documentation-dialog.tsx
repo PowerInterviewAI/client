@@ -67,8 +67,7 @@ export default function DocumentationDialog({ open, onOpenChange }: Documentatio
           <p className="text-sm text-muted-foreground mb-4">
             {APP_NAME} stays out of the taskbar and the macOS Dock so it is not visible when you
             share your screen, which also means a minimized window has no button to click. Just
-            launch {APP_NAME} again: it does not start a second copy, it brings this window back.{' '}
-            {HOTKEYS[Hotkey.RestoreWin].combo} does the same without leaving the keyboard.
+            launch {APP_NAME} again: it does not start a second copy, it brings this window back.
           </p>
 
           <h3 className="text-sm font-semibold mb-2">Hotkeys</h3>

@@ -77,7 +77,7 @@ The main window reference is passed to `windowControlService` and `zoomService` 
 
 The app keeps itself off the surfaces a screen share exposes: `skipTaskbar: true` on the window, no desktop shortcut from the NSIS installer (and `build/installer.nsh` deletes one left by an older install), and on macOS an accessory activation policy - `LSUIElement` in the packaged Info.plist, `app.setActivationPolicy('accessory')` for dev runs - so there is no Dock icon and no Cmd+Tab entry.
 
-Two consequences follow from having no taskbar button and no Dock icon. A minimized window can only be brought back by relaunching the app (the single instance lock routes to `restoreWindow()`) or with `Ctrl+Shift+F8` (`Ctrl+Opt+F8` on macOS) - F8 because these shortcuts are system-wide and `Ctrl+Shift+R` is hard-reload in every browser. And `window-all-closed` quits on every platform including macOS, because a windowless process would otherwise sit there holding the global hotkeys unreachable. `test/stealth-surface.test.mjs` pins all of it.
+Two consequences follow from having no taskbar button and no Dock icon. A minimized window can only be brought back by relaunching the app - the single instance lock routes to `restoreWindow()`. And `window-all-closed` quits on every platform including macOS, because a windowless process would otherwise sit there holding the global hotkeys unreachable. `test/stealth-surface.test.mjs` pins all of it.
 
 Always-on-top belongs to stealth mode only (`'screen-saver'` level), and is dropped again on the way out.
 

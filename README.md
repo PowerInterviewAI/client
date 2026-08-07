@@ -66,7 +66,7 @@ Stay on top of the conversation with live ASR:
 
 The app keeps itself off the surfaces a screen share exposes. There is no desktop shortcut, no taskbar button on Windows, and no Dock icon or Cmd+Tab entry on macOS. Stealth mode additionally hides the window from screen capture.
 
-**Lost the window?** Launch Power Interview again. It does not start a second copy - the running app brings its window back and focuses it. `Ctrl+Shift+F8` (`Ctrl+Opt+F8` on macOS) does the same without leaving the keyboard.
+**Lost the window?** Launch Power Interview again. It does not start a second copy - the running app brings its window back and focuses it.
 
 ## Platform Support
 

@@ -44,7 +44,9 @@ export async function run() {
     /^[\s\S]{0,120}app\.quit\(\)/.test(onAllClosed) && !/^[\s\S]{0,120}darwin/.test(onAllClosed)
   );
   const hotkeys = fs.readFileSync(path.join(ROOT, 'electron-dist', 'hotkeys.js'), 'utf8');
-  check('a restore hotkey is registered', /restoreWindow\(\)/.test(hotkeys));
+
+  // The restore hotkey is gone: relaunching the app is the recovery path, and F8 is now free.
+  check('no F8 shortcut is registered', !/\+F8/.test(hotkeys));
 
   // Stealth mode hides the control panel that carries the transcription toggle, so the hotkey
   // is the only route to it there. It takes both halves to work, and neither fails loudly.
