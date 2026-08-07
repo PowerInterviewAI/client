@@ -18,6 +18,19 @@ const isMac = process.platform === 'darwin';
 // Windows/Linux use Control+Shift
 const BASE = isMac ? 'Control+Alt' : 'Control+Shift';
 
+// globalShortcut.register() returns false rather than throwing when another application has
+// already claimed the accelerator system-wide - a common combo like Ctrl+Shift+L is far more
+// likely to lose that race than e.g. Ctrl+Shift+J, so without this check one binding can go
+// dead with no trace while its neighbors keep working.
+function registerShortcut(accelerator: string, callback: () => void): void {
+  const ok = globalShortcut.register(accelerator, callback);
+  if (!ok) {
+    console.warn(
+      `[Hotkeys] failed to register ${accelerator} - likely already claimed by another application`
+    );
+  }
+}
+
 /**
  * Register global hotkeys for window management and navigation
  */
@@ -26,7 +39,7 @@ export function registerGlobalHotkeys(): void {
   globalShortcut.unregisterAll();
 
   // Stop assistant
-  globalShortcut.register(`${BASE}+Q`, () => {
+  registerShortcut(`${BASE}+Q`, () => {
     const w = BrowserWindow.getAllWindows()[0];
     if (w && !w.isDestroyed()) {
       w.webContents.send('hotkey:stop-assistant');
@@ -34,35 +47,35 @@ export function registerGlobalHotkeys(): void {
   });
 
   // Stealth mode toggle
-  globalShortcut.register(`${BASE}+M`, () => toggleStealth());
+  registerShortcut(`${BASE}+M`, () => toggleStealth());
 
   // Opacity toggle: cycle opacity when in stealth mode
-  globalShortcut.register(`${BASE}+N`, () => toggleOpacity());
+  registerShortcut(`${BASE}+N`, () => toggleOpacity());
 
   // Toggle the transcription dock. F8 rather than T because these shortcuts are system-wide, and
   // it keeps the dock reachable in stealth mode, where the control panel carrying the button is
   // hidden.
-  globalShortcut.register(`${BASE}+F8`, () => {
+  registerShortcut(`${BASE}+F8`, () => {
     const w = BrowserWindow.getAllWindows()[0];
     if (w && !w.isDestroyed()) w.webContents.send('hotkey:toggle-transcript');
   });
 
   // Zoom hotkeys
-  globalShortcut.register(`${BASE}+=`, () => {
+  registerShortcut(`${BASE}+=`, () => {
     try {
       zoomService.adjustZoom(ZOOM_STEP);
     } catch (e) {
       console.warn('hotkey zoom in failed', e);
     }
   });
-  globalShortcut.register(`${BASE}+-`, () => {
+  registerShortcut(`${BASE}+-`, () => {
     try {
       zoomService.adjustZoom(-ZOOM_STEP);
     } catch (e) {
       console.warn('hotkey zoom out failed', e);
     }
   });
-  globalShortcut.register(`${BASE}+0`, () => {
+  registerShortcut(`${BASE}+0`, () => {
     try {
       zoomService.resetZoom();
     } catch (e) {
@@ -100,63 +113,63 @@ export function registerGlobalHotkeys(): void {
   };
 
   for (let i = 1; i <= 9; i++) {
-    globalShortcut.register(`${BASE}+${i}`, () => {
+    registerShortcut(`${BASE}+${i}`, () => {
       moveWindowToCorner(numToCorner(i));
     });
   }
 
   // Window movement: Ctrl+Alt+Shift+Arrow (Alt = Option on macOS)
-  globalShortcut.register('Control+Alt+Shift+Up', () => moveWindowByArrow('up'));
-  globalShortcut.register('Control+Alt+Shift+Down', () => moveWindowByArrow('down'));
-  globalShortcut.register('Control+Alt+Shift+Left', () => moveWindowByArrow('left'));
-  globalShortcut.register('Control+Alt+Shift+Right', () => moveWindowByArrow('right'));
+  registerShortcut('Control+Alt+Shift+Up', () => moveWindowByArrow('up'));
+  registerShortcut('Control+Alt+Shift+Down', () => moveWindowByArrow('down'));
+  registerShortcut('Control+Alt+Shift+Left', () => moveWindowByArrow('left'));
+  registerShortcut('Control+Alt+Shift+Right', () => moveWindowByArrow('right'));
 
   // Window resize: macOS = Ctrl+Option+Command+Arrow, Windows = Ctrl+Win+Shift+Arrow
   const resizeMod = isMac ? 'Control+Alt+Super' : 'Control+Super+Shift';
-  globalShortcut.register(`${resizeMod}+Up`, () => resizeWindowByArrow('up'));
-  globalShortcut.register(`${resizeMod}+Down`, () => resizeWindowByArrow('down'));
-  globalShortcut.register(`${resizeMod}+Right`, () => resizeWindowByArrow('right'));
-  globalShortcut.register(`${resizeMod}+Left`, () => resizeWindowByArrow('left'));
+  registerShortcut(`${resizeMod}+Up`, () => resizeWindowByArrow('up'));
+  registerShortcut(`${resizeMod}+Down`, () => resizeWindowByArrow('down'));
+  registerShortcut(`${resizeMod}+Right`, () => resizeWindowByArrow('right'));
+  registerShortcut(`${resizeMod}+Left`, () => resizeWindowByArrow('left'));
 
   // Scroll live suggestions: J (down) / K (up) / L (end)
-  globalShortcut.register(`${BASE}+K`, () => {
+  registerShortcut(`${BASE}+K`, () => {
     const w = BrowserWindow.getAllWindows()[0];
     if (w && !w.isDestroyed()) w.webContents.send('hotkey:scroll', '0', 'up');
   });
-  globalShortcut.register(`${BASE}+J`, () => {
+  registerShortcut(`${BASE}+J`, () => {
     const w = BrowserWindow.getAllWindows()[0];
     if (w && !w.isDestroyed()) w.webContents.send('hotkey:scroll', '0', 'down');
   });
-  globalShortcut.register(`${BASE}+L`, () => {
+  registerShortcut(`${BASE}+L`, () => {
     const w = BrowserWindow.getAllWindows()[0];
     if (w && !w.isDestroyed()) w.webContents.send('hotkey:scroll', '0', 'end');
   });
 
   // Scroll action suggestions: I (up) / U (down) / O (end)
-  globalShortcut.register(`${BASE}+I`, () => {
+  registerShortcut(`${BASE}+I`, () => {
     const w = BrowserWindow.getAllWindows()[0];
     if (w && !w.isDestroyed()) w.webContents.send('hotkey:scroll', '1', 'up');
   });
-  globalShortcut.register(`${BASE}+U`, () => {
+  registerShortcut(`${BASE}+U`, () => {
     const w = BrowserWindow.getAllWindows()[0];
     if (w && !w.isDestroyed()) w.webContents.send('hotkey:scroll', '1', 'down');
   });
-  globalShortcut.register(`${BASE}+O`, () => {
+  registerShortcut(`${BASE}+O`, () => {
     const w = BrowserWindow.getAllWindows()[0];
     if (w && !w.isDestroyed()) w.webContents.send('hotkey:scroll', '1', 'end');
   });
 
   // Action suggestion operations
-  globalShortcut.register(`${BASE}+F9`, async () => {
+  registerShortcut(`${BASE}+F9`, async () => {
     await actionSuggestionService.captureScreenshot();
   });
-  globalShortcut.register(`${BASE}+F10`, async () => {
+  registerShortcut(`${BASE}+F10`, async () => {
     await actionSuggestionService.clearImages();
   });
-  globalShortcut.register(`${BASE}+F11`, async () => {
+  registerShortcut(`${BASE}+F11`, async () => {
     await actionSuggestionService.startGenerateSuggestion();
   });
-  globalShortcut.register(`${BASE}+F12`, async () => {
+  registerShortcut(`${BASE}+F12`, async () => {
     try {
       if (!actionSuggestionService.hasUploadedImages()) {
         await actionSuggestionService.captureScreenshot();
