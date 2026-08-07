@@ -109,6 +109,7 @@ declare global {
         text: string;
       }) => Promise<void>;
       setSessionToken: (token: string) => Promise<void>;
+      channelDisconnected: (channel: 'ch_0' | 'ch_1') => Promise<void>;
       enableLoopbackAudio: () => Promise<void>;
       disableLoopbackAudio: () => Promise<void>;
     };

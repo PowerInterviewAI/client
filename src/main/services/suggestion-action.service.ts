@@ -2,7 +2,15 @@ import { BrowserWindow, desktopCapturer, screen } from 'electron';
 import sharp from 'sharp';
 
 import { LLMApi } from '../api/llm.js';
-import { ACTION_SUGGESTION_MAX_CAPTURES, ACTION_TIMEOUT_MS, BACKEND_BASE_URL } from '../consts.js';
+import {
+  ACTION_SUGGESTION_MAX_CAPTURES,
+  ACTION_SUGGESTION_TTFB_MS,
+  ACTION_TIMEOUT_MS,
+  BACKEND_BASE_URL,
+  CAPTURE_MAX_EDGE_PX,
+  SUGGESTION_STALL_MS,
+  TRANSCRIPT_UPLOAD_LIMIT,
+} from '../consts.js';
 import { configStore } from '../store/config.store.js';
 import {
   ActionSuggestion,
@@ -23,7 +31,7 @@ export class ActionSuggestionService {
   private llmApi: LLMApi = new LLMApi();
   private uploadedImageNames: string[] = [];
   private suggestions: Map<number, ActionSuggestion> = new Map();
-  private abortMap: Map<string, boolean> = new Map();
+  private abortMap: Map<string, AbortController> = new Map();
 
   hasUploadedImages(): boolean {
     return this.uploadedImageNames.length > 0;
@@ -146,14 +154,21 @@ export class ActionSuggestionService {
     this.stopRunningTasks();
 
     const taskId = UuidUtil.generate();
-    this.abortMap.set(taskId, false);
-    this.generateSuggestion(taskId, appState.transcripts);
+    const controller = new AbortController();
+    this.abortMap.set(taskId, controller);
+
+    // generateSuggestion owns the release, but it can throw before reaching its own try/finally
+    // (config reads, state reads, the first setSuggestion). Releasing here on a synchronous
+    // rejection keeps a leaked lock from disabling all three action hotkeys for the session.
+    this.generateSuggestion(taskId, controller, appState.transcripts).catch((error) => {
+      console.error('[ActionSuggestionService] generateSuggestion rejected:', error);
+      actionLockService.release(ActionType.CaptureSuggestion);
+    });
   }
 
   stopRunningTasks(): void {
-    this.abortMap.forEach((_value, key) => {
-      this.abortMap.set(key, true);
-    });
+    this.abortMap.forEach((controller) => controller.abort());
+    this.abortMap.clear();
   }
 
   async clear(): Promise<void> {
@@ -183,7 +198,15 @@ export class ActionSuggestionService {
     return '';
   }
 
-  private async generateSuggestion(taskId: string, transcripts: Transcript[]): Promise<void> {
+  private async generateSuggestion(
+    taskId: string,
+    controller: AbortController,
+    transcripts: Transcript[]
+  ): Promise<void> {
+    // The controller is passed in rather than looked up. A lookup needs a not-found branch,
+    // and that branch would return before reaching the finally that releases the action lock -
+    // leaking it permanently and disabling all three hotkeys, which is the exact bug this
+    // service is being fixed for.
     const timestamp = DateTimeUtil.now();
     const conf = configStore.getConfig();
     const interviewConfig = appStateService.getState().interviewConfig;
@@ -192,7 +215,7 @@ export class ActionSuggestionService {
       config: conf.llmConf,
       profile_data: interviewConfig.profileData,
       context: interviewConfig.context,
-      transcripts: transcripts,
+      transcripts: transcripts.slice(-TRANSCRIPT_UPLOAD_LIMIT),
       image_names: [...this.uploadedImageNames],
     };
 
@@ -210,8 +233,20 @@ export class ActionSuggestionService {
 
     this.uploadedImageNames = [];
 
+    // See the live-suggestion service: a resettable timer, not a race against reader.read().
+    let stallTimer: NodeJS.Timeout | null = null;
+    const armStallTimer = (ms: number): void => {
+      if (stallTimer) clearTimeout(stallTimer);
+      stallTimer = setTimeout(() => {
+        controller.abort(new DOMException('stalled', 'TimeoutError'));
+      }, ms);
+    };
+
     try {
-      const stream = await this.llmApi.generateActionSuggestionStream(payload);
+      // Action requests carry up to four screenshots that the backend base64-encodes before
+      // the provider emits a token, so they legitimately start much slower than live ones.
+      armStallTimer(ACTION_SUGGESTION_TTFB_MS);
+      const stream = await this.llmApi.generateActionSuggestionStream(payload, controller.signal);
       if (!stream) {
         throw new Error('Failed to get stream response');
       }
@@ -228,36 +263,55 @@ export class ActionSuggestionService {
 
           if (done) break;
 
-          if (this.abortMap.get(taskId)) {
-            this.abortMap.delete(taskId);
-
-            console.info('[ActionSuggestionService] Action suggestion generation stopped by user');
-            suggestion.state = SuggestionState.Stopped;
-            this.setSuggestion(timestamp, suggestion);
-            return;
-          }
-
           if (value) {
+            armStallTimer(SUGGESTION_STALL_MS);
             const chunk = decoder.decode(value, { stream: true });
             suggestion.answer += chunk;
-            suggestion.state = SuggestionState.Loading;
             this.setSuggestion(timestamp, suggestion);
           }
         }
 
         if (suggestion.state === SuggestionState.Loading) {
-          suggestion.state = SuggestionState.Success;
+          if (suggestion.answer.length === 0) {
+            // This path already promoted to Loading before the loop, so an empty stream lands
+            // here as a blank Success card rather than a stuck one. Still wrong: report it.
+            suggestion.state = SuggestionState.Error;
+            suggestion.error = 'The model returned an empty response.';
+          } else {
+            suggestion.state = SuggestionState.Success;
+          }
           this.setSuggestion(timestamp, suggestion);
         }
       } finally {
+        // releaseLock does not cancel the body; an abandoned body leaks the connection.
+        await reader.cancel().catch(() => {});
         reader.releaseLock();
       }
     } catch (error) {
-      console.error('[ActionSuggestionService] Failed to generate action suggestion:', error);
-      suggestion.state = SuggestionState.Error;
-      suggestion.error = getSuggestionErrorMessage(error);
+      // See the live-suggestion service: an abort rejects with the reason, so the signal is
+      // the reliable source, not the error name.
+      const aborted = controller.signal.aborted;
+      const stalled =
+        aborted &&
+        controller.signal.reason instanceof Error &&
+        controller.signal.reason.name === 'TimeoutError';
+
+      if (aborted && !stalled) {
+        console.info('[ActionSuggestionService] Action suggestion generation stopped');
+        suggestion.state = SuggestionState.Stopped;
+      } else {
+        if (!aborted) {
+          console.error('[ActionSuggestionService] Failed to generate action suggestion:', error);
+        }
+        suggestion.state = SuggestionState.Error;
+        suggestion.error = stalled
+          ? 'The response timed out. Please try again.'
+          : getSuggestionErrorMessage(error);
+      }
       this.setSuggestion(timestamp, suggestion);
     } finally {
+      if (stallTimer) clearTimeout(stallTimer);
+      this.abortMap.delete(taskId);
       actionLockService.release(ActionType.CaptureSuggestion);
     }
   }
@@ -278,12 +332,19 @@ export class ActionSuggestionService {
       const physicalWidth = Math.round(targetDisplay.size.width * targetDisplay.scaleFactor);
       const physicalHeight = Math.round(targetDisplay.size.height * targetDisplay.scaleFactor);
 
+      // Scale at capture time rather than after. thumbnail.toPNG() below is synchronous and
+      // runs on the main process, so shrinking the bitmap first is what keeps it from stalling
+      // the event loop; doing it in sharp afterwards would be too late.
+      const scale = Math.min(1, CAPTURE_MAX_EDGE_PX / Math.max(physicalWidth, physicalHeight));
+      const captureWidth = Math.round(physicalWidth * scale);
+      const captureHeight = Math.round(physicalHeight * scale);
+
       // desktopCapturer is Electron's built-in screen-capture API.
       // A timeout guards against indefinite hangs on restricted or virtual display adapters.
       const sources = await Promise.race([
         desktopCapturer.getSources({
           types: ['screen'],
-          thumbnailSize: { width: physicalWidth, height: physicalHeight },
+          thumbnailSize: { width: captureWidth, height: captureHeight },
         }),
         new Promise<never>((_, reject) =>
           setTimeout(

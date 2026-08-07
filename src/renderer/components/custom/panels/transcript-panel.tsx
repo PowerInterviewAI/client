@@ -81,7 +81,15 @@ function TranscriptPanel({ transcripts, isRunning = false }: TranscriptPanelProp
           <>
             <div className="divide-y divide-border/50 px-2 py-1">
               {transcripts.map((item, idx) => (
-                <div key={idx} className="flex items-baseline gap-2 py-1">
+                // content-visibility skips style, layout and paint for rows scrolled out of
+                // view, which is the cost that grew with transcript length. Chosen over a
+                // windowing library because rows wrap to variable heights: `auto` in
+                // contain-intrinsic-size remembers each row's last rendered size, so scroll
+                // position and scrollIntoView stay accurate without measurement plumbing.
+                <div
+                  key={idx}
+                  className="flex items-baseline gap-2 py-1 [content-visibility:auto] [contain-intrinsic-size:auto_2rem]"
+                >
                   {/* The dock is wide and short, so the speaker rides inline with the words
                       rather than spending a line of its own on them. */}
                   <p className="flex-1 text-sm text-foreground/90 leading-snug text-wrap">

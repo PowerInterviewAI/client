@@ -29,8 +29,15 @@ const DEFAULT_STATE: AppState = {
   interviewConfigLoaded: false,
 };
 
+// Every broadcast structured-clones the whole renderer state, and they fire on each streamed
+// token and each ASR partial - roughly 20/second across two channels, against a transcript array
+// that grows for the whole interview. Coalescing bounds that cost per unit time instead of per
+// event. Short enough that streaming still reads as streaming.
+const BROADCAST_COALESCE_MS = 50;
+
 export class AppStateService {
   private state: AppState;
+  private broadcastTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     this.state = { ...DEFAULT_STATE };
@@ -116,6 +123,27 @@ export class AppStateService {
   }
 
   private notifyRenderer(): void {
+    if (this.broadcastTimer) return;
+
+    this.broadcastTimer = setTimeout(() => {
+      this.broadcastTimer = null;
+      this.flushRenderer();
+    }, BROADCAST_COALESCE_MS);
+  }
+
+  /**
+   * Send a pending broadcast immediately, if one is scheduled.
+   *
+   * Coalescing means a caller that needs the renderer to have the current state right now - a
+   * test, or a shutdown path - cannot simply wait. Deliberately a no-op when nothing is
+   * pending, so flushing cannot manufacture a broadcast that the change detection suppressed.
+   */
+  flushRenderer(): void {
+    if (!this.broadcastTimer) return;
+
+    clearTimeout(this.broadcastTimer);
+    this.broadcastTimer = null;
+
     try {
       const win = getWindowReference();
       if (win && !win.isDestroyed()) {

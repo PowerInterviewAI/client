@@ -204,7 +204,11 @@ function LiveSuggestionsPanel({
                 animate={s.timestamp > lastRevealedAt}
                 className="border-b border-border/40 last:border-0"
               >
-                <div className="flex gap-3 py-3">
+                {/* Skip style, layout and paint for cards scrolled out of view. Applied here
+                    rather than on SuggestionReveal's wrapper, which is an animating grid that
+                    size containment would fight. The newest card - the streaming one - is
+                    always on screen, so containment never applies to it. */}
+                <div className="flex gap-3 py-3 [content-visibility:auto] [contain-intrinsic-size:auto_6rem]">
                   {idx === 0 &&
                   (s.state === SuggestionState.Pending || s.state === SuggestionState.Loading) ? (
                     <Loader className="h-4 w-4 mt-px text-accent shrink-0 animate-spin" />

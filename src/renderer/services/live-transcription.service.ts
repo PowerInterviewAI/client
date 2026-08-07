@@ -219,6 +219,13 @@ class AudioWsStream {
 
     ws.onclose = () => {
       if (this.stopping || !this.active) return;
+
+      // A reconnect starts a fresh backend session, so any in-flight utterance never gets its
+      // final. Tell main to close it out, or the orphaned partial gates live suggestions.
+      getElectron()
+        ?.transcription.channelDisconnected(this.channel)
+        .catch((error) => console.error('Failed to report channel disconnect:', error));
+
       this.scheduleReconnect();
     };
   }

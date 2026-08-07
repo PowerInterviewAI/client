@@ -101,6 +101,8 @@ const electronApi = {
       ipcRenderer.invoke('transcription:ingest', payload),
     setSessionToken: (token: string) =>
       ipcRenderer.invoke('transcription:set-session-token', token),
+    channelDisconnected: (channel: 'ch_0' | 'ch_1') =>
+      ipcRenderer.invoke('transcription:channel-disconnected', channel),
     // Channel names set by the electron-audio-loopback package — cannot be renamed
     enableLoopbackAudio: () => ipcRenderer.invoke('enable-loopback-audio'),
     disableLoopbackAudio: () => ipcRenderer.invoke('disable-loopback-audio'),
