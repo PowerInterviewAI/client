@@ -46,14 +46,22 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
 
-    // Save remember me preference and credentials if checked
-    await updateConfig({
-      rememberMe,
-      email: rememberMe ? email.trim() : '',
-      password: rememberMe ? password : '',
-    });
+    // Persisting the remember-me choice must never block the sign-in attempt.
+    try {
+      await updateConfig({
+        rememberMe,
+        email: rememberMe ? email.trim() : '',
+        password: rememberMe ? password : '',
+      });
+    } catch (err) {
+      console.error('Failed to save remember-me preference:', err);
+    }
 
-    await login(email.trim(), password);
+    try {
+      await login(email.trim(), password);
+    } catch {
+      // useAuth already set `error`, which is rendered below; nothing else to do here.
+    }
   };
 
   useEffect(() => {

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import ConfigurationDialog from '@/components/custom/configuration-dialog';
 import DocumentationDialog from '@/components/custom/documentation-dialog';
@@ -77,7 +78,11 @@ export default function TitlebarMenu({ style }: { style?: React.CSSProperties })
     try {
       await logout();
     } catch (err) {
+      // Read the message off the caught error rather than the `error` state above - `logout`
+      // sets it and throws in the same tick, so this closure's `error` is still last render's
+      // (stale) value.
       console.error('Sign out failed:', err);
+      toast.error(err instanceof Error ? err.message : 'Failed to sign out');
     }
   };
 

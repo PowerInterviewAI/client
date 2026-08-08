@@ -165,8 +165,11 @@ export class AuthService {
         return { success: false, error: response.error.message || 'Change password failed' };
       }
 
-      // Update stored password in config store
-      configStore.updateConfig({ password: newPassword });
+      // Only persist when the user opted in - login/logout leave the store empty otherwise,
+      // and writing here would put credentials back behind their back.
+      if (configStore.getConfig().rememberMe) {
+        configStore.updateConfig({ password: newPassword });
+      }
 
       return { success: true };
     } catch {
