@@ -106,6 +106,16 @@ function applySurfaceVisibility(): void {
     } catch (e) {
       console.warn('setSkipTaskbar failed:', e);
     }
+
+    // `titleBarStyle: 'hidden'` draws the traffic lights as native chrome, independent of
+    // setSkipTaskbar/the Dock icon - they stay on screen in stealth mode unless hidden here too.
+    if (isMac) {
+      try {
+        win.setWindowButtonVisibility(!_stealth);
+      } catch (e) {
+        console.warn('setWindowButtonVisibility failed:', e);
+      }
+    }
   }
 
   if (isMac) applyDockVisibility();

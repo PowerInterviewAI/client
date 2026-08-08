@@ -186,9 +186,13 @@ declare global {
       checkAll: () => Promise<{
         mic: 'not-determined' | 'denied' | 'granted' | 'restricted' | 'unknown';
         screen: 'not-determined' | 'denied' | 'granted' | 'restricted' | 'unknown';
+        // True when Screen Recording shows 'granted' but was granted after this process
+        // launched - macOS won't apply it to a live capture until the app is relaunched.
+        screenNeedsRelaunch: boolean;
       }>;
       requestMicrophone: () => Promise<boolean>;
       openSettings: (pane: 'microphone' | 'screen') => Promise<void>;
+      relaunch: () => Promise<void>;
     };
 
     // Open external URL in user's default browser

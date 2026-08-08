@@ -7,9 +7,10 @@ export type PermStatus = 'not-determined' | 'denied' | 'granted' | 'restricted' 
 export interface PermissionsStatus {
   mic: PermStatus;
   screen: PermStatus;
+  screenNeedsRelaunch: boolean;
 }
 
-const DEFAULT: PermissionsStatus = { mic: 'unknown', screen: 'unknown' };
+const DEFAULT: PermissionsStatus = { mic: 'unknown', screen: 'unknown', screenNeedsRelaunch: false };
 
 export function usePermissions(active: boolean) {
   const [status, setStatus] = useState<PermissionsStatus>(DEFAULT);
@@ -37,7 +38,9 @@ export function usePermissions(active: boolean) {
 
   const micOk = status.mic === 'granted';
   // macOS 14 (Sonoma): 'not-determined' for screen = dynamic picker handles it at capture time
-  const screenOk = status.screen === 'granted' || status.screen === 'not-determined';
+  const screenOk =
+    (status.screen === 'granted' || status.screen === 'not-determined') &&
+    !status.screenNeedsRelaunch;
   const allGranted = micOk && screenOk;
 
   return { status, loading, allGranted, recheck: check };
