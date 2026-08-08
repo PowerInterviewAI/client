@@ -26,6 +26,7 @@ export default function PermissionGateDialog({
   proceedLabel = 'Start',
 }: PermissionGateDialogProps) {
   const { status, loading, allGranted, recheck } = usePermissions(open);
+  const { screenNeedsRelaunch } = status;
   const [requesting, setRequesting] = useState(false);
 
   const requestMic = async () => {
@@ -88,18 +89,24 @@ export default function PermissionGateDialog({
           <PermissionRow
             icon={<Monitor className="h-4 w-4" />}
             label="Screen Recording"
-            status={status.screen}
+            status={screenNeedsRelaunch ? 'not-determined' : status.screen}
             note={
               status.screen === 'unknown'
                 ? 'Checking...'
-                : status.screen === 'granted'
-                  ? 'Access granted'
-                  : status.screen === 'not-determined'
-                    ? 'Will be requested when recording starts'
-                    : 'Enable in System Settings, then restart the app to apply'
+                : screenNeedsRelaunch
+                  ? 'Granted - restart the app to apply before starting'
+                  : status.screen === 'granted'
+                    ? 'Access granted'
+                    : status.screen === 'not-determined'
+                      ? 'Will be requested when recording starts'
+                      : 'Enable in System Settings, then restart the app to apply'
             }
             action={
-              status.screen === 'denied' || status.screen === 'restricted' ? (
+              screenNeedsRelaunch ? (
+                <Button size="sm" onClick={relaunch}>
+                  Restart App
+                </Button>
+              ) : status.screen === 'denied' || status.screen === 'restricted' ? (
                 <div className="flex flex-col gap-1.5">
                   <Button size="sm" variant="outline" onClick={() => openSettings('screen')}>
                     Open Settings

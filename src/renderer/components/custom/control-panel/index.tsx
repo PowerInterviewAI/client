@@ -86,7 +86,9 @@ export default function ControlPanel() {
       if (electron) {
         const perms = await electron.permissions.checkAll();
         const micOk = perms.mic === 'granted';
-        const screenOk = perms.screen === 'granted' || perms.screen === 'not-determined';
+        const screenOk =
+          (perms.screen === 'granted' || perms.screen === 'not-determined') &&
+          !perms.screenNeedsRelaunch;
         if (!micOk || !screenOk) {
           setPermGateOpen(true);
           return;
