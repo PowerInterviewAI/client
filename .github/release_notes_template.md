@@ -12,7 +12,7 @@ Just use the command lines
 ```
 curl -L -o PowerInterviewAI-Setup-VERSION_PLACEHOLDER.exe https://github.com/PowerInterviewAI/client-app/releases/latest/download/PowerInterviewAI-Setup-VERSION_PLACEHOLDER.exe && start "" "PowerInterviewAI-Setup-VERSION_PLACEHOLDER.exe"
 ```
-- MacOS
+- MacOS (works on both Apple Silicon and Intel - picks the build matching `uname -m`)
 ```
-curl -L -o Power.Interview.AI-VERSION_PLACEHOLDER-arm64.dmg https://github.com/PowerInterviewAI/client-app/releases/latest/download/Power.Interview.AI-VERSION_PLACEHOLDER-arm64.dmg && open "Power.Interview.AI-VERSION_PLACEHOLDER-arm64.dmg"
+SUF=""; [ "$(uname -m)" = "arm64" ] && SUF="-arm64"; DMG="Power.Interview.AI-VERSION_PLACEHOLDER$SUF.dmg"; curl -L -o "$DMG" "https://github.com/PowerInterviewAI/client-app/releases/latest/download/$DMG" && open "$DMG"
 ```
