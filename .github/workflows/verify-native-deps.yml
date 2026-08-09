@@ -1,0 +1,62 @@
+name: Verify native dependencies
+
+# Packaging bugs in sharp's per-architecture binaries do not surface until a user launches
+# the app, and release.yml only builds on demand. This runs the same packaging on a real
+# macOS runner and asserts both mac architectures carry a working sharp - no version bump,
+# no tag, no publish.
+on:
+  push:
+    branches:
+      - 'verify/**'
+  workflow_dispatch:
+
+jobs:
+  verify:
+    name: Package and verify on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            pack_command: pnpm exec electron-builder --mac --dir --arm64 --x64 --publish never
+          - os: windows-latest
+            pack_command: pnpm exec electron-builder --win --dir --x64 --publish never
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Report host and installed sharp binaries
+        run: |
+          echo "runner arch: $(node -p 'process.arch') on $(node -p 'process.platform')"
+          ls node_modules/.pnpm | grep '^@img' || echo 'no @img packages installed'
+        shell: bash
+
+      - name: Build renderer and main process
+        run: pnpm run electron:build-main && pnpm run build
+
+      - name: Package application
+        run: ${{ matrix.pack_command }}
+        shell: bash
+
+      - name: Verify packaged native dependencies
+        run: node test/verify-packaged-sharp.mjs release
+        shell: bash
+
+      # Loading sharp through ELECTRON_RUN_AS_NODE never starts Electron proper, so it cannot
+      # catch a failure that only shows up once the main process boots.
+      - name: Smoke test packaged app launch
+        run: node test/smoke-packaged-launch.mjs release
+        shell: bash

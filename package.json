@@ -96,6 +96,10 @@
       "dist/**/*",
       "package.json"
     ],
+    "asarUnpack": [
+      "**/node_modules/sharp/**/*",
+      "**/node_modules/@img/**/*"
+    ],
     "directories": {
       "buildResources": "build",
       "output": "release"
@@ -109,7 +113,11 @@
           ]
         }
       ],
-      "icon": "build/icon.ico"
+      "icon": "build/icon.ico",
+      "files": [
+        "!**/node_modules/@img/*darwin*/**",
+        "!**/node_modules/@img/*linux*/**"
+      ]
     },
     "mac": {
       "target": [
@@ -129,6 +137,10 @@
         }
       ],
       "icon": "build/icon.png",
+      "files": [
+        "!**/node_modules/@img/*win32*/**",
+        "!**/node_modules/@img/*linux*/**"
+      ],
       "category": "public.app-category.productivity",
       "minimumSystemVersion": "14.4.0",
       "identity": "-",
