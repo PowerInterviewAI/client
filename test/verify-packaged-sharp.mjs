@@ -130,7 +130,7 @@ function verify(app) {
       return;
     }
     check(`loads and runs sharp from the packaged app`, false);
-    console.error(`         ${detail.split('\n')[0]}`);
+    for (const line of detail.split('\n')) console.error(`         ${line}`);
   }
 }
 
