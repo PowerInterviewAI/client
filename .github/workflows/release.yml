@@ -95,6 +95,13 @@ jobs:
         run: ${{ matrix.build_command }}
         shell: bash
 
+      # The mac job packages x64 and arm64 from one node_modules, and pnpm only materialises
+      # the runner's own architecture, so a missing native binary is invisible until a user
+      # launches the artifact. Fail the release here instead.
+      - name: Verify packaged native dependencies
+        run: node test/verify-packaged-sharp.mjs release
+        shell: bash
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:

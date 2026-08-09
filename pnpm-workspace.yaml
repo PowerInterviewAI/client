@@ -3,3 +3,15 @@ allowBuilds:
   electron-winstaller: true
   esbuild: true
   sharp: true
+
+# The macOS runner is arm64 but electron-builder packages both mac arches from one
+# node_modules, so sharp's per-arch optional deps must all be materialised at install
+# time or the x64 artifact ships without its native binary.
+supportedArchitectures:
+  os:
+    - win32
+    - darwin
+    - current
+  cpu:
+    - x64
+    - arm64
