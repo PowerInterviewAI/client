@@ -134,7 +134,9 @@ function verify(app) {
   }
 }
 
-const releaseDir = process.argv[2] ?? 'release';
+// Absolute, because the runtime check hands these paths to require() and a bare relative
+// path there is read as a package name rather than a location on disk.
+const releaseDir = path.resolve(process.argv[2] ?? 'release');
 if (!fs.existsSync(releaseDir)) {
   console.error(`No such directory: ${releaseDir}`);
   process.exit(1);
