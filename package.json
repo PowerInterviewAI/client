@@ -141,6 +141,7 @@
         "!**/node_modules/@img/*win32*/**",
         "!**/node_modules/@img/*linux*/**"
       ],
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
       "category": "public.app-category.productivity",
       "minimumSystemVersion": "14.4.0",
       "identity": "-",
