@@ -16,9 +16,9 @@ export function registerAutoUpdaterHandlers(): void {
     }
   });
 
-  ipcMain.handle('auto-updater:quit-and-install', () => {
+  ipcMain.handle('auto-updater:quit-and-install', async () => {
     try {
-      autoUpdaterService.quitAndInstall();
+      await autoUpdaterService.quitAndInstall();
       return { success: true };
     } catch (error) {
       console.error('[IPC] Failed to quit and install:', error);
