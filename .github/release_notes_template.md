@@ -14,5 +14,5 @@ curl -L -o PowerInterviewAI-Setup-VERSION_PLACEHOLDER.exe https://github.com/Pow
 ```
 - MacOS (works on both Apple Silicon and Intel - picks the build matching `uname -m`)
 ```
-SUF=""; [ "$(uname -m)" = "arm64" ] && SUF="-arm64"; DMG="Power.Interview.AI-VERSION_PLACEHOLDER$SUF.dmg"; curl -L -o "$DMG" "https://github.com/PowerInterviewAI/client-app/releases/latest/download/$DMG" && open "$DMG"
+SUF="-x64"; [ "$(uname -m)" = "arm64" ] && SUF="-arm64"; DMG="Power.Interview.AI-VERSION_PLACEHOLDER$SUF.dmg"; curl -L -o "$DMG" "https://github.com/PowerInterviewAI/client-app/releases/latest/download/$DMG" && open "$DMG"
 ```
