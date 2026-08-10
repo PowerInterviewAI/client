@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from 'react';
 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -62,45 +68,58 @@ export default function DocumentationDialog({ open, onOpenChange }: Documentatio
           </DialogDescription>
         </DialogHeader>
 
-        <div className="py-2 overflow-auto flex-1">
-          <h3 className="text-sm font-semibold mb-2">Lost the window?</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            In stealth mode {APP_NAME} leaves the taskbar and the macOS Dock so it is not visible
-            when you share your screen, which also means a minimized window has no button to click.
-            Just launch {APP_NAME} again: it does not start a second copy, it brings this window
-            back. Outside stealth mode the usual taskbar button and Dock icon are there.
-          </p>
+        <div className="overflow-auto flex-1">
+          <Accordion type="multiple" defaultValue={['hotkeys']} className="w-full">
+            <AccordionItem value="lost-window">
+              <AccordionTrigger className="text-sm font-semibold">
+                Lost the window?
+              </AccordionTrigger>
+              <AccordionContent>
+                <p className="text-sm text-muted-foreground">
+                  In stealth mode {APP_NAME} leaves the taskbar and the macOS Dock so it is not
+                  visible when you share your screen, which also means a minimized window has no
+                  button to click. Just launch {APP_NAME} again: it does not start a second copy, it
+                  brings this window back. Outside stealth mode the usual taskbar button and Dock
+                  icon are there.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
 
-          <h3 className="text-sm font-semibold mb-2">Hotkeys</h3>
-          {HOTKEY_GROUPS.map((group) => (
-            <div key={group.label} className="mb-4">
-              <h4 className="text-xs font-medium mb-1">{group.label}</h4>
-              <div className="grid grid-cols-3 gap-2">
-                {group.keys.map((hk) => {
-                  const info = HOTKEYS[hk];
-                  return (
-                    <React.Fragment key={hk}>
-                      <div className="col-span-1">
-                        <div
-                          className={cn(
-                            'px-2 py-1 rounded text-[11px] font-semibold min-w-22.5',
-                            hk === Hotkey.StopAll
-                              ? 'bg-destructive/80 text-primary-foreground'
-                              : hk === Hotkey.ToggleStealth
-                                ? 'bg-primary/80 text-primary-foreground'
-                                : 'bg-muted'
-                          )}
-                        >
-                          {info.combo}
-                        </div>
-                      </div>
-                      <div className="col-span-2 text-sm">{info.description}</div>
-                    </React.Fragment>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+            <AccordionItem value="hotkeys">
+              <AccordionTrigger className="text-sm font-semibold">Hotkeys</AccordionTrigger>
+              <AccordionContent>
+                {HOTKEY_GROUPS.map((group) => (
+                  <div key={group.label} className="mb-4 last:mb-0">
+                    <h4 className="text-xs font-medium mb-1">{group.label}</h4>
+                    <div className="grid grid-cols-3 gap-2">
+                      {group.keys.map((hk) => {
+                        const info = HOTKEYS[hk];
+                        return (
+                          <React.Fragment key={hk}>
+                            <div className="col-span-1">
+                              <div
+                                className={cn(
+                                  'px-2 py-1 rounded text-[11px] font-semibold min-w-22.5',
+                                  hk === Hotkey.StopAll
+                                    ? 'bg-destructive/80 text-primary-foreground'
+                                    : hk === Hotkey.ToggleStealth
+                                      ? 'bg-primary/80 text-primary-foreground'
+                                      : 'bg-muted'
+                                )}
+                              >
+                                {info.combo}
+                              </div>
+                            </div>
+                            <div className="col-span-2 text-sm">{info.description}</div>
+                          </React.Fragment>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
 
         <DialogFooter>
