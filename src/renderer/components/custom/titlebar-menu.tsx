@@ -14,7 +14,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import ConfigurationDialog from '@/components/custom/configuration-dialog';
 import DocumentationDialog from '@/components/custom/documentation-dialog';
 import {
   DropdownMenu,
@@ -28,6 +27,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useAppState } from '@/hooks/use-app-state';
 import useAuth from '@/hooks/use-auth';
 import { useConfigStore } from '@/hooks/use-config-store';
+import { useConfigurationDialog } from '@/hooks/use-configuration-dialog';
 import { useThemeStore } from '@/hooks/use-theme-store';
 import { Hotkey, HOTKEYS } from '@/lib/hotkeys';
 import { getElectron } from '@/lib/utils';
@@ -41,8 +41,8 @@ export default function TitlebarMenu({ style }: { style?: React.CSSProperties })
   const { config } = useConfigStore();
   const { isDark, toggleTheme } = useThemeStore();
   const { logout, changePassword, loading, error, setError } = useAuth();
+  const { openConfigurationDialog } = useConfigurationDialog();
   const [isDocsOpen, setIsDocsOpen] = useState(false);
-  const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
   const isLoggedIn = appState?.isLoggedIn ?? false;
@@ -116,7 +116,7 @@ export default function TitlebarMenu({ style }: { style?: React.CSSProperties })
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={() => !disabled && setIsConfigOpen(true)}
+                onClick={() => !disabled && openConfigurationDialog()}
                 disabled={disabled}
               >
                 <SettingsIcon className="mr-2 h-4 w-4" />
@@ -172,8 +172,6 @@ export default function TitlebarMenu({ style }: { style?: React.CSSProperties })
       {/* Rendered unconditionally: gating these on isLoggedIn would unmount an open dialog the
           moment a session ends, stranding the pointer-events lock it holds. */}
       <DocumentationDialog open={isDocsOpen} onOpenChange={setIsDocsOpen} />
-
-      <ConfigurationDialog isOpen={isConfigOpen} onOpenChange={setIsConfigOpen} />
 
       <ChangePasswordDialog
         open={isChangePasswordOpen}
