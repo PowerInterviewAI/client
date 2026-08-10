@@ -16,6 +16,9 @@ export {};
 
 declare global {
   interface ElectronAPI {
+    // Host OS, exposed statically at preload time (no IPC round-trip)
+    platform: 'darwin' | 'win32' | 'linux';
+
     // Hotkey scroll events
     onHotkeyScroll: (
       callback: (section: string, direction: 'up' | 'down' | 'end') => void
