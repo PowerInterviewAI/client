@@ -1,5 +1,6 @@
+import { createHash } from 'node:crypto';
 import { createWriteStream } from 'node:fs';
-import { mkdir, rm } from 'node:fs/promises';
+import { mkdir, readdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
@@ -18,8 +19,10 @@ interface GitHubRelease {
   tag_name: string;
   published_at: string;
   body: string | null;
-  assets: { name: string; browser_download_url: string }[];
+  assets: { name: string; browser_download_url: string; digest?: string | null }[];
 }
+
+const MAC_UPDATE_DOWNLOAD_DIR_NAME = 'power-interview-ai-updates';
 
 const MAC_UPDATE_PROGRESS_THROTTLE_MS = 200;
 
@@ -200,13 +203,14 @@ class AutoUpdaterService {
   }
 
   private async downloadMacAsset(
-    asset: { name: string; url: string },
+    asset: { name: string; url: string; digest: string | null },
     info: UpdateInfo
   ): Promise<void> {
-    const destDir = path.join(app.getPath('temp'), 'power-interview-ai-updates');
+    const destDir = path.join(app.getPath('temp'), MAC_UPDATE_DOWNLOAD_DIR_NAME);
     const destPath = path.join(destDir, asset.name);
 
     await mkdir(destDir, { recursive: true });
+    await this.clearMacUpdateDownloadDir(destDir);
 
     const response = await fetch(asset.url);
     if (!response.ok || !response.body) {
@@ -217,10 +221,12 @@ class AutoUpdaterService {
     let transferred = 0;
     let lastEmit = 0;
     const startTime = Date.now();
+    const hash = createHash('sha256');
 
     try {
       const source = Readable.fromWeb(response.body as unknown as NodeReadableStream<Uint8Array>);
       source.on('data', (chunk: Buffer) => {
+        hash.update(chunk);
         transferred += chunk.length;
         const now = Date.now();
         if (now - lastEmit < MAC_UPDATE_PROGRESS_THROTTLE_MS && transferred !== total) {
@@ -237,6 +243,18 @@ class AutoUpdaterService {
       });
 
       await pipeline(source, createWriteStream(destPath));
+
+      const expectedDigest = asset.digest?.replace(/^sha256:/, '') ?? null;
+      if (expectedDigest) {
+        const actualDigest = hash.digest('hex');
+        if (actualDigest !== expectedDigest) {
+          throw new Error('Downloaded update failed integrity verification');
+        }
+      } else {
+        console.warn(
+          '[AutoUpdater] No digest provided by GitHub for this asset; skipping integrity verification'
+        );
+      }
     } catch (error) {
       await rm(destPath, { force: true });
       throw error;
@@ -246,6 +264,17 @@ class AutoUpdaterService {
     this.updateDownloaded = true;
     this.updateCheckInProgress = false;
     this.notifyRenderer(UpdateStatus.Downloaded, info);
+  }
+
+  // Removes any previously downloaded installers from the update temp dir so they
+  // don't silently accumulate on disk across update checks.
+  private async clearMacUpdateDownloadDir(destDir: string): Promise<void> {
+    try {
+      const entries = await readdir(destDir);
+      await Promise.all(entries.map((entry) => rm(path.join(destDir, entry), { force: true })));
+    } catch (error) {
+      console.warn('[AutoUpdater] Failed to clear stale update downloads:', error);
+    }
   }
 
   async quitAndInstall(): Promise<void> {
