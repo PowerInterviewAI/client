@@ -23,6 +23,8 @@ interface PushNotification {
 }
 
 const electronApi = {
+  platform: process.platform,
+
   onHotkeyScroll: (callback: (section: string, direction: string) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, section: string, direction: string) =>
       callback(section, direction);
