@@ -6,6 +6,7 @@ import { useAppState } from '@/hooks/use-app-state';
 import { useAssistantService } from '@/hooks/use-assistant-service';
 import { useAudioInputDevices } from '@/hooks/use-audio-devices';
 import { useConfigStore } from '@/hooks/use-config-store';
+import { useConfigurationDialog } from '@/hooks/use-configuration-dialog';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { isMac } from '@/lib/consts';
 import { getElectron } from '@/lib/utils';
@@ -30,6 +31,7 @@ export default function ControlPanel() {
   const { startAssistant, stopAssistant } = useAssistantService();
   const { runningState, appState } = useAppState();
   const { config } = useConfigStore();
+  const { openConfigurationDialog } = useConfigurationDialog();
   const [permGateOpen, setPermGateOpen] = useState(false);
 
   const audioInputDevices = useAudioInputDevices();
@@ -47,10 +49,15 @@ export default function ControlPanel() {
         // retry: without this the same toast repeats forever however often Start is pressed.
         onFail: () => void getElectron()?.account?.refresh(),
       },
-      { ok: !!appState?.interviewConfig?.fullName, message: 'Full name is not set' },
+      {
+        ok: !!appState?.interviewConfig?.fullName,
+        message: 'Full name is not set',
+        onFail: openConfigurationDialog,
+      },
       {
         ok: appState?.interviewConfig?.hasProfileData ?? false,
         message: 'Profile data is not set',
+        onFail: openConfigurationDialog,
       },
       {
         ok: !audioInputDeviceNotFound,
