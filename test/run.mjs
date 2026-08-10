@@ -21,6 +21,7 @@ for (const module of [
   './stealth-toggle.test.mjs',
   './stealth-dock.test.mjs',
   './tools-export.test.mjs',
+  './mac-update-util.test.mjs',
 ]) {
   const { run } = await import(module);
   failures.push(...(await run(userDataDir)));

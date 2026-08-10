@@ -4,6 +4,12 @@ export const BACKEND_BASE_URL = EnvUtil.isDev()
   ? 'http://localhost:8080'
   : 'https://api.powerinterviewai.com';
 
+// GitHub repo the release/publish workflow ships to. macOS reads releases from here directly
+// (see mac-update.util.ts) since Squirrel.Mac's silent update needs real Developer ID signing,
+// which this app does not have yet.
+export const GITHUB_RELEASES_OWNER = 'PowerInterviewAI';
+export const GITHUB_RELEASES_REPO = 'client-app';
+
 // Minimum allowed dimensions for window bounds. The renderer degrades gracefully below its
 // preferred layout - computeAvailable() in pages/main/index.tsx shrinks the transcript dock and
 // suggestion panels down to their own floors (TRANSCRIPT_DOCK_MIN_HEIGHT / SUGGESTION_MIN_HEIGHT,
