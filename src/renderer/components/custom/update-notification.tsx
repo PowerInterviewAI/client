@@ -57,11 +57,14 @@ export function UpdateNotification() {
         }
 
         if (info) {
+          const isMac = window.electronAPI?.platform === 'darwin';
           toast.success(`Update Downloaded: v${info.version}`, {
-            description: 'Click to restart and install the update.',
+            description: isMac
+              ? 'Click to open the installer, then drag it into Applications.'
+              : 'Click to restart and install the update.',
             duration: Infinity,
             action: {
-              label: 'Restart Now',
+              label: isMac ? 'Open Installer' : 'Restart Now',
               onClick: () => quitAndInstall(),
             },
           });
