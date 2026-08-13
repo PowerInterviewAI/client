@@ -24,6 +24,7 @@ for (const module of [
   // reads the same running state through its own copy of window-control.
   './running-surface.test.mjs',
   './tools-export.test.mjs',
+  './suggestion-sentinel.test.mjs',
   './mac-update-util.test.mjs',
 ]) {
   const { run } = await import(module);
