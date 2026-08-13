@@ -37,7 +37,13 @@ function SuggestionAnswer({
 }) {
   if (suggestion.mode === SuggestionMode.Professional) {
     return (
-      <div className="text-sm text-foreground/90 leading-relaxed">
+      // The headline is the line that has to land in a glance, and SafeMarkdown renders it as bold
+      // text in a paragraph that is already semibold - next to no contrast against the bullets
+      // under it. Size and full-strength foreground rather than text-accent: the accent is an
+      // oklch 0.77 orange, which reads as a highlight on the dark card and as low-contrast body
+      // text on the light one. Applied here, not in SafeMarkdown, because the action panel renders
+      // whole documents through the same component and has no headline line to promote.
+      <div className="text-sm text-foreground/90 leading-relaxed [&>p:first-child]:mt-0 [&>p:first-child]:text-[0.95rem] [&>p:first-child]:text-foreground [&_ul]:mt-1 [&_li]:my-0.5">
         <SafeMarkdown content={suggestion.answer} />
         {trailing && <span className="text-muted-foreground"> ...</span>}
       </div>
