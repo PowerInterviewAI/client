@@ -1,15 +1,15 @@
 import { LLMApi } from '../api/llm.js';
 import {
-  LIVE_SUGGESTION_NO_SUGGESTION,
   LIVE_SUGGESTION_TTFB_MS,
   SUGGESTION_STALL_MS,
   TRANSCRIPT_UPLOAD_LIMIT,
 } from '../consts.js';
 import { configStore } from '../store/config.store.js';
 import { LiveSuggestion, Speaker, SuggestionState, Transcript } from '../types/app-state.js';
-import { GenerateLiveSuggestionRequest } from '../types/llm.js';
+import { GenerateLiveSuggestionRequest, SuggestionMode } from '../types/llm.js';
 import { DateTimeUtil } from '../utils/datetime.js';
 import { getSuggestionErrorMessage } from '../utils/suggestion-error.js';
+import { isNoSuggestionSentinel } from '../utils/suggestion-sentinel.js';
 import { UuidUtil } from '../utils/uuid.js';
 import { appStateService } from './app-state.service.js';
 
@@ -36,10 +36,7 @@ class LiveSuggestionService {
       return;
     }
 
-    if (
-      suggestion.answer.length > 0 &&
-      LIVE_SUGGESTION_NO_SUGGESTION.startsWith(suggestion.answer)
-    ) {
+    if (isNoSuggestionSentinel(suggestion.answer)) {
       this.suggestions.delete(timestamp);
     } else {
       this.suggestions.set(timestamp, suggestion);
@@ -59,12 +56,19 @@ class LiveSuggestionService {
     // clears the abort map entry, leaking it.
     const epoch = this.epoch;
     const timestamp = DateTimeUtil.now();
+
+    // Read once, up front. The card and the request must agree on the mode even if the user
+    // toggles while this stream is in flight, or the panel would render prose as Markdown.
+    const conf = configStore.getConfig();
+    const mode = conf.professionalMode ? SuggestionMode.Professional : SuggestionMode.Normal;
+
     const suggestion: LiveSuggestion = {
       timestamp,
       last_question: transcripts[transcripts.length - 1].text,
       answer: '',
       state: SuggestionState.Pending,
       error: '',
+      mode,
     };
 
     // Append initial suggestion
@@ -82,13 +86,13 @@ class LiveSuggestionService {
     };
 
     try {
-      const conf = configStore.getConfig();
       const interviewConfig = appStateService.getState().interviewConfig;
       const requestBody: GenerateLiveSuggestionRequest = {
         config: conf.llmConf,
         profile_data: interviewConfig.profileData,
         context: interviewConfig.context,
         transcripts: transcripts.slice(-TRANSCRIPT_UPLOAD_LIMIT),
+        mode,
       };
 
       armStallTimer(LIVE_SUGGESTION_TTFB_MS);
@@ -190,7 +194,14 @@ class LiveSuggestionService {
     const taskId = UuidUtil.generate();
     const controller = new AbortController();
     this.abortMap.set(taskId, controller);
-    void this.generateSuggestion(taskId, controller, filteredTranscripts);
+
+    // generateSuggestion owns the abort-map cleanup in its own finally, but it can throw before
+    // reaching the try that guards it - the config and state reads sit above it. Deleting the
+    // entry here on a synchronous rejection keeps a dead controller from being aborted forever.
+    this.generateSuggestion(taskId, controller, filteredTranscripts).catch((error) => {
+      console.error('[LiveSuggestionService] generateSuggestion rejected:', error);
+      this.abortMap.delete(taskId);
+    });
   }
 
   stopRunningTasks(): void {

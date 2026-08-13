@@ -49,12 +49,15 @@ Real-time ASR via WebSocket streaming on two separate channels - the interviewer
 
 ### Live Suggestions
 
-Streaming AI responses generated from the user's CV and job description, triggered by live transcript context. Service: [src/main/services/suggestion-live.service.ts](src/main/services/suggestion-live.service.ts).
+Streaming AI responses generated from the user's CV and job description, triggered by live transcript context. Answers render as Markdown in both suggestion modes, so bold, bullets and inline code arrive formatted rather than as raw characters. Service: [src/main/services/suggestion-live.service.ts](src/main/services/suggestion-live.service.ts).
 
 ### Action Suggestions
 
 Screenshot-based problem solving. Accepts up to 4 images, sends them to the LLM backend, returns syntax-highlighted code output. Service: [src/main/services/suggestion-action.service.ts](src/main/services/suggestion-action.service.ts).
 
+### Professional Mode
+
+Optional, off by default. Switches both live and triggered suggestions from full sentences to hints - a bold one-line core answer plus 3-5 keyword bullets - so the panel can be read at a glance mid-interview. Toggled from the control panel or with `Ctrl+Shift+F7`, which keeps it reachable in stealth mode. Persisted locally as `professionalMode`; sent to the backend as `mode` on the suggestion request.
 ### Session Window Behaviour
 
 While the assistant is running - or while stealth mode is on - the window is pinned above other windows (`screen-saver` level, and visible over a fullscreen call on macOS) and drops its taskbar button and Dock icon. The two conditions are independent: switching stealth off mid-session leaves both in place until the session actually stops. macOS traffic lights stay visible outside stealth, since the window is still interactive. Service: [src/main/services/window-control.service.ts](src/main/services/window-control.service.ts).

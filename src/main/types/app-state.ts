@@ -3,6 +3,7 @@
  */
 
 import { UserRole } from './health-check.js';
+import { SuggestionMode } from './llm.js';
 
 export enum Speaker {
   Self = 'self',
@@ -40,6 +41,14 @@ export interface LiveSuggestion {
   answer: string;
   state: SuggestionState;
   error: string;
+  /**
+   * The mode this answer was generated under, not the mode currently configured.
+   *
+   * The panel picks its renderer from this. Reading the live setting instead would re-render
+   * every card on screen the moment the user toggles mid-interview, so a prose answer would
+   * suddenly be parsed as Markdown.
+   */
+  mode: SuggestionMode;
 }
 
 export interface ActionSuggestion {

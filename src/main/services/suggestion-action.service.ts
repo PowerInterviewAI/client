@@ -19,7 +19,7 @@ import {
   SuggestionState,
   Transcript,
 } from '../types/app-state.js';
-import { GenerateActionSuggestionRequest } from '../types/llm.js';
+import { GenerateActionSuggestionRequest, SuggestionMode } from '../types/llm.js';
 import { DateTimeUtil } from '../utils/datetime.js';
 import { getSuggestionErrorMessage } from '../utils/suggestion-error.js';
 import { UuidUtil } from '../utils/uuid.js';
@@ -217,6 +217,7 @@ export class ActionSuggestionService {
       context: interviewConfig.context,
       transcripts: transcripts.slice(-TRANSCRIPT_UPLOAD_LIMIT),
       image_names: [...this.uploadedImageNames],
+      mode: conf.professionalMode ? SuggestionMode.Professional : SuggestionMode.Normal,
     };
 
     const lastQuestion = this.getLastInterviewerQuestion(transcripts);

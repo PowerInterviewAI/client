@@ -26,6 +26,9 @@ export interface RuntimeConfig {
 
   // transcription bottom dock visibility
   showTranscriptPanel: boolean;
+
+  // suggestions come back as headline + keyword bullets instead of full sentences
+  professionalMode: boolean;
 }
 
 // Default runtime configuration
@@ -45,6 +48,9 @@ const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
   autoScrollTranscript: true,
 
   showTranscriptPanel: true,
+
+  // opt-in: prose is what every existing user already expects from the panel
+  professionalMode: false,
 };
 
 // interviewConf (full name, profile, context) used to be cached under `runtime`, but it's now
@@ -228,6 +234,9 @@ export const configStore = new ConfigStore();
   }
   if (raw?.showTranscriptPanel === undefined) {
     migration.showTranscriptPanel = true;
+  }
+  if (raw?.professionalMode === undefined) {
+    migration.professionalMode = false;
   }
   // perform migration only if there are values to set
   if (Object.keys(migration).length > 0) {
