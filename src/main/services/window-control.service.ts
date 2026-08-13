@@ -2,6 +2,7 @@ import { app, BrowserWindow, screen } from 'electron';
 
 import { MIN_HEIGHT, MIN_WIDTH, OPACITY_LEVELS } from '../consts.js';
 import { configStore } from '../store/config.store.js';
+import { RunningState } from '../types/app-state.js';
 import { appStateService } from './app-state.service.js';
 import { pushNotificationService } from './push-notification.service.js';
 
@@ -11,9 +12,19 @@ const isMac = process.platform === 'darwin';
 // toggle can silently leave the icon in the wrong state. 1100ms is the documented workaround.
 const DOCK_RATE_LIMIT_MS = 1100;
 
+// Levels from 'floating' to 'status' put the window *below* the Dock on macOS and below the
+// taskbar on Windows, which is not what "on top" means here - the window has to sit over a
+// video call that may itself be fullscreen. 'screen-saver' is the first level above both, and
+// Apple only discourages going higher than one above it.
+const ALWAYS_ON_TOP_LEVEL = 'screen-saver' as const;
+
 // Global reference to the main window
 let win: BrowserWindow | null = null;
 let _stealth = configStore.getStealth();
+
+// Last z-order state we asked for. `null` means nothing has been applied to this window yet,
+// which is what makes the first call after a window is registered always go through.
+let alwaysOnTopApplied: boolean | null = null;
 
 // Last Dock state we asked macOS for, and when. `null` means nothing has been applied yet.
 let dockVisible: boolean | null = null;
@@ -68,6 +79,10 @@ interface WindowBounds {
 export function setWindowReference(window: BrowserWindow): void {
   win = window;
 
+  // The tracked z-order belongs to the previous window, not this one. Carrying it over would
+  // read the first real call as a no-op and leave the new window unpinned.
+  alwaysOnTopApplied = null;
+
   // The shell re-registers the taskbar button whenever the window is re-shown or re-shaped, and
   // most of those paths are not ours to intercept - Alt+Tab restoring a minimized window, for one.
   // Re-assert on the events instead of at every call site.
@@ -88,10 +103,34 @@ export function getWindowReference(): BrowserWindow | null {
   return win;
 }
 
+/** Whether the assistant is mid-session. Defaults to false if state is somehow unreadable. */
+function isAssistantRunning(): boolean {
+  try {
+    return appStateService.getState().runningState === RunningState.Running;
+  } catch (e) {
+    console.warn('Failed to read running state:', e);
+    return false;
+  }
+}
+
 /**
- * Put the taskbar button and the macOS Dock icon in step with stealth mode: present in normal
- * mode, gone in stealth, where a labelled button or Dock icon is the first thing a shared screen
- * gives the app away with.
+ * Whether the app should be keeping itself off the surfaces a screen share exposes, and pinned
+ * above the call.
+ *
+ * Two independent inputs, either of which is enough. Stealth is the explicit request for it.
+ * A running assistant is the implicit one: that is precisely when a screen share is likely to be
+ * live, and when the suggestions are useless if the call window covers them. The two are not
+ * nested - leaving stealth mid-session must not hand the taskbar button back.
+ */
+function shouldHideSurfaces(): boolean {
+  return _stealth || isAssistantRunning();
+}
+
+/**
+ * Put the taskbar button, the macOS Dock icon and the window's z-order in step with
+ * `shouldHideSurfaces()`: present and unpinned when idle out of stealth, gone and pinned on top
+ * otherwise, where a labelled button or Dock icon is the first thing a shared screen gives the
+ * app away with.
  *
  * This cannot be set once and left alone. Hiding the taskbar button is registration state
  * (`ITaskbarList::DeleteTab` on Windows), not a window style, and the shell re-adds the button
@@ -100,15 +139,24 @@ export function getWindowReference(): BrowserWindow | null {
  * has to call this afterwards.
  */
 function applySurfaceVisibility(): void {
+  const hidden = shouldHideSurfaces();
+
   if (win && !win.isDestroyed()) {
+    // Z-order first. Changing it re-registers the window with the shell and hands the taskbar
+    // button back, so setSkipTaskbar below has to be the one that runs last of the two.
+    applyAlwaysOnTop(hidden);
+
     try {
-      win.setSkipTaskbar(_stealth);
+      win.setSkipTaskbar(hidden);
     } catch (e) {
       console.warn('setSkipTaskbar failed:', e);
     }
 
     // `titleBarStyle: 'hidden'` draws the traffic lights as native chrome, independent of
     // setSkipTaskbar/the Dock icon - they stay on screen in stealth mode unless hidden here too.
+    //
+    // Keyed to stealth alone, not `hidden`. A merely running window is still focusable and
+    // interactive, so taking its close and minimise buttons away would strand the user.
     if (isMac) {
       try {
         win.setWindowButtonVisibility(!_stealth);
@@ -119,6 +167,61 @@ function applySurfaceVisibility(): void {
   }
 
   if (isMac) applyDockVisibility();
+}
+
+/**
+ * Pin the window above other windows, or release it.
+ *
+ * `setVisibleOnAllWorkspaces` is the other half on macOS: a window that is merely always-on-top
+ * still disappears when the user switches to a fullscreen Space, which is how most people run a
+ * video call - so without `visibleOnFullScreen` the pin does nothing in the case it exists for.
+ * Both are released together; leaving the window on every Space after a session is over would
+ * follow the user around their desktop.
+ *
+ * No-op calls are skipped, for the same reason `applyDockVisibility` skips them. Window events
+ * (show, restore, maximize) run through here too, and re-issuing the pin is not free or even
+ * invisible: on Windows it re-raises the window to the front of the topmost band, and on macOS
+ * Electron re-runs the whole level lookup and the Cocoa call with no early return of its own.
+ */
+function applyAlwaysOnTop(pinned: boolean): void {
+  if (!win || win.isDestroyed()) return;
+  if (alwaysOnTopApplied === pinned) return;
+
+  try {
+    if (pinned) {
+      win.setAlwaysOnTop(true, ALWAYS_ON_TOP_LEVEL);
+    } else {
+      win.setAlwaysOnTop(false);
+    }
+  } catch (e) {
+    console.warn('setAlwaysOnTop with level failed:', e);
+    // Fall back to plain always-on-top if the level is not supported on this platform.
+    try {
+      win.setAlwaysOnTop(pinned);
+    } catch (e) {
+      console.warn('setAlwaysOnTop failed:', e);
+    }
+  }
+
+  try {
+    if (typeof win.setVisibleOnAllWorkspaces === 'function') {
+      win.setVisibleOnAllWorkspaces(pinned, { visibleOnFullScreen: pinned });
+    }
+  } catch (e) {
+    console.warn('setVisibleOnAllWorkspaces failed:', e);
+  }
+
+  alwaysOnTopApplied = pinned;
+}
+
+/**
+ * Re-apply the window surfaces after something other than a stealth toggle changed the inputs.
+ *
+ * Exported for `appStateService`, which owns the running state: the assistant starting or
+ * stopping moves `shouldHideSurfaces()` without going through `enableStealth`/`disableStealth`.
+ */
+export function refreshWindowSurfaces(): void {
+  applySurfaceVisibility();
 }
 
 /**
@@ -133,7 +236,7 @@ function applySurfaceVisibility(): void {
  * than deferred with the Dock call - the icon goes away immediately even in the swallowed case.
  */
 function applyDockVisibility(): void {
-  const wantVisible = !_stealth;
+  const wantVisible = !shouldHideSurfaces();
 
   // Window events (show, restore, maximize) land here too. Skipping the no-op keeps them from
   // spending the one-second budget that a real stealth toggle needs.
@@ -165,7 +268,8 @@ function applyDockVisibility(): void {
   dockRecheckTimer = setTimeout(() => {
     dockRecheckTimer = null;
     // Forget what we asked for so the re-assert is not skipped as a no-op, then apply whatever
-    // stealth is by now - the user may have toggled again while this was pending.
+    // the inputs say by now - the user may have toggled stealth again, or the assistant may
+    // have started or stopped, while this was pending.
     dockVisible = null;
     applyDockVisibility();
   }, DOCK_RATE_LIMIT_MS);
@@ -368,28 +472,8 @@ export function enableStealth(): void {
   if (!win || win.isDestroyed()) return;
 
   try {
-    // Ensure window stays always on top in stealth mode (use highest level)
-    try {
-      // Use a high z-order level so the overlay remains above other windows
-      win.setAlwaysOnTop(true, 'screen-saver');
-    } catch (e) {
-      console.warn('setAlwaysOnTop with level failed:', e);
-      // Fallback to basic always-on-top if level not supported
-      try {
-        win.setAlwaysOnTop(true);
-      } catch (e) {
-        console.warn('setAlwaysOnTop failed:', e);
-      }
-    }
-
-    // Make the window visible on all workspaces and in fullscreen
-    try {
-      if (typeof win.setVisibleOnAllWorkspaces === 'function') {
-        win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
-      }
-    } catch (e) {
-      console.warn('setVisibleOnAllWorkspaces failed:', e);
-    }
+    // Always-on-top and the workspace flags are not set here: applySurfaceVisibility() below
+    // owns them, so that a session still running when stealth is switched off keeps the pin.
 
     // Ignore mouse events so clicks pass through the window
     // forward: true ensures underlying windows still receive events
@@ -437,16 +521,14 @@ export function disableStealth(): void {
     win.setIgnoreMouseEvents(false);
     win.setFocusable(true);
 
-    // Restore previous always-on-top state
-    win.setAlwaysOnTop(false);
-
     _stealth = false;
 
     // Restore full opacity
     win.setOpacity(1.0);
 
     // Last, after every other window mutation: setFocusable, the z-order change and dropping
-    // the layered style all reshuffle the taskbar registration.
+    // the layered style all reshuffle the taskbar registration. This also drops always-on-top,
+    // but only when no session is running - stopping stealth mid-interview keeps the pin.
     applySurfaceVisibility();
 
     try {
