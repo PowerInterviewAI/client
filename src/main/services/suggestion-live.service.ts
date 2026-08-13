@@ -1,6 +1,5 @@
 import { LLMApi } from '../api/llm.js';
 import {
-  LIVE_SUGGESTION_NO_SUGGESTION,
   LIVE_SUGGESTION_TTFB_MS,
   SUGGESTION_STALL_MS,
   TRANSCRIPT_UPLOAD_LIMIT,
@@ -10,6 +9,7 @@ import { LiveSuggestion, Speaker, SuggestionState, Transcript } from '../types/a
 import { GenerateLiveSuggestionRequest, SuggestionMode } from '../types/llm.js';
 import { DateTimeUtil } from '../utils/datetime.js';
 import { getSuggestionErrorMessage } from '../utils/suggestion-error.js';
+import { isNoSuggestionSentinel } from '../utils/suggestion-sentinel.js';
 import { UuidUtil } from '../utils/uuid.js';
 import { appStateService } from './app-state.service.js';
 
@@ -36,10 +36,7 @@ class LiveSuggestionService {
       return;
     }
 
-    if (
-      suggestion.answer.length > 0 &&
-      LIVE_SUGGESTION_NO_SUGGESTION.startsWith(suggestion.answer)
-    ) {
+    if (isNoSuggestionSentinel(suggestion.answer)) {
       this.suggestions.delete(timestamp);
     } else {
       this.suggestions.set(timestamp, suggestion);
