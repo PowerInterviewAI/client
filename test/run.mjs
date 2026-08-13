@@ -20,6 +20,9 @@ for (const module of [
   './stealth-surface.test.mjs',
   './stealth-toggle.test.mjs',
   './stealth-dock.test.mjs',
+  // After the stealth tests: it drives the shared appStateService singleton, and the dock test
+  // reads the same running state through its own copy of window-control.
+  './running-surface.test.mjs',
   './tools-export.test.mjs',
   './mac-update-util.test.mjs',
 ]) {

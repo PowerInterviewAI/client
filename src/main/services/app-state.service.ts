@@ -12,7 +12,7 @@ import {
   Speaker,
   SuggestionState,
 } from '../types/app-state.js';
-import { getWindowReference } from './window-control.service.js';
+import { getWindowReference, refreshWindowSurfaces } from './window-control.service.js';
 
 const DEFAULT_STATE: AppState = {
   isStealth: false,
@@ -115,10 +115,25 @@ export class AppStateService {
       (key) => !Object.is(this.state[key], updates[key])
     );
 
+    const runningChanged =
+      updates.runningState !== undefined && updates.runningState !== this.state.runningState;
+
     this.state = { ...this.state, ...updates };
     if (changed) {
       this.notifyRenderer();
     }
+
+    // The taskbar button, the Dock icon and always-on-top follow the running state as well as
+    // stealth, and this is the only place a run starts or ends. Done after the state is written,
+    // since window-control reads it back. Never allowed to fail the update itself.
+    if (runningChanged) {
+      try {
+        refreshWindowSurfaces();
+      } catch (e) {
+        console.warn('Failed to refresh window surfaces:', e);
+      }
+    }
+
     return this.getState();
   }
 

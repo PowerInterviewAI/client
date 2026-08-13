@@ -55,6 +55,10 @@ Streaming AI responses generated from the user's CV and job description, trigger
 
 Screenshot-based problem solving. Accepts up to 4 images, sends them to the LLM backend, returns syntax-highlighted code output. Service: [src/main/services/suggestion-action.service.ts](src/main/services/suggestion-action.service.ts).
 
+### Session Window Behaviour
+
+While the assistant is running - or while stealth mode is on - the window is pinned above other windows (`screen-saver` level, and visible over a fullscreen call on macOS) and drops its taskbar button and Dock icon. The two conditions are independent: switching stealth off mid-session leaves both in place until the session actually stops. macOS traffic lights stay visible outside stealth, since the window is still interactive. Service: [src/main/services/window-control.service.ts](src/main/services/window-control.service.ts).
+
 ### Interview Config Sync
 
 Full name, profile/CV, and context are stored on the user's backend account and pulled on login or a remembered session, so the setup follows the user across devices. Service: [src/main/services/account.service.ts](src/main/services/account.service.ts). The full values are kept in the main process and fetched on demand over `account:get`; the app-state broadcast carries only a `{ fullName, hasProfileData }` summary, since the profile and context can each run to 128,000 characters.
