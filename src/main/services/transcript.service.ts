@@ -1,9 +1,12 @@
 import {
+  INTERVIEWER_TURN_SETTLE_MS,
   LIVE_SUGGESTION_GAP_MS,
   SELF_PARTIAL_STALE_MS,
   TRANSCRIPT_INTER_TRANSCRIPT_GAP_MS,
 } from '../consts.js';
 import { Speaker, Transcript } from '../types/app-state.js';
+import { RequestTurnVerdict } from '../types/llm.js';
+import { classifyInterviewerTurn, TurnVerdict } from '../utils/interviewer-turn.js';
 import { appStateService } from './app-state.service.js';
 import { liveSuggestionService } from './suggestion-live.service.js';
 
@@ -14,6 +17,9 @@ class TranscriptService {
   private selfPartialTranscript: Transcript | null = null;
   private otherTranscripts: Transcript[] = [];
   private otherPartialTranscript: Transcript | null = null;
+
+  private turnSettleTimer: NodeJS.Timeout | null = null;
+  private latestCleaned: Transcript[] = [];
 
   async ingest(channelRaw: string, typeRaw: string, textRaw: string): Promise<void> {
     if (!this.isActive) return;
@@ -80,33 +86,87 @@ class TranscriptService {
       }
     }
 
-    const lastSelf = cleaned.filter((t) => t.speaker === Speaker.Self).slice(-1)[0];
+    // Read by the settle timer, which fires after this call has returned and must see the turn as
+    // it stands then, not as it stood when the timer was armed.
+    this.latestCleaned = cleaned;
+
     if (transcript.speaker === Speaker.Other && transcript.isFinal) {
-      // These two conditions are the only ways a suggestion is silently suppressed, and
-      // neither surfaces anywhere. Logged so a field or local repro can distinguish
-      // "the request was never made" from "the request was made and stalled".
-
-      // A partial that has gone quiet is almost certainly orphaned by a dropped ASR socket
-      // whose final never arrived. Treat it as absent rather than gating indefinitely.
-      const blockedByPartial =
-        !!this.selfPartialTranscript &&
-        now - this.selfPartialTranscript.endTimestamp <= SELF_PARTIAL_STALE_MS;
-      const selfAgeMs = lastSelf ? now - lastSelf.endTimestamp : null;
-      const skipDueToRecentSelf =
-        !!lastSelf && lastSelf.isFinal && selfAgeMs !== null && selfAgeMs <= LIVE_SUGGESTION_GAP_MS;
-
-      console.info(
-        `[TranscriptService] suggestion gate: blockedByPartial=${blockedByPartial}` +
-          ` skipDueToRecentSelf=${skipDueToRecentSelf}` +
-          ` lastSelfAgeMs=${selfAgeMs ?? 'none'}`
-      );
-
-      if (!blockedByPartial && !skipDueToRecentSelf) {
-        await liveSuggestionService.startGenerateSuggestion(cleaned);
-      }
+      this.scheduleSuggestion(cleaned);
     }
 
     appStateService.updateState({ transcripts: cleaned });
+  }
+
+  /**
+   * Decide what to do with the interviewer turn that just ended.
+   *
+   * Runs on the *merged* turn rather than the single final, so a question the ASR split across two
+   * finals is classified whole. Re-arming on every final is what makes that work: a fragment parks
+   * on the settle timer, and its continuation replaces the pending decision with one taken on the
+   * complete sentence.
+   */
+  private scheduleSuggestion(cleaned: Transcript[]): void {
+    this.clearTurnSettleTimer();
+
+    const turn = cleaned.filter((t) => t.speaker === Speaker.Other).slice(-1)[0];
+    const verdict = classifyInterviewerTurn(turn?.text ?? '');
+
+    console.info(`[TranscriptService] turn verdict=${verdict}`);
+
+    if (verdict === TurnVerdict.Skip) {
+      // No request and no card. The NO_SUGGESTION_NEEDED sentinel still backs this up for turns
+      // the lexicon cannot settle, but a turn caught here never reaches the panel at all, so
+      // nothing flashes on screen and nothing is billed.
+      return;
+    }
+
+    if (verdict === TurnVerdict.Answer) {
+      void this.fireSuggestion(RequestTurnVerdict.Answer);
+      return;
+    }
+
+    this.turnSettleTimer = setTimeout(() => {
+      this.turnSettleTimer = null;
+      void this.fireSuggestion(RequestTurnVerdict.Uncertain);
+    }, INTERVIEWER_TURN_SETTLE_MS);
+  }
+
+  private async fireSuggestion(verdict: RequestTurnVerdict): Promise<void> {
+    if (!this.isActive) return;
+
+    const cleaned = this.latestCleaned;
+    const now = Date.now();
+    const lastSelf = cleaned.filter((t) => t.speaker === Speaker.Self).slice(-1)[0];
+
+    // These two conditions are the only ways a suggestion is silently suppressed, and
+    // neither surfaces anywhere. Logged so a field or local repro can distinguish
+    // "the request was never made" from "the request was made and stalled".
+
+    // A partial that has gone quiet is almost certainly orphaned by a dropped ASR socket
+    // whose final never arrived. Treat it as absent rather than gating indefinitely.
+    const blockedByPartial =
+      !!this.selfPartialTranscript &&
+      now - this.selfPartialTranscript.endTimestamp <= SELF_PARTIAL_STALE_MS;
+    const selfAgeMs = lastSelf ? now - lastSelf.endTimestamp : null;
+    const skipDueToRecentSelf =
+      !!lastSelf && lastSelf.isFinal && selfAgeMs !== null && selfAgeMs <= LIVE_SUGGESTION_GAP_MS;
+
+    console.info(
+      `[TranscriptService] suggestion gate: blockedByPartial=${blockedByPartial}` +
+        ` skipDueToRecentSelf=${skipDueToRecentSelf}` +
+        ` lastSelfAgeMs=${selfAgeMs ?? 'none'}`
+    );
+
+    if (!blockedByPartial && !skipDueToRecentSelf) {
+      await liveSuggestionService.startGenerateSuggestion(cleaned, verdict);
+    }
+  }
+
+  private clearTurnSettleTimer(): void {
+    if (this.turnSettleTimer) {
+      clearTimeout(this.turnSettleTimer);
+      this.turnSettleTimer = null;
+    }
   }
 
   /**
@@ -146,13 +206,18 @@ class TranscriptService {
 
   async stop(): Promise<void> {
     this.isActive = false;
+    // A timer left armed here would fire a request against a stopped session. `fireSuggestion`
+    // re-checks `isActive` as well, so this is belt and braces on the cheaper of the two paths.
+    this.clearTurnSettleTimer();
   }
 
   clear(): void {
+    this.clearTurnSettleTimer();
     this.selfTranscripts = [];
     this.selfPartialTranscript = null;
     this.otherTranscripts = [];
     this.otherPartialTranscript = null;
+    this.latestCleaned = [];
     appStateService.updateState({ transcripts: [] });
   }
 }

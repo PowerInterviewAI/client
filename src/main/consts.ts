@@ -41,9 +41,30 @@ export const SELF_PARTIAL_STALE_MS = 15_000;
 // export read the full transcript from app state.
 export const TRANSCRIPT_UPLOAD_LIMIT = 60;
 
+// How long an interviewer turn that is neither a clear question nor clear filler is allowed to
+// settle before it is answered. An ASR final is an acoustic endpoint, not the end of a thought, so
+// a question broken by a thinking pause ("So tell me about" ... "your Kafka work") arrives as two
+// finals: without this the first fires a request that the second immediately aborts, and the card
+// rewrites itself under the candidate mid-read.
+//
+// Paid for only by turns that reach TurnVerdict.Uncertain. A turn ending in a question mark, or a
+// punctuated directive, is answered with no added latency at all - see interviewer-turn.ts.
+export const INTERVIEWER_TURN_SETTLE_MS = 700;
+
 // Suggestion constants
 export const LIVE_SUGGESTION_GAP_MS = 2000;
 export const LIVE_SUGGESTION_NO_SUGGESTION = 'NO_SUGGESTION_NEEDED';
+
+// How long a live-suggestion card waits before it is allowed to render at all. The backend's
+// speculative gate (LLMService.turn_needs_answer) runs beside the answer generation and can
+// suppress the whole response after it has already started - within roughly this long. Rendering
+// a Pending card immediately would make every suppressed turn flash a spinner and then vanish,
+// which is worse than the delay: a card that disappears reads as broken, one that never appears
+// reads as nothing having happened, which is correct for a "yeah, got it".
+//
+// Not a cap on generation - a genuinely slow real answer still renders once this fires, it just
+// starts one step behind instead of at the first byte.
+export const LIVE_SUGGESTION_RENDER_DELAY_MS = 900;
 export const ACTION_SUGGESTION_MAX_CAPTURES = 4;
 export const ACTION_TIMEOUT_MS = 30_000; // 30 seconds
 
