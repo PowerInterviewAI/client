@@ -69,6 +69,8 @@ Action suggestions are independent of transcripts - triggered by screenshot capt
 
 **Professional mode** (`professionalMode` in ConfigStore, off by default) asks the backend for hints - a headline plus keyword bullets - instead of full sentences. Both suggestion services read the flag once at the top of `generateSuggestion` and send it as `mode` on the request; the backend defaults it to `normal`, so the field is safe to omit against an older deployment.
 
+The `NO_SUGGESTION_NEEDED` sentinel goes through `isNoSuggestionSentinel()` ([src/main/utils/suggestion-sentinel.ts](src/main/utils/suggestion-sentinel.ts)) rather than a direct comparison. It is prefix-matched because it runs on every streamed chunk, and it strips leading markdown first: the professional prompt asks for a bold headline on line 1, so a model that carries that format over emits `**NO_SUGGESTION_NEEDED**` and a bare match would leave the sentinel on screen as a card. `test/suggestion-sentinel.test.mjs` pins both halves - the wrapped forms are suppressed, real answers are not.
+
 Each `LiveSuggestion` carries the `mode` it was *generated* under, and the panel picks its renderer from that, not from the current setting. Reading the live setting instead would reformat every card on screen the moment the user toggles mid-interview, parsing prose answers as Markdown. Professional answers render through `SafeMarkdown`, the same component the action panel already uses; normal answers keep the plain 🪄-prefixed text.
 
 ### Routing
