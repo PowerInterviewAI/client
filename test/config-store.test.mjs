@@ -65,12 +65,21 @@ export async function run(userDataDir) {
   check('clear drops the owner claim', store.getLegacyInterviewConfOwner() === null);
   check('clear leaves other settings intact', store.configStore.getConfig().email === 'a@b.c');
 
-  // Professional mode is opt-in. The seeded runtime above predates the key, so an upgrading
-  // install must read back as off rather than silently switching every suggestion to hints.
-  check('professionalMode defaults off on upgrade', cfg.professionalMode === false);
+  // Professional mode is opt-in: the seeded runtime above predates the key, and an upgrading
+  // install must not silently start emitting hints instead of prose.
+  //
+  // Two independent mechanisms deliver this - the DEFAULT_RUNTIME_CONFIG spread in getConfig,
+  // and the migration IIFE, which pins false rather than the default. That redundancy is the
+  // point: should professional mode ever become the default for new installs, the migration is
+  // what keeps existing users on prose. No single assertion can isolate one mechanism while
+  // both hold, so this asserts the invariant itself.
+  check('professionalMode reads off on upgrade', cfg.professionalMode === false);
 
   store.configStore.updateConfig({ professionalMode: true });
-  check('professionalMode is persisted', store.configStore.getConfig().professionalMode === true);
+  check(
+    'professionalMode is persisted',
+    store.configStore.getStoredRuntime()?.professionalMode === true
+  );
 
   store.configStore.updateConfig({ sessionToken: 'tok2' });
   check(
