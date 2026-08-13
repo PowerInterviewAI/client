@@ -17,6 +17,7 @@ import ZoomControl from '../zoom-control';
 import { AudioGroup } from './audio-group';
 import { LLMGroup } from './llm-group';
 import { MainGroup } from './main-group';
+import { ProfessionalModeGroup } from './professional-mode-group';
 import { ToolsGroup } from './tools-group';
 
 type StateConfig = {
@@ -155,6 +156,7 @@ export default function ControlPanel() {
             getDisabled={getDisabled}
           />
           <LLMGroup getDisabled={getDisabled} />
+          <ProfessionalModeGroup />
         </div>
 
         <MainGroup stateConfig={{ onClick, className, icon, label }} getDisabled={getDisabled} />

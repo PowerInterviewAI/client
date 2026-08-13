@@ -25,4 +25,7 @@ export interface Config {
 
   // Transcription bottom dock visibility (persisted between sessions)
   showTranscriptPanel: boolean;
+
+  // Suggestions come back as headline + keyword bullets instead of full sentences
+  professionalMode: boolean;
 }

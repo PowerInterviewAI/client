@@ -44,6 +44,12 @@ const electronApi = {
     return () => ipcRenderer.removeListener('hotkey:toggle-transcript', handler);
   },
 
+  onHotkeyToggleProfessionalMode: (callback: () => void) => {
+    const handler = () => callback();
+    ipcRenderer.on('hotkey:toggle-professional-mode', handler);
+    return () => ipcRenderer.removeListener('hotkey:toggle-professional-mode', handler);
+  },
+
   config: {
     get: () => ipcRenderer.invoke('config:get'),
     update: (updates: Record<string, unknown>) => ipcRenderer.invoke('config:update', updates),

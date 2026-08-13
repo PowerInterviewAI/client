@@ -1,3 +1,5 @@
+import type { SuggestionMode } from './llm';
+
 export enum SuggestionState {
   Idle = 'idle',
   Uploading = 'uploading',
@@ -14,6 +16,8 @@ export interface LiveSuggestion {
   answer: string;
   state: SuggestionState;
   error: string;
+  /** The mode this answer was generated under, which is what selects the renderer. */
+  mode: SuggestionMode;
 }
 
 export interface ActionSuggestion {

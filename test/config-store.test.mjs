@@ -28,11 +28,17 @@ export async function run(userDataDir) {
 
   const store = await loadMain('store/config.store.js');
 
-  check('legacy conf is readable for migration', store.getLegacyInterviewConf()?.profileData === 'MY CV');
+  check(
+    'legacy conf is readable for migration',
+    store.getLegacyInterviewConf()?.profileData === 'MY CV'
+  );
 
   const cfg = store.configStore.getConfig();
   check('getConfig omits interviewConf', !('interviewConf' in cfg));
-  check('getConfig keeps real settings', cfg.email === 'a@b.c' && cfg.autoScrollTranscript === false);
+  check(
+    'getConfig keeps real settings',
+    cfg.email === 'a@b.c' && cfg.autoScrollTranscript === false
+  );
 
   // The data-loss trap: an unrelated write must not drop the not-yet-migrated copy.
   store.configStore.updateConfig({ sessionToken: 'tok' });
@@ -52,9 +58,25 @@ export async function run(userDataDir) {
 
   store.clearLegacyInterviewConf();
   check('clear drops the in-memory copy', store.getLegacyInterviewConf() === null);
-  check('clear drops the disk copy', !('interviewConf' in (store.configStore.getStoredRuntime() ?? {})));
+  check(
+    'clear drops the disk copy',
+    !('interviewConf' in (store.configStore.getStoredRuntime() ?? {}))
+  );
   check('clear drops the owner claim', store.getLegacyInterviewConfOwner() === null);
   check('clear leaves other settings intact', store.configStore.getConfig().email === 'a@b.c');
+
+  // Professional mode is opt-in. The seeded runtime above predates the key, so an upgrading
+  // install must read back as off rather than silently switching every suggestion to hints.
+  check('professionalMode defaults off on upgrade', cfg.professionalMode === false);
+
+  store.configStore.updateConfig({ professionalMode: true });
+  check('professionalMode is persisted', store.configStore.getConfig().professionalMode === true);
+
+  store.configStore.updateConfig({ sessionToken: 'tok2' });
+  check(
+    'professionalMode survives an unrelated write',
+    store.configStore.getConfig().professionalMode === true
+  );
 
   return failures;
 }

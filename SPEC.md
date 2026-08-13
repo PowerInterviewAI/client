@@ -55,6 +55,10 @@ Streaming AI responses generated from the user's CV and job description, trigger
 
 Screenshot-based problem solving. Accepts up to 4 images, sends them to the LLM backend, returns syntax-highlighted code output. Service: [src/main/services/suggestion-action.service.ts](src/main/services/suggestion-action.service.ts).
 
+### Professional Mode
+
+Optional, off by default. Switches both live and triggered suggestions from full sentences to hints - a bold one-line core answer plus 3-5 keyword bullets - so the panel can be read at a glance mid-interview. Toggled from the control panel or with `Ctrl+Shift+F7`, which keeps it reachable in stealth mode. Persisted locally as `professionalMode`; sent to the backend as `mode` on the suggestion request.
+
 ### Interview Config Sync
 
 Full name, profile/CV, and context are stored on the user's backend account and pulled on login or a remembered session, so the setup follows the user across devices. Service: [src/main/services/account.service.ts](src/main/services/account.service.ts). The full values are kept in the main process and fetched on demand over `account:get`; the app-state broadcast carries only a `{ fullName, hasProfileData }` summary, since the profile and context can each run to 128,000 characters.

@@ -50,10 +50,22 @@ export interface LLMRequest {
   config: LLMConfig | null;
 }
 
+/**
+ * How much prose a suggestion should carry.
+ *
+ * Normal is full spoken sentences. Professional is a headline plus keyword bullets, for reading
+ * at a glance mid-interview. Mirrors `SuggestionMode` in the backend's `app/schemas/suggestion.py`.
+ */
+export enum SuggestionMode {
+  Normal = 'normal',
+  Professional = 'professional',
+}
+
 export interface GenerateLiveSuggestionRequest extends LLMRequest {
   profile_data: string;
   context: string;
   transcripts: Transcript[];
+  mode: SuggestionMode;
 }
 
 // action request reuses live fields but adds image names

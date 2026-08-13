@@ -67,6 +67,10 @@ Handler registration lives in [src/main/ipc/](src/main/ipc/) - one file per doma
 
 Action suggestions are independent of transcripts - triggered by screenshot captures (up to `ACTION_SUGGESTION_MAX_CAPTURES` = 4 images per request).
 
+**Professional mode** (`professionalMode` in ConfigStore, off by default) asks the backend for hints - a headline plus keyword bullets - instead of full sentences. Both suggestion services read the flag once at the top of `generateSuggestion` and send it as `mode` on the request; the backend defaults it to `normal`, so the field is safe to omit against an older deployment.
+
+Each `LiveSuggestion` carries the `mode` it was *generated* under, and the panel picks its renderer from that, not from the current setting. Reading the live setting instead would reformat every card on screen the moment the user toggles mid-interview, parsing prose answers as Markdown. Professional answers render through `SafeMarkdown`, the same component the action panel already uses; normal answers keep the plain 🪄-prefixed text.
+
 ### Routing
 
 Hash-based router (required for Electron `file://` protocol). Routes: `/` (index, redirects based on login state) -> `/auth/login` or `/auth/signup` -> `/main` (interview UI) -> `/payment`.

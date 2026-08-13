@@ -14,11 +14,43 @@ function truncateMiddle(text: string, maxLen: number): string {
 import { Card } from '@/components/ui/card';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { newestTimestamp } from '@/lib/suggestions';
+import { SuggestionMode } from '@/types/llm';
 import { type LiveSuggestion, SuggestionState } from '@/types/suggestion';
 
 import { Button } from '../../ui/button';
 import { Checkbox } from '../../ui/checkbox';
+import { SafeMarkdown } from '../safe-markdown';
 import SuggestionReveal from './suggestion-reveal';
+
+/**
+ * Render one answer in the format it was generated in.
+ *
+ * Keyed off the suggestion's own mode rather than the current setting, so toggling mid-interview
+ * leaves cards already on screen alone. `trailing` marks a stopped stream as unfinished.
+ */
+function SuggestionAnswer({
+  suggestion,
+  trailing,
+}: {
+  suggestion: LiveSuggestion;
+  trailing?: boolean;
+}) {
+  if (suggestion.mode === SuggestionMode.Professional) {
+    return (
+      <div className="text-sm text-foreground/90 leading-relaxed">
+        <SafeMarkdown content={suggestion.answer} />
+        {trailing && <span className="text-muted-foreground"> ...</span>}
+      </div>
+    );
+  }
+
+  return (
+    <div className="text-sm font-semibold text-foreground/90 leading-relaxed whitespace-pre-wrap">
+      🪄 {suggestion.answer}
+      {trailing && ' ...'}
+    </div>
+  );
+}
 
 interface LiveSuggestionsPanelProps {
   suggestions?: LiveSuggestion[];
@@ -223,16 +255,10 @@ function LiveSuggestionsPanel({
                     </div>
 
                     {(s.state === SuggestionState.Loading ||
-                      s.state === SuggestionState.Success) && (
-                      <div className="text-sm font-semibold text-foreground/90 leading-relaxed whitespace-pre-wrap">
-                        🪄 {s.answer}
-                      </div>
-                    )}
+                      s.state === SuggestionState.Success) && <SuggestionAnswer suggestion={s} />}
 
                     {s.state === SuggestionState.Stopped && (
-                      <div className="text-sm font-semibold text-foreground/90 leading-relaxed whitespace-pre-wrap">
-                        🪄 {s.answer} ...
-                      </div>
+                      <SuggestionAnswer suggestion={s} trailing />
                     )}
 
                     {s.state === SuggestionState.Error && (

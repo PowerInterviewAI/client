@@ -12,6 +12,7 @@ import {
   Speaker,
   SuggestionState,
 } from '../types/app-state.js';
+import { SuggestionMode } from '../types/llm.js';
 import { getWindowReference } from './window-control.service.js';
 
 const DEFAULT_STATE: AppState = {
@@ -65,6 +66,7 @@ export class AppStateService {
           answer: 'Suggested answers will be here in real-time',
           state: SuggestionState.Success,
           error: '',
+          mode: SuggestionMode.Normal,
         },
       ],
       actionSuggestions: [
