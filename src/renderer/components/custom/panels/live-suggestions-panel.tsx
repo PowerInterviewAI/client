@@ -13,7 +13,7 @@ function truncateMiddle(text: string, maxLen: number): string {
 
 import { Card } from '@/components/ui/card';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
-import { newestTimestamp } from '@/lib/suggestions';
+import { newestTimestamp, withHardBreaks } from '@/lib/suggestions';
 import { SuggestionMode } from '@/types/llm';
 import { type LiveSuggestion, SuggestionState } from '@/types/suggestion';
 
@@ -25,8 +25,14 @@ import SuggestionReveal from './suggestion-reveal';
 /**
  * Render one answer in the format it was generated in.
  *
+ * Both modes go through `SafeMarkdown`: the normal-mode prompt asks for light formatting, and a
+ * model that reaches for bold or a bullet there used to put the asterisks on screen literally.
  * Keyed off the suggestion's own mode rather than the current setting, so toggling mid-interview
- * leaves cards already on screen alone. `trailing` marks a stopped stream as unfinished.
+ * leaves cards already on screen alone - what the mode still decides is the presentation around
+ * the Markdown, not whether it is parsed.
+ *
+ * `trailing` marks a stopped stream as unfinished. Appended to the content rather than rendered
+ * beside it, so it lands inline at the end of the last line instead of on a block of its own.
  */
 function SuggestionAnswer({
   suggestion,
@@ -35,6 +41,8 @@ function SuggestionAnswer({
   suggestion: LiveSuggestion;
   trailing?: boolean;
 }) {
+  const suffix = trailing ? ' ...' : '';
+
   if (suggestion.mode === SuggestionMode.Professional) {
     return (
       // The headline is the line that has to land in a glance, and SafeMarkdown renders it as bold
@@ -44,16 +52,21 @@ function SuggestionAnswer({
       // text on the light one. Applied here, not in SafeMarkdown, because the action panel renders
       // whole documents through the same component and has no headline line to promote.
       <div className="text-sm text-foreground/90 leading-relaxed [&>p:first-child]:mt-0 [&>p:first-child]:text-[0.95rem] [&>p:first-child]:text-foreground [&_ul]:mt-1 [&_li]:my-0.5">
-        <SafeMarkdown content={suggestion.answer} />
-        {trailing && <span className="text-muted-foreground"> ...</span>}
+        <SafeMarkdown content={suggestion.answer + suffix} />
       </div>
     );
   }
 
   return (
-    <div className="text-sm font-semibold text-foreground/90 leading-relaxed whitespace-pre-wrap">
-      🪄 {suggestion.answer}
-      {trailing && ' ...'}
+    // The wand stays a marker in its own column rather than a character prepended to the content:
+    // inside the Markdown it would swallow whatever structure the answer opens with.
+    <div className="flex gap-1.5 text-sm text-foreground/90 leading-relaxed">
+      <span aria-hidden="true" className="shrink-0">
+        🪄
+      </span>
+      <div className="min-w-0 flex-1 [&>p:first-child]:mt-0 [&>p:last-child]:mb-0">
+        <SafeMarkdown content={withHardBreaks(suggestion.answer) + suffix} />
+      </div>
     </div>
   );
 }
