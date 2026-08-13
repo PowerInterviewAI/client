@@ -25,6 +25,9 @@ export async function run() {
   windowControl.setWindowReference({
     isDestroyed: () => false,
     setSkipTaskbar: () => {},
+    // Registering a window applies the surface state, which pins or releases the z-order too.
+    setAlwaysOnTop: () => {},
+    setVisibleOnAllWorkspaces: () => {},
     webContents: { send: (channel, payload) => sent.push({ channel, payload }) },
   });
 
@@ -79,7 +82,9 @@ export async function run() {
   check('a coalesced broadcast reaches the renderer', sent.length === beforeCoalesced + 1);
   check('the coalesced broadcast carries the change', sent.at(-1).payload.isBackendLive === true);
 
-  appStateService.updateState({ interviewConfig: { fullName: 'Jane', profileData: '   ', context: '' } });
+  appStateService.updateState({
+    interviewConfig: { fullName: 'Jane', profileData: '   ', context: '' },
+  });
   check(
     'whitespace-only profile is not reported as set',
     appStateService.getRendererState().interviewConfig.hasProfileData === false

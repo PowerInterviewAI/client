@@ -48,7 +48,21 @@ export async function run() {
   check('stealth makes the app an accessory app', /'accessory'/.test(windowControl));
   check('normal mode brings the Dock icon back', /dock\?\.show\(\)/.test(windowControl));
   check('normal mode makes the app a regular app', /'regular'/.test(windowControl));
-  check('the taskbar button follows stealth', /setSkipTaskbar\(_?stealth\)/.test(windowControl));
+
+  // These surfaces follow stealth OR a running assistant, not stealth alone. Both inputs have to
+  // reach the same predicate, or one of them silently stops hiding anything.
+  check(
+    'the taskbar button follows the surface predicate',
+    /setSkipTaskbar\(hidden\)/.test(windowControl)
+  );
+  check(
+    'the surface predicate covers stealth and running',
+    /_stealth \|\| isAssistantRunning\(\)/.test(windowControl)
+  );
+  check(
+    'the Dock icon follows the same predicate',
+    /wantVisible = !shouldHideSurfaces\(\)/.test(windowControl)
+  );
 
   // In stealth mode there is no taskbar button and no Dock icon: without this, closing or
   // minimizing the window leaves a running process with no way back to it.

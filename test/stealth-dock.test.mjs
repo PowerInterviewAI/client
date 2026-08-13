@@ -124,5 +124,32 @@ export async function run() {
   check('the re-assert stops once the state is stable', calls.length === afterSettle);
   check('and the Dock icon is still there', surfaceIs(calls, 'visible'));
 
+  // The Dock icon follows a running assistant as well as stealth. The traffic lights deliberately
+  // do not: a running window outside stealth is still focusable and interactive, so taking its
+  // close and minimise buttons away would strand the user. This is the only test that runs as
+  // darwin, so it is the only place either is reachable.
+  //
+  // The refresh is called directly rather than left to appStateService. That singleton is shared
+  // with this copy of the module, but its own import of window-control carries no query string,
+  // so its refresh drives the *default* instance - not this darwin one. That the state change
+  // triggers a refresh at all is covered in running-surface.test.mjs.
+  const { appStateService } = await import('../electron-dist/services/app-state.service.js');
+  const { RunningState } = await import('../electron-dist/types/app-state.js');
+
+  await wait(1300);
+  windowButtonVisible.length = 0;
+  appStateService.updateState({ runningState: RunningState.Running });
+  windowControl.refreshWindowSurfaces();
+  check('starting the assistant drops the Dock icon', surfaceIs(calls, 'hidden'));
+  check(
+    'starting the assistant leaves the traffic lights alone',
+    windowButtonVisible.at(-1) === true
+  );
+
+  await wait(1300);
+  appStateService.updateState({ runningState: RunningState.Idle });
+  windowControl.refreshWindowSurfaces();
+  check('stopping the assistant brings the Dock icon back', surfaceIs(calls, 'visible'));
+
   return failures;
 }
