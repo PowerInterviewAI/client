@@ -49,7 +49,7 @@ Real-time ASR via WebSocket streaming on two separate channels - the interviewer
 
 ### Live Suggestions
 
-Streaming AI responses generated from the user's CV and job description, triggered by live transcript context. Service: [src/main/services/suggestion-live.service.ts](src/main/services/suggestion-live.service.ts).
+Streaming AI responses generated from the user's CV and job description, triggered by live transcript context. Answers render as Markdown in both suggestion modes, so bold, bullets and inline code arrive formatted rather than as raw characters. Service: [src/main/services/suggestion-live.service.ts](src/main/services/suggestion-live.service.ts).
 
 ### Action Suggestions
 

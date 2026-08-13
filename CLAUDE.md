@@ -71,7 +71,9 @@ Action suggestions are independent of transcripts - triggered by screenshot capt
 
 The `NO_SUGGESTION_NEEDED` sentinel goes through `isNoSuggestionSentinel()` ([src/main/utils/suggestion-sentinel.ts](src/main/utils/suggestion-sentinel.ts)) rather than a direct comparison. It is prefix-matched because it runs on every streamed chunk, and it strips leading markdown first: the professional prompt asks for a bold headline on line 1, so a model that carries that format over emits `**NO_SUGGESTION_NEEDED**` and a bare match would leave the sentinel on screen as a card. `test/suggestion-sentinel.test.mjs` pins both halves - the wrapped forms are suppressed, real answers are not.
 
-Each `LiveSuggestion` carries the `mode` it was *generated* under, and the panel picks its renderer from that, not from the current setting. Reading the live setting instead would reformat every card on screen the moment the user toggles mid-interview, parsing prose answers as Markdown. Professional answers render through `SafeMarkdown`, the same component the action panel already uses; normal answers keep the plain 🪄-prefixed text.
+Both live modes render through `SafeMarkdown`, the same component the action panel uses. The normal-mode prompt asks for plain text *with light formatting*, so any bold or bullet the model reached for used to land on screen as literal asterisks. Prose is passed through `withHardBreaks()` ([src/renderer/lib/suggestions.ts](src/renderer/lib/suggestions.ts)) first: Markdown folds a single newline into a space, and the `whitespace-pre-wrap` rendering it replaced showed every newline the model emitted.
+
+Each `LiveSuggestion` still carries the `mode` it was *generated* under, and the panel keys off that rather than the current setting, so toggling mid-interview leaves cards already on screen alone. What the mode selects is the presentation around the Markdown: professional promotes the headline line, normal keeps the 🪄 marker in a column of its own - prepending it to the content instead would swallow whatever structure the answer opens with.
 
 ### Routing
 
