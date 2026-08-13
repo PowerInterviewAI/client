@@ -22,6 +22,10 @@ const ALWAYS_ON_TOP_LEVEL = 'screen-saver' as const;
 let win: BrowserWindow | null = null;
 let _stealth = configStore.getStealth();
 
+// Last z-order state we asked for. `null` means nothing has been applied to this window yet,
+// which is what makes the first call after a window is registered always go through.
+let alwaysOnTopApplied: boolean | null = null;
+
 // Last Dock state we asked macOS for, and when. `null` means nothing has been applied yet.
 let dockVisible: boolean | null = null;
 let lastDockCallAt = 0;
@@ -74,6 +78,10 @@ interface WindowBounds {
  */
 export function setWindowReference(window: BrowserWindow): void {
   win = window;
+
+  // The tracked z-order belongs to the previous window, not this one. Carrying it over would
+  // read the first real call as a no-op and leave the new window unpinned.
+  alwaysOnTopApplied = null;
 
   // The shell re-registers the taskbar button whenever the window is re-shown or re-shaped, and
   // most of those paths are not ours to intercept - Alt+Tab restoring a minimized window, for one.
@@ -169,9 +177,15 @@ function applySurfaceVisibility(): void {
  * video call - so without `visibleOnFullScreen` the pin does nothing in the case it exists for.
  * Both are released together; leaving the window on every Space after a session is over would
  * follow the user around their desktop.
+ *
+ * No-op calls are skipped, for the same reason `applyDockVisibility` skips them. Window events
+ * (show, restore, maximize) run through here too, and re-issuing the pin is not free or even
+ * invisible: on Windows it re-raises the window to the front of the topmost band, and on macOS
+ * Electron re-runs the whole level lookup and the Cocoa call with no early return of its own.
  */
 function applyAlwaysOnTop(pinned: boolean): void {
   if (!win || win.isDestroyed()) return;
+  if (alwaysOnTopApplied === pinned) return;
 
   try {
     if (pinned) {
@@ -196,6 +210,8 @@ function applyAlwaysOnTop(pinned: boolean): void {
   } catch (e) {
     console.warn('setVisibleOnAllWorkspaces failed:', e);
   }
+
+  alwaysOnTopApplied = pinned;
 }
 
 /**

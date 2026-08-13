@@ -86,6 +86,13 @@ export async function run() {
     check(`the ${event} event keeps the button hidden while running`, skipTaskbar.at(-1) === true);
   }
 
+  // The taskbar button has to be re-asserted every time; the z-order does not, and re-issuing it
+  // is not invisible. On Windows it re-raises the window to the front of the topmost band, so a
+  // window event would shuffle the window over whatever the user just brought forward.
+  alwaysOnTop.length = 0;
+  for (const event of ['show', 'restore', 'maximize', 'unmaximize']) handlers[event]?.();
+  check('window events do not re-issue an unchanged z-order', alwaysOnTop.length === 0);
+
   skipTaskbar.length = 0;
   windowControl.restoreWindow();
   check('restoring while running keeps the button hidden', skipTaskbar.at(-1) === true);
@@ -100,9 +107,12 @@ export async function run() {
   alwaysOnTop.length = 0;
   windowControl.disableStealth();
   check('leaving stealth mid-session keeps the button hidden', skipTaskbar.at(-1) === true);
+  // Asserted as "never released" rather than "last call was pin": the window is already pinned
+  // for the running session, so the correct behaviour is to issue no z-order call at all. A
+  // check on the last call would instead demand the redundant re-issue the guard exists to avoid.
   check(
-    'leaving stealth mid-session keeps the window pinned',
-    alwaysOnTop.at(-1)?.enabled === true
+    'leaving stealth mid-session never unpins the window',
+    !alwaysOnTop.some((call) => call.enabled === false)
   );
 
   // 4. Stopping is what releases both.
