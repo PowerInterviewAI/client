@@ -10,6 +10,26 @@ import { classifyInterviewerTurn, TurnVerdict } from '../utils/interviewer-turn.
 import { appStateService } from './app-state.service.js';
 import { liveSuggestionService } from './suggestion-live.service.js';
 
+/**
+ * Every trailing `Other` entry in `cleaned` since the candidate last spoke, oldest first.
+ *
+ * A pause longer than TRANSCRIPT_INTER_TRANSCRIPT_GAP_MS keeps two interviewer blocks separate in
+ * `cleaned` even though the candidate never took the floor between them
+ * ("Tell me about your Kafka work." <pause> "Okay?"). Classifying only the last block would read
+ * that as pure backchannel and silently drop the question in the block before it, so "the turn" is
+ * every trailing `Other` block, not just the most recent one.
+ *
+ * Exported standalone so the concatenation itself is unit-testable against a plain `cleaned`
+ * array, without driving real wall-clock gaps through `ingest()`.
+ */
+export function selectTrailingOtherTurn(cleaned: Transcript[]): Transcript[] {
+  const trailing: Transcript[] = [];
+  for (let i = cleaned.length - 1; i >= 0 && cleaned[i].speaker === Speaker.Other; i--) {
+    trailing.unshift(cleaned[i]);
+  }
+  return trailing;
+}
+
 class TranscriptService {
   private isActive = false;
 
@@ -103,13 +123,14 @@ class TranscriptService {
    * Runs on the *merged* turn rather than the single final, so a question the ASR split across two
    * finals is classified whole. Re-arming on every final is what makes that work: a fragment parks
    * on the settle timer, and its continuation replaces the pending decision with one taken on the
-   * complete sentence.
+   * complete sentence. See `selectTrailingOtherTurn` for why "the turn" can span more than one
+   * merged block.
    */
   private scheduleSuggestion(cleaned: Transcript[]): void {
     this.clearTurnSettleTimer();
 
-    const turn = cleaned.filter((t) => t.speaker === Speaker.Other).slice(-1)[0];
-    const verdict = classifyInterviewerTurn(turn?.text ?? '');
+    const trailingOther = selectTrailingOtherTurn(cleaned);
+    const verdict = classifyInterviewerTurn(trailingOther.map((t) => t.text).join(' '));
 
     console.info(`[TranscriptService] turn verdict=${verdict}`);
 
