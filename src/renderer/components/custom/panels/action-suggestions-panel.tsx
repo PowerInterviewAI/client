@@ -216,27 +216,34 @@ function ActionSuggestionsPanel({
               >
                 {/* Same as the live panel: skip off-screen work. Worth more per card here,
                     since these carry screenshots and markdown with code blocks. */}
-                <div className="flex gap-3 py-3 [content-visibility:auto] [contain-intrinsic-size:auto_8rem]">
-                  {idx === 0 &&
-                  (s.state === SuggestionState.Pending || s.state === SuggestionState.Loading) ? (
-                    <Loader className="h-4 w-4 mt-px text-accent shrink-0 animate-spin" />
-                  ) : s.state === SuggestionState.Stopped ? (
-                    <PauseCircle className="h-4 w-4 mt-px text-muted-foreground shrink-0" />
-                  ) : (
-                    <Zap className="h-4 w-4 mt-px text-accent shrink-0" />
-                  )}
-
-                  {/* min-w-0: a flex item defaults to min-width:auto, so one long URL or code
-                      token in an answer would widen the card past the panel instead of wrapping */}
-                  <div className="min-w-0 flex-1">
-                    {s.last_question && s.last_question.trim() !== '' && (
-                      <div className="flex text-xs text-muted-foreground mb-2">
-                        <span className="wrap-break-word">
-                          {truncateMiddle(s.last_question, MAX_QUESTION_LENGTH)}
-                        </span>
-                      </div>
+                <div className="py-3 [content-visibility:auto] [contain-intrinsic-size:auto_8rem]">
+                  {/* Same as the live panel: the prompt stays pinned while its own card is in
+                      view, so a long answer never leaves the reader without the question that
+                      produced it. bg-card because the answer scrolls underneath it, and
+                      line-clamp-2 so a long prompt cannot pin a third of the panel open. */}
+                  <div className="sticky top-0 z-10 flex gap-3 bg-card pb-2">
+                    {idx === 0 &&
+                    (s.state === SuggestionState.Pending || s.state === SuggestionState.Loading) ? (
+                      <Loader className="h-4 w-4 mt-px text-accent shrink-0 animate-spin" />
+                    ) : s.state === SuggestionState.Stopped ? (
+                      <PauseCircle className="h-4 w-4 mt-px text-muted-foreground shrink-0" />
+                    ) : (
+                      <Zap className="h-4 w-4 mt-px text-accent shrink-0" />
                     )}
 
+                    {/* min-w-0: a flex item defaults to min-width:auto, so one long unbroken
+                        token would widen the card past the panel instead of wrapping */}
+                    {s.last_question && s.last_question.trim() !== '' && (
+                      <div
+                        className="min-w-0 flex-1 text-xs text-muted-foreground wrap-break-word line-clamp-2"
+                        title={s.last_question}
+                      >
+                        {truncateMiddle(s.last_question, MAX_QUESTION_LENGTH)}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="min-w-0 pl-7">
                     {s.image_urls && s.image_urls.length > 0 && (
                       <div className="flex shrink-0 mb-2">
                         <div className="flex gap-2 overflow-x-auto">
@@ -261,27 +268,25 @@ function ActionSuggestionsPanel({
                       </div>
                     )}
 
-                    <div className="min-w-0 flex-1">
-                      {(s.state === SuggestionState.Loading ||
-                        s.state === SuggestionState.Success) && (
-                        <div className="text-sm text-foreground leading-relaxed">
-                          <SafeMarkdown content={s.answer} />
-                        </div>
-                      )}
+                    {(s.state === SuggestionState.Loading ||
+                      s.state === SuggestionState.Success) && (
+                      <div className="text-sm text-foreground leading-relaxed">
+                        <SafeMarkdown content={s.answer} />
+                      </div>
+                    )}
 
-                      {s.state === SuggestionState.Stopped && (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                          <PauseCircle className="h-4 w-4" />
-                          <span>Suggestion canceled</span>
-                        </div>
-                      )}
+                    {s.state === SuggestionState.Stopped && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                        <PauseCircle className="h-4 w-4" />
+                        <span>Suggestion canceled</span>
+                      </div>
+                    )}
 
-                      {s.state === SuggestionState.Error && (
-                        <div className="bg-destructive/10 border border-destructive/20 rounded-md p-2 mt-1">
-                          <p className="text-xs text-destructive">{s.error}</p>
-                        </div>
-                      )}
-                    </div>
+                    {s.state === SuggestionState.Error && (
+                      <div className="bg-destructive/10 border border-destructive/20 rounded-md p-2 mt-1">
+                        <p className="text-xs text-destructive">{s.error}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </SuggestionReveal>

@@ -97,7 +97,14 @@ function headingFactory<L extends HeadingLevel>(level: L) {
   // should read as a heading without taking over the panel. h5/h6 land at body size and lean on
   // weight alone.
   const sizes = [1.125, 1.0625, 1, 0.9375, 0.875, 0.875];
-  const margins = ['mt-4 mb-2', 'mt-4 mb-2', 'mt-3 mb-1.5', 'mt-3 mb-1.5', 'mt-2 mb-1', 'mt-2 mb-1'];
+  const margins = [
+    'mt-4 mb-2',
+    'mt-4 mb-2',
+    'mt-3 mb-1.5',
+    'mt-3 mb-1.5',
+    'mt-2 mb-1',
+    'mt-2 mb-1',
+  ];
 
   const Heading: React.FC<React.HTMLAttributes<HTMLHeadingElement> & MarkdownNodeProp> =
     function MarkdownHeading({ children, className, style, node, ...props }) {

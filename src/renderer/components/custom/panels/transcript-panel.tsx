@@ -1,5 +1,5 @@
 import { ArrowDown } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Card } from '@/components/ui/card';
 import { useAppState } from '@/hooks/use-app-state';
@@ -14,6 +14,41 @@ import { Checkbox } from '../../ui/checkbox';
 // what would push the speaker onto a line of its own.
 const timeFormat = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' });
 
+interface SpeakerRun {
+  speaker: Speaker;
+  key: string;
+  items: Transcript[];
+}
+
+/**
+ * Collapse consecutive entries from one speaker into a single run.
+ *
+ * An ASR final is an acoustic endpoint, not the end of a turn, so one person talking produces a
+ * string of entries that used to repeat their name on every line. Grouping prints it once, and -
+ * the reason this exists - gives the label a block tall enough to stay pinned to while the rest of
+ * the run scrolls past it.
+ */
+function groupBySpeaker(transcripts: Transcript[]): SpeakerRun[] {
+  const runs: SpeakerRun[] = [];
+
+  for (const item of transcripts) {
+    const current = runs[runs.length - 1];
+
+    if (current && current.speaker === item.speaker) {
+      current.items.push(item);
+      continue;
+    }
+
+    runs.push({
+      speaker: item.speaker,
+      key: `${runs.length}-${item.timestamp}`,
+      items: [item],
+    });
+  }
+
+  return runs;
+}
+
 interface TranscriptPanelProps {
   transcripts: Transcript[];
   isRunning?: boolean;
@@ -27,6 +62,8 @@ function TranscriptPanel({ transcripts, isRunning = false }: TranscriptPanelProp
   const endRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState<boolean>(() => config?.autoScrollTranscript ?? true);
   const isStealth = useIsStealthMode();
+
+  const runs = useMemo(() => groupBySpeaker(transcripts), [transcripts]);
 
   useEffect(() => {
     if (typeof config?.autoScrollTranscript === 'boolean') {
@@ -80,35 +117,50 @@ function TranscriptPanel({ transcripts, isRunning = false }: TranscriptPanelProp
         ) : (
           <>
             <div className="divide-y divide-border/50 px-2 py-1">
-              {transcripts.map((item, idx) => {
-                const speaker = item.speaker === Speaker.Self ? username : 'Interviewer';
+              {runs.map((run) => {
+                const speaker = run.speaker === Speaker.Self ? username : 'Interviewer';
                 return (
-                  // content-visibility skips style, layout and paint for rows scrolled out of
-                  // view, which is the cost that grew with transcript length. `auto` in
-                  // contain-intrinsic-size remembers each row's last rendered size, so scroll
-                  // position and scrollIntoView stay accurate without measurement plumbing.
-                  <div
-                    key={idx}
-                    className="flex items-baseline gap-2 py-1 max-w-3xl mx-auto [content-visibility:auto] [contain-intrinsic-size:auto_2rem]"
-                  >
+                  <div key={run.key} className="flex gap-2 py-1 max-w-3xl mx-auto">
                     {/* Fixed-width column so wrapped/adjacent rows keep a stable left edge
                         regardless of speaker name length; long names truncate rather than
-                        pushing the text column around. */}
+                        pushing the text column around.
+
+                        sticky + self-start is what keeps the name on screen for the whole run:
+                        it rides the top of the scrollport until the run's last line passes, so
+                        scrolling into the middle of a long answer never leaves the reader
+                        without a speaker. It needs no background of its own - the gutter is a
+                        column the text never enters, so nothing scrolls underneath it. */}
                     <span
-                      className="w-20 shrink-0 truncate text-xs font-semibold text-primary"
+                      className="sticky top-1 self-start w-20 shrink-0 truncate text-xs font-semibold text-primary"
                       title={speaker}
                     >
                       {speaker}
                     </span>
-                    <p className="flex-1 min-w-0 text-sm text-foreground/90 leading-snug text-wrap">
-                      {item.text}
-                    </p>
-                    <time
-                      dateTime={new Date(item.timestamp).toISOString()}
-                      className="text-xs text-muted-foreground tabular-nums shrink-0"
-                    >
-                      {timeFormat.format(item.timestamp)}
-                    </time>
+
+                    <div className="min-w-0 flex-1">
+                      {run.items.map((item, idx) => (
+                        // content-visibility skips style, layout and paint for rows scrolled out
+                        // of view, which is the cost that grew with transcript length. `auto` in
+                        // contain-intrinsic-size remembers each row's last rendered size, so
+                        // scroll position and scrollIntoView stay accurate without measurement
+                        // plumbing. Kept per row rather than per run so a long run still skips
+                        // the lines that are off screen.
+                        <div
+                          key={idx}
+                          className="flex items-baseline gap-2 [content-visibility:auto] [contain-intrinsic-size:auto_1.25rem]"
+                        >
+                          <p className="flex-1 min-w-0 text-sm text-foreground/90 leading-snug text-wrap">
+                            {item.text}
+                          </p>
+                          <time
+                            dateTime={new Date(item.timestamp).toISOString()}
+                            className="text-xs text-muted-foreground tabular-nums shrink-0"
+                          >
+                            {timeFormat.format(item.timestamp)}
+                          </time>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 );
               })}

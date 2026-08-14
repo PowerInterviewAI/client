@@ -259,22 +259,38 @@ function LiveSuggestionsPanel({
                     rather than on SuggestionReveal's wrapper, which is an animating grid that
                     size containment would fight. The newest card - the streaming one - is
                     always on screen, so containment never applies to it. */}
-                <div className="flex gap-3 py-3 [content-visibility:auto] [contain-intrinsic-size:auto_6rem]">
-                  {idx === 0 &&
-                  (s.state === SuggestionState.Pending || s.state === SuggestionState.Loading) ? (
-                    <Loader className="h-4 w-4 mt-px text-accent shrink-0 animate-spin" />
-                  ) : s.state === SuggestionState.Stopped ? (
-                    <PauseCircle className="h-4 w-4 mt-px text-muted-foreground shrink-0" />
-                  ) : (
-                    <Zap className="h-4 w-4 mt-px text-accent shrink-0" />
-                  )}
-                  {/* min-w-0: a flex item defaults to min-width:auto, so one long URL or code
-                      token in an answer would widen the card past the panel instead of wrapping */}
-                  <div className="min-w-0 flex-1">
-                    <div className="text-xs text-muted-foreground mb-2 wrap-break-word">
+                <div className="py-3 [content-visibility:auto] [contain-intrinsic-size:auto_6rem]">
+                  {/* The question is what says which turn this answer belongs to, and on an answer
+                      taller than the panel it used to scroll away and leave the reader holding an
+                      answer with no question. Pinned for as long as its own card is in view - the
+                      card's paint containment is what stops it at the card's last line.
+
+                      Unlike the transcript's speaker label this sits over the answer rather than
+                      beside it, so it needs bg-card to keep the text scrolling underneath from
+                      showing through, and line-clamp-2 so a 256-character question cannot pin a
+                      third of the panel open. The full text stays on the title. */}
+                  <div className="sticky top-0 z-10 flex gap-3 bg-card pb-2">
+                    {idx === 0 &&
+                    (s.state === SuggestionState.Pending || s.state === SuggestionState.Loading) ? (
+                      <Loader className="h-4 w-4 mt-px text-accent shrink-0 animate-spin" />
+                    ) : s.state === SuggestionState.Stopped ? (
+                      <PauseCircle className="h-4 w-4 mt-px text-muted-foreground shrink-0" />
+                    ) : (
+                      <Zap className="h-4 w-4 mt-px text-accent shrink-0" />
+                    )}
+                    {/* min-w-0: a flex item defaults to min-width:auto, so one long unbroken
+                        token would widen the card past the panel instead of wrapping */}
+                    <div
+                      className="min-w-0 flex-1 text-xs text-muted-foreground wrap-break-word line-clamp-2"
+                      title={s.last_question}
+                    >
                       {truncateMiddle(s.last_question, MAX_QUESTION_LENGTH)}
                     </div>
+                  </div>
 
+                  {/* icon column (w-4) plus its gap (gap-3), so the answer keeps the left edge it
+                      had when the icon was a flex sibling of the whole card body */}
+                  <div className="min-w-0 pl-7">
                     {(s.state === SuggestionState.Loading ||
                       s.state === SuggestionState.Success) && <SuggestionAnswer suggestion={s} />}
 
