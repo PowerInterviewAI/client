@@ -15,3 +15,6 @@ export const TRANSCRIPT_DOCK_MIN_HEIGHT = 120;
 export const TRANSCRIPT_DOCK_MAX_HEIGHT = 280;
 // Height the suggestion column keeps for itself, whatever the dock would like to take.
 export const SUGGESTION_MIN_HEIGHT = 100;
+// The drag handle between them. Both panels are explicitly sized, so this has to come out of the
+// budget or the pair overflows the container by exactly the handle.
+export const DOCK_HANDLE_HEIGHT = 6;

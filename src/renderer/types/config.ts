@@ -26,6 +26,9 @@ export interface Config {
   // Transcription bottom dock visibility (persisted between sessions)
   showTranscriptPanel: boolean;
 
+  // Height the user dragged the transcription dock to, in px. null means automatic sizing.
+  transcriptDockHeight: number | null;
+
   // Suggestions come back as headline + keyword bullets instead of full sentences
   professionalMode: boolean;
 }

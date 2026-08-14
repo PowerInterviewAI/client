@@ -5,6 +5,7 @@ import ConnectingNotice from '@/components/custom/connecting-notice';
 import ControlPanel from '@/components/custom/control-panel';
 import { LoadingPage } from '@/components/custom/loading';
 import ActionSuggestionsPanel from '@/components/custom/panels/action-suggestions-panel';
+import DockResizeHandle from '@/components/custom/panels/dock-resize-handle';
 import LiveSuggestionsPanel from '@/components/custom/panels/live-suggestions-panel';
 import TranscriptPanel from '@/components/custom/panels/transcript-panel';
 import PermissionGateDialog from '@/components/custom/permission-gate-dialog';
@@ -18,6 +19,7 @@ import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { useProfessionalMode } from '@/hooks/use-professional-mode';
 import { useTranscriptPanel } from '@/hooks/use-transcript-panel';
 import {
+  DOCK_HANDLE_HEIGHT,
   isMac,
   SUGGESTION_MIN_HEIGHT,
   TRANSCRIPT_DOCK_MAX_HEIGHT,
@@ -32,7 +34,7 @@ import { type Transcript } from '@/types/transcript';
 export default function MainPage() {
   const navigate = useNavigate();
 
-  const { config, isLoading: configLoading, loadConfig } = useConfigStore();
+  const { config, isLoading: configLoading, loadConfig, updateConfig } = useConfigStore();
   const { stopAssistant } = useAssistantService();
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const [liveSuggestions, setLiveSuggestions] = useState<LiveSuggestion[]>([]);
@@ -40,6 +42,12 @@ export default function MainPage() {
   const [transcriptHeight, setTranscriptHeight] = useState<number | null>(null);
   const [suggestionHeight, setSuggestionHeight] = useState<number | null>(null);
   const [trialNoticeClosed, setTrialNoticeClosed] = useState(false);
+
+  // The height the user dragged the dock to, null while it is sized automatically. Held here
+  // rather than read straight off the config so a drag stays smooth: it updates every frame and
+  // only reaches the store on release.
+  const [dockPref, setDockPref] = useState<number | null>(null);
+  const [dockMax, setDockMax] = useState<number>(TRANSCRIPT_DOCK_MAX_HEIGHT);
 
   // App state from context
   const { appState } = useAppState();
@@ -81,6 +89,24 @@ export default function MainPage() {
     loadConfig();
   }, [loadConfig]);
 
+  // Adopt the stored dock height once config arrives. Writes go the other way on release only,
+  // so this settles on the value we just persisted rather than fighting the drag.
+  useEffect(() => {
+    if (config?.transcriptDockHeight !== undefined) {
+      setDockPref(config.transcriptDockHeight);
+    }
+  }, [config?.transcriptDockHeight]);
+
+  const commitDockHeight = useCallback(
+    (height: number | null) => {
+      setDockPref(height);
+      updateConfig({ transcriptDockHeight: height }).catch((e) =>
+        console.error('Failed to persist transcript dock height', e)
+      );
+    },
+    [updateConfig]
+  );
+
   const hasLiveSuggestions = liveSuggestions.length > 0;
   const hasActionSuggestions = actionSuggestions.length > 0;
   const hasTranscripts = transcripts.length > 0;
@@ -105,27 +131,43 @@ export default function MainPage() {
 
     const available = Math.max(100, window.innerHeight - (title + status + control + extra));
 
+    // Border plus the drag handle, which only exists when the two share the area.
+    const between = 4 + DOCK_HANDLE_HEIGHT;
+    const maxDock = Math.max(
+      TRANSCRIPT_DOCK_MIN_HEIGHT,
+      available - SUGGESTION_MIN_HEIGHT - between
+    );
+    setDockMax(maxDock);
+
     // Docked alone the transcript takes everything; sharing, it takes a slice and never
     // squeezes the suggestion row below SUGGESTION_MIN_HEIGHT.
     let dock = 0;
     if (showTranscriptDock) {
-      dock = !hasSuggestions
-        ? available
-        : Math.min(
-            Math.max(
-              TRANSCRIPT_DOCK_MIN_HEIGHT,
-              Math.min(TRANSCRIPT_DOCK_MAX_HEIGHT, Math.round(available * TRANSCRIPT_DOCK_RATIO))
-            ),
-            Math.max(0, available - SUGGESTION_MIN_HEIGHT)
-          );
+      if (!hasSuggestions) {
+        dock = available;
+      } else if (dockPref !== null) {
+        // A dragged height is a decision, so it is clamped only to what fits. The automatic
+        // MAX exists to stop the dock helping itself to the panel, not to overrule a choice.
+        dock = Math.min(Math.max(TRANSCRIPT_DOCK_MIN_HEIGHT, dockPref), maxDock);
+      } else {
+        dock = Math.min(
+          Math.max(
+            TRANSCRIPT_DOCK_MIN_HEIGHT,
+            Math.min(TRANSCRIPT_DOCK_MAX_HEIGHT, Math.round(available * TRANSCRIPT_DOCK_RATIO))
+          ),
+          maxDock
+        );
+      }
     }
     setTranscriptHeight(dock);
 
     // Suggestion panels sit side by side, so they share the full height left above the dock.
     setSuggestionHeight(
-      hasSuggestions ? Math.max(SUGGESTION_MIN_HEIGHT, available - dock - (dock > 0 ? 4 : 0)) : 0
+      hasSuggestions
+        ? Math.max(SUGGESTION_MIN_HEIGHT, available - dock - (dock > 0 ? between : 0))
+        : 0
     );
-  }, [hasSuggestions, showTranscriptDock]);
+  }, [hasSuggestions, showTranscriptDock, dockPref]);
 
   const isStealth = useIsStealthMode();
 
@@ -282,14 +324,27 @@ export default function MainPage() {
           </div>
         )}
 
-        {/* Bottom dock: Transcription, spanning the full width */}
+        {/* Bottom dock: Transcription, spanning the full width. The handle only appears when the
+            dock shares the area with suggestions - docked alone it already fills it, so there is
+            nothing to trade height against. */}
         {showTranscriptDock && (
-          <div className="shrink-0" style={transcriptStyle}>
-            <TranscriptPanel
-              transcripts={transcripts}
-              isRunning={appState?.runningState === RunningState.Running}
-            />
-          </div>
+          <>
+            {hasSuggestions && (
+              <DockResizeHandle
+                height={transcriptHeight ?? TRANSCRIPT_DOCK_MIN_HEIGHT}
+                min={TRANSCRIPT_DOCK_MIN_HEIGHT}
+                max={dockMax}
+                onResize={setDockPref}
+                onCommit={commitDockHeight}
+              />
+            )}
+            <div className="shrink-0" style={transcriptStyle}>
+              <TranscriptPanel
+                transcripts={transcripts}
+                isRunning={appState?.runningState === RunningState.Running}
+              />
+            </div>
+          </>
         )}
       </div>
 

@@ -27,6 +27,9 @@ export interface RuntimeConfig {
   // transcription bottom dock visibility
   showTranscriptPanel: boolean;
 
+  // height the user dragged the dock to, in px; null leaves it on the automatic ratio
+  transcriptDockHeight: number | null;
+
   // suggestions come back as headline + keyword bullets instead of full sentences
   professionalMode: boolean;
 }
@@ -48,6 +51,7 @@ const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
   autoScrollTranscript: true,
 
   showTranscriptPanel: true,
+  transcriptDockHeight: null,
 
   // opt-in: prose is what every existing user already expects from the panel
   professionalMode: false,
@@ -234,6 +238,9 @@ export const configStore = new ConfigStore();
   }
   if (raw?.showTranscriptPanel === undefined) {
     migration.showTranscriptPanel = true;
+  }
+  if (raw?.transcriptDockHeight === undefined) {
+    migration.transcriptDockHeight = null;
   }
   if (raw?.professionalMode === undefined) {
     migration.professionalMode = false;
