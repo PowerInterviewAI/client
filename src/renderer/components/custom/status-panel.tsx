@@ -1,4 +1,4 @@
-import { Captions, CaptionsOff, Keyboard, List } from 'lucide-react';
+import { Captions, CaptionsOff, Keyboard, ListChecks, Route } from 'lucide-react';
 
 import CreditsDisplay from '@/components/custom/credits-display';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -42,7 +42,11 @@ export default function StatusPanel({
       <Tooltip>
         <TooltipTrigger asChild>
           <div className={cn('ml-2', badgeClass(professionalMode))}>
-            <List className="h-3.5 w-3.5" />
+            {professionalMode ? (
+              <ListChecks className="h-3.5 w-3.5" />
+            ) : (
+              <Route className="h-3.5 w-3.5 -scale-y-100" />
+            )}
             {professionalMode ? 'Professional' : 'Normal'}
           </div>
         </TooltipTrigger>

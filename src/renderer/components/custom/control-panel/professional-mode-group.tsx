@@ -1,4 +1,4 @@
-import { List } from 'lucide-react';
+import { ListChecks, Route } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -12,10 +12,8 @@ import { Hotkey, HOTKEYS } from '@/lib/hotkeys';
  * toggle. It only affects the next suggestion, so leaving it live while the assistant runs
  * cannot corrupt an in-flight stream.
  *
- * Uses a filled `default` variant when on rather than a text-color tint on `secondary`: an
- * icon-color-only change against the light `--secondary` background read as nearly invisible,
- * the same problem the ToggleStealth hotkey chip in status-panel already solves with a filled
- * background.
+ * Signals on/off via icon shape (`ListChecks` when on, `Route` when off) rather than a color/fill
+ * change: a color-only cue against the light `--secondary` background read as nearly invisible.
  */
 export function ProfessionalModeGroup() {
   const { enabled, toggle } = useProfessionalMode();
@@ -25,14 +23,18 @@ export function ProfessionalModeGroup() {
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
-            variant={enabled ? 'default' : 'secondary'}
+            variant="secondary"
             size="icon"
             className="h-8 w-8 border-none rounded-xl"
             aria-pressed={enabled}
             aria-label="Toggle professional mode"
             onClick={toggle}
           >
-            <List className="h-4 w-4" />
+            {enabled ? (
+              <ListChecks className="h-4 w-4" />
+            ) : (
+              <Route className="h-4 w-4 -scale-y-100" />
+            )}
           </Button>
         </TooltipTrigger>
         <TooltipContent>

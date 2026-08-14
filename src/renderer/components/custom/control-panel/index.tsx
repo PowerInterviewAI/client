@@ -156,13 +156,15 @@ export default function ControlPanel() {
             getDisabled={getDisabled}
           />
           <LLMGroup getDisabled={getDisabled} />
-          <ProfessionalModeGroup />
         </div>
 
         <MainGroup stateConfig={{ onClick, className, icon, label }} getDisabled={getDisabled} />
 
         <div className="flex flex-1 basis-0 min-w-0 items-center justify-between gap-2">
-          <ToolsGroup getDisabled={getDisabled} />
+          <div className="flex items-center gap-2">
+            <ProfessionalModeGroup />
+            <ToolsGroup getDisabled={getDisabled} />
+          </div>
           <ZoomControl />
         </div>
       </div>
