@@ -61,11 +61,25 @@ export enum SuggestionMode {
   Professional = 'professional',
 }
 
+/**
+ * What the local gate concluded about the interviewer's last turn.
+ *
+ * Only two of `TurnVerdict`'s three values travel: a `Skip` never becomes a request at all. The
+ * backend runs its own classifier for `Uncertain` and trusts `Answer`, which is what keeps a model
+ * call off the path of every plainly answerable question. Mirrors `TurnVerdict` in the backend's
+ * `app/schemas/suggestion.py`.
+ */
+export enum RequestTurnVerdict {
+  Answer = 'answer',
+  Uncertain = 'uncertain',
+}
+
 export interface GenerateLiveSuggestionRequest extends LLMRequest {
   profile_data: string;
   context: string;
   transcripts: Transcript[];
   mode: SuggestionMode;
+  turn_verdict?: RequestTurnVerdict;
 }
 
 // action request reuses live fields but adds image names

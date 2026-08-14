@@ -1,12 +1,17 @@
 import { LLMApi } from '../api/llm.js';
 import {
+  LIVE_SUGGESTION_RENDER_DELAY_MS,
   LIVE_SUGGESTION_TTFB_MS,
   SUGGESTION_STALL_MS,
   TRANSCRIPT_UPLOAD_LIMIT,
 } from '../consts.js';
 import { configStore } from '../store/config.store.js';
 import { LiveSuggestion, Speaker, SuggestionState, Transcript } from '../types/app-state.js';
-import { GenerateLiveSuggestionRequest, SuggestionMode } from '../types/llm.js';
+import {
+  GenerateLiveSuggestionRequest,
+  RequestTurnVerdict,
+  SuggestionMode,
+} from '../types/llm.js';
 import { DateTimeUtil } from '../utils/datetime.js';
 import { getSuggestionErrorMessage } from '../utils/suggestion-error.js';
 import { isNoSuggestionSentinel } from '../utils/suggestion-sentinel.js';
@@ -49,7 +54,8 @@ class LiveSuggestionService {
   private async generateSuggestion(
     taskId: string,
     controller: AbortController,
-    transcripts: Transcript[]
+    transcripts: Transcript[],
+    turnVerdict: RequestTurnVerdict
   ): Promise<void> {
     // No empty-transcript guard here on purpose. startGenerateSuggestion already returns
     // before registering a task, and a second check would return ahead of the finally that
@@ -71,8 +77,33 @@ class LiveSuggestionService {
       mode,
     };
 
-    // Append initial suggestion
-    this.appendSuggestion(timestamp, suggestion, epoch);
+    // The card is *not* appended yet. A turn the backend suppresses resolves in a few hundred
+    // milliseconds, and appending here would put a spinner on screen only to delete it again -
+    // exactly the flicker the gate exists to remove. The card appears on whichever comes first:
+    // real content, an error, or LIVE_SUGGESTION_RENDER_DELAY_MS of waiting, which is what keeps
+    // a genuinely slow answer from looking like a dropped one.
+    let renderTimer: NodeJS.Timeout | null = setTimeout(() => {
+      renderTimer = null;
+      this.appendSuggestion(timestamp, suggestion, epoch);
+    }, LIVE_SUGGESTION_RENDER_DELAY_MS);
+
+    // Every write after the first goes through here, so the pending card can never be scheduled
+    // into existence after the sentinel has already decided there is nothing to show.
+    const publish = (): void => {
+      if (renderTimer) {
+        clearTimeout(renderTimer);
+        renderTimer = null;
+      }
+      this.appendSuggestion(timestamp, suggestion, epoch);
+    };
+
+    // Refresh a card that is already on screen, without bringing one into existence. Used for
+    // state changes that carry nothing for the candidate to read.
+    const refresh = (): void => {
+      if (this.suggestions.has(timestamp)) {
+        this.appendSuggestion(timestamp, suggestion, epoch);
+      }
+    };
 
     // A plain resettable timer, not a race against reader.read(): a losing read promise stays
     // pending and has already consumed a read request, so looping would leave two outstanding
@@ -93,6 +124,7 @@ class LiveSuggestionService {
         context: interviewConfig.context,
         transcripts: transcripts.slice(-TRANSCRIPT_UPLOAD_LIMIT),
         mode,
+        turn_verdict: turnVerdict,
       };
 
       armStallTimer(LIVE_SUGGESTION_TTFB_MS);
@@ -109,8 +141,11 @@ class LiveSuggestionService {
       // check below only fires for Loading, and no timeout rescues it because the stream
       // ended rather than stalled. An upstream that emits only a <think> block reaches here
       // with nothing to yield, since _strip_think_stream swallows the whole buffer.
+      // Refresh, not publish. The response headers land before the backend's gate has decided
+      // anything - it holds the body back, not the response - so publishing here would render
+      // the exact card the delay above exists to withhold.
       suggestion.state = SuggestionState.Loading;
-      this.appendSuggestion(timestamp, suggestion, epoch);
+      refresh();
 
       try {
         while (true) {
@@ -122,7 +157,7 @@ class LiveSuggestionService {
             suggestion.answer += chunk;
 
             // Update the suggestion
-            this.appendSuggestion(timestamp, suggestion, epoch);
+            publish();
           }
         }
 
@@ -135,7 +170,7 @@ class LiveSuggestionService {
           } else {
             suggestion.state = SuggestionState.Success;
           }
-          this.appendSuggestion(timestamp, suggestion, epoch);
+          publish();
         }
       } finally {
         // releaseLock alone does not cancel the body. Undici documents that an unconsumed,
@@ -157,6 +192,9 @@ class LiveSuggestionService {
       if (aborted && !stalled) {
         // Superseded by a newer question. Expected, not a failure.
         suggestion.state = SuggestionState.Stopped;
+        // Refresh: a card superseded before it was ever shown has no partial answer on it, and
+        // a Stopped ghost appearing for a question the candidate never saw asked reads as a bug.
+        refresh();
       } else {
         if (!aborted) {
           console.error('[LiveSuggestionService] Failed to generate suggestion:', error);
@@ -165,15 +203,20 @@ class LiveSuggestionService {
         suggestion.error = stalled
           ? 'The response timed out. Please try again.'
           : getSuggestionErrorMessage(error);
+        // Publish: a failure is always worth surfacing, even one that failed fast.
+        publish();
       }
-      this.appendSuggestion(timestamp, suggestion, epoch);
     } finally {
       if (stallTimer) clearTimeout(stallTimer);
+      if (renderTimer) clearTimeout(renderTimer);
       this.abortMap.delete(taskId);
     }
   }
 
-  async startGenerateSuggestion(transcripts: Transcript[]): Promise<void> {
+  async startGenerateSuggestion(
+    transcripts: Transcript[],
+    turnVerdict: RequestTurnVerdict = RequestTurnVerdict.Uncertain
+  ): Promise<void> {
     // Remove trailing SELF transcripts (same logic as Python)
     const filteredTranscripts = [...transcripts];
     while (
@@ -198,7 +241,7 @@ class LiveSuggestionService {
     // generateSuggestion owns the abort-map cleanup in its own finally, but it can throw before
     // reaching the try that guards it - the config and state reads sit above it. Deleting the
     // entry here on a synchronous rejection keeps a dead controller from being aborted forever.
-    this.generateSuggestion(taskId, controller, filteredTranscripts).catch((error) => {
+    this.generateSuggestion(taskId, controller, filteredTranscripts, turnVerdict).catch((error) => {
       console.error('[LiveSuggestionService] generateSuggestion rejected:', error);
       this.abortMap.delete(taskId);
     });
