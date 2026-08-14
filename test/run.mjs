@@ -27,6 +27,7 @@ for (const module of [
   './interviewer-turn.test.mjs',
   './transcript-turn-selection.test.mjs',
   './suggestion-sentinel.test.mjs',
+  './suggestion-emphasis.test.mjs',
   './mac-update-util.test.mjs',
 ]) {
   const { run } = await import(module);

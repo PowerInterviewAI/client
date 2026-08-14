@@ -13,7 +13,7 @@ function truncateMiddle(text: string, maxLen: number): string {
 
 import { Card } from '@/components/ui/card';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
-import { newestTimestamp, withHardBreaks } from '@/lib/suggestions';
+import { newestTimestamp, stripDanglingEmphasis, withHardBreaks } from '@/lib/suggestions';
 import { SuggestionMode } from '@/types/llm';
 import { type LiveSuggestion, SuggestionState } from '@/types/suggestion';
 
@@ -42,6 +42,7 @@ function SuggestionAnswer({
   trailing?: boolean;
 }) {
   const suffix = trailing ? ' ...' : '';
+  const answer = stripDanglingEmphasis(suggestion.answer);
 
   if (suggestion.mode === SuggestionMode.Professional) {
     return (
@@ -52,7 +53,7 @@ function SuggestionAnswer({
       // text on the light one. Applied here, not in SafeMarkdown, because the action panel renders
       // whole documents through the same component and has no headline line to promote.
       <div className="text-sm text-foreground leading-relaxed [&>p:first-child]:text-[0.95rem] [&_ul]:mt-1 [&_li]:my-0.5">
-        <SafeMarkdown content={suggestion.answer + suffix} />
+        <SafeMarkdown content={answer + suffix} />
       </div>
     );
   }
@@ -65,7 +66,7 @@ function SuggestionAnswer({
         🪄
       </span>
       <div className="min-w-0 flex-1">
-        <SafeMarkdown content={withHardBreaks(suggestion.answer) + suffix} />
+        <SafeMarkdown content={withHardBreaks(answer) + suffix} />
       </div>
     </div>
   );
