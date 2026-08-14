@@ -68,6 +68,16 @@ type StrongProps = React.HTMLAttributes<HTMLElement> &
     children?: React.ReactNode;
   };
 
+type EmProps = React.HTMLAttributes<HTMLElement> &
+  MarkdownNodeProp & {
+    children?: React.ReactNode;
+  };
+
+type DelProps = React.HTMLAttributes<HTMLElement> &
+  MarkdownNodeProp & {
+    children?: React.ReactNode;
+  };
+
 type BlockquoteProps = React.BlockquoteHTMLAttributes<HTMLQuoteElement> &
   MarkdownNodeProp & {
     children?: React.ReactNode;
@@ -219,12 +229,34 @@ const components: Components = {
       </p>
     );
   },
+  // Emphasis is what the prompts now spend on the words an answer turns on, so both marks are
+  // declared here rather than left to the UA defaults: the default `bolder` resolves against
+  // whatever weight it inherits rather than a fixed one, and italic alone is a weak signal at
+  // 0.875rem on a dark card. The pair is deliberately asymmetric - bold carries weight,
+  // italic carries slant plus a step down in colour - so a bolded term and an italicised caveat
+  // read as two different kinds of emphasis rather than two flavours of "important".
   strong: function MarkdownStrong({ children, node, ...props }: StrongProps) {
     void node;
     return (
       <strong className="font-semibold text-foreground" {...props}>
         {children}
       </strong>
+    );
+  },
+  em: function MarkdownEm({ children, node, ...props }: EmProps) {
+    void node;
+    return (
+      <em className="italic text-foreground/85" {...props}>
+        {children}
+      </em>
+    );
+  },
+  del: function MarkdownDel({ children, node, ...props }: DelProps) {
+    void node;
+    return (
+      <del className="line-through text-muted-foreground" {...props}>
+        {children}
+      </del>
     );
   },
   blockquote: function MarkdownBlockquote({ children, node, ...props }: BlockquoteProps) {
