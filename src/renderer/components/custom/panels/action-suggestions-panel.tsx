@@ -226,10 +226,14 @@ function ActionSuggestionsPanel({
                     <Zap className="h-4 w-4 mt-px text-accent shrink-0" />
                   )}
 
-                  <div>
+                  {/* min-w-0: a flex item defaults to min-width:auto, so one long URL or code
+                      token in an answer would widen the card past the panel instead of wrapping */}
+                  <div className="min-w-0 flex-1">
                     {s.last_question && s.last_question.trim() !== '' && (
                       <div className="flex text-xs text-muted-foreground mb-2">
-                        <span>{truncateMiddle(s.last_question, MAX_QUESTION_LENGTH)}</span>
+                        <span className="wrap-break-word">
+                          {truncateMiddle(s.last_question, MAX_QUESTION_LENGTH)}
+                        </span>
                       </div>
                     )}
 
@@ -257,13 +261,11 @@ function ActionSuggestionsPanel({
                       </div>
                     )}
 
-                    <div className="flex-1">
+                    <div className="min-w-0 flex-1">
                       {(s.state === SuggestionState.Loading ||
                         s.state === SuggestionState.Success) && (
-                        <div className="text-sm text-foreground/90 leading-relaxed">
-                          <div className="text-sm">
-                            <SafeMarkdown content={s.answer} />
-                          </div>
+                        <div className="text-sm text-foreground leading-relaxed">
+                          <SafeMarkdown content={s.answer} />
                         </div>
                       )}
 

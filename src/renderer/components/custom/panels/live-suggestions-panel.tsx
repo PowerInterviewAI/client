@@ -45,13 +45,13 @@ function SuggestionAnswer({
 
   if (suggestion.mode === SuggestionMode.Professional) {
     return (
-      // The headline is the line that has to land in a glance, and SafeMarkdown renders it as bold
-      // text in a paragraph that is already semibold - next to no contrast against the bullets
-      // under it. Size and full-strength foreground rather than text-accent: the accent is an
-      // oklch 0.77 orange, which reads as a highlight on the dark card and as low-contrast body
+      // The headline is the line that has to land in a glance. SafeMarkdown gives it weight - it
+      // renders as `strong` at 600 over regular body - and the size bump here is what separates it
+      // from the bullets under it. Full-strength foreground rather than text-accent: the accent is
+      // an oklch 0.77 orange, which reads as a highlight on the dark card and as low-contrast body
       // text on the light one. Applied here, not in SafeMarkdown, because the action panel renders
       // whole documents through the same component and has no headline line to promote.
-      <div className="text-sm text-foreground/90 leading-relaxed [&>p:first-child]:mt-0 [&>p:first-child]:text-[0.95rem] [&>p:first-child]:text-foreground [&_ul]:mt-1 [&_li]:my-0.5">
+      <div className="text-sm text-foreground leading-relaxed [&>p:first-child]:text-[0.95rem] [&_ul]:mt-1 [&_li]:my-0.5">
         <SafeMarkdown content={suggestion.answer + suffix} />
       </div>
     );
@@ -60,11 +60,11 @@ function SuggestionAnswer({
   return (
     // The wand stays a marker in its own column rather than a character prepended to the content:
     // inside the Markdown it would swallow whatever structure the answer opens with.
-    <div className="flex gap-1.5 text-sm text-foreground/90 leading-relaxed">
+    <div className="flex gap-1.5 text-sm text-foreground leading-relaxed">
       <span aria-hidden="true" className="shrink-0">
         🪄
       </span>
-      <div className="min-w-0 flex-1 [&>p:first-child]:mt-0 [&>p:last-child]:mb-0">
+      <div className="min-w-0 flex-1">
         <SafeMarkdown content={withHardBreaks(suggestion.answer) + suffix} />
       </div>
     </div>
@@ -268,8 +268,10 @@ function LiveSuggestionsPanel({
                   ) : (
                     <Zap className="h-4 w-4 mt-px text-accent shrink-0" />
                   )}
-                  <div>
-                    <div className="text-xs text-muted-foreground mb-2">
+                  {/* min-w-0: a flex item defaults to min-width:auto, so one long URL or code
+                      token in an answer would widen the card past the panel instead of wrapping */}
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs text-muted-foreground mb-2 wrap-break-word">
                       {truncateMiddle(s.last_question, MAX_QUESTION_LENGTH)}
                     </div>
 
