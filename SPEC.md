@@ -57,7 +57,7 @@ Screenshot-based problem solving. Accepts up to 4 images, sends them to the LLM 
 
 ### Professional Mode
 
-Optional, off by default. Switches both live and triggered suggestions from full sentences to hints - a bold one-line core answer plus 3-5 keyword bullets - so the panel can be read at a glance mid-interview. Toggled from the control panel or with `Ctrl+Shift+F7`, which keeps it reachable in stealth mode. Persisted locally as `professionalMode`; sent to the backend as `mode` on the suggestion request.
+Optional, off by default. Restructures both live and triggered suggestions into a bold one-line core answer plus one bullet per point, however many the answer needs - the same answer normal mode would give, reorganised so the eye finds each point in one pass and stripped of its padding. Bullets stay full speakable sentences rather than keywords, so the candidate can read one out loud as it stands. Toggled from the control panel or with `Ctrl+Shift+F7`, which keeps it reachable in stealth mode. Persisted locally as `professionalMode`; sent to the backend as `mode` on the suggestion request.
 ### Session Window Behaviour
 
 While the assistant is running - or while stealth mode is on - the window is pinned above other windows (`screen-saver` level, and visible over a fullscreen call on macOS) and drops its taskbar button and Dock icon. The two conditions are independent: switching stealth off mid-session leaves both in place until the session actually stops. macOS traffic lights stay visible outside stealth, since the window is still interactive. Service: [src/main/services/window-control.service.ts](src/main/services/window-control.service.ts).

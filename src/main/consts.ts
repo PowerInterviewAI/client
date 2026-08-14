@@ -49,6 +49,13 @@ export const TRANSCRIPT_UPLOAD_LIMIT = 60;
 //
 // Paid for only by turns that reach TurnVerdict.Uncertain. A turn ending in a question mark, or a
 // punctuated directive, is answered with no added latency at all - see interviewer-turn.ts.
+//
+// LIVE_SUGGESTION_RENDER_DELAY_MS does NOT make this redundant, which is the obvious reason to
+// delete it. That delay only bounds how long an *empty* card waits; the first streamed chunk calls
+// publish() and renders immediately, bypassing it. So a fragment whose request beats its own
+// continuation to a first token puts a partial answer to half a question on screen no matter what
+// the render delay is set to. Not issuing the request until the turn has settled is the only point
+// where that is actually preventable.
 export const INTERVIEWER_TURN_SETTLE_MS = 700;
 
 // Suggestion constants
