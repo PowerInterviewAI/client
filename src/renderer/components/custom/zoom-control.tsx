@@ -3,6 +3,9 @@ import { useEffect, useState } from 'react';
 
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatCombo } from '@/lib/hotkeys';
+import { cn } from '@/lib/utils';
+
+import { BAR_GHOST, BAR_ICON_BUTTON } from './control-panel/bar';
 
 export default function ZoomControl() {
   const [zoomPercent, setZoomPercent] = useState(100);
@@ -40,7 +43,10 @@ export default function ZoomControl() {
             onClick={handleZoomReset}
             aria-label="Reset zoom"
             title="Reset zoom"
-            className="h-7 w-16 flex items-center justify-center rounded hover:bg-muted"
+            className={cn(
+              'h-8 px-2 flex items-center justify-center rounded-lg tabular-nums',
+              BAR_GHOST
+            )}
           >
             <RefreshCcw className="h-4 w-4" />
             <span className="ml-1 text-xs">{zoomPercent}%</span>
@@ -57,7 +63,7 @@ export default function ZoomControl() {
             onClick={handleZoomIn}
             aria-label="Zoom in"
             title="Zoom in"
-            className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
+            className={cn(BAR_ICON_BUTTON, BAR_GHOST, 'flex items-center justify-center')}
           >
             <ZoomIn className="h-4 w-4" />
           </button>
@@ -73,7 +79,7 @@ export default function ZoomControl() {
             onClick={handleZoomOut}
             aria-label="Zoom out"
             title="Zoom out"
-            className="h-7 w-7 flex items-center justify-center rounded hover:bg-muted"
+            className={cn(BAR_ICON_BUTTON, BAR_GHOST, 'flex items-center justify-center')}
           >
             <ZoomOut className="h-4 w-4" />
           </button>

@@ -26,9 +26,11 @@ import { useAppState } from '@/hooks/use-app-state';
 import useTools from '@/hooks/use-tools';
 import { useTranscriptPanel } from '@/hooks/use-transcript-panel';
 import { Hotkey, HOTKEYS } from '@/lib/hotkeys';
-import { getElectron } from '@/lib/utils';
+import { cn, getElectron } from '@/lib/utils';
 import { RunningState } from '@/types/app-state';
 import type { ExportFormat } from '@/types/export';
+
+import { BAR_ACTIVE, BAR_GHOST, BAR_ICON_BUTTON } from './bar';
 
 interface ToolsGroupProps {
   getDisabled: (state: RunningState, disableOnRunning?: boolean) => boolean;
@@ -127,15 +129,15 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
   };
 
   return (
-    <div className="flex items-center space-x-2">
+    <div className="flex items-center gap-1">
       {/* View-only preference, so it stays available while the assistant runs */}
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
-            variant="secondary"
+            variant="ghost"
             onClick={onToggleTranscript}
             size="sm"
-            className="h-8 w-8 text-xs rounded-xl cursor-pointer"
+            className={cn(BAR_ICON_BUTTON, transcriptVisible ? BAR_ACTIVE : BAR_GHOST)}
             aria-pressed={transcriptVisible}
           >
             {transcriptVisible ? (
@@ -155,10 +157,10 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
-            variant="secondary"
+            variant="ghost"
             onClick={onClear}
             size="sm"
-            className="h-8 w-8 text-xs rounded-xl cursor-pointer"
+            className={cn(BAR_ICON_BUTTON, BAR_GHOST)}
             disabled={getDisabled(runningState) || exporting || clearing}
           >
             {clearing ? (
@@ -179,9 +181,9 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
           <TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
               <Button
-                variant="secondary"
+                variant="ghost"
                 size="sm"
-                className="h-8 w-8 text-xs rounded-xl cursor-pointer"
+                className={cn(BAR_ICON_BUTTON, BAR_GHOST)}
                 disabled={getDisabled(runningState) || exporting}
               >
                 {exporting ? (

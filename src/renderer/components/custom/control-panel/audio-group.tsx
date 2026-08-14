@@ -15,8 +15,11 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAppState } from '@/hooks/use-app-state';
 import { useConfigStore } from '@/hooks/use-config-store';
+import { cn } from '@/lib/utils';
 import { RunningState } from '@/types/app-state';
 import { type AudioDevice } from '@/types/audio-device';
+
+import { BAR_GHOST, BAR_ICON_BUTTON } from './bar';
 
 interface AudioGroupProps {
   audioInputDevices: AudioDevice[];
@@ -50,9 +53,9 @@ export function AudioGroup({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant="secondary"
+              variant="ghost"
               size="icon"
-              className="h-8 w-8 border-none rounded-xl"
+              className={cn(BAR_ICON_BUTTON, BAR_GHOST)}
               disabled={getDisabled(runningState)}
               onClick={() => setOpen(true)}
             >

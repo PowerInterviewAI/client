@@ -117,8 +117,9 @@ export default function ControlPanel() {
     [RunningState.Starting]: {
       onClick: () => {},
       className: 'bg-blue-600 hover:bg-blue-600/90',
+      // The label is on screen now, so the trailing dots the icon already animates are dropped
       icon: <Ellipsis className="h-3.5 w-3.5 animate-pulse" />,
-      label: 'Starting...',
+      label: 'Starting',
     },
     [RunningState.Running]: {
       onClick: async () => {
@@ -132,7 +133,7 @@ export default function ControlPanel() {
       onClick: () => {},
       className: 'bg-destructive hover:bg-destructive/90',
       icon: <Ellipsis className="h-3.5 w-3.5 animate-pulse" />,
-      label: 'Stopping...',
+      label: 'Stopping',
     },
   };
   const { onClick, className, icon, label } = stateConfig[runningState];
@@ -147,9 +148,20 @@ export default function ControlPanel() {
 
   return (
     <>
-      {/* Equal-basis side columns keep Start/Stop on the panel's centre line whatever they hold. */}
-      <div id="control-panel" className="flex items-center gap-2 pr-1 pb-0.5">
-        <div className="flex flex-1 basis-0 min-w-0 items-center justify-end gap-2">
+      {/* Reading order is the order of use: start the session, then the things that shape it.
+          Grouping is carried by spacing - gap-1 inside a group, gap-4 between - rather than by a
+          rule between every cluster, so the row stays quiet at 32px tall. The one hairline earns
+          its place by marking the only boundary that matters, between the action and the settings.
+
+          Zoom is held at the right edge by ml-auto: it changes how the app is viewed rather than
+          what it does, and mixing it into the run would make it read as another interview control. */}
+      <div id="control-panel" className="flex items-center gap-4 px-1 pb-1 pt-0.5">
+        <MainGroup stateConfig={{ onClick, className, icon, label }} getDisabled={getDisabled} />
+
+        <div className="h-5 w-px bg-border" aria-hidden="true" />
+
+        {/* Inputs and model - both open a dialog, both lock while the assistant runs */}
+        <div className="flex items-center gap-1">
           <AudioGroup
             audioInputDevices={audioInputDevices ?? []}
             audioInputDeviceNotFound={audioInputDeviceNotFound}
@@ -158,13 +170,13 @@ export default function ControlPanel() {
           <LLMGroup getDisabled={getDisabled} />
         </div>
 
-        <MainGroup stateConfig={{ onClick, className, icon, label }} getDisabled={getDisabled} />
+        {/* What the interview produces: how suggestions read, and what to do with the session */}
+        <div className="flex items-center gap-1">
+          <ProfessionalModeGroup />
+          <ToolsGroup getDisabled={getDisabled} />
+        </div>
 
-        <div className="flex flex-1 basis-0 min-w-0 items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <ProfessionalModeGroup />
-            <ToolsGroup getDisabled={getDisabled} />
-          </div>
+        <div className="ml-auto">
           <ZoomControl />
         </div>
       </div>

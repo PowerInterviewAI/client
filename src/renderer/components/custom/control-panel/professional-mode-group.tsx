@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useProfessionalMode } from '@/hooks/use-professional-mode';
 import { Hotkey, HOTKEYS } from '@/lib/hotkeys';
+import { cn } from '@/lib/utils';
+
+import { BAR_ACTIVE, BAR_GHOST, BAR_ICON_BUTTON } from './bar';
 
 /**
  * Professional mode toggle.
@@ -12,8 +15,10 @@ import { Hotkey, HOTKEYS } from '@/lib/hotkeys';
  * toggle. It only affects the next suggestion, so leaving it live while the assistant runs
  * cannot corrupt an in-flight stream.
  *
- * Signals on/off via icon shape (`ListChecks` when on, `Route` when off) rather than a color/fill
- * change: a color-only cue against the light `--secondary` background read as nearly invisible.
+ * Signals on/off twice over - the fill from `BAR_ACTIVE`, and the icon shape (`ListChecks` when
+ * on, `Route` when off). The icon swap used to be carrying this alone, because a fill against the
+ * `secondary` background the button sat on read as nearly invisible; against the ghost resting
+ * state it is the clearer of the two, and the shape still survives a colour-blind reader.
  */
 export function ProfessionalModeGroup() {
   const { enabled, toggle } = useProfessionalMode();
@@ -23,9 +28,9 @@ export function ProfessionalModeGroup() {
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
-            variant="secondary"
+            variant="ghost"
             size="icon"
-            className="h-8 w-8 border-none rounded-xl"
+            className={cn(BAR_ICON_BUTTON, enabled ? BAR_ACTIVE : BAR_GHOST)}
             aria-pressed={enabled}
             aria-label="Toggle professional mode"
             onClick={toggle}

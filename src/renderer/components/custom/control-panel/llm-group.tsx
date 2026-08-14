@@ -15,10 +15,12 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAppState } from '@/hooks/use-app-state';
 import { useConfigStore } from '@/hooks/use-config-store';
-import { getElectron } from '@/lib/utils';
+import { cn, getElectron } from '@/lib/utils';
 import { RunningState } from '@/types/app-state';
 import type { LLMConfigValidationResult, LLMModelInfo } from '@/types/llm';
 import { LLMProvider } from '@/types/llm';
+
+import { BAR_GHOST, BAR_ICON_BUTTON } from './bar';
 
 interface LLMGroupProps {
   getDisabled: (state: RunningState, disableOnRunning?: boolean) => boolean;
@@ -216,10 +218,10 @@ export function LLMGroup({ getDisabled }: LLMGroupProps) {
       await updateConfig({
         llmConf: useOwnApiKey
           ? {
-            provider: currentProvider,
-            apikey: apiKey.trim(),
-            model: effectiveModel,
-          }
+              provider: currentProvider,
+              apikey: apiKey.trim(),
+              model: effectiveModel,
+            }
           : null,
       });
       toast.success('LLM configuration saved');
@@ -237,9 +239,9 @@ export function LLMGroup({ getDisabled }: LLMGroupProps) {
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
-            variant="secondary"
+            variant="ghost"
             size="icon"
-            className="h-8 w-8 border-none rounded-xl"
+            className={cn(BAR_ICON_BUTTON, BAR_GHOST)}
             disabled={getDisabled(runningState)}
             onClick={() => setOpen(true)}
           >
