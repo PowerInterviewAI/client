@@ -148,6 +148,19 @@ export default function SignupPage() {
                 Resend code
               </button>
             </div>
+
+            {/*
+              The copy above tells a user whose address is already registered to go and sign
+              in, and this is the only step that had no way to do it - step one carries the
+              same link. That did not matter while a taken address was stopped at step one by
+              a 409; now it reaches this screen instead, so the link has to be here too, or
+              the advice lands somewhere the user cannot act on it.
+            */}
+            <div className="text-center">
+              <Link to="/auth/login" className="text-sm underline">
+                Already have account? Just login
+              </Link>
+            </div>
           </form>
         )}
 
