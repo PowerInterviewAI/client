@@ -176,6 +176,82 @@ export class AuthService {
       return { success: false, error: 'Change password failed' };
     }
   }
+
+  /**
+   * Request a password reset code for an address.
+   *
+   * The backend answers the same whether or not that address has an account, so a `true`
+   * here means "the request went through", never "this address is registered". Reporting
+   * anything more specific to the renderer would put back over the UI the enumeration the
+   * endpoint exists to avoid.
+   */
+  async forgotPassword(email: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const response = await this.client.forgotPassword({ email });
+      if (response.error) {
+        return {
+          success: false,
+          error: response.error.message || 'Failed to send password reset code',
+        };
+      }
+      return { success: true };
+    } catch {
+      return { success: false, error: 'Failed to send password reset code' };
+    }
+  }
+
+  /**
+   * Check a password reset code without spending it.
+   */
+  async verifyPasswordResetCode(
+    email: string,
+    code: string
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const response = await this.client.verifyPasswordResetCode({ email, code });
+      if (response.error) {
+        return {
+          success: false,
+          error: response.error.message || 'Invalid or expired reset code',
+        };
+      }
+      return { success: true };
+    } catch {
+      return { success: false, error: 'Invalid or expired reset code' };
+    }
+  }
+
+  /**
+   * Set a new password from a reset code.
+   */
+  async resetPassword(
+    email: string,
+    code: string,
+    newPassword: string
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const response = await this.client.resetPassword({
+        email,
+        code,
+        new_password: newPassword,
+      });
+      if (response.error) {
+        return { success: false, error: response.error.message || 'Password reset failed' };
+      }
+
+      // The login form pre-fills from the store when rememberMe is on, and the password it
+      // holds is the one that just stopped working. Same guard as changePassword: only write
+      // when the user opted in, since login/logout leave the store empty otherwise.
+      const config = configStore.getConfig();
+      if (config.rememberMe) {
+        configStore.updateConfig({ email, password: newPassword });
+      }
+
+      return { success: true };
+    } catch {
+      return { success: false, error: 'Password reset failed' };
+    }
+  }
 }
 
 export const authService = new AuthService();

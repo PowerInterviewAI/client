@@ -51,6 +51,18 @@ declare global {
         oldPassword: string,
         newPassword: string
       ) => Promise<{ success: boolean; error?: string }>;
+      // Succeeds whether or not the address has an account: the backend answers identically
+      // either way so it cannot be used to test who is registered.
+      forgotPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
+      verifyPasswordResetCode: (
+        email: string,
+        code: string
+      ) => Promise<{ success: boolean; error?: string }>;
+      resetPassword: (
+        email: string,
+        code: string,
+        newPassword: string
+      ) => Promise<{ success: boolean; error?: string }>;
     };
 
     // Account config management (full name, profile, context) - synced with the backend

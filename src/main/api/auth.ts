@@ -6,10 +6,13 @@
 import {
   AuthToken,
   ChangePasswordRequest,
+  ForgotPasswordRequest,
   LoginRequest,
+  ResetPasswordRequest,
   SendVerificationCodeRequest,
   SignupRequest,
   VerifyEmailCodeRequest,
+  VerifyPasswordResetCodeRequest,
 } from '../types/auth.js';
 import { ApiClient, ApiResponse } from './client.js';
 
@@ -54,5 +57,29 @@ export class AuthApi extends ApiClient {
    */
   async changePassword(data: ChangePasswordRequest): Promise<ApiResponse<void>> {
     return this.post<void>('/api/auth/change-password', data);
+  }
+
+  /**
+   * Request a password reset code.
+   *
+   * Succeeds whether or not the address has an account - the backend answers identically
+   * either way so that the endpoint cannot be used to test who has one.
+   */
+  async forgotPassword(data: ForgotPasswordRequest): Promise<ApiResponse<void>> {
+    return this.post<void>('/api/auth/forgot-password', data);
+  }
+
+  /**
+   * Check a password reset code without spending it
+   */
+  async verifyPasswordResetCode(data: VerifyPasswordResetCodeRequest): Promise<ApiResponse<void>> {
+    return this.post<void>('/api/auth/verify-password-reset-code', data);
+  }
+
+  /**
+   * Set a new password from a reset code
+   */
+  async resetPassword(data: ResetPasswordRequest): Promise<ApiResponse<void>> {
+    return this.post<void>('/api/auth/reset-password', data);
   }
 }

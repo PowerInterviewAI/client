@@ -65,6 +65,11 @@ const electronApi = {
     logout: () => ipcRenderer.invoke('auth:logout'),
     changePassword: (currentPassword: string, newPassword: string) =>
       ipcRenderer.invoke('auth:change-password', currentPassword, newPassword),
+    forgotPassword: (email: string) => ipcRenderer.invoke('auth:forgot-password', email),
+    verifyPasswordResetCode: (email: string, code: string) =>
+      ipcRenderer.invoke('auth:verify-password-reset-code', email, code),
+    resetPassword: (email: string, code: string, newPassword: string) =>
+      ipcRenderer.invoke('auth:reset-password', email, code, newPassword),
   },
 
   account: {
