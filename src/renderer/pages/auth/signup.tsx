@@ -99,8 +99,17 @@ export default function SignupPage() {
           <form onSubmit={submitCode} className="space-y-4">
             <div>
               <label className="text-sm block mb-1">Verification code</label>
+              {/*
+                Conditional, like the reset wizard's step two, because the backend now answers
+                the same whether or not the address already has an account. It sends a code to
+                a free address and a "you already have one" notice to a taken one, so a flat
+                "we sent a code" is wrong half the time - and stating which happened would put
+                back over the UI the enumeration the endpoint was changed to remove.
+              */}
               <p className="text-sm text-muted-foreground mb-2">
-                We sent a verification code to {email}. Paste it below.
+                If {email} does not already have an account, we sent a verification code to it.
+                Paste the code below. If it does, we sent a note explaining how to sign in
+                instead.
               </p>
               <Textarea value={code} onChange={(e) => setCode(e.target.value)} rows={4} required />
             </div>
@@ -130,14 +139,30 @@ export default function SignupPage() {
                 onClick={async () => {
                   setError(null);
                   if (await sendVerificationCode(email.trim())) {
-                    toast.success('Verification code resent.');
+                    // Not "Verification code resent": a taken address gets the "you already
+                    // have an account" notice resent instead, and this toast can no longer
+                    // tell which one happened - see sendVerificationCode's docstring.
+                    toast.success('Request sent again.');
                   } else {
-                    toast.error('Failed to resend verification code.');
+                    toast.error('Failed to resend.');
                   }
                 }}
               >
                 Resend code
               </button>
+            </div>
+
+            {/*
+              The copy above tells a user whose address is already registered to go and sign
+              in, and this is the only step that had no way to do it - step one carries the
+              same link. That did not matter while a taken address was stopped at step one by
+              a 409; now it reaches this screen instead, so the link has to be here too, or
+              the advice lands somewhere the user cannot act on it.
+            */}
+            <div className="text-center">
+              <Link to="/auth/login" className="text-sm underline">
+                Already have account? Just login
+              </Link>
             </div>
           </form>
         )}
