@@ -38,7 +38,10 @@ declare global {
     // Authentication management
     auth: {
       sendVerificationCode: (email: string) => Promise<{ success: boolean; error?: string }>;
-      verifyEmailCode: (email: string, code: string) => Promise<{ success: boolean; error?: string }>;
+      verifyEmailCode: (
+        email: string,
+        code: string
+      ) => Promise<{ success: boolean; error?: string }>;
       signup: (
         username: string,
         email: string,
@@ -49,6 +52,18 @@ declare global {
       logout: () => Promise<{ success: boolean; error?: string }>;
       changePassword: (
         oldPassword: string,
+        newPassword: string
+      ) => Promise<{ success: boolean; error?: string }>;
+      // Succeeds whether or not the address has an account: the backend answers identically
+      // either way so it cannot be used to test who is registered.
+      forgotPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
+      verifyPasswordResetCode: (
+        email: string,
+        code: string
+      ) => Promise<{ success: boolean; error?: string }>;
+      resetPassword: (
+        email: string,
+        code: string,
         newPassword: string
       ) => Promise<{ success: boolean; error?: string }>;
     };

@@ -126,10 +126,17 @@ export default function LoginPage() {
             {loading ? 'Signing in…' : 'Sign in'}
           </Button>
 
-          <div className="text-center">
-            <Link to="/auth/signup" className="text-sm underline">
-              Don&apos;t have account? Create a new one.
-            </Link>
+          <div className="text-center space-y-1">
+            <div>
+              <Link to="/auth/signup" className="text-sm underline">
+                Don&apos;t have account? Create a new one.
+              </Link>
+            </div>
+            <div>
+              <Link to="/auth/forgot-password" className="text-sm underline">
+                Forgot your password?
+              </Link>
+            </div>
           </div>
         </form>
       </CardContent>

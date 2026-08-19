@@ -88,7 +88,12 @@ export default function useAuth() {
     setLoading(true);
     setError(null);
     try {
-      const result = await window.electronAPI?.auth.signup(username, email, password, verificationCode);
+      const result = await window.electronAPI?.auth.signup(
+        username,
+        email,
+        password,
+        verificationCode
+      );
       if (!result?.success) {
         const errMsg = result?.error || 'Signup failed';
         setError(errMsg);
@@ -142,6 +147,77 @@ export default function useAuth() {
     }
   };
 
+  // Request a password reset code. A `true` result means the request went through,
+  // not that the address is registered - the backend answers the same either way so that
+  // the endpoint cannot be used to test who has an account, and the UI must not undo that
+  // by reporting "no such account" here.
+  const forgotPassword = async (email: string): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await window.electronAPI?.auth.forgotPassword(email);
+      if (!result?.success) {
+        const errMsg = result?.error || 'Failed to send password reset code';
+        setError(errMsg);
+        return false;
+      }
+      return true;
+    } catch (err) {
+      console.error('forgotPassword error:', err);
+      setError('Failed to send password reset code');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Check a password reset code without spending it, so a mistyped one is caught before
+  // the user has typed a new password twice.
+  const verifyPasswordResetCode = async (email: string, code: string): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await window.electronAPI?.auth.verifyPasswordResetCode(email, code);
+      if (!result?.success) {
+        const errMsg = result?.error || 'Invalid or expired reset code';
+        setError(errMsg);
+        return false;
+      }
+      return true;
+    } catch (err) {
+      console.error('verifyPasswordResetCode error:', err);
+      setError('Invalid or expired reset code');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Set a new password from a reset code.
+  const resetPassword = async (
+    email: string,
+    code: string,
+    newPassword: string
+  ): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await window.electronAPI?.auth.resetPassword(email, code, newPassword);
+      if (!result?.success) {
+        const errMsg = result?.error || 'Password reset failed';
+        setError(errMsg);
+        return false;
+      }
+      return true;
+    } catch (err) {
+      console.error('resetPassword error:', err);
+      setError('Password reset failed');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Return stable object for consumers; `setError` is exposed so callers
   // can clear errors when appropriate (e.g. on input changes).
   return {
@@ -151,6 +227,9 @@ export default function useAuth() {
     signup,
     logout,
     changePassword,
+    forgotPassword,
+    verifyPasswordResetCode,
+    resetPassword,
     loading,
     error,
     setError,

@@ -23,7 +23,10 @@ export class AuthService {
     try {
       const response = await this.client.sendVerificationCode({ email });
       if (response.error) {
-        return { success: false, error: response.error.message || 'Failed to send verification code' };
+        return {
+          success: false,
+          error: response.error.message || 'Failed to send verification code',
+        };
       }
       return { success: true };
     } catch {
@@ -34,11 +37,17 @@ export class AuthService {
   /**
    * Verify an email verification code.
    */
-  async verifyEmailCode(email: string, code: string): Promise<{ success: boolean; error?: string }> {
+  async verifyEmailCode(
+    email: string,
+    code: string
+  ): Promise<{ success: boolean; error?: string }> {
     try {
       const response = await this.client.verifyEmailCode({ email, code });
       if (response.error) {
-        return { success: false, error: response.error.message || 'Invalid or expired verification code' };
+        return {
+          success: false,
+          error: response.error.message || 'Invalid or expired verification code',
+        };
       }
       return { success: true };
     } catch {
@@ -174,6 +183,99 @@ export class AuthService {
       return { success: true };
     } catch {
       return { success: false, error: 'Change password failed' };
+    }
+  }
+
+  /**
+   * Request a password reset code for an address.
+   *
+   * The backend answers the same whether or not that address has an account, so a `true`
+   * here means "the request went through", never "this address is registered". Reporting
+   * anything more specific to the renderer would put back over the UI the enumeration the
+   * endpoint exists to avoid.
+   */
+  async forgotPassword(email: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const response = await this.client.forgotPassword({ email });
+      if (response.error) {
+        return {
+          success: false,
+          error: response.error.message || 'Failed to send password reset code',
+        };
+      }
+      return { success: true };
+    } catch {
+      return { success: false, error: 'Failed to send password reset code' };
+    }
+  }
+
+  /**
+   * Check a password reset code without spending it.
+   */
+  async verifyPasswordResetCode(
+    email: string,
+    code: string
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const response = await this.client.verifyPasswordResetCode({ email, code });
+      if (response.error) {
+        return {
+          success: false,
+          error: response.error.message || 'Invalid or expired reset code',
+        };
+      }
+      return { success: true };
+    } catch {
+      return { success: false, error: 'Invalid or expired reset code' };
+    }
+  }
+
+  /**
+   * Set a new password from a reset code.
+   */
+  async resetPassword(
+    email: string,
+    code: string,
+    newPassword: string
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const response = await this.client.resetPassword({
+        email,
+        code,
+        new_password: newPassword,
+      });
+      if (response.error) {
+        return { success: false, error: response.error.message || 'Password reset failed' };
+      }
+
+      // The login form pre-fills from the store when rememberMe is on, and if what it holds
+      // is this account then the password in it is the one that just stopped working.
+      //
+      // Two guards, not one. `rememberMe` is the same check changePassword makes: login and
+      // logout leave the store empty when the user did not opt in, and writing here would put
+      // credentials back on disk behind their back. The address check is specific to reset,
+      // which is the only password flow that runs while signed out and can therefore be run
+      // for an account other than the remembered one. On a shared machine that would
+      // otherwise replace someone else's remembered login with this one.
+      //
+      // Guarded separately from the request, because by this line the reset has already
+      // happened and the code is spent. Letting a disk write decide the return value reports
+      // a failure for a reset that succeeded, and the retry that invites cannot work - the
+      // same trap the login form avoids when it persists remember-me.
+      try {
+        const config = configStore.getConfig();
+        const isRememberedAccount =
+          (config.email ?? '').trim().toLowerCase() === email.trim().toLowerCase();
+        if (config.rememberMe && isRememberedAccount) {
+          configStore.updateConfig({ password: newPassword });
+        }
+      } catch (err) {
+        console.error('Failed to store the new password after reset:', err);
+      }
+
+      return { success: true };
+    } catch {
+      return { success: false, error: 'Password reset failed' };
     }
   }
 }

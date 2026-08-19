@@ -87,7 +87,17 @@ Each `LiveSuggestion` still carries the `mode` it was *generated* under, and the
 
 ### Routing
 
-Hash-based router (required for Electron `file://` protocol). Routes: `/` (index, redirects based on login state) -> `/auth/login` or `/auth/signup` -> `/main` (interview UI) -> `/payment`.
+Hash-based router (required for Electron `file://` protocol). Routes: `/` (index, redirects based on login state) -> `/auth/login`, `/auth/signup`, or `/auth/forgot-password` -> `/main` (interview UI) -> `/payment`.
+
+`/auth/forgot-password` is a three-step wizard shaped like the signup one (email -> code -> password), and the reset is code-based rather than an emailed link because a link opens the system browser, which has no way to hand a token back without a registered deep-link protocol handler.
+
+**Step one advances on success alone and never reports "no such account".** The backend answers `forgot-password` identically for a registered and an unregistered address so that the endpoint cannot be used to test who has one, and a UI that reported the difference would hand that oracle straight back - which is why the copy on step two is conditional ("if an account exists for..."). `AuthService.forgotPassword` resolving true means the request went through, nothing more.
+
+`AuthService.resetPassword` rewrites the stored password behind **two** guards, `rememberMe` and the address matching the remembered one. The login form pre-fills from that store, so skipping the write leaves a filled-in password that has just stopped working; writing it on `rememberMe` alone puts credentials on disk for a user who did not opt in. The address check is specific to reset, the only password flow that runs while signed out and therefore the only one that can be run for an account other than the remembered one - on a shared machine, writing unconditionally would replace someone else's remembered login with this one. That write is wrapped in its own `try`, separate from the request. By the time it runs the password has already changed and the code is spent, so letting a disk failure decide the return value would report a failure for a reset that succeeded and send the user to retry with a code that can no longer work - the same trap the login form avoids when it persists remember-me. `test/password-reset.test.mjs` pins all of it, including the failed-reset case and a store that throws.
+
+The final step latches on success. `loading` is already back to false while the two-second redirect runs, so a live button there would let a second click resend a code the backend has just spent, toasting a guaranteed failure over the success still on screen.
+
+It also carries its own way out, which the signup wizard does not need. `AuthLayout` renders this card and nothing else - no navigation of its own - and the reset code expires on `PASSWORD_RESET_CODE_EXPIRE_MINUTES` while the user is choosing a password. A failure there is therefore both likely and unrecoverable in place, since retrying the same dead code cannot succeed, so the step offers `Start over` (back to step one, address kept and code dropped) and a link to sign in, and the failure copy sends the user for a new code rather than telling them to try again.
 
 ### Window and Stealth Mode
 

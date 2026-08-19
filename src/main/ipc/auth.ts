@@ -38,4 +38,22 @@ export function registerAuthHandlers(): void {
       return authService.changePassword(currentPassword, newPassword);
     }
   );
+
+  // Request a password reset code
+  ipcMain.handle('auth:forgot-password', async (_event, email: string) => {
+    return authService.forgotPassword(email);
+  });
+
+  // Verify a password reset code
+  ipcMain.handle('auth:verify-password-reset-code', async (_event, email: string, code: string) => {
+    return authService.verifyPasswordResetCode(email, code);
+  });
+
+  // Set a new password from a reset code
+  ipcMain.handle(
+    'auth:reset-password',
+    async (_event, email: string, code: string, newPassword: string) => {
+      return authService.resetPassword(email, code, newPassword);
+    }
+  );
 }
