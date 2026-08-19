@@ -1,7 +1,7 @@
 {
   "name": "power-interview-ai",
   "private": false,
-  "version": "1.6.6",
+  "version": "1.6.7",
   "description": "AI-powered live interview assistant",
   "author": "VectorLeap Pulse Innovation LTD",
   "main": "electron-dist/index.js",
