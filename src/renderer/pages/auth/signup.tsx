@@ -139,9 +139,12 @@ export default function SignupPage() {
                 onClick={async () => {
                   setError(null);
                   if (await sendVerificationCode(email.trim())) {
-                    toast.success('Verification code resent.');
+                    // Not "Verification code resent": a taken address gets the "you already
+                    // have an account" notice resent instead, and this toast can no longer
+                    // tell which one happened - see sendVerificationCode's docstring.
+                    toast.success('Request sent again.');
                   } else {
-                    toast.error('Failed to resend verification code.');
+                    toast.error('Failed to resend.');
                   }
                 }}
               >
