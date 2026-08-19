@@ -97,6 +97,8 @@ Hash-based router (required for Electron `file://` protocol). Routes: `/` (index
 
 The final step latches on success. `loading` is already back to false while the two-second redirect runs, so a live button there would let a second click resend a code the backend has just spent, toasting a guaranteed failure over the success still on screen.
 
+It also carries its own way out, which the signup wizard does not need. `AuthLayout` renders this card and nothing else - no navigation of its own - and the reset code expires on `PASSWORD_RESET_CODE_EXPIRE_MINUTES` while the user is choosing a password. A failure there is therefore both likely and unrecoverable in place, since retrying the same dead code cannot succeed, so the step offers `Start over` (back to step one, address kept and code dropped) and a link to sign in, and the failure copy sends the user for a new code rather than telling them to try again.
+
 ### Window and Stealth Mode
 
 The main window reference is passed to `windowControlService` and `zoomService` after creation. Window bounds persist to Electron Store on `close` and are restored on next launch with minimum-size clamping (`MIN_WIDTH` / `MIN_HEIGHT` from [src/main/consts.ts](src/main/consts.ts)).

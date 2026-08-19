@@ -75,8 +75,23 @@ export default function ForgotPasswordPage() {
         navigate('/auth/login');
       }, 2000);
     } else {
-      toast.error('Password reset failed. Please try again.');
+      // The code was verified to reach this step, so the overwhelmingly likely cause is that
+      // it expired or was spent in between. Retrying the same code cannot work, so the copy
+      // sends them for a new one rather than telling them to try again.
+      toast.error('Password reset failed. The code may have expired - request a new one.');
     }
+  };
+
+  // Back to step one with the address kept and the code dropped. The code is the part that
+  // goes stale, and the password step is otherwise a dead end: the layout renders this card
+  // alone with no navigation of its own, so an expired code there would leave the user with
+  // nothing on screen that can recover the flow.
+  const startOver = () => {
+    setError(null);
+    setCode('');
+    setPassword('');
+    setPasswordConfirm('');
+    setStep('email');
   };
 
   return (
@@ -131,15 +146,7 @@ export default function ForgotPasswordPage() {
             </Button>
 
             <div className="flex justify-between text-sm">
-              <button
-                type="button"
-                className="underline"
-                onClick={() => {
-                  setError(null);
-                  setCode('');
-                  setStep('email');
-                }}
-              >
+              <button type="button" className="underline" disabled={loading} onClick={startOver}>
                 Change email
               </button>
               <button
@@ -192,6 +199,17 @@ export default function ForgotPasswordPage() {
             <Button type="submit" disabled={loading || succeeded} className="w-full">
               {loading ? 'Saving…' : succeeded ? 'Password reset' : 'Set new password'}
             </Button>
+
+            {!succeeded && (
+              <div className="flex justify-between text-sm">
+                <button type="button" className="underline" disabled={loading} onClick={startOver}>
+                  Start over
+                </button>
+                <Link to="/auth/login" className="underline">
+                  Back to sign in
+                </Link>
+              </div>
+            )}
           </form>
         )}
       </CardContent>
