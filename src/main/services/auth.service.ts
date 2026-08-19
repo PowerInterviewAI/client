@@ -182,8 +182,18 @@ export class AuthService {
 
       // Only persist when the user opted in - login/logout leave the store empty otherwise,
       // and writing here would put credentials back behind their back.
-      if (configStore.getConfig().rememberMe) {
-        configStore.updateConfig({ password: newPassword });
+      //
+      // Guarded separately from the request, because by this line the password has already
+      // changed on the server. Letting a disk write decide the return value reports a failure
+      // for a change that happened, and the dialog then asks the user to try again with a
+      // current password that is no longer current, so the retry cannot work either. Same
+      // line `resetPassword` draws, and `login.tsx` before it.
+      try {
+        if (configStore.getConfig().rememberMe) {
+          configStore.updateConfig({ password: newPassword });
+        }
+      } catch (err) {
+        console.error('Failed to store the new password after change:', err);
       }
 
       return { success: true };
