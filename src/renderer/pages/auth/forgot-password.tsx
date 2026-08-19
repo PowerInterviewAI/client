@@ -55,7 +55,12 @@ export default function ForgotPasswordPage() {
     if (await verifyPasswordResetCode(email.trim(), code.trim())) {
       setStep('password');
     } else {
-      toast.error('Invalid or expired reset code.');
+      // Names no cause, because this step has more than one and the toast cannot tell them
+      // apart. A rejection here is a bad or expired code most of the time, but it is also how
+      // the rate limit and a deactivated account arrive, and asserting "invalid code" over
+      // either of those sends the user to re-read a code that was never the problem. The
+      // inline error carries the reason the server actually gave.
+      toast.error('Could not verify the reset code.');
     }
   };
 
