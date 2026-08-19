@@ -99,8 +99,17 @@ export default function SignupPage() {
           <form onSubmit={submitCode} className="space-y-4">
             <div>
               <label className="text-sm block mb-1">Verification code</label>
+              {/*
+                Conditional, like the reset wizard's step two, because the backend now answers
+                the same whether or not the address already has an account. It sends a code to
+                a free address and a "you already have one" notice to a taken one, so a flat
+                "we sent a code" is wrong half the time - and stating which happened would put
+                back over the UI the enumeration the endpoint was changed to remove.
+              */}
               <p className="text-sm text-muted-foreground mb-2">
-                We sent a verification code to {email}. Paste it below.
+                If {email} does not already have an account, we sent a verification code to it.
+                Paste the code below. If it does, we sent a note explaining how to sign in
+                instead.
               </p>
               <Textarea value={code} onChange={(e) => setCode(e.target.value)} rows={4} required />
             </div>

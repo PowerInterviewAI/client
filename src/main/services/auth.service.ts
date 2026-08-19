@@ -18,6 +18,12 @@ export class AuthService {
 
   /**
    * Send an email verification code to a prospective user.
+   *
+   * The backend answers the same whether or not the address already has an account, so a
+   * `true` here means "the request went through", never "this address is free". It mails a
+   * code to a free address and a "you already have an account" notice to a taken one.
+   * Reporting anything more specific to the renderer would put back over the UI the
+   * enumeration the endpoint was changed to remove.
    */
   async sendVerificationCode(email: string): Promise<{ success: boolean; error?: string }> {
     try {
