@@ -98,6 +98,24 @@ export async function run() {
     configStore.getConfig().password === 'still-valid'
   );
 
+  // A store that cannot be written must not turn a completed reset into a reported failure.
+  // By the time the write runs the password has changed and the code is spent, so "failed"
+  // sends the user to retry with a code that can no longer work.
+  configStore.updateConfig({ rememberMe: true, email: 'a@b.c', password: 'stale' });
+  response = {};
+  const realUpdate = configStore.updateConfig.bind(configStore);
+  configStore.updateConfig = () => {
+    throw new Error('disk full');
+  };
+  let survived;
+  try {
+    survived = await authService.resetPassword('a@b.c', 'code', 'brand-new');
+  } finally {
+    configStore.updateConfig = realUpdate;
+  }
+  check('a reset still succeeds when the store write throws', survived.success === true);
+  check('and reports no error', survived.error === undefined);
+
   // --- verifyPasswordResetCode ------------------------------------------------------
 
   response = {};

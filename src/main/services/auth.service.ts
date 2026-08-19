@@ -257,11 +257,20 @@ export class AuthService {
       // which is the only password flow that runs while signed out and can therefore be run
       // for an account other than the remembered one. On a shared machine that would
       // otherwise replace someone else's remembered login with this one.
-      const config = configStore.getConfig();
-      const isRememberedAccount =
-        (config.email ?? '').trim().toLowerCase() === email.trim().toLowerCase();
-      if (config.rememberMe && isRememberedAccount) {
-        configStore.updateConfig({ password: newPassword });
+      //
+      // Guarded separately from the request, because by this line the reset has already
+      // happened and the code is spent. Letting a disk write decide the return value reports
+      // a failure for a reset that succeeded, and the retry that invites cannot work - the
+      // same trap the login form avoids when it persists remember-me.
+      try {
+        const config = configStore.getConfig();
+        const isRememberedAccount =
+          (config.email ?? '').trim().toLowerCase() === email.trim().toLowerCase();
+        if (config.rememberMe && isRememberedAccount) {
+          configStore.updateConfig({ password: newPassword });
+        }
+      } catch (err) {
+        console.error('Failed to store the new password after reset:', err);
       }
 
       return { success: true };
