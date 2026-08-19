@@ -64,7 +64,29 @@ export async function run() {
     'the stored password is replaced when rememberMe is on',
     configStore.getConfig().password === 'brand-new'
   );
-  check('the stored email still matches', configStore.getConfig().email === 'a@b.c');
+  check('the stored email is left as it was', configStore.getConfig().email === 'a@b.c');
+
+  // Case differences between what was typed at login and what was typed here are not a
+  // different account.
+  configStore.updateConfig({ rememberMe: true, email: 'a@b.c', password: 'stale' });
+  await authService.resetPassword('A@B.C', 'code', 'brand-new');
+  check(
+    'the remembered account is matched case-insensitively',
+    configStore.getConfig().password === 'brand-new'
+  );
+
+  // Reset is the only password flow that runs signed out, so it can be run for an account
+  // other than the remembered one. That must not clobber the remembered one.
+  configStore.updateConfig({ rememberMe: true, email: 'mine@b.c', password: 'mine' });
+  await authService.resetPassword('someone-else@b.c', 'code', 'their-new-password');
+  check(
+    'resetting another account leaves the remembered password alone',
+    configStore.getConfig().password === 'mine'
+  );
+  check(
+    'resetting another account leaves the remembered email alone',
+    configStore.getConfig().email === 'mine@b.c'
+  );
 
   // A failed reset must not touch the store: the old password is still the live one.
   configStore.updateConfig({ rememberMe: true, email: 'a@b.c', password: 'still-valid' });

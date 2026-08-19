@@ -93,7 +93,9 @@ Hash-based router (required for Electron `file://` protocol). Routes: `/` (index
 
 **Step one advances on success alone and never reports "no such account".** The backend answers `forgot-password` identically for a registered and an unregistered address so that the endpoint cannot be used to test who has one, and a UI that reported the difference would hand that oracle straight back - which is why the copy on step two is conditional ("if an account exists for..."). `AuthService.forgotPassword` resolving true means the request went through, nothing more.
 
-`AuthService.resetPassword` rewrites the stored password when `rememberMe` is on, guarded exactly the way `changePassword` guards it. The login form pre-fills from that store, so skipping the write leaves a filled-in password that has just stopped working, and writing it unguarded puts credentials on disk for a user who did not opt in. `test/password-reset.test.mjs` pins both directions plus the failed-reset case.
+`AuthService.resetPassword` rewrites the stored password behind **two** guards, `rememberMe` and the address matching the remembered one. The login form pre-fills from that store, so skipping the write leaves a filled-in password that has just stopped working; writing it on `rememberMe` alone puts credentials on disk for a user who did not opt in. The address check is specific to reset, the only password flow that runs while signed out and therefore the only one that can be run for an account other than the remembered one - on a shared machine, writing unconditionally would replace someone else's remembered login with this one. `test/password-reset.test.mjs` pins all of it, including the failed-reset case.
+
+The final step latches on success. `loading` is already back to false while the two-second redirect runs, so a live button there would let a second click resend a code the backend has just spent, toasting a guaranteed failure over the success still on screen.
 
 ### Window and Stealth Mode
 

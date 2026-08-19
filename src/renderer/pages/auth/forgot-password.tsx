@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -21,6 +21,19 @@ export default function ForgotPasswordPage() {
   const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
+  // The reset succeeded and the redirect is pending. The form stays on screen through that
+  // gap with `loading` already back to false, so without this the button is live again and a
+  // second click resends a code the backend has just spent - a guaranteed 401, toasting a
+  // failure on top of the success the user is still reading.
+  const [succeeded, setSucceeded] = useState(false);
+  const redirectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (redirectTimer.current) clearTimeout(redirectTimer.current);
+    },
+    []
+  );
 
   const submitEmail = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +61,7 @@ export default function ForgotPasswordPage() {
 
   const submitPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (succeeded) return;
     setError(null);
     if (password !== passwordConfirm) {
       setError('Passwords do not match');
@@ -55,8 +69,9 @@ export default function ForgotPasswordPage() {
     }
 
     if (await resetPassword(email.trim(), code.trim(), password)) {
+      setSucceeded(true);
       toast.success('Password reset. Please sign in with your new password.');
-      setTimeout(() => {
+      redirectTimer.current = setTimeout(() => {
         navigate('/auth/login');
       }, 2000);
     } else {
@@ -174,8 +189,8 @@ export default function ForgotPasswordPage() {
 
             {error && <div className="text-sm text-red-600">{error}</div>}
 
-            <Button type="submit" disabled={loading} className="w-full">
-              {loading ? 'Saving…' : 'Set new password'}
+            <Button type="submit" disabled={loading || succeeded} className="w-full">
+              {loading ? 'Saving…' : succeeded ? 'Password reset' : 'Set new password'}
             </Button>
           </form>
         )}

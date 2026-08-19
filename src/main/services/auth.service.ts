@@ -248,12 +248,20 @@ export class AuthService {
         return { success: false, error: response.error.message || 'Password reset failed' };
       }
 
-      // The login form pre-fills from the store when rememberMe is on, and the password it
-      // holds is the one that just stopped working. Same guard as changePassword: only write
-      // when the user opted in, since login/logout leave the store empty otherwise.
+      // The login form pre-fills from the store when rememberMe is on, and if what it holds
+      // is this account then the password in it is the one that just stopped working.
+      //
+      // Two guards, not one. `rememberMe` is the same check changePassword makes: login and
+      // logout leave the store empty when the user did not opt in, and writing here would put
+      // credentials back on disk behind their back. The address check is specific to reset,
+      // which is the only password flow that runs while signed out and can therefore be run
+      // for an account other than the remembered one. On a shared machine that would
+      // otherwise replace someone else's remembered login with this one.
       const config = configStore.getConfig();
-      if (config.rememberMe) {
-        configStore.updateConfig({ email, password: newPassword });
+      const isRememberedAccount =
+        (config.email ?? '').trim().toLowerCase() === email.trim().toLowerCase();
+      if (config.rememberMe && isRememberedAccount) {
+        configStore.updateConfig({ password: newPassword });
       }
 
       return { success: true };
