@@ -87,7 +87,13 @@ Each `LiveSuggestion` still carries the `mode` it was *generated* under, and the
 
 ### Routing
 
-Hash-based router (required for Electron `file://` protocol). Routes: `/` (index, redirects based on login state) -> `/auth/login` or `/auth/signup` -> `/main` (interview UI) -> `/payment`.
+Hash-based router (required for Electron `file://` protocol). Routes: `/` (index, redirects based on login state) -> `/auth/login`, `/auth/signup`, or `/auth/forgot-password` -> `/main` (interview UI) -> `/payment`.
+
+`/auth/forgot-password` is a three-step wizard shaped like the signup one (email -> code -> password), and the reset is code-based rather than an emailed link because a link opens the system browser, which has no way to hand a token back without a registered deep-link protocol handler.
+
+**Step one advances on success alone and never reports "no such account".** The backend answers `forgot-password` identically for a registered and an unregistered address so that the endpoint cannot be used to test who has one, and a UI that reported the difference would hand that oracle straight back - which is why the copy on step two is conditional ("if an account exists for..."). `AuthService.forgotPassword` resolving true means the request went through, nothing more.
+
+`AuthService.resetPassword` rewrites the stored password when `rememberMe` is on, guarded exactly the way `changePassword` guards it. The login form pre-fills from that store, so skipping the write leaves a filled-in password that has just stopped working, and writing it unguarded puts credentials on disk for a user who did not opt in. `test/password-reset.test.mjs` pins both directions plus the failed-reset case.
 
 ### Window and Stealth Mode
 

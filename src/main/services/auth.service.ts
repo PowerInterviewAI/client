@@ -23,7 +23,10 @@ export class AuthService {
     try {
       const response = await this.client.sendVerificationCode({ email });
       if (response.error) {
-        return { success: false, error: response.error.message || 'Failed to send verification code' };
+        return {
+          success: false,
+          error: response.error.message || 'Failed to send verification code',
+        };
       }
       return { success: true };
     } catch {
@@ -34,11 +37,17 @@ export class AuthService {
   /**
    * Verify an email verification code.
    */
-  async verifyEmailCode(email: string, code: string): Promise<{ success: boolean; error?: string }> {
+  async verifyEmailCode(
+    email: string,
+    code: string
+  ): Promise<{ success: boolean; error?: string }> {
     try {
       const response = await this.client.verifyEmailCode({ email, code });
       if (response.error) {
-        return { success: false, error: response.error.message || 'Invalid or expired verification code' };
+        return {
+          success: false,
+          error: response.error.message || 'Invalid or expired verification code',
+        };
       }
       return { success: true };
     } catch {

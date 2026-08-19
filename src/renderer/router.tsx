@@ -1,6 +1,7 @@
 import { createHashRouter, Outlet } from 'react-router-dom';
 
 import MainFrame from './components/custom/main-frame';
+import ForgotPasswordPage from './pages/auth/forgot-password';
 import AuthLayout from './pages/auth/layout';
 import LoginPage from './pages/auth/login';
 import SignupPage from './pages/auth/signup';
@@ -37,6 +38,10 @@ export const router = createHashRouter([
           {
             path: 'signup',
             element: <SignupPage />,
+          },
+          {
+            path: 'forgot-password',
+            element: <ForgotPasswordPage />,
           },
         ],
       },

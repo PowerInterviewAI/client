@@ -29,6 +29,7 @@ for (const module of [
   './suggestion-sentinel.test.mjs',
   './suggestion-emphasis.test.mjs',
   './mac-update-util.test.mjs',
+  './password-reset.test.mjs',
 ]) {
   const { run } = await import(module);
   failures.push(...(await run(userDataDir)));
