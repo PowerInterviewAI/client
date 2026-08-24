@@ -15,6 +15,9 @@ const userDataDir = stubElectron();
 const failures = [];
 for (const module of [
   './config-store.test.mjs',
+  // After config-store: that one seeds the store file and asserts on the leftover pre-sync
+  // config, and this one writes to the same store.
+  './language.test.mjs',
   './app-state.test.mjs',
   './account.test.mjs',
   './stealth-surface.test.mjs',
