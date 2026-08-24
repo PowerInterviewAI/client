@@ -99,9 +99,12 @@ export default function ControlPanel() {
     try {
       await startAssistant();
     } catch (error) {
+      // No stopAssistant() here. startAssistant's own catch has already torn both services down
+      // and put runningState back to Idle; calling it again only walks the button through a
+      // three-second "Stopping" for a session that never started, and its own failure would
+      // land here as an unhandled rejection.
       console.error('Failed to start assistant:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to start assistant');
-      await stopAssistant();
     }
   };
 
