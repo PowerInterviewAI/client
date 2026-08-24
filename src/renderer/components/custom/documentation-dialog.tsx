@@ -18,6 +18,7 @@ import {
 import { APP_NAME } from '@/lib/consts';
 import { Hotkey, HOTKEY_GROUPS, HOTKEYS } from '@/lib/hotkeys';
 import { cn } from '@/lib/utils';
+import { LANGUAGES } from '@/types/language';
 
 import ExternalLink from './external-link';
 
@@ -81,6 +82,25 @@ export default function DocumentationDialog({ open, onOpenChange }: Documentatio
                   button to click. Just launch {APP_NAME} again: it does not start a second copy, it
                   brings this window back. Outside stealth mode the usual taskbar button and Dock
                   icon are there.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="language">
+              <AccordionTrigger className="text-sm font-semibold">
+                Interviewing in another language
+              </AccordionTrigger>
+              <AccordionContent>
+                <p className="text-sm text-muted-foreground">
+                  The language button on the control bar sets the language of the whole session:
+                  which speech model transcribes the call, what language suggestions are written in,
+                  and the language of the exported report.{' '}
+                  {LANGUAGES.map((l) => l.nativeName).join(', ')} are supported.
+                </p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  You can change it mid-interview. Suggestions follow immediately, from the next
+                  answer onward. Speech recognition takes a moment longer: it reconnects, so the
+                  sentence being spoken at that instant may be cut short in the transcript.
                 </p>
               </AccordionContent>
             </AccordionItem>

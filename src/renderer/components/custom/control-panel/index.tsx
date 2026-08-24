@@ -15,6 +15,7 @@ import { RunningState } from '@/types/app-state';
 import PermissionGateDialog from '../permission-gate-dialog';
 import ZoomControl from '../zoom-control';
 import { AudioGroup } from './audio-group';
+import { LanguageGroup } from './language-group';
 import { LLMGroup } from './llm-group';
 import { MainGroup } from './main-group';
 import { ProfessionalModeGroup } from './professional-mode-group';
@@ -160,13 +161,16 @@ export default function ControlPanel() {
 
         <div className="h-5 w-px bg-border" aria-hidden="true" />
 
-        {/* Inputs and model - both open a dialog, both lock while the assistant runs */}
+        {/* What the session runs on - all three lock while the assistant runs. Language sits
+            here rather than with the presentation toggles because it is an input as much as an
+            output: it picks the speech model before it picks the answer's language. */}
         <div className="flex items-center gap-1">
           <AudioGroup
             audioInputDevices={audioInputDevices ?? []}
             audioInputDeviceNotFound={audioInputDeviceNotFound}
             getDisabled={getDisabled}
           />
+          <LanguageGroup getDisabled={getDisabled} />
           <LLMGroup getDisabled={getDisabled} />
         </div>
 
