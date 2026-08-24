@@ -36,16 +36,16 @@ export function useInterviewLanguage() {
       return;
     }
 
-    // Persisted first, reconnected second. If the reconnect fails the setting still stands, so
-    // stopping and starting the assistant recovers; rolling the setting back on a failed
-    // reconnect would leave the user with no way to reach the language they picked.
+    // Persisted first, reconnected second. If the reconnect fails the setting still stands and
+    // the channel keeps retrying on it; rolling the setting back would leave the user with no
+    // way to reach the language they picked.
     setSwitching(true);
     try {
       await liveTranscriptionService.setLanguage(language);
     } catch (e) {
       console.error('Failed to switch transcription language', e);
-      toast.error('Suggestions switched language, but transcription could not reconnect', {
-        description: 'Stop and start the assistant to apply it.',
+      toast.warning('Suggestions switched language; transcription is still reconnecting', {
+        description: 'It keeps retrying. Stop and start the assistant if it does not come back.',
       });
     } finally {
       setSwitching(false);

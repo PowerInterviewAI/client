@@ -97,6 +97,8 @@ One setting decides three things: which AssemblyAI speech model transcribes the 
 
 Two guards in `AudioWsStream` make that safe, and both protect against the same failure - two sockets on one channel, one of them orphaned and still relaying audio into a dead session. `ws.onclose` ignores a close from a socket that is no longer `this.ws`, since that is the tail of a replacement rather than a disconnect; and the `switching` flag suppresses the ordinary backoff reconnect for the close `setLanguage` causes itself, which it then handles immediately instead of after `WS_RETRY_BASE_DELAY_MS`. `connectWebSocket` rebuilds the URL per attempt rather than capturing it, which is what lets a reconnect pick up the new language at all.
 
+Two consequences of that first guard. `setLanguage` has to report `channelDisconnected` itself rather than leaving it to `onclose`: `new WebSocket` assigns `this.ws` synchronously, so the old socket's close event always arrives after the replacement exists and is correctly ignored. And `setLanguage` keys its own no-op check on `this.ws` rather than on `active`, which `start()` only sets *after* its first connect returns - in that window a socket exists on the old language and an `active` check would skip it.
+
 The setting is persisted *before* the reconnect and never rolled back on failure: a failed reconnect that reverted the setting would leave the user with no route to the language they picked, whereas leaving it set means stopping and starting the assistant recovers.
 
 The trigger shows the code (`EN`, `ES`) next to the icon for the same reason the tooltip names the language - the one question this control has to answer at a glance is what it is currently set to.

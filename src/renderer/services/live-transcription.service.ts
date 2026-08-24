@@ -167,8 +167,11 @@ class AudioWsStream {
     if (language === this.language) return;
     this.language = language;
 
-    // Not started yet, or already stopped: start() reads the field, so there is nothing to do.
-    if (!this.active || this.stopping) return;
+    // Keyed on the socket rather than on `active`, which start() only sets *after* its first
+    // connect returns. In that window a socket already exists on the old language and would
+    // never be reconnected, leaving the channel transcribing in a language nobody selected.
+    // No socket means start() has not run or stop() has cleared it, and start() reads the field.
+    if (this.stopping || !this.ws) return;
 
     this.switching = true;
     try {
@@ -180,10 +183,38 @@ class AudioWsStream {
       if (this.ws && this.ws.readyState < WebSocket.CLOSING) {
         this.ws.close();
       }
+      // Reported here rather than left to onclose. `new WebSocket` below assigns `this.ws`
+      // synchronously, so by the time the old socket's close event fires it is no longer the
+      // current one and that handler correctly ignores it - which would swallow this too, and
+      // leave the orphaned partial gating live suggestions for the rest of the session.
+      this.reportDisconnected();
       await this.connectWithRetry();
+    } catch (error) {
+      // Stopped while the new socket was coming up. That is the assistant shutting down, not a
+      // failed switch, and reporting it would toast an error over a deliberate action.
+      if (this.stopping) return;
+
+      // Hand the channel back to the ordinary backoff loop before reporting. Five failed
+      // attempts is a provider or network problem, not a permanent one, and without this the
+      // channel stays silent until the assistant is stopped and started - a worse outcome than
+      // the language change the user asked for simply taking longer to land.
+      this.scheduleReconnect();
+      throw error;
     } finally {
       this.switching = false;
     }
+  }
+
+  /**
+   * Tell main this channel's session ended mid-utterance.
+   *
+   * A reconnect - dropped or deliberate - starts a fresh backend session, so any in-flight
+   * utterance never gets its final, and the orphaned partial gates live suggestions.
+   */
+  private reportDisconnected(): void {
+    getElectron()
+      ?.transcription.channelDisconnected(this.channel)
+      .catch((error) => console.error('Failed to report channel disconnect:', error));
   }
 
   private async connectWithRetry(): Promise<void> {
@@ -276,15 +307,10 @@ class AudioWsStream {
       // socket with a second one.
       if (this.ws !== ws) return;
 
-      // A reconnect starts a fresh backend session, so any in-flight utterance never gets its
-      // final. Tell main to close it out, or the orphaned partial gates live suggestions. A
-      // language switch is a reconnect too, so this holds for it as well.
-      getElectron()
-        ?.transcription.channelDisconnected(this.channel)
-        .catch((error) => console.error('Failed to report channel disconnect:', error));
+      this.reportDisconnected();
 
-      // setLanguage owns the reconnect in that case, and does it immediately rather than after
-      // the backoff delay this would wait out.
+      // setLanguage owns both the report and the reconnect for the close it caused itself, and
+      // reconnects immediately rather than after the backoff delay this would wait out.
       if (this.switching) return;
 
       this.scheduleReconnect();
@@ -395,7 +421,14 @@ class LiveTranscriptionService {
    * the config store when it is built, so the next one already follows the new setting.
    */
   async setLanguage(language: Language): Promise<void> {
-    await Promise.all(this.channels.map((channel) => channel.setLanguage(language)));
+    // allSettled, not all: `all` rejects on the first failure and leaves the other channel's
+    // rejection unhandled, which surfaces as an unhandledrejection rather than as this throw.
+    const results = await Promise.allSettled(
+      this.channels.map((channel) => channel.setLanguage(language))
+    );
+
+    const failed = results.find((result) => result.status === 'rejected');
+    if (failed) throw failed.reason;
   }
 
   async stop(): Promise<void> {
