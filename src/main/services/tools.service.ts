@@ -21,6 +21,14 @@ class ToolsService {
     const transcripts = appStateService.getState().transcripts;
     const suggestions = appStateService.getState().liveSuggestions;
 
+    // Checked before the request, not after. Summarizing an empty interview is a billed model
+    // call whose only possible output is invented, and it lands in a document the candidate is
+    // told is a record of their interview. The export button is live whenever the assistant is
+    // idle, which includes every launch before the first session.
+    if (transcripts.length === 0 && suggestions.length === 0) {
+      throw new Error('There is nothing to export yet. Run an interview first.');
+    }
+
     // Call the API to generate the summary text
     const conf = configStore.getConfig();
     const response = await this.llmApi.generateSummary({

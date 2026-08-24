@@ -37,7 +37,7 @@ interface ToolsGroupProps {
 }
 
 export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
-  const { runningState } = useAppState();
+  const { runningState, appState } = useAppState();
   const { exporting, exportTranscript, clearAll, setPlaceholderData } = useTools();
   const { visible: transcriptVisible, toggle: onToggleTranscript } = useTranscriptPanel();
   const [clearing, setClearing] = useState(false);
@@ -57,7 +57,22 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
     }
   };
 
+  // Nothing recorded yet. Checked here as well as in the service, and this is the copy the user
+  // actually reads: an error thrown out of an ipcMain handler reaches the renderer wrapped in
+  // Electron's "Error invoking remote method 'tools:export-transcript'" prefix, which is not a
+  // sentence to put in front of someone. The service keeps its own guard because it is what
+  // stops the billed summarize call, and this state can be stale by a broadcast.
+  const nothingToExport =
+    (appState?.transcripts?.length ?? 0) === 0 && (appState?.liveSuggestions?.length ?? 0) === 0;
+
   const onExportTranscript = async (format: ExportFormat) => {
+    if (nothingToExport) {
+      toast.error('There is nothing to export yet', {
+        description: 'Run an interview first, then export the transcript and suggestions.',
+      });
+      return;
+    }
+
     try {
       const filePath = await exportTranscript(format);
       if (!filePath) return;
@@ -124,7 +139,9 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
       );
     } catch (error) {
       console.error(error);
-      toast.error('Failed to export interview');
+      // The message when there is nothing to export names the reason, and a generic "failed"
+      // over it would send the user looking for a fault that is not there.
+      toast.error(error instanceof Error ? error.message : 'Failed to export interview');
     }
   };
 
