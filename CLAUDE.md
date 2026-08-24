@@ -85,6 +85,35 @@ The backend prompts now ask for inline emphasis on the words an answer turns on,
 
 Each `LiveSuggestion` still carries the `mode` it was *generated* under, and the panel keys off that rather than the current setting, so toggling mid-interview leaves cards already on screen alone. What the mode selects is the presentation around the Markdown: professional promotes the headline line, normal keeps the 🪄 marker in a column of its own - prepending it to the content instead would swallow whatever structure the answer opens with.
 
+### Assistant lifecycle
+
+`RunningState` is what every control on the bar is gated on, and `Starting` and `Stopping` disable
+all of them - Stop included. So the one invariant `useAssistantService` has to hold is that the
+state always lands back on a terminal value, whatever went wrong on the way. `stopAssistant`
+returns to `Idle` in a `finally`, and tears the four services down through `Promise.allSettled`
+rather than `Promise.all`: `all` rejects on the first one that throws and abandons the other three,
+so a single failing teardown used to leave the rest running *and* strand the app in `Stopping`
+with no reachable control - unrecoverable without restarting the app, mid-interview. A partial
+failure is now a toast rather than a throw, because there is nothing left for a caller to do about
+it and the session is over either way.
+
+The failed-start path is the mirror of that, and it belongs in exactly one place. `startAssistant`
+already tears both services down and returns to `Idle` in its own `catch`, so `doStart` in
+[control-panel/index.tsx](src/renderer/components/custom/control-panel/index.tsx) reports the error
+and stops there. Calling `stopAssistant()` after it, as it used to, walked the button through a
+three-second `Stopping` for a session that never started, and that call's own failure landed
+outside the `try` as an unhandled rejection.
+
+`useMediaDevices` reports `ready` alongside the device list because an empty list means two
+different things - `enumerateDevices()` has not answered yet, and this machine has none - and the
+control panel renders a destructive badge and refuses Start on the second. Reading them as one
+put a red `!` on a working microphone for the first frames after every launch, and refused a Start
+pressed quickly with a message naming a device that was there all along. An unset
+`audioInputDeviceName` is a third state again, and also not "missing": `AudioGroup` is choosing
+the default at that moment, in an effect - never in the render body, where the store write
+re-enters React mid-commit and a failed IPC call rolls the value back into the same condition that
+triggered it, one write per frame.
+
 ### Interview language
 
 One setting decides three things: which AssemblyAI speech model transcribes the call, what language suggestions come back in, and the language of the exported report. `Language` is mirrored across the processes the way `SuggestionMode` is - [src/main/types/language.ts](src/main/types/language.ts) for the request bodies, [src/renderer/types/language.ts](src/renderer/types/language.ts) for the same enum plus the display metadata the picker needs. Six languages, because that is what `universal-streaming-multilingual` transcribes: offering one the ASR cannot hear would not degrade, it would answer a question that was never asked.
