@@ -36,9 +36,23 @@ export default function ControlPanel() {
   const { openConfigurationDialog } = useConfigurationDialog();
   const [permGateOpen, setPermGateOpen] = useState(false);
 
-  const audioInputDevices = useAudioInputDevices();
+  const { devices: audioInputDevices, ready: audioDevicesReady } = useAudioInputDevices();
 
   if (isStealth) return null;
+
+  const selectedAudioInputDeviceName = config?.audioInputDeviceName ?? '';
+
+  // Three states, not two. Until enumerateDevices() has settled the list is empty because
+  // nothing has been asked yet, and a bare `find(...) === undefined` reports the configured
+  // microphone as missing for the first frames after mount - a red badge on a working device,
+  // and a start that is refused if the user is quick. An unset name is not "missing" either:
+  // AudioGroup is picking the default at that moment.
+  const noAudioInputDevices = audioDevicesReady && audioInputDevices.length === 0;
+  const audioInputDeviceNotFound =
+    audioDevicesReady &&
+    audioInputDevices.length > 0 &&
+    selectedAudioInputDeviceName !== '' &&
+    !audioInputDevices.some((d) => d.name === selectedAudioInputDeviceName);
 
   const checkCanStart = () => {
     const checks: { ok: boolean; message: string; onFail?: () => void }[] = [
@@ -62,8 +76,12 @@ export default function ControlPanel() {
         onFail: openConfigurationDialog,
       },
       {
+        ok: !noAudioInputDevices,
+        message: 'No microphone was detected. Connect one and try again.',
+      },
+      {
         ok: !audioInputDeviceNotFound,
-        message: `Audio input device "${config?.audioInputDeviceName}" is not found`,
+        message: `Audio input device "${selectedAudioInputDeviceName}" is not found`,
       },
     ];
 
@@ -139,9 +157,6 @@ export default function ControlPanel() {
   };
   const { onClick, className, icon, label } = stateConfig[runningState];
 
-  const audioInputDeviceNotFound =
-    audioInputDevices?.find((d) => d.name === config?.audioInputDeviceName) === undefined;
-
   const getDisabled = (state: RunningState, disableOnRunning: boolean = true): boolean => {
     if (disableOnRunning && state === RunningState.Running) return true;
     return state === RunningState.Starting || state === RunningState.Stopping;
@@ -166,7 +181,7 @@ export default function ControlPanel() {
             output: it picks the speech model before it picks the answer's language. */}
         <div className="flex items-center gap-1">
           <AudioGroup
-            audioInputDevices={audioInputDevices ?? []}
+            audioInputDevices={audioInputDevices}
             audioInputDeviceNotFound={audioInputDeviceNotFound}
             getDisabled={getDisabled}
           />
