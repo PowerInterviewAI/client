@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { getElectron } from '@/lib/utils';
 import { liveTranscriptionService } from '@/services/live-transcription.service';
 import { RunningState } from '@/types/app-state';
+import { DEFAULT_LANGUAGE } from '@/types/language';
 
 import { useConfigStore } from './use-config-store';
 
@@ -36,9 +37,12 @@ export const useAssistantService = create<AssistantService>((set) => ({
 
       // Start transcription services
       await electron.transcription.start();
+      // The language the sockets open on. It can change mid-session after this, but only
+      // through useInterviewLanguage, which reconnects them - nothing else reads it again.
       await liveTranscriptionService.start(
         config?.audioInputDeviceName ?? '',
-        config?.sessionToken ?? ''
+        config?.sessionToken ?? '',
+        config?.language ?? DEFAULT_LANGUAGE
       );
 
       // Sleep 3 seconds to ensure the assistant has fully started before allowing stop actions

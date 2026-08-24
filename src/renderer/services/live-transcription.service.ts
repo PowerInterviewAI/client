@@ -1,4 +1,5 @@
 import { getElectron } from '@/lib/utils';
+import { DEFAULT_LANGUAGE, Language } from '@/types/language';
 
 const SAMPLE_RATE = 16000;
 const MAX_WS_BUFFERED_BYTES = SAMPLE_RATE * 0.3;
@@ -11,6 +12,18 @@ const BACKEND_BASE_URL = import.meta.env.DEV
   ? 'http://localhost:8080'
   : 'https://api.powerinterviewai.com';
 const STREAMING_URL = `${BACKEND_BASE_URL.replace('http', 'ws')}/api/asr/streaming`;
+
+/**
+ * The streaming URL for one channel.
+ *
+ * English is sent as no parameter at all rather than as `language=en`. The backend treats an
+ * absent language as English and builds the AssemblyAI URL it has always built, so an English
+ * session stays byte-identical to what shipped before the picker existed.
+ */
+function buildStreamingUrl(language: Language): string {
+  if (language === DEFAULT_LANGUAGE) return STREAMING_URL;
+  return `${STREAMING_URL}?language=${encodeURIComponent(language)}`;
+}
 
 // Inline AudioWorklet processor (runs off the main thread)
 const AUDIO_WORKLET_CODE = `
@@ -53,9 +66,15 @@ class AudioWsStream {
   private stopping = false;
   private reconnectTimer: number | null = null;
 
+  // Set while setLanguage() is tearing the socket down and bringing it back. The close it
+  // causes is not a disconnect, so the ordinary reconnect must not also fire: two connects in
+  // flight leave one socket orphaned and still relaying audio into a dead session.
+  private switching = false;
+
   constructor(
     private readonly channel: Channel,
     private readonly stream: MediaStream,
+    private language: Language,
     private readonly onTranscript: (payload: {
       channel: Channel;
       type: 'partial' | 'final';
@@ -136,6 +155,37 @@ class AudioWsStream {
     this.ws = null;
   }
 
+  /**
+   * Re-open this channel's socket on a different language.
+   *
+   * The language is a connection parameter, so there is no way to change it in place: the socket
+   * has to go and come back. That costs a gap of a second or two in this channel's transcription
+   * and orphans whatever utterance was mid-flight, which is why the caller is expected to be a
+   * deliberate user action rather than anything automatic.
+   */
+  async setLanguage(language: Language): Promise<void> {
+    if (language === this.language) return;
+    this.language = language;
+
+    // Not started yet, or already stopped: start() reads the field, so there is nothing to do.
+    if (!this.active || this.stopping) return;
+
+    this.switching = true;
+    try {
+      // Cancel a pending backoff reconnect first, or it wakes up later and opens a second socket.
+      if (this.reconnectTimer !== null) {
+        window.clearTimeout(this.reconnectTimer);
+        this.reconnectTimer = null;
+      }
+      if (this.ws && this.ws.readyState < WebSocket.CLOSING) {
+        this.ws.close();
+      }
+      await this.connectWithRetry();
+    } finally {
+      this.switching = false;
+    }
+  }
+
   private async connectWithRetry(): Promise<void> {
     let lastError: unknown;
     for (let attempt = 0; attempt < WS_RETRY_MAX_ATTEMPTS; attempt++) {
@@ -166,7 +216,9 @@ class AudioWsStream {
 
   private connectWebSocket(): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      const ws = new WebSocket(STREAMING_URL);
+      // Rebuilt per attempt rather than captured once, so a reconnect cannot outlive the
+      // language the session opened with.
+      const ws = new WebSocket(buildStreamingUrl(this.language));
       this.ws = ws;
       let settled = false;
 
@@ -219,12 +271,21 @@ class AudioWsStream {
 
     ws.onclose = () => {
       if (this.stopping || !this.active) return;
+      // A close from a socket that is no longer the current one is not a disconnect; it is the
+      // tail of a replacement that already happened. Reconnecting on it would clobber the live
+      // socket with a second one.
+      if (this.ws !== ws) return;
 
       // A reconnect starts a fresh backend session, so any in-flight utterance never gets its
-      // final. Tell main to close it out, or the orphaned partial gates live suggestions.
+      // final. Tell main to close it out, or the orphaned partial gates live suggestions. A
+      // language switch is a reconnect too, so this holds for it as well.
       getElectron()
         ?.transcription.channelDisconnected(this.channel)
         .catch((error) => console.error('Failed to report channel disconnect:', error));
+
+      // setLanguage owns the reconnect in that case, and does it immediately rather than after
+      // the backoff delay this would wait out.
+      if (this.switching) return;
 
       this.scheduleReconnect();
     };
@@ -275,7 +336,11 @@ class LiveTranscriptionService {
   private loopbackStream: MediaStream | null = null;
   private channels: AudioWsStream[] = [];
 
-  async start(audioInputDeviceName: string, sessionToken: string): Promise<void> {
+  async start(
+    audioInputDeviceName: string,
+    sessionToken: string,
+    language: Language = DEFAULT_LANGUAGE
+  ): Promise<void> {
     const electron = getElectron();
     if (!electron) throw new Error('Electron API not available');
     await electron.transcription.setSessionToken(sessionToken);
@@ -316,10 +381,21 @@ class LiveTranscriptionService {
       await electron.transcription.ingest(payload);
     };
 
-    const micChannel = new AudioWsStream('ch_1', this.micStream, onTranscript);
-    const loopbackChannel = new AudioWsStream('ch_0', this.loopbackStream, onTranscript);
+    const micChannel = new AudioWsStream('ch_1', this.micStream, language, onTranscript);
+    const loopbackChannel = new AudioWsStream('ch_0', this.loopbackStream, language, onTranscript);
     this.channels = [micChannel, loopbackChannel];
     await Promise.all(this.channels.map((channel) => channel.start()));
+  }
+
+  /**
+   * Switch both channels to a new language mid-session.
+   *
+   * A no-op when nothing is running: the channels array is empty until start(), and start()
+   * takes the language it is called with. Suggestions need no equivalent - every request reads
+   * the config store when it is built, so the next one already follows the new setting.
+   */
+  async setLanguage(language: Language): Promise<void> {
+    await Promise.all(this.channels.map((channel) => channel.setLanguage(language)));
   }
 
   async stop(): Promise<void> {
