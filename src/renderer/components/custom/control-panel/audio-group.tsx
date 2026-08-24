@@ -1,6 +1,6 @@
 import { DialogDescription } from '@radix-ui/react-dialog';
 import { Mic } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -40,12 +40,27 @@ export function AudioGroup({
     return true;
   });
 
-  // If no audio input device is selected but there are available devices, select the first one by default
-  if ((config?.audioInputDeviceName ?? '') === '') {
-    if (usableAudioInputDevices.length > 0) {
-      updateConfig({ audioInputDeviceName: usableAudioInputDevices[0].name });
-    }
-  }
+  // First usable device as the default, once. In an effect rather than in the render body: a
+  // store write during render re-enters React mid-commit, and because `updateConfig` rolls the
+  // optimistic value back when the IPC call fails, the condition that triggered it is true again
+  // on the very next render - a failed write repeated for every frame, each one an unhandled
+  // rejection. `pickedDefault` also stops it re-picking after the user clears the selection or
+  // unplugs the chosen device mid-session.
+  const pickedDefault = useRef(false);
+  const firstUsableDeviceName = usableAudioInputDevices[0]?.name;
+
+  useEffect(() => {
+    if (pickedDefault.current) return;
+    if (!config) return; // config not loaded yet; '' here would not mean "unset"
+    if (config.audioInputDeviceName !== '') return;
+    if (!firstUsableDeviceName) return;
+
+    pickedDefault.current = true;
+    updateConfig({ audioInputDeviceName: firstUsableDeviceName }).catch((e) => {
+      pickedDefault.current = false;
+      console.error('Failed to select a default microphone', e);
+    });
+  }, [config, firstUsableDeviceName, updateConfig]);
 
   return (
     <div className="flex items-center">
