@@ -13,6 +13,19 @@ import { pushNotificationService } from './push-notification.service.js';
 const SUCCESS_INTERVAL = 5 * 1000; // 5 seconds
 const FAILURE_INTERVAL = 1 * 1000; // 1 second
 
+// A backend that is down is usually down for longer than a second, and the first retry is the
+// only one that benefits from being immediate. Without a ceiling the loop below polls at 1 Hz
+// for as long as the app is open - a laptop left overnight on a dropped connection makes tens of
+// thousands of failing requests, and every installed client comes back at the same rate the
+// moment a real outage ends. Backoff is capped rather than unbounded so recovery is still
+// noticed within half a minute, which is what the reconnect notice in the UI is waiting on.
+const MAX_FAILURE_INTERVAL = 30 * 1000;
+const FAILURE_BACKOFF_FACTOR = 2;
+
+function nextFailureInterval(current: number): number {
+  return Math.min(current * FAILURE_BACKOFF_FACTOR, MAX_FAILURE_INTERVAL);
+}
+
 export class HealthCheckService {
   private running = false;
   private client = new HealthCheckApi();
@@ -64,6 +77,8 @@ export class HealthCheckService {
   /** Backend ping loop */
   private startBackendLoop(): void {
     (async () => {
+      let failureInterval = FAILURE_INTERVAL;
+
       while (this.running) {
         let backendLive = false;
         try {
@@ -74,13 +89,17 @@ export class HealthCheckService {
         }
 
         if (!backendLive) {
-          console.log('[HealthCheckService] Backend not live');
+          console.log(`[HealthCheckService] Backend not live, next check in ${failureInterval}ms`);
         }
 
         // Update app state
         appStateService.updateState({ isBackendLive: backendLive });
 
-        const next = backendLive ? SUCCESS_INTERVAL : FAILURE_INTERVAL;
+        // Reset on the way back up, so one blip does not leave the app checking slowly for the
+        // rest of the session.
+        const next = backendLive ? SUCCESS_INTERVAL : failureInterval;
+        failureInterval = backendLive ? FAILURE_INTERVAL : nextFailureInterval(failureInterval);
+
         await safeSleep(next);
       }
     })();
@@ -89,12 +108,17 @@ export class HealthCheckService {
   /** Client ping loop */
   private startClientLoop(): void {
     (async () => {
+      let failureInterval = FAILURE_INTERVAL;
+
       while (this.running) {
         const state = appStateService.getState();
 
-        // skip if not logged in
+        // skip if not logged in. Kept at FAILURE_INTERVAL: it makes no request, so it costs a
+        // timer wake-up rather than traffic, and it is what decides how soon after a sign-in the
+        // credits and role reach the UI.
         if (!state.isLoggedIn) {
           await safeSleep(FAILURE_INTERVAL);
+          failureInterval = FAILURE_INTERVAL;
           continue;
         }
 
@@ -117,9 +141,11 @@ export class HealthCheckService {
               userRole: res.data?.user_role,
             });
           }
+          failureInterval = FAILURE_INTERVAL;
         } catch (error) {
           console.error('[HealthCheckService] Client ping error:', error);
-          nextInterval = FAILURE_INTERVAL;
+          nextInterval = failureInterval;
+          failureInterval = nextFailureInterval(failureInterval);
         }
 
         await safeSleep(nextInterval);
