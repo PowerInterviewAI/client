@@ -85,6 +85,24 @@ The backend prompts now ask for inline emphasis on the words an answer turns on,
 
 Each `LiveSuggestion` still carries the `mode` it was *generated* under, and the panel keys off that rather than the current setting, so toggling mid-interview leaves cards already on screen alone. What the mode selects is the presentation around the Markdown: professional promotes the headline line, normal keeps the 🪄 marker in a column of its own - prepending it to the content instead would swallow whatever structure the answer opens with.
 
+### Interview language
+
+One setting decides three things: which AssemblyAI speech model transcribes the call, what language suggestions come back in, and the language of the exported report. `Language` is mirrored across the processes the way `SuggestionMode` is - [src/main/types/language.ts](src/main/types/language.ts) for the request bodies, [src/renderer/types/language.ts](src/renderer/types/language.ts) for the same enum plus the display metadata the picker needs. Six languages, because that is what `universal-streaming-multilingual` transcribes: offering one the ASR cannot hear would not degrade, it would answer a question that was never asked.
+
+**English is the absence of the feature.** `buildStreamingUrl` sends no `language` parameter at all for English rather than `language=en`, and the backend defaults the request field, so a session that never touches the picker produces exactly the traffic it produced before this existed.
+
+`configStore.getConfig()` resolves the language on the way *out*, not on the way in. The disk holds whatever some build wrote - a code a later release dropped, or one an older release never knew - and every consumer reads through `getConfig`, so that is the single place an unknown code can be stopped before it reaches the ASR URL and three request bodies. `test/language.test.mjs` pins it.
+
+**The picker stays live mid-interview**, unlike Audio and Model, because an interview that switches language is the case it exists for and not one the candidate can prepare for by restarting. The two halves of the setting move at different speeds and `useInterviewLanguage` is where that is reconciled. Suggestions need nothing: every request reads the config store as it is built, so the next one already follows. The ASR carries its language as a *connection* parameter, so `liveTranscriptionService.setLanguage()` tears both sockets down and re-opens them - a second or two of gap, and whatever utterance was mid-flight is orphaned, which is why the button shows a spinner rather than pretending the change was instant and why the menu says so before the user commits.
+
+Two guards in `AudioWsStream` make that safe, and both protect against the same failure - two sockets on one channel, one of them orphaned and still relaying audio into a dead session. `ws.onclose` ignores a close from a socket that is no longer `this.ws`, since that is the tail of a replacement rather than a disconnect; and the `switching` flag suppresses the ordinary backoff reconnect for the close `setLanguage` causes itself, which it then handles immediately instead of after `WS_RETRY_BASE_DELAY_MS`. `connectWebSocket` rebuilds the URL per attempt rather than capturing it, which is what lets a reconnect pick up the new language at all.
+
+The setting is persisted *before* the reconnect and never rolled back on failure: a failed reconnect that reverted the setting would leave the user with no route to the language they picked, whereas leaving it set means stopping and starting the assistant recovers.
+
+The trigger shows the code (`EN`, `ES`) next to the icon for the same reason the tooltip names the language - the one question this control has to answer at a glance is what it is currently set to.
+
+The app's own chrome is **not** localised, deliberately: an English button on a Spanish interview is an inconvenience, an English transcript of Spanish speech is a wrong answer read out loud.
+
 ### Routing
 
 Hash-based router (required for Electron `file://` protocol). Routes: `/` (index, redirects based on login state) -> `/auth/login`, `/auth/signup`, or `/auth/forgot-password` -> `/main` (interview UI) -> `/payment`.
