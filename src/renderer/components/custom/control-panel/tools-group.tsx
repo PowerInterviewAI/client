@@ -99,6 +99,7 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
                     size="sm"
                     variant="outline"
                     className="h-6 w-6 p-0"
+                    aria-label="Open the exported file"
                     onClick={() => electron?.openFile(filePath)}
                   >
                     <FileIcon className="h-3 w-3" />
@@ -112,6 +113,7 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
                     size="sm"
                     variant="outline"
                     className="h-6 w-6 p-0"
+                    aria-label="Show the exported file in its folder"
                     onClick={() => electron?.showInFolder(filePath)}
                   >
                     <FolderOpenIcon className="h-3 w-3" />
@@ -125,6 +127,7 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
                     size="sm"
                     variant="ghost"
                     className="h-6 w-6 p-0"
+                    aria-label="Dismiss"
                     onClick={() => toast.dismiss(toastId)}
                   >
                     <XIcon className="h-3 w-3" />
@@ -156,6 +159,7 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
             size="sm"
             className={cn(BAR_ICON_BUTTON, transcriptVisible ? BAR_ACTIVE : BAR_GHOST)}
             aria-pressed={transcriptVisible}
+            aria-label={transcriptVisible ? 'Hide transcription' : 'Show transcription'}
           >
             {transcriptVisible ? (
               <Captions className="h-4 w-4" />
@@ -179,6 +183,8 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
             size="sm"
             className={cn(BAR_ICON_BUTTON, BAR_GHOST)}
             disabled={getDisabled(runningState) || exporting || clearing}
+            aria-label="Clear the interview"
+            aria-busy={clearing}
           >
             {clearing ? (
               <Loader className="h-4 w-4 animate-spin" />
@@ -202,6 +208,8 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
                 size="sm"
                 className={cn(BAR_ICON_BUTTON, BAR_GHOST)}
                 disabled={getDisabled(runningState) || exporting}
+                aria-label="Export the interview"
+                aria-busy={exporting}
               >
                 {exporting ? (
                   <Loader className="h-4 w-4 animate-spin" />

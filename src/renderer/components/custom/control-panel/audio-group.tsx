@@ -73,8 +73,16 @@ export function AudioGroup({
               className={cn(BAR_ICON_BUTTON, BAR_GHOST)}
               disabled={getDisabled(runningState)}
               onClick={() => setOpen(true)}
+              // The warning state is carried by a badge drawn over the corner of this button,
+              // which is colour and position and nothing else. Folding it into the name is what
+              // makes the one condition this control reports reachable without seeing it.
+              aria-label={
+                audioInputDeviceNotFound
+                  ? 'Audio options - the selected microphone was not found'
+                  : 'Audio options'
+              }
             >
-              <Mic className="h-4 w-4" />
+              <Mic className="h-4 w-4" aria-hidden="true" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>
@@ -84,6 +92,7 @@ export function AudioGroup({
         {audioInputDeviceNotFound && (
           <Badge
             variant="destructive"
+            aria-hidden="true"
             className="absolute -bottom-1 -right-1 h-4 min-w-4 rounded-full px-1 flex items-center justify-center text-[10px] border"
           >
             !
