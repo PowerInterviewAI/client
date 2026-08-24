@@ -90,6 +90,22 @@ export async function run() {
     return prevented;
   };
 
+  // createWindow() runs again when the single-instance lock recovers a destroyed window, and
+  // web-contents-created is an app-level event, so a second install would stack a duplicate
+  // listener on every web contents from then on.
+  installNavigationGuard(APP_URL);
+  const laterHandlers = [];
+  const laterContents = {
+    setWindowOpenHandler: () => {},
+    on: (event, handler) => {
+      if (event === 'will-navigate') laterHandlers.push(handler);
+    },
+  };
+  electron.app.emit('web-contents-created', {}, laterContents);
+  // One, not two: a second install would leave two app-level listeners, and every web contents
+  // created from then on would get both.
+  check('installing twice registers nothing twice', laterHandlers.length === 1);
+
   check('the app may navigate within its own origin', !navigate(`${APP_URL}/index.html`));
   check('an off-origin navigation is blocked', navigate('https://example.com'));
   check('a file url is blocked', navigate('file:///etc/passwd'));

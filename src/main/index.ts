@@ -174,8 +174,8 @@ async function createWindow() {
   await win.webContents.session.clearCache();
 
   // Installed before the load, so the guard is in place for the app's very first document.
-  // `web-contents-created` fires for the window created above, and the handler is idempotent
-  // enough to survive a relaunch because the window is only ever created once per process.
+  // Idempotent, because this function runs again when the single-instance lock recovers a
+  // destroyed window and `web-contents-created` is an app-level event.
   if (EnvUtil.isDev()) {
     const devUrl = 'http://localhost:15173';
     installNavigationGuard(devUrl);

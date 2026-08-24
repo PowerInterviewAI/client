@@ -57,7 +57,15 @@ export async function openExternally(url: string): Promise<{ success: boolean; e
  * candidate's CV through `account.get()`. `will-navigate` pins the window to the app's own
  * document; the dev server and the packaged `file://` bundle are the only origins it may hold.
  */
+let installed = false;
+
 export function installNavigationGuard(appUrl: string): void {
+  // `createWindow()` runs again when the single-instance lock recovers a destroyed window, and
+  // `web-contents-created` is an app-level event: without this the second call would stack a
+  // duplicate will-navigate listener on every web contents for the rest of the process.
+  if (installed) return;
+  installed = true;
+
   let appOrigin: string;
   try {
     appOrigin = new URL(appUrl).origin;
