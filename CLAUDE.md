@@ -134,6 +134,31 @@ The trigger shows the code (`EN`, `ES`) next to the icon for the same reason the
 
 The app's own chrome is **not** localised, deliberately: an English button on a Spanish interview is an inconvenience, an English transcript of Spanish speech is a wrong answer read out loud.
 
+### Navigation and external links
+
+The panels render Markdown that came from a language model, and `remark-gfm` autolinks bare URLs,
+so an anchor in this app is not necessarily one a person wrote. `installNavigationGuard()`
+([src/main/navigation-guard.ts](src/main/navigation-guard.ts)) is installed before the window's
+first load and closes the two routes that follow from that, neither of which announced itself.
+
+`setWindowOpenHandler` denies **every** new window. A `target="_blank"` anchor - which is what
+`SafeMarkdown` renders - asks Electron for one, and with no handler installed the default is to
+make it: a chromeless BrowserWindow with no address bar showing a page the user did not choose.
+A web URL is handed to the real browser instead, through `setImmediate` as Electron's own
+guidance requires.
+
+`will-navigate` pins the window to the app's own document. An anchor without a target navigates
+the frame it is in, and that frame is the app - preload runs on whatever document loads next, so
+a remote page would inherit `window.electronAPI`, and with it the session token through
+`config.get()` and the candidate's CV through `account.get()`. `file:` origins serialize to
+`"null"`, so the packaged build is matched on its exact document URL rather than on an origin
+comparison that could never hold.
+
+Both routes and the `external:open` IPC handler go through the same `openExternally()`, which
+allows `http:`, `https:` and `mailto:` only. `shell.openExternal` delegates to the OS protocol
+handler, so `file:` launches whatever the path points at and a registered custom scheme runs
+whatever claimed it. `test/navigation-guard.test.mjs` pins all three.
+
 ### Routing
 
 Hash-based router (required for Electron `file://` protocol). Routes: `/` (index, redirects based on login state) -> `/auth/login`, `/auth/signup`, or `/auth/forgot-password` -> `/main` (interview UI) -> `/payment`.

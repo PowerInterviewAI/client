@@ -31,11 +31,21 @@ export function stubElectron() {
 // Records every Dock/activation-policy call in order so the macOS surface can be asserted on
 // any platform. See test/stealth-dock.test.mjs.
 const dockCalls = [];
+// Every app.on(...) registration, so a test can fire the event the module under test is
+// waiting for. See test/navigation-guard.test.mjs.
+const appListeners = new Map();
 const app = {
   getPath: () => ${JSON.stringify(userData)},
   getName: () => 'pia-test',
   getVersion: () => '0.0.0',
-  on: () => {},
+  on: (event, handler) => {
+    if (!appListeners.has(event)) appListeners.set(event, []);
+    appListeners.get(event).push(handler);
+  },
+  emit: (event, ...args) => {
+    for (const handler of appListeners.get(event) ?? []) handler(...args);
+  },
+  appListeners,
   whenReady: () => Promise.resolve(),
   setActivationPolicy: (policy) => dockCalls.push(policy),
   dock: {
@@ -46,7 +56,14 @@ const app = {
 };
 const ipcMain = { on: () => {}, handle: () => {} };
 const screen = { getPrimaryDisplay: () => ({ workAreaSize: { width: 1920, height: 1080 } }), getAllDisplays: () => [] };
-const shell = { openPath: async () => '' };
+// Records what was handed to the OS, so a test can assert that a blocked scheme never reaches it.
+const openExternalCalls = [];
+const shell = {
+  openPath: async () => '',
+  openExternal: async (url) => { openExternalCalls.push(url); },
+  openExternalCalls,
+  showItemInFolder: () => {},
+};
 export { app, ipcMain, screen, shell };
 export default { app, ipcMain, screen, shell };`,
       };
