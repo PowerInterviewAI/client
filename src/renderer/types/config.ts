@@ -1,10 +1,10 @@
+import type { Language } from './language';
 import type { LLMConfig } from './llm';
 
-export enum Language {
-  English = 'en',
-}
+export type { Language };
 
 export interface Config {
+  // Interview language: what the ASR transcribes and what suggestions come back in.
   language: Language;
 
   // Authentication

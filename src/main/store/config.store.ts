@@ -6,11 +6,13 @@
 import ElectronStore from 'electron-store';
 
 import { OPACITY_DEFAULT } from '../consts.js';
+import { DEFAULT_LANGUAGE, Language, resolveLanguage } from '../types/language.js';
 import { LLMConfig } from '../types/llm.js';
 
 // Runtime configuration (matches Config type in frontend)
 export interface RuntimeConfig {
-  language: string;
+  /** Interview language: what the ASR transcribes and what suggestions come back in. */
+  language: Language;
   sessionToken: string;
   rememberMe: boolean;
   email: string;
@@ -36,7 +38,7 @@ export interface RuntimeConfig {
 
 // Default runtime configuration
 const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
-  language: 'en',
+  language: DEFAULT_LANGUAGE,
   sessionToken: '',
   rememberMe: true,
   email: '',
@@ -102,7 +104,15 @@ class ConfigStore {
   getConfig(): RuntimeConfig {
     const stored: StoredRuntime = { ...this.store.get('runtime', DEFAULT_RUNTIME_CONFIG) };
     delete stored.interviewConf;
-    return { ...DEFAULT_RUNTIME_CONFIG, ...stored } as RuntimeConfig;
+    const config = { ...DEFAULT_RUNTIME_CONFIG, ...stored } as RuntimeConfig;
+
+    // Resolved on the way out, not on the way in. The disk holds whatever some build wrote -
+    // a language a later release dropped, or one an older one never knew - and every consumer
+    // reads through here, so this is the one place that can stop an unknown code reaching the
+    // ASR URL and the request bodies.
+    config.language = resolveLanguage(config.language);
+
+    return config;
   }
 
   /**
