@@ -1,4 +1,5 @@
 import { Transcript } from './app-state.js';
+import { Language } from './language.js';
 
 export enum LLMProvider {
   OPENAI = 'openai',
@@ -48,6 +49,12 @@ export interface LLMConfigValidationResult {
 
 export interface LLMRequest {
   config: LLMConfig | null;
+
+  /**
+   * Interview language. Carried on the shared base so the three request kinds cannot drift, and
+   * defaulted server-side, so omitting it against an older deployment still means English.
+   */
+  language?: Language;
 }
 
 /**

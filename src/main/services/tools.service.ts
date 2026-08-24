@@ -22,10 +22,14 @@ class ToolsService {
     const suggestions = appStateService.getState().liveSuggestions;
 
     // Call the API to generate the summary text
+    const conf = configStore.getConfig();
     const response = await this.llmApi.generateSummary({
-      config: configStore.getConfig().llmConf,
+      config: conf.llmConf,
       username,
       transcripts,
+      // The exported report is written in the interview's language too. A Spanish interview
+      // summarised in English is a document the candidate cannot hand to anyone involved in it.
+      language: conf.language,
     } as GenerateSummarizeRequest);
     if (response.error) {
       throw new Error(response.error.message);
