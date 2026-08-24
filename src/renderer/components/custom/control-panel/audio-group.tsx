@@ -100,12 +100,18 @@ export function AudioGroup({
 
           {/* Microphone Select */}
           <div className="mb-3">
-            <label className="text-xs text-muted-foreground mb-1 block">Microphone</label>
+            <label id="audio-input-label" className="text-xs text-muted-foreground mb-1 block">
+              Microphone
+            </label>
             <Select
               value={config?.audioInputDeviceName}
-              onValueChange={(v) => updateConfig({ audioInputDeviceName: v })}
+              onValueChange={(v) =>
+                updateConfig({ audioInputDeviceName: v }).catch((e) =>
+                  console.error('Failed to save the selected microphone', e)
+                )
+              }
             >
-              <SelectTrigger className="h-8 w-full text-xs">
+              <SelectTrigger aria-labelledby="audio-input-label" className="h-8 w-full text-xs">
                 <SelectValue placeholder="Select microphone" />
               </SelectTrigger>
               <SelectContent>

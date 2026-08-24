@@ -86,9 +86,14 @@ export default function LoginPage() {
       <CardContent>
         <form onSubmit={submit} className="space-y-4">
           <div>
-            <label className="text-sm block mb-1">Email</label>
+            <label htmlFor="login-email" className="text-sm block mb-1">
+              Email
+            </label>
             <Input
+              id="login-email"
+              name="email"
               type="email"
+              autoComplete="username"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               maxLength={254}
@@ -97,8 +102,13 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="text-sm block mb-1">Password</label>
+            <label htmlFor="login-password" className="text-sm block mb-1">
+              Password
+            </label>
             <InputPassword
+              id="login-password"
+              name="password"
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               maxLength={128}
@@ -120,7 +130,15 @@ export default function LoginPage() {
             </label>
           </div>
 
-          {error && <div className="text-sm text-red-600">{error}</div>}
+          {/* role=alert: the failure this renders is "Incorrect email or password", which arrives
+              with no other change on screen. Without it a screen reader user submits the form and
+              is told nothing at all. text-destructive rather than red-600 so it stays legible on
+              the dark theme, where a fixed 600-weight red sits close to the card behind it. */}
+          {error && (
+            <div role="alert" className="text-sm text-destructive">
+              {error}
+            </div>
+          )}
 
           <Button type="submit" disabled={loading} className="w-full mt-2">
             {loading ? 'Signing in…' : 'Sign in'}

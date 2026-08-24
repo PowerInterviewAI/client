@@ -279,13 +279,17 @@ export function LLMGroup({ getDisabled }: LLMGroupProps) {
           </div>
 
           <div className="grid gap-2">
-            <label className="text-xs text-muted-foreground">LLM Provider</label>
+            {/* A Radix Select trigger is a button, not a form control, so htmlFor does not
+                reach it. id + aria-labelledby is what associates the two. */}
+            <label id="llm-provider-label" className="text-xs text-muted-foreground">
+              LLM Provider
+            </label>
             <Select
               value={currentProvider}
               onValueChange={handleProviderChange}
               disabled={isProviderDisabled}
             >
-              <SelectTrigger className="h-8 w-full text-xs">
+              <SelectTrigger aria-labelledby="llm-provider-label" className="h-8 w-full text-xs">
                 <SelectValue placeholder={providerPlaceholder} />
               </SelectTrigger>
               <SelectContent>
@@ -299,9 +303,14 @@ export function LLMGroup({ getDisabled }: LLMGroupProps) {
           </div>
 
           <div className="grid gap-2">
-            <label className="text-xs text-muted-foreground">API Key</label>
+            <label htmlFor="llm-api-key" className="text-xs text-muted-foreground">
+              API Key
+            </label>
             <Input
+              id="llm-api-key"
+              name="llm-api-key"
               type="password"
+              autoComplete="off"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder="Enter API key"
@@ -312,9 +321,11 @@ export function LLMGroup({ getDisabled }: LLMGroupProps) {
           </div>
 
           <div className="grid gap-2">
-            <label className="text-xs text-muted-foreground">Model</label>
+            <label id="llm-model-label" className="text-xs text-muted-foreground">
+              Model
+            </label>
             <Select value={effectiveModel} onValueChange={onModelChange} disabled={isModelDisabled}>
-              <SelectTrigger className="h-8 w-full text-xs">
+              <SelectTrigger aria-labelledby="llm-model-label" className="h-8 w-full text-xs">
                 <SelectValue placeholder={modelPlaceholder} />
               </SelectTrigger>
               <SelectContent>

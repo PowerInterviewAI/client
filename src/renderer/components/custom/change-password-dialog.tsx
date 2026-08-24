@@ -54,6 +54,8 @@ export function ChangePasswordDialog({
     onOpenChange(newOpen);
   };
 
+  const passwordsMismatch = confirmPassword !== '' && newPassword !== confirmPassword;
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-106.25">
@@ -69,6 +71,8 @@ export function ChangePasswordDialog({
             <div className="relative">
               <InputPassword
                 id="current-password"
+                name="current-password"
+                autoComplete="current-password"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 placeholder="Enter current password"
@@ -83,6 +87,8 @@ export function ChangePasswordDialog({
             <div className="relative">
               <InputPassword
                 id="new-password"
+                name="new-password"
+                autoComplete="new-password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Enter new password"
@@ -97,6 +103,8 @@ export function ChangePasswordDialog({
             <div className="relative">
               <InputPassword
                 id="confirm-password"
+                name="confirm-password"
+                autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm new password"
@@ -128,7 +136,20 @@ export function ChangePasswordDialog({
             {loading ? 'Changing...' : 'Change Password'}
           </Button>
         </DialogFooter>
-        {error && <div className="text-sm text-red-600 mt-2">{error}</div>}
+        {/* Says why the button is dead. A mismatch is the one condition above that the user
+            cannot see from the fields themselves - both are masked - so without this the
+            dialog silently refuses to submit and gives no reason. Held back until the confirm
+            field has something in it, so it is not an error for a half-typed entry. */}
+        {passwordsMismatch && (
+          <div role="alert" className="text-sm text-destructive mt-2">
+            The new passwords do not match.
+          </div>
+        )}
+        {error && (
+          <div role="alert" className="text-sm text-destructive mt-2">
+            {error}
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -109,9 +109,14 @@ export default function ForgotPasswordPage() {
         {step === 'email' && (
           <form onSubmit={submitEmail} className="space-y-4">
             <div>
-              <label className="text-sm block mb-1">Email</label>
+              <label htmlFor="reset-email" className="text-sm block mb-1">
+                Email
+              </label>
               <Input
+                id="reset-email"
+                name="email"
                 type="email"
+                autoComplete="username"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 maxLength={254}
@@ -119,7 +124,11 @@ export default function ForgotPasswordPage() {
               />
             </div>
 
-            {error && <div className="text-sm text-red-600">{error}</div>}
+            {error && (
+              <div role="alert" className="text-sm text-destructive">
+                {error}
+              </div>
+            )}
 
             <Button type="submit" disabled={loading} className="w-full">
               {loading ? 'Sending…' : 'Send reset code'}
@@ -136,15 +145,29 @@ export default function ForgotPasswordPage() {
         {step === 'code' && (
           <form onSubmit={submitCode} className="space-y-4">
             <div>
-              <label className="text-sm block mb-1">Reset code</label>
+              <label htmlFor="reset-code" className="text-sm block mb-1">
+                Reset code
+              </label>
               <p className="text-sm text-muted-foreground mb-2">
                 If an account exists for {email}, we sent a reset code to it. Paste the code below.
                 It can only be used once, and the email says when it expires.
               </p>
-              <Textarea value={code} onChange={(e) => setCode(e.target.value)} rows={4} required />
+              <Textarea
+                id="reset-code"
+                name="code"
+                autoComplete="one-time-code"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                rows={4}
+                required
+              />
             </div>
 
-            {error && <div className="text-sm text-red-600">{error}</div>}
+            {error && (
+              <div role="alert" className="text-sm text-destructive">
+                {error}
+              </div>
+            )}
 
             <Button type="submit" disabled={loading} className="w-full">
               {loading ? 'Verifying…' : 'Verify'}
@@ -180,8 +203,13 @@ export default function ForgotPasswordPage() {
             </p>
 
             <div>
-              <label className="text-sm block mb-1">New password</label>
+              <label htmlFor="reset-password" className="text-sm block mb-1">
+                New password
+              </label>
               <InputPassword
+                id="reset-password"
+                name="new-password"
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 maxLength={128}
@@ -190,8 +218,13 @@ export default function ForgotPasswordPage() {
             </div>
 
             <div>
-              <label className="text-sm block mb-1">Confirm new password</label>
+              <label htmlFor="reset-password-confirm" className="text-sm block mb-1">
+                Confirm new password
+              </label>
               <InputPassword
+                id="reset-password-confirm"
+                name="confirm-password"
+                autoComplete="new-password"
                 value={passwordConfirm}
                 onChange={(e) => setPasswordConfirm(e.target.value)}
                 maxLength={128}
@@ -199,7 +232,11 @@ export default function ForgotPasswordPage() {
               />
             </div>
 
-            {error && <div className="text-sm text-red-600">{error}</div>}
+            {error && (
+              <div role="alert" className="text-sm text-destructive">
+                {error}
+              </div>
+            )}
 
             <Button type="submit" disabled={loading || succeeded} className="w-full">
               {loading ? 'Saving…' : succeeded ? 'Password reset' : 'Set new password'}
