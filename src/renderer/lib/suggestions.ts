@@ -56,3 +56,27 @@ export function stripDanglingEmphasis(text: string): string {
 
   return out;
 }
+
+/**
+ * Shorten a question to `maxLen` characters, dropping the middle rather than the tail.
+ *
+ * The opening words say what the interviewer asked and the closing ones usually carry the actual
+ * ask, so a tail truncation loses the half that matters. The separator is counted against the
+ * budget: both panels used to subtract three characters for it and then splice in thirteen, so
+ * the "256 character" cap produced 266-character lines and the caller's arithmetic was wrong
+ * wherever it was reused.
+ */
+const TRUNCATE_SEPARATOR = ' ... ';
+
+export function truncateMiddle(text: string, maxLen: number): string {
+  if (text.length <= maxLen) return text;
+  // Nothing meaningful survives once the separator eats the budget; fall back to a plain head cut.
+  if (maxLen <= TRUNCATE_SEPARATOR.length) return text.slice(0, Math.max(0, maxLen));
+
+  const keep = maxLen - TRUNCATE_SEPARATOR.length;
+  const head = Math.ceil(keep / 2);
+  const tail = keep - head;
+  return (
+    text.slice(0, head) + TRUNCATE_SEPARATOR + (tail > 0 ? text.slice(text.length - tail) : '')
+  );
+}

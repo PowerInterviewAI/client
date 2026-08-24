@@ -31,6 +31,7 @@ for (const module of [
   './transcript-turn-selection.test.mjs',
   './suggestion-sentinel.test.mjs',
   './suggestion-emphasis.test.mjs',
+  './suggestion-truncate.test.mjs',
   './mac-update-util.test.mjs',
   './change-password.test.mjs',
   './password-reset.test.mjs',
