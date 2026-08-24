@@ -188,11 +188,14 @@ export default function MainPage() {
       .catch(() => {});
   }, [configLoading, appState?.isBackendLive, appState?.isLoggedIn]);
 
-  // Compute available space when page is navigated to
+  // Compute available space when page is navigated to. Deferred a tick so the titlebar, status
+  // and control rows it measures have been laid out, and cleared on unmount so a navigation
+  // away mid-tick does not measure a torn-down tree.
   useEffect(() => {
-    setTimeout(() => {
+    const id = window.setTimeout(() => {
       computeAvailable();
     }, 10);
+    return () => window.clearTimeout(id);
   }, [computeAvailable]);
 
   // compute panel height by subtracting hotkeys/control/video heights from viewport
@@ -225,10 +228,17 @@ export default function MainPage() {
     computeAvailable();
   }, [isStealth, computeAvailable]);
 
-  // Recompute when assistant running state or appState becomes available
+  // Recompute when the assistant's running state changes.
+  //
+  // Keyed on `runningState` alone. `appState` is a fresh object on every push from main, which
+  // during an interview is every streamed suggestion chunk and every ASR partial - several times
+  // a second. Each run does three getBoundingClientRect() calls, so having it in the dependency
+  // list forced a synchronous layout on the renderer for every token that arrived, while the
+  // panel it was measuring had not changed size at all. None of the other inputs to the layout
+  // live on appState; they all have effects of their own above.
   useEffect(() => {
     computeAvailable();
-  }, [appState?.runningState, appState, computeAvailable]);
+  }, [appState?.runningState, computeAvailable]);
 
   // Memoized styles to prevent unnecessary re-renders
   const transcriptStyle = useMemo(
@@ -261,12 +271,13 @@ export default function MainPage() {
   const _redirectedToLogin = useRef(false);
 
   useEffect(() => {
-    if (appState?.isLoggedIn === false && !_redirectedToLogin.current) {
-      _redirectedToLogin.current = true;
-      setTimeout(() => {
-        navigate('/auth/login', { replace: true });
-      }, 500);
-    }
+    if (appState?.isLoggedIn !== false || _redirectedToLogin.current) return;
+
+    _redirectedToLogin.current = true;
+    const id = window.setTimeout(() => {
+      navigate('/auth/login', { replace: true });
+    }, 500);
+    return () => window.clearTimeout(id);
   }, [appState?.isLoggedIn, navigate]);
 
   // Show loading if not logged in (fallback)
