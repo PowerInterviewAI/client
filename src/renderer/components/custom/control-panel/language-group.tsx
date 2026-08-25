@@ -81,34 +81,45 @@ export function LanguageGroup({ getDisabled }: LanguageGroupProps) {
         {/* Opens upward: the menu is portalled into the overflow-hidden <main> from main-frame
             and the control panel is the bottom-most thing in it, so a downward menu is clipped
             rather than flipped. */}
-        <DropdownMenuContent align="start" side="top" className="w-56">
+        {/* Capped and scrollable because the list is 28 long, not the 6 it was built for. The
+            menu opens upward from the bottom-most control, so an uncapped list is not merely
+            tall - it runs off the top of the window and the first entries become unreachable. */}
+        <DropdownMenuContent
+          align="start"
+          side="top"
+          className="flex max-h-[min(60vh,20rem)] w-56 flex-col"
+        >
           <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
             Interview language
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          {LANGUAGES.map((item) => {
-            const selected = item.code === language;
-            return (
-              <DropdownMenuItem
-                key={item.code}
-                onClick={() => void setLanguage(item.code)}
-                className="gap-2"
-              >
-                {/* The check occupies its own fixed column rather than being conditionally
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            {LANGUAGES.map((item) => {
+              const selected = item.code === language;
+              return (
+                <DropdownMenuItem
+                  key={item.code}
+                  onClick={() => void setLanguage(item.code)}
+                  className="gap-2"
+                >
+                  {/* The check occupies its own fixed column rather than being conditionally
                     rendered, so the labels do not shift by 16px as the selection moves. */}
-                <Check
-                  className={cn('h-4 w-4 shrink-0', selected ? 'opacity-100' : 'opacity-0')}
-                  aria-hidden="true"
-                />
-                <span className={cn('flex-1', selected && 'font-medium')}>{item.nativeName}</span>
-                {/* The English name earns its place for the reverse lookup: a user who has not
+                  <Check
+                    className={cn('h-4 w-4 shrink-0', selected ? 'opacity-100' : 'opacity-0')}
+                    aria-hidden="true"
+                  />
+                  <span dir="auto" className={cn('flex-1', selected && 'font-medium')}>
+                    {item.nativeName}
+                  </span>
+                  {/* The English name earns its place for the reverse lookup: a user who has not
                     yet found their language scans this column, not the endonyms. */}
-                {item.nativeName !== item.name && (
-                  <span className="text-xs text-muted-foreground">{item.name}</span>
-                )}
-              </DropdownMenuItem>
-            );
-          })}
+                  {item.nativeName !== item.name && (
+                    <span className="text-xs text-muted-foreground">{item.name}</span>
+                  )}
+                </DropdownMenuItem>
+              );
+            })}
+          </div>
           {runningState === RunningState.Running && (
             <>
               <DropdownMenuSeparator />
