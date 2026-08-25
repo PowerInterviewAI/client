@@ -137,7 +137,7 @@ pnpm test:main     # main-process checks
 ### Configuration
 
 - Set profile (CV, job description)
-- Select microphone
+- Select microphone (changeable mid-interview, without interrupting transcription)
 - Start assistant
 
 ## Use Cases
