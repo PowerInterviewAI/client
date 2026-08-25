@@ -1,5 +1,5 @@
 import { DialogDescription } from '@radix-ui/react-dialog';
-import { Mic } from 'lucide-react';
+import { Loader, Mic } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAppState } from '@/hooks/use-app-state';
+import { useAudioInputDevice } from '@/hooks/use-audio-input-device';
 import { useConfigStore } from '@/hooks/use-config-store';
 import { cn } from '@/lib/utils';
 import { RunningState } from '@/types/app-state';
@@ -27,6 +28,18 @@ interface AudioGroupProps {
   getDisabled: (state: RunningState, disableOnRunning?: boolean) => boolean;
 }
 
+/**
+ * Microphone selection, live mid-interview.
+ *
+ * It used to lock while the assistant ran, which made the one case it is needed for
+ * unreachable: a headset that dies, is unplugged, or was the wrong device to begin with, noticed
+ * only once the interviewer cannot hear the answer. Restarting the assistant to fix it drops the
+ * transcript and the suggestion history with it.
+ *
+ * Unlike the language picker, nothing reconnects. The device is only what feeds the worklet, not
+ * a connection parameter, so the socket and any utterance in flight survive - which is why this
+ * carries no warning about a gap in the transcript, because there is not one.
+ */
 export function AudioGroup({
   audioInputDevices,
   audioInputDeviceNotFound,
@@ -35,6 +48,7 @@ export function AudioGroup({
   const [open, setOpen] = useState(false);
   const { runningState } = useAppState();
   const { config, updateConfig } = useConfigStore();
+  const { deviceName, switching, setDevice } = useAudioInputDevice();
   const usableAudioInputDevices = audioInputDevices.filter((d) => {
     if (d.name.toLowerCase().includes('virtual')) return false;
     return true;
@@ -46,6 +60,10 @@ export function AudioGroup({
   // on the very next render - a failed write repeated for every frame, each one an unhandled
   // rejection. `pickedDefault` also stops it re-picking after the user clears the selection or
   // unplugs the chosen device mid-session.
+  //
+  // Deliberately still `updateConfig` rather than the hook's `setDevice`: this is the store
+  // reaching a valid initial state, not a device change, and routing it through the live swap
+  // would put a spinner on a control the user has not touched.
   const pickedDefault = useRef(false);
   const firstUsableDeviceName = usableAudioInputDevices[0]?.name;
 
@@ -62,6 +80,10 @@ export function AudioGroup({
     });
   }, [config, firstUsableDeviceName, updateConfig]);
 
+  // `false`, so the control locks only through the transient Starting and Stopping states, where
+  // the graph it would rewire is being built or torn down anyway.
+  const disabled = getDisabled(runningState, false);
+
   return (
     <div className="flex items-center">
       <div className="relative">
@@ -71,7 +93,7 @@ export function AudioGroup({
               variant="ghost"
               size="icon"
               className={cn(BAR_ICON_BUTTON, BAR_GHOST)}
-              disabled={getDisabled(runningState)}
+              disabled={disabled}
               onClick={() => setOpen(true)}
               // The warning state is carried by a badge drawn over the corner of this button,
               // which is colour and position and nothing else. Folding it into the name is what
@@ -81,8 +103,13 @@ export function AudioGroup({
                   ? 'Audio options - the selected microphone was not found'
                   : 'Audio options'
               }
+              aria-busy={switching}
             >
-              <Mic className="h-4 w-4" aria-hidden="true" />
+              {switching ? (
+                <Loader className="h-4 w-4 animate-spin" aria-hidden="true" />
+              ) : (
+                <Mic className="h-4 w-4" aria-hidden="true" />
+              )}
             </Button>
           </TooltipTrigger>
           <TooltipContent>
@@ -113,12 +140,9 @@ export function AudioGroup({
               Microphone
             </label>
             <Select
-              value={config?.audioInputDeviceName}
-              onValueChange={(v) =>
-                updateConfig({ audioInputDeviceName: v }).catch((e) =>
-                  console.error('Failed to save the selected microphone', e)
-                )
-              }
+              value={deviceName}
+              disabled={switching}
+              onValueChange={(v) => void setDevice(v)}
             >
               <SelectTrigger aria-labelledby="audio-input-label" className="h-8 w-full text-xs">
                 <SelectValue placeholder="Select microphone" />
@@ -131,6 +155,15 @@ export function AudioGroup({
                 ))}
               </SelectContent>
             </Select>
+            {runningState === RunningState.Running && (
+              // Says what will not happen, which is the question a candidate mid-interview
+              // actually has before touching a control on a live session.
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                {switching
+                  ? 'Switching microphone...'
+                  : 'Takes effect immediately. Transcription keeps running.'}
+              </p>
+            )}
           </div>
         </DialogContent>
       </Dialog>

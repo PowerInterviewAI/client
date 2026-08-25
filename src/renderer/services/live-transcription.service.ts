@@ -73,7 +73,7 @@ class AudioWsStream {
 
   constructor(
     private readonly channel: Channel,
-    private readonly stream: MediaStream,
+    private stream: MediaStream,
     private language: Language,
     private readonly onTranscript: (payload: {
       channel: Channel;
@@ -153,6 +153,35 @@ class AudioWsStream {
       this.ws.close();
     }
     this.ws = null;
+  }
+
+  /**
+   * Point this channel at a different audio source, without reconnecting.
+   *
+   * Unlike the language, the input device is not a connection parameter - it is only what feeds
+   * the worklet - so the socket, the provider session and any utterance in flight all survive.
+   * That is why this costs no gap in the transcript where `setLanguage` costs a second or two,
+   * and why it is safe to leave the control live during a call.
+   *
+   * The caller owns stopping the old stream, and must do it *after* this resolves: the tracks
+   * are still feeding the graph until the source below is replaced.
+   */
+  async setStream(stream: MediaStream): Promise<void> {
+    // No graph yet: start() has not run, or stop() tore it down. Recording the stream is enough,
+    // since start() reads the field.
+    if (!this.ctx || !this.workletNode) {
+      this.stream = stream;
+      return;
+    }
+
+    this.source?.disconnect();
+    this.stream = stream;
+
+    // Built on the existing AudioContext on purpose. Its sampleRate is fixed at construction and
+    // `convertTo16kPcm` reads it, so making a new context here would silently resample against
+    // the wrong rate; `createMediaStreamSource` handles a device that runs at another rate.
+    this.source = this.ctx.createMediaStreamSource(stream);
+    this.source.connect(this.workletNode);
   }
 
   /**
@@ -362,6 +391,10 @@ class LiveTranscriptionService {
   private loopbackStream: MediaStream | null = null;
   private channels: AudioWsStream[] = [];
 
+  // Held separately from `channels` because the microphone is the only one a device change can
+  // move: ch_0 is loopback, captured from the call rather than from a device the user picks.
+  private micChannel: AudioWsStream | null = null;
+
   async start(
     audioInputDeviceName: string,
     sessionToken: string,
@@ -409,6 +442,7 @@ class LiveTranscriptionService {
 
     const micChannel = new AudioWsStream('ch_1', this.micStream, language, onTranscript);
     const loopbackChannel = new AudioWsStream('ch_0', this.loopbackStream, language, onTranscript);
+    this.micChannel = micChannel;
     this.channels = [micChannel, loopbackChannel];
     await Promise.all(this.channels.map((channel) => channel.start()));
   }
@@ -431,9 +465,52 @@ class LiveTranscriptionService {
     if (failed) throw failed.reason;
   }
 
+  /**
+   * Switch the microphone mid-session.
+   *
+   * A no-op when nothing is running: `micChannel` is null until start(), and start() resolves
+   * the device from the config store itself, so a change made while stopped is already applied
+   * by the time anything reads it.
+   *
+   * The new stream is acquired *before* anything is torn down, and the old one is stopped only
+   * once the swap has succeeded. A device that is unplugged, in use, or refused by permissions
+   * therefore leaves the session running on the microphone it already had, which is the whole
+   * reason this is not a stop-and-start. Only ch_1 moves; ch_0 is loopback audio from the call.
+   */
+  async setAudioInputDevice(deviceName: string): Promise<void> {
+    const channel = this.micChannel;
+    if (!channel) return;
+
+    const deviceId = await this.resolveMicDeviceId(deviceName);
+    const nextStream = await navigator.mediaDevices.getUserMedia({
+      audio: deviceId ? { deviceId: { exact: deviceId } } : true,
+      video: false,
+    });
+
+    // Stopped while getUserMedia was resolving. Releasing the stream here matters: nothing else
+    // holds a reference to it, so the device would stay open with its indicator light on for the
+    // life of the app.
+    if (this.micChannel !== channel) {
+      nextStream.getTracks().forEach((track) => track.stop());
+      return;
+    }
+
+    const previous = this.micStream;
+    try {
+      await channel.setStream(nextStream);
+    } catch (error) {
+      nextStream.getTracks().forEach((track) => track.stop());
+      throw error;
+    }
+
+    this.micStream = nextStream;
+    previous?.getTracks().forEach((track) => track.stop());
+  }
+
   async stop(): Promise<void> {
     await Promise.all(this.channels.map((channel) => channel.stop()));
     this.channels = [];
+    this.micChannel = null;
 
     this.micStream?.getTracks().forEach((track) => track.stop());
     this.loopbackStream?.getTracks().forEach((track) => track.stop());
