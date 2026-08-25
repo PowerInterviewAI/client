@@ -1,7 +1,7 @@
 /**
  * The interview language decides which speech model transcribes the audio, and that failure is
- * silent: universal-streaming-english does not report a language it cannot handle, it returns
- * confident English words for speech that was never English. So the two things worth pinning are
+ * silent: a model does not report a language it cannot handle, it returns confident words in one
+ * it can for speech that was never in that language. So the two things worth pinning are
  * that a stored language actually reaches the request bodies, and that an unknown one resolves to
  * English here rather than travelling to the backend and the ASR URL.
  */

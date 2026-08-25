@@ -17,8 +17,8 @@ const STREAMING_URL = `${BACKEND_BASE_URL.replace('http', 'ws')}/api/asr/streami
  * The streaming URL for one channel.
  *
  * English is sent as no parameter at all rather than as `language=en`. The backend treats an
- * absent language as English and builds the AssemblyAI URL it has always built, so an English
- * session stays byte-identical to what shipped before the picker existed.
+ * absent language as English, so an English session stays byte-identical to what shipped before
+ * the picker existed - which is what the request looks like from every client released before it.
  */
 function buildStreamingUrl(language: Language): string {
   if (language === DEFAULT_LANGUAGE) return STREAMING_URL;

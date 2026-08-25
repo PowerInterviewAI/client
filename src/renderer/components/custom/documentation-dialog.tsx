@@ -94,13 +94,38 @@ export default function DocumentationDialog({ open, onOpenChange }: Documentatio
                 <p className="text-sm text-muted-foreground">
                   The language button on the control bar sets the language of the whole session:
                   which speech model transcribes the call, what language suggestions are written in,
-                  and the language of the exported report.{' '}
-                  {LANGUAGES.map((l) => l.nativeName).join(', ')} are supported.
+                  and the language of the exported report.
+                </p>
+                {/* A list rather than a sentence: at 28 entries the run-on paragraph this used to
+                    be could not be scanned for one's own language, which is the only question a
+                    reader opens this section with. Derived from LANGUAGES so it cannot drift. */}
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {LANGUAGES.length} languages are supported:{' '}
+                  <span dir="auto">{LANGUAGES.map((l) => l.nativeName).join(' · ')}</span>
                 </p>
                 <p className="mt-2 text-sm text-muted-foreground">
                   You can change it mid-interview. Suggestions follow immediately, from the next
                   answer onward. Speech recognition takes a moment longer: it reconnects, so the
                   sentence being spoken at that instant may be cut short in the transcript.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="microphone">
+              <AccordionTrigger className="text-sm font-semibold">
+                Changing microphone mid-interview
+              </AccordionTrigger>
+              <AccordionContent>
+                <p className="text-sm text-muted-foreground">
+                  The microphone button on the control bar stays available while an interview is
+                  running. If your headset dies, is unplugged, or was the wrong device to begin
+                  with, pick another one there rather than stopping the assistant - stopping it
+                  clears the transcript and the suggestions with it.
+                </p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  The change takes effect immediately and transcription keeps running, so nothing is
+                  cut short. If the device you pick cannot be opened - unplugged, or in use by
+                  another app - the interview carries on using the previous one and the app says so.
                 </p>
               </AccordionContent>
             </AccordionItem>
