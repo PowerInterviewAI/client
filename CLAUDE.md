@@ -116,13 +116,15 @@ triggered it, one write per frame.
 
 ### Interview language
 
-One setting decides three things: which AssemblyAI speech model transcribes the call, what language suggestions come back in, and the language of the exported report. `Language` is mirrored across the processes the way `SuggestionMode` is - [src/main/types/language.ts](src/main/types/language.ts) for the request bodies, [src/renderer/types/language.ts](src/renderer/types/language.ts) for the same enum plus the display metadata the picker needs. Six languages, because that is what `universal-streaming-multilingual` transcribes: offering one the ASR cannot hear would not degrade, it would answer a question that was never asked.
+One setting decides three things: which speech model transcribes the call, what language suggestions come back in, and the language of the exported report. `Language` is mirrored across the processes the way `SuggestionMode` is - [src/main/types/language.ts](src/main/types/language.ts) for the request bodies, [src/renderer/types/language.ts](src/renderer/types/language.ts) for the same enum plus the display metadata the picker needs. 28 languages, which is what the backend's Deepgram Nova-3 provider streams: offering one the ASR cannot hear would not degrade, it would answer a question that was never asked. It was six while the backend was AssemblyAI-only.
+
+A backend still configured for AssemblyAI resolves a language it cannot hear back to English rather than faking it, so a client ahead of its backend degrades one session instead of breaking it. `test/language.test.mjs` pins the two mirrors staying in step, which is the failure the widening made likely: an enum member with no picker entry renders a blank trigger, and a picker entry with no enum member resolves straight back to English when picked. The menu is capped and scrolls, because it opens upward from the bottom-most control into an overflow-hidden `main` - an uncapped 28-item list runs off the top of the window rather than flipping.
 
 **English is the absence of the feature.** `buildStreamingUrl` sends no `language` parameter at all for English rather than `language=en`, and the backend defaults the request field, so a session that never touches the picker produces exactly the traffic it produced before this existed.
 
 `configStore.getConfig()` resolves the language on the way *out*, not on the way in. The disk holds whatever some build wrote - a code a later release dropped, or one an older release never knew - and every consumer reads through `getConfig`, so that is the single place an unknown code can be stopped before it reaches the ASR URL and three request bodies. `test/language.test.mjs` pins it.
 
-**The picker stays live mid-interview**, unlike Audio and Model, because an interview that switches language is the case it exists for and not one the candidate can prepare for by restarting. The two halves of the setting move at different speeds and `useInterviewLanguage` is where that is reconciled. Suggestions need nothing: every request reads the config store as it is built, so the next one already follows. The ASR carries its language as a *connection* parameter, so `liveTranscriptionService.setLanguage()` tears both sockets down and re-opens them - a second or two of gap, and whatever utterance was mid-flight is orphaned, which is why the button shows a spinner rather than pretending the change was instant and why the menu says so before the user commits.
+**The picker stays live mid-interview**, unlike Model, because an interview that switches language is the case it exists for and not one the candidate can prepare for by restarting. The two halves of the setting move at different speeds and `useInterviewLanguage` is where that is reconciled. Suggestions need nothing: every request reads the config store as it is built, so the next one already follows. The ASR carries its language as a *connection* parameter, so `liveTranscriptionService.setLanguage()` tears both sockets down and re-opens them - a second or two of gap, and whatever utterance was mid-flight is orphaned, which is why the button shows a spinner rather than pretending the change was instant and why the menu says so before the user commits.
 
 Two guards in `AudioWsStream` make that safe, and both protect against the same failure - two sockets on one channel, one of them orphaned and still relaying audio into a dead session. `ws.onclose` ignores a close from a socket that is no longer `this.ws`, since that is the tail of a replacement rather than a disconnect; and the `switching` flag suppresses the ordinary backoff reconnect for the close `setLanguage` causes itself, which it then handles immediately instead of after `WS_RETRY_BASE_DELAY_MS`. `connectWebSocket` rebuilds the URL per attempt rather than capturing it, which is what lets a reconnect pick up the new language at all.
 
@@ -133,6 +135,46 @@ The setting is persisted *before* the reconnect and never rolled back on failure
 The trigger shows the code (`EN`, `ES`) next to the icon for the same reason the tooltip names the language - the one question this control has to answer at a glance is what it is currently set to.
 
 The app's own chrome is **not** localised, deliberately: an English button on a Spanish interview is an inconvenience, an English transcript of Spanish speech is a wrong answer read out loud.
+
+### Audio input device
+
+**The microphone can be changed mid-interview**, and for the same reason the language can: the case
+it exists for only shows up once the session is running. A headset that dies, is unplugged, or was
+the wrong device to begin with is noticed when the interviewer says they cannot hear you, and the
+control used to be locked at exactly that moment - the only fix was stopping the assistant, which
+drops the transcript and the suggestion history with it.
+
+It is cheaper than the language switch, and the difference is worth keeping straight. The device is
+only what feeds the worklet; it is **not** a connection parameter. So `AudioWsStream.setStream()`
+replaces the `MediaStreamAudioSourceNode` while the socket, the provider session and any utterance
+in flight all survive. Nothing reconnects, there is no gap in the transcript, and the dialog
+therefore promises the opposite of what the language menu warns about. Reaching for `setLanguage`'s
+machinery here would reintroduce the gap this avoids.
+
+Two things `liveTranscriptionService.setAudioInputDevice()` has to hold, both pinned by
+`test/audio-device-switch.test.mjs`. **The replacement stream is acquired before anything is torn
+down**, and the previous one stopped only after the swap succeeds, so a device that is unplugged,
+held by another app, or refused by permissions leaves the interview on the microphone it already
+had. Releasing first reads as the obvious cleanup order and works every time the new device is
+present; on the one path that matters it leaves the session with no microphone at all, mid-answer.
+And a stream that finishes opening *after* the session stopped is released rather than left holding
+the device with its indicator light on, since nothing else keeps a reference to it.
+
+`setStream` reuses the existing `AudioContext` rather than building one. Its `sampleRate` is fixed
+at construction and `convertTo16kPcm` reads it, so a fresh context would resample every frame
+against the wrong rate - quietly, and only for users whose second device runs at a different rate
+than their first.
+
+Only `ch_1` moves. `ch_0` is loopback audio captured from the call and has no device to change.
+
+The setting is persisted before the swap and never rolled back on failure, the same as the language
+picker: a failed swap leaves the audio running, so reverting would only remove the user's route to
+the device they picked.
+
+The tests are source-level, unusually for this directory - every other one loads a built
+main-process module, and this is renderer code with no runtime harness. They are worth the
+awkwardness because the ordering above is what a later tidy-up breaks, with no symptom a type
+checker or a linter can see.
 
 ### Navigation and external links
 
