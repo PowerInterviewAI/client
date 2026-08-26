@@ -17,11 +17,9 @@
  * Source-level checks, like `audio-device-switch.test.mjs`: this is renderer code and the
  * renderer has no runtime harness in this directory.
  */
-import { readFileSync } from 'node:fs';
+import { codeOnly, createChecker, readSource } from './helpers.mjs';
 
-import { codeOnly, createChecker } from './helpers.mjs';
-
-const read = (path) => codeOnly(readFileSync(new URL(path, import.meta.url), 'utf8'));
+const read = (path) => codeOnly(readSource(new URL(path, import.meta.url)));
 
 export async function run() {
   const { check, failures } = createChecker('rtl-rendering');

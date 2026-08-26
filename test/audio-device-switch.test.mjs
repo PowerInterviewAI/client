@@ -11,16 +11,13 @@
  * by permissions - it leaves the interview with no microphone at all, mid-answer, having been
  * asked only to change one.
  */
-import { readFileSync } from 'node:fs';
-
-import { codeOnly, createChecker, methodBody } from './helpers.mjs';
+import { codeOnly, createChecker, methodBody, readSource } from './helpers.mjs';
 
 export async function run() {
   const { check, failures } = createChecker('audio-device-switch');
 
-  const source = readFileSync(
-    new URL('../src/renderer/services/live-transcription.service.ts', import.meta.url),
-    'utf8'
+  const source = readSource(
+    new URL('../src/renderer/services/live-transcription.service.ts', import.meta.url)
   );
 
   const body = methodBody(source, 'async setAudioInputDevice(');
@@ -61,7 +58,10 @@ export async function run() {
   // off - with the config naming the other one. The UI disables the picker while a swap is in
   // flight, but that is a guard in a different layer from the bug.
   const bodyCode = codeOnly(body);
-  check('a generation is taken before the awaits', /const seq = \+\+this\.micSwitchSeq;/.test(bodyCode));
+  check(
+    'a generation is taken before the awaits',
+    /const seq = \+\+this\.micSwitchSeq;/.test(bodyCode)
+  );
   check(
     'the generation is taken before getUserMedia',
     bodyCode.indexOf('this.micSwitchSeq') < bodyCode.indexOf('getUserMedia')

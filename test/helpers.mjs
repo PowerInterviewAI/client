@@ -110,6 +110,22 @@ export function createChecker(name) {
 }
 
 /**
+ * Read a source file for the source-level checks, with line endings normalised.
+ *
+ * `core.autocrlf` is true and there is no `.gitattributes`, so a checkout on Windows - which is
+ * where this project is developed - materialises these files with CRLF while CI materialises
+ * them with LF. Any anchor containing a literal newline therefore matches on the runner and
+ * fails on the developer's machine, which is the worst direction for it to fail in: green CI,
+ * and a suite that looks broken to whoever just pulled.
+ *
+ * Normalised on read rather than making each matcher line-ending aware, because the matchers are
+ * written against the source as it reads on screen and that is the useful thing about them.
+ */
+export function readSource(url) {
+  return fs.readFileSync(url, 'utf8').replace(/\r\n?/g, '\n');
+}
+
+/**
  * Strip comments from TypeScript source before matching against it.
  *
  * The source-level checks in this directory forbid patterns that the code's own comments

@@ -5,9 +5,7 @@
  * that a stored language actually reaches the request bodies, and that an unknown one resolves to
  * English here rather than travelling to the backend and the ASR URL.
  */
-import { readFileSync } from 'node:fs';
-
-import { createChecker, loadMain } from './helpers.mjs';
+import { createChecker, loadMain, readSource } from './helpers.mjs';
 
 export async function run() {
   const { check, failures } = createChecker('language');
@@ -37,10 +35,7 @@ export async function run() {
   // no renderer entry renders a blank trigger, and a renderer entry with no enum member is an
   // option that resolves straight back to English when picked. The renderer source is read as
   // text because it is never built into electron-dist, which is all `loadMain` can reach.
-  const rendererSource = readFileSync(
-    new URL('../src/renderer/types/language.ts', import.meta.url),
-    'utf8'
-  );
+  const rendererSource = readSource(new URL('../src/renderer/types/language.ts', import.meta.url));
   const rendererCodes = [...rendererSource.matchAll(/code: Language\.\w+, name: '/g)].length;
   const rendererEnum = [...rendererSource.matchAll(/^  \w+ = '([a-z]{2})',$/gm)].map((m) => m[1]);
 
