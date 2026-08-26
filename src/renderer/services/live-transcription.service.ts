@@ -402,6 +402,11 @@ class LiveTranscriptionService {
   // move: ch_0 is loopback, captured from the call rather than from a device the user picks.
   private micChannel: AudioWsStream | null = null;
 
+  // Bumped per device change, so a swap can tell it has been superseded while it was awaiting.
+  // Two changes in flight resolve in completion order, not request order, so without this the
+  // slower one lands last and the session ends up on a device the user already moved off.
+  private micSwitchSeq = 0;
+
   async start(
     audioInputDeviceName: string,
     sessionToken: string,
@@ -488,16 +493,18 @@ class LiveTranscriptionService {
     const channel = this.micChannel;
     if (!channel) return;
 
+    const seq = ++this.micSwitchSeq;
+
     const deviceId = await this.resolveMicDeviceId(deviceName);
     const nextStream = await navigator.mediaDevices.getUserMedia({
       audio: deviceId ? { deviceId: { exact: deviceId } } : true,
       video: false,
     });
 
-    // Stopped while getUserMedia was resolving. Releasing the stream here matters: nothing else
-    // holds a reference to it, so the device would stay open with its indicator light on for the
-    // life of the app.
-    if (this.micChannel !== channel) {
+    // Stopped, or superseded by a later change, while getUserMedia was resolving. Releasing the
+    // stream here matters in both cases: nothing else holds a reference to it, so the device
+    // would stay open with its indicator light on for the life of the app.
+    if (this.micChannel !== channel || seq !== this.micSwitchSeq) {
       nextStream.getTracks().forEach((track) => track.stop());
       return;
     }

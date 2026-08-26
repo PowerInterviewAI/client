@@ -82,6 +82,25 @@ export async function run() {
     !body.includes('connectWithRetry') && !body.includes('reportDisconnected')
   );
 
+  // Two changes in flight resolve in completion order, not request order. Without a generation
+  // token the slower one lands last, and the session ends up on a device the user already moved
+  // off - with the config naming the other one. The UI disables the picker while a swap is in
+  // flight, but that is a guard in a different layer from the bug.
+  const bodyCode = codeOnly(body);
+  check('a generation is taken before the awaits', /const seq = \+\+this\.micSwitchSeq;/.test(bodyCode));
+  check(
+    'the generation is taken before getUserMedia',
+    bodyCode.indexOf('this.micSwitchSeq') < bodyCode.indexOf('getUserMedia')
+  );
+  check(
+    'a superseded swap is abandoned rather than applied',
+    /seq !== this\.micSwitchSeq/.test(bodyCode)
+  );
+  check(
+    'the superseded check guards the same release path as the teardown check',
+    /this\.micChannel !== channel \|\| seq !== this\.micSwitchSeq/.test(bodyCode)
+  );
+
   const setStream = methodBody(source, 'async setStream(');
   const setStreamCode = codeOnly(setStream);
   check('setStream exists', setStream.length > 0);
