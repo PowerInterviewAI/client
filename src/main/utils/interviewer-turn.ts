@@ -28,6 +28,25 @@ const NON_LEXICAL = /[[(<][^\])>]*[\])>]/g;
 const TERMINAL_PUNCTUATION = /[.!?]["')\]]*\s*$/;
 
 /**
+ * Question marks that are not `?`.
+ *
+ * Japanese and Chinese use the fullwidth form, Arabic and Persian the mirrored one, Greek the
+ * semicolon. They are folded to `?` in `normalize` so the completeness check below reads them the
+ * same way it reads an English one - which is worth doing because it is the difference between
+ * answering a finished question immediately and making it wait out the settle timer first.
+ */
+const FOREIGN_QUESTION_MARKS = /[？؟;]/g;
+
+/**
+ * Any letter, in any script.
+ *
+ * `normalize` reduces a turn to ASCII, which is right for an English lexicon and wrong as a test
+ * for whether anything was said: a Japanese question reduces to nothing at all. This tells the
+ * two apart.
+ */
+const ANY_LETTER = /\p{L}/u;
+
+/**
  * Question and directive openers. Only consulted together with terminal punctuation, so this does
  * not have to distinguish "how" mid-sentence from "how" as an opener.
  */
@@ -137,6 +156,7 @@ function normalize(text: string): string {
     .toLowerCase()
     .replace(NON_LEXICAL, ' ')
     .replace(/[‘’]/g, "'")
+    .replace(FOREIGN_QUESTION_MARKS, '?')
     .replace(/[^a-z0-9'?\s]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
@@ -168,8 +188,20 @@ export function classifyInterviewerTurn(rawText: string): TurnVerdict {
   if (!raw) return TurnVerdict.Skip;
 
   const normalized = normalize(raw);
-  // Empty only when the turn was entirely non-speech, e.g. "[laugh]" or "(inaudible)".
-  if (!normalized) return TurnVerdict.Skip;
+  if (!normalized) {
+    // Empty means one of two very different things, and the lexicon cannot tell them apart on
+    // its own. `[laugh]` and `(inaudible)` really were non-speech and are correctly dropped. A
+    // Japanese, Chinese, Thai, Russian, Arabic, Korean, Greek, Hebrew or Hindi question also
+    // reduces to nothing here, because `normalize` keeps only ASCII - and dropping *that* is a
+    // question silently answered with nothing, mid-interview, which is the one failure this
+    // classifier is built to never produce.
+    //
+    // So the test is whether any letters survived the non-speech markers. If they did, this is a
+    // language the lexicon cannot read rather than an absence of speech, and it goes to
+    // `Uncertain` - which defers to the backend gate, the one stage that can actually read it.
+    const withoutNonSpeech = raw.replace(NON_LEXICAL, ' ');
+    return ANY_LETTER.test(withoutNonSpeech) ? TurnVerdict.Uncertain : TurnVerdict.Skip;
+  }
 
   const core = stripLeadingBackchannel(normalized.split(' '));
   if (core.length === 0) return TurnVerdict.Skip;

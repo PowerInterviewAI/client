@@ -61,5 +61,39 @@ export async function run() {
   check('unterminated clause waits', waits('And the part where you'));
   check('terminated statement with no cue waits', waits('Your role there.'));
 
+  // Scripts the lexicon cannot read. `normalize` reduces a turn to ASCII, which is right for an
+  // English backchannel list and catastrophic as a test for whether anything was said: every one
+  // of these reduced to nothing, hit the "entirely non-speech" branch, and was dropped outright.
+  // No request, no card, no error - a question silently answered with nothing, in about a third
+  // of the languages the picker offers.
+  check('japanese question is not skipped', !skips('あなたの経験について教えてください。'));
+  check('chinese question is not skipped', !skips('请介绍一下你的项目'));
+  check('thai question is not skipped', !skips('ช่วยเล่าเกี่ยวกับงานของคุณ'));
+  check('russian question is not skipped', !skips('Расскажите о вашем опыте'));
+  check('korean question is not skipped', !skips('경험에 대해 말씀해 주세요'));
+  check('arabic question is not skipped', !skips('ما هي خبرتك'));
+  check('hindi question is not skipped', !skips('अपने अनुभव के बारे में बताइए'));
+  check('greek question is not skipped', !skips('Ποια είναι η εμπειρία σας;'));
+  check('hebrew question is not skipped', !skips('ספר לי על הניסיון שלך'));
+
+  // They go to the backend gate rather than being answered outright, because the lexicon has read
+  // nothing and has no grounds to claim the turn is complete.
+  check('unpunctuated japanese waits', waits('あなたの経験について教えてください'));
+  check('unpunctuated russian waits', waits('Расскажите о вашем опыте'));
+
+  // A question mark is a completeness signal in any script, and honouring the non-ASCII forms is
+  // what saves those turns the settle-timer wait.
+  check('fullwidth question mark answers', answers('あなたの経験は？'));
+  check('chinese fullwidth question mark answers', answers('你的项目是什么？'));
+  check('arabic question mark answers', answers('ما هي خبرتك؟'));
+
+  // The English half of that branch has to keep working: these really are non-speech.
+  check('bare laugh marker still skipped', skips('[laugh]'));
+  check('bare inaudible marker still skipped', skips('(inaudible)'));
+  check('bare noise marker still skipped', skips('<noise>'));
+  check('several markers still skipped', skips('[laugh] (inaudible)'));
+  check('punctuation only still skipped', skips('...'));
+  check('digits are not letters but are speech', !skips('2019'));
+
   return failures;
 }
