@@ -101,7 +101,17 @@ export default function DocumentationDialog({ open, onOpenChange }: Documentatio
                     reader opens this section with. Derived from LANGUAGES so it cannot drift. */}
                 <p className="mt-2 text-sm text-muted-foreground">
                   {LANGUAGES.length} languages are supported:{' '}
-                  <span dir="auto">{LANGUAGES.map((l) => l.nativeName).join(' · ')}</span>
+                  {/* Each name is its own isolate rather than one `dir="auto"` span around the
+                      lot. Joined into a single string, the two right-to-left names sit adjacent
+                      with only a neutral between them, so the bidi algorithm resolves that
+                      separator right-to-left too and lays the pair out as one run - printing the
+                      last two languages in the list in the opposite order to every other pair. */}
+                  {LANGUAGES.map((language, index) => (
+                    <React.Fragment key={language.code}>
+                      {index > 0 && ' · '}
+                      <bdi>{language.nativeName}</bdi>
+                    </React.Fragment>
+                  ))}
                 </p>
                 <p className="mt-2 text-sm text-muted-foreground">
                   You can change it mid-interview. Suggestions follow immediately, from the next

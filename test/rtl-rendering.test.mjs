@@ -80,5 +80,19 @@ export async function run() {
     );
   }
 
+  // The documentation dialog lists all 28 endonyms in one paragraph, and Arabic and Hebrew are
+  // adjacent in it. Joined into a single string they are two RTL runs with one neutral between
+  // them, which the bidi algorithm resolves right-to-left as well and lays out as a single run -
+  // so the last two languages in the list print in the opposite order to every other pair. Each
+  // name is its own isolate instead.
+  const docs = read('../src/renderer/components/custom/documentation-dialog.tsx');
+  check('the endonym list isolates each name', /<bdi>\{language\.nativeName\}<\/bdi>/.test(docs));
+  check('and is no longer joined into one string', !/nativeName\)\.join\(/.test(docs));
+
+  // The picker's own endonyms are already one per menu item, so they need direction but not
+  // isolation - a block boundary isolates by itself.
+  const picker = read('../src/renderer/components/custom/control-panel/language-group.tsx');
+  check('the picker resolves each endonym separately', /<span dir="auto"/.test(picker));
+
   return failures;
 }
