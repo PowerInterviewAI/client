@@ -1,5 +1,5 @@
 import { DialogDescription } from '@radix-ui/react-dialog';
-import { Loader, Mic } from 'lucide-react';
+import { AlertTriangle, Loader, Mic } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -48,7 +48,8 @@ export function AudioGroup({
   const [open, setOpen] = useState(false);
   const { runningState } = useAppState();
   const { config, updateConfig } = useConfigStore();
-  const { deviceName, switching, setDevice } = useAudioInputDevice();
+  const { deviceName, switching, failedDeviceName, setDevice, clearFailedDevice } =
+    useAudioInputDevice();
   const usableAudioInputDevices = audioInputDevices.filter((d) => {
     if (d.name.toLowerCase().includes('virtual')) return false;
     return true;
@@ -80,9 +81,18 @@ export function AudioGroup({
     });
   }, [config, firstUsableDeviceName, updateConfig]);
 
+  // A failed swap only disagrees with the stored device for the life of that session: the next
+  // start reads the store fresh. Leaving the warning up past the stop would describe a state
+  // that no longer exists.
+  const running = runningState === RunningState.Running;
+  useEffect(() => {
+    if (!running) clearFailedDevice();
+  }, [running, clearFailedDevice]);
+
   // `false`, so the control locks only through the transient Starting and Stopping states, where
   // the graph it would rewire is being built or torn down anyway.
   const disabled = getDisabled(runningState, false);
+  const swapFailed = running && failedDeviceName !== null;
 
   return (
     <div className="flex items-center">
@@ -97,11 +107,13 @@ export function AudioGroup({
               onClick={() => setOpen(true)}
               // The warning state is carried by a badge drawn over the corner of this button,
               // which is colour and position and nothing else. Folding it into the name is what
-              // makes the one condition this control reports reachable without seeing it.
+              // makes the conditions this control reports reachable without seeing it.
               aria-label={
-                audioInputDeviceNotFound
-                  ? 'Audio options - the selected microphone was not found'
-                  : 'Audio options'
+                swapFailed
+                  ? 'Audio options - could not switch microphone, still using the previous one'
+                  : audioInputDeviceNotFound
+                    ? 'Audio options - the selected microphone was not found'
+                    : 'Audio options'
               }
               aria-busy={switching}
             >
@@ -116,7 +128,10 @@ export function AudioGroup({
             <p>Audio options</p>
           </TooltipContent>
         </Tooltip>
-        {audioInputDeviceNotFound && (
+        {/* A failed swap raises the same badge as a missing device. Nobody opens a dialog
+            spontaneously mid-interview, and this is the state where the interviewer has just
+            said they cannot hear you - the button has to carry it. */}
+        {(audioInputDeviceNotFound || swapFailed) && (
           <Badge
             variant="destructive"
             aria-hidden="true"
@@ -159,15 +174,36 @@ export function AudioGroup({
                 ))}
               </SelectContent>
             </Select>
-            {runningState === RunningState.Running && (
-              // Says what will not happen, which is the question a candidate mid-interview
-              // actually has before touching a control on a live session.
-              <p className="mt-1.5 text-xs text-muted-foreground">
-                {switching
-                  ? 'Switching microphone...'
-                  : 'Takes effect immediately. Transcription keeps running.'}
-              </p>
-            )}
+            {/* One chain rather than sibling conditions, so every running state says something.
+                Written as two `&&` blocks it left a hole: retrying after a failure is both
+                `switching` and `failedDeviceName`, which satisfied neither, and the line vanished
+                at exactly the moment the user was waiting to hear whether it had worked.
+
+                Order is by what the user needs most. A failed swap outranks the reassurance
+                because the control is naming a device the session is not using, and that is the
+                one thing a candidate being told they cannot be heard needs to know - it survives
+                the toast, which does not. */}
+            {running &&
+              (switching ? (
+                <p className="mt-1.5 text-xs text-muted-foreground">Switching microphone...</p>
+              ) : failedDeviceName ? (
+                <p
+                  role="alert"
+                  className="mt-1.5 flex items-start gap-1.5 text-xs text-destructive"
+                >
+                  <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" aria-hidden="true" />
+                  <span>
+                    Could not switch to {failedDeviceName}. This interview is still using the
+                    previous microphone. Stop and start the assistant to use it.
+                  </span>
+                </p>
+              ) : (
+                // Says what will not happen, which is the question a candidate mid-interview
+                // actually has before touching a control on a live session.
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  Takes effect immediately. Transcription keeps running.
+                </p>
+              ))}
           </div>
         </DialogContent>
       </Dialog>

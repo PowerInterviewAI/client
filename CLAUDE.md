@@ -132,7 +132,11 @@ Two consequences of that first guard. `setLanguage` has to report `channelDiscon
 
 The setting is persisted *before* the reconnect and never rolled back on failure: a failed reconnect that reverted the setting would leave the user with no route to the language they picked, whereas leaving it set means stopping and starting the assistant recovers.
 
+**That choice leaves the two halves disagreeing, and the UI has to say so for longer than a toast does.** Suggestions have moved and transcription has not, so the menu shows the new language with a check beside it while the transcript is still arriving in the old one - and a candidate reading answers in one language and a transcript in another has no other way to tell which half moved. `reconnectFailed` keeps it visible: the trigger icon goes destructive, the tooltip says "Suggestions only", and the menu replaces its reconnect notice with what actually happened. It is cleared on a switch that succeeds and on leaving `Running`, because the next start opens both sockets on the stored language and the disagreement is gone with the session that produced it.
+
 The trigger shows the code (`EN`, `ES`) next to the icon for the same reason the tooltip names the language - the one question this control has to answer at a glance is what it is currently set to.
+
+Menu items carry an explicit `textValue` of the **English** name. Radix runs its own typeahead on an open menu and matches a prefix of that; left unset it uses the item's rendered text, which is the two names run together (`PolskiPolish`), so only the endonym was ever reachable by typing. At six entries that hardly mattered. At 28 the endonym column is what the eye scans and the English name is what a user types, and they should be two access paths rather than one.
 
 The app's own chrome is **not** localised, deliberately: an English button on a Spanish interview is an inconvenience, an English transcript of Spanish speech is a wrong answer read out loud.
 
@@ -179,6 +183,17 @@ Only `ch_1` moves. `ch_0` is loopback audio captured from the call and has no de
 The setting is persisted before the swap and never rolled back on failure, the same as the language
 picker: a failed swap leaves the audio running, so reverting would only remove the user's route to
 the device they picked.
+
+**And the same consequence: the picker then names a microphone the session is not using.** That is
+the state where the interviewer has just said they cannot hear you, so it is carried on the control
+bar rather than only in the dialog - `failedDeviceName` raises the same badge a missing device
+raises, and the dialog names the device that failed. Nobody opens a dialog spontaneously
+mid-interview. It clears on a swap that succeeds and on leaving `Running`.
+
+The dialog's running-state line is one conditional chain rather than sibling `&&` blocks, and that
+is not style: written as siblings, retrying after a failure was both `switching` and
+`failedDeviceName` and satisfied neither, so the line vanished at exactly the moment the user was
+waiting to hear whether it had worked.
 
 The tests are source-level, unusually for this directory - every other one loads a built
 main-process module, and this is renderer code with no runtime harness. They are worth the

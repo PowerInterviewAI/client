@@ -13,6 +13,12 @@ import { useConfigStore } from './use-config-store';
  * build wrote to disk, and a code this build does not know would otherwise render as a blank
  * trigger on the control bar.
  *
+ * The two halves can also end up disagreeing outright: suggestions follow immediately, and a
+ * reconnect that fails leaves transcription on the old language while the menu shows the new one
+ * with a check beside it. `reconnectFailed` keeps that visible after the toast has gone, because
+ * the candidate reading answers in one language and a transcript in another has no other way to
+ * tell which half moved.
+ *
  * The two halves of the setting move at different speeds, and the setter is where that is
  * reconciled. Suggestions need nothing: each request reads the config store as it is built, so
  * the next one already follows the new language. The ASR sockets carry theirs as a connection
@@ -22,6 +28,7 @@ import { useConfigStore } from './use-config-store';
 export function useInterviewLanguage() {
   const { config } = useConfigStore();
   const [switching, setSwitching] = useState(false);
+  const [reconnectFailed, setReconnectFailed] = useState(false);
   const option = getLanguageOption(config?.language);
 
   const setLanguage = useCallback(async (language: Language) => {
@@ -42,8 +49,11 @@ export function useInterviewLanguage() {
     setSwitching(true);
     try {
       await liveTranscriptionService.setLanguage(language);
+      // Cleared on success, so a retry that works takes the warning down with it.
+      setReconnectFailed(false);
     } catch (e) {
       console.error('Failed to switch transcription language', e);
+      setReconnectFailed(true);
       toast.warning('Suggestions switched language; transcription is still reconnecting', {
         description: 'It keeps retrying. Stop and start the assistant if it does not come back.',
       });
@@ -52,5 +62,21 @@ export function useInterviewLanguage() {
     }
   }, []);
 
-  return { language: option.code, option, switching, setLanguage };
+  /**
+   * Drop the warning without changing the language.
+   *
+   * The half-applied state only exists for the life of the session that produced it: the next
+   * start opens both sockets on the stored language. Leaving the warning up past a stop would
+   * describe something that is no longer true.
+   */
+  const clearReconnectFailed = useCallback(() => setReconnectFailed(false), []);
+
+  return {
+    language: option.code,
+    option,
+    switching,
+    reconnectFailed,
+    setLanguage,
+    clearReconnectFailed,
+  };
 }

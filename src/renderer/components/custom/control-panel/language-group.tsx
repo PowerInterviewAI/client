@@ -1,4 +1,5 @@
-import { Check, Languages, Loader } from 'lucide-react';
+import { AlertTriangle, Check, Languages, Loader } from 'lucide-react';
+import { useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -40,8 +41,19 @@ interface LanguageGroupProps {
  */
 export function LanguageGroup({ getDisabled }: LanguageGroupProps) {
   const { runningState } = useAppState();
-  const { language, option, switching, setLanguage } = useInterviewLanguage();
+  const { language, option, switching, reconnectFailed, setLanguage, clearReconnectFailed } =
+    useInterviewLanguage();
   const disabled = getDisabled(runningState, false) || switching;
+
+  // The half-applied state belongs to the session that produced it. The next start opens both
+  // sockets on the stored language, so keeping the warning past a stop would describe something
+  // that is no longer true.
+  const running = runningState === RunningState.Running;
+  useEffect(() => {
+    if (!running) clearReconnectFailed();
+  }, [running, clearReconnectFailed]);
+
+  const halfApplied = running && reconnectFailed && !switching;
 
   return (
     <div className="flex items-center">
@@ -59,13 +71,20 @@ export function LanguageGroup({ getDisabled }: LanguageGroupProps) {
                 // height, not by every control being square.
                 className={cn('h-8 gap-1.5 rounded-lg px-2', BAR_GHOST)}
                 disabled={disabled}
-                aria-label={`Interview language: ${option.name}`}
+                aria-label={
+                  halfApplied
+                    ? `Interview language: ${option.name} - transcription did not switch`
+                    : `Interview language: ${option.name}`
+                }
                 aria-busy={switching}
               >
                 {switching ? (
                   <Loader className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Languages className="h-4 w-4" />
+                  // Tinted rather than badged: the trigger is already carrying the code, and a
+                  // second mark beside it would crowd a 32px row. The colour says the setting is
+                  // only half applied without claiming which half.
+                  <Languages className={cn('h-4 w-4', halfApplied && 'text-destructive')} />
                 )}
                 <span className="text-[11px] font-medium tracking-wide">{option.short}</span>
               </Button>
@@ -74,7 +93,11 @@ export function LanguageGroup({ getDisabled }: LanguageGroupProps) {
           <TooltipContent>
             <p>Interview Language: {option.nativeName}</p>
             <p className="text-xs text-muted-foreground">
-              {switching ? 'Reconnecting transcription...' : 'Speech recognition and suggestions'}
+              {switching
+                ? 'Reconnecting transcription...'
+                : halfApplied
+                  ? 'Suggestions only - transcription is still reconnecting'
+                  : 'Speech recognition and suggestions'}
             </p>
           </TooltipContent>
         </Tooltip>
@@ -101,6 +124,12 @@ export function LanguageGroup({ getDisabled }: LanguageGroupProps) {
                   key={item.code}
                   onClick={() => void setLanguage(item.code)}
                   className="gap-2"
+                  // Radix runs its own typeahead on an open menu, matching a prefix of this. Left
+                  // unset it uses the item's rendered text, which is the two names run together
+                  // ("PolskiPolish"), so only the endonym was ever reachable by typing. The
+                  // English name is the useful half: the endonym column is what the eye scans,
+                  // and a list of 28 wants those to be two access paths rather than one.
+                  textValue={item.name}
                 >
                   {/* The check occupies its own fixed column rather than being conditionally
                     rendered, so the labels do not shift by 16px as the selection moves. */}
@@ -120,14 +149,30 @@ export function LanguageGroup({ getDisabled }: LanguageGroupProps) {
               );
             })}
           </div>
-          {runningState === RunningState.Running && (
+          {running && (
             <>
               <DropdownMenuSeparator />
-              {/* Says what will happen before it happens: a two-second hole in the transcript
-                  is alarming if it arrives unannounced mid-question. */}
-              <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                Transcription reconnects; the current sentence may be cut short.
-              </div>
+              {/* The half-applied case outranks the notice below it. Suggestions have already
+                  moved and transcription has not, so the checked item names a language only half
+                  the session is in - and the toast that said so is long gone. */}
+              {reconnectFailed && !switching ? (
+                <div
+                  role="alert"
+                  className="flex items-start gap-1.5 px-2 py-1.5 text-xs text-destructive"
+                >
+                  <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" aria-hidden="true" />
+                  <span>
+                    Suggestions moved, transcription did not. It is still retrying - stop and start
+                    the assistant if it does not come back.
+                  </span>
+                </div>
+              ) : (
+                /* Says what will happen before it happens: a two-second hole in the transcript
+                   is alarming if it arrives unannounced mid-question. */
+                <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                  Transcription reconnects; the current sentence may be cut short.
+                </div>
+              )}
             </>
           )}
         </DropdownMenuContent>
