@@ -4,9 +4,11 @@ import {
   SELF_PARTIAL_STALE_MS,
   TRANSCRIPT_INTER_TRANSCRIPT_GAP_MS,
 } from '../consts.js';
+import { configStore } from '../store/config.store.js';
 import { Speaker, Transcript } from '../types/app-state.js';
 import { RequestTurnVerdict } from '../types/llm.js';
 import { classifyInterviewerTurn, TurnVerdict } from '../utils/interviewer-turn.js';
+import { transcriptSeparator } from '../utils/transcript-join.js';
 import { appStateService } from './app-state.service.js';
 import { liveSuggestionService } from './suggestion-live.service.js';
 
@@ -86,6 +88,11 @@ class TranscriptService {
     if (this.otherPartialTranscript) allTranscripts.push(this.otherPartialTranscript);
     allTranscripts = allTranscripts.filter(Boolean).sort((a, b) => a.timestamp - b.timestamp);
 
+    // Read once per ingest rather than per merge. `getConfig()` reads an in-memory store, and
+    // this function already rebuilds `cleaned` from scratch on every partial, so the cost is
+    // noise next to the loop below.
+    const separator = transcriptSeparator(configStore.getConfig().language);
+
     const cleaned: Transcript[] = [];
     for (const t of allTranscripts) {
       const lastIndex = cleaned.length - 1;
@@ -99,7 +106,7 @@ class TranscriptService {
         lastCleaned.speaker === t.speaker &&
         t.timestamp - lastCleaned.endTimestamp <= TRANSCRIPT_INTER_TRANSCRIPT_GAP_MS
       ) {
-        lastCleaned.text += ' ' + t.text;
+        lastCleaned.text += separator + t.text;
         lastCleaned.endTimestamp = t.endTimestamp;
       } else {
         cleaned.push({ ...t });

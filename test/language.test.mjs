@@ -13,6 +13,7 @@ export async function run() {
   const { check, failures } = createChecker('language');
 
   const { Language, DEFAULT_LANGUAGE, resolveLanguage } = await loadMain('types/language.js');
+  const { transcriptSeparator } = await loadMain('utils/transcript-join.js');
   const { configStore } = await loadMain('store/config.store.js');
 
   check('English is the default', DEFAULT_LANGUAGE === 'en');
@@ -64,6 +65,20 @@ export async function run() {
   check('a regional variant resolves to English', resolveLanguage('en-GB') === 'en');
   check('a known code is kept', resolveLanguage('es') === 'es');
   check('case and whitespace are normalised', resolveLanguage(' ES ') === 'es');
+
+  // The backend already avoids putting spaces inside a Japanese utterance when it rejoins the
+  // segments Deepgram froze. transcript.service.ts merges whole transcripts that landed within
+  // TRANSCRIPT_INTER_TRANSCRIPT_GAP_MS of each other, and joining those with a space would put
+  // the defect straight back - in the panel, and in the text the suggestion request carries.
+  check('a spaced language merges with a space', transcriptSeparator('en') === ' ');
+  check('Spanish merges with a space', transcriptSeparator('es') === ' ');
+  check('Japanese merges with nothing', transcriptSeparator('ja') === '');
+  check('Chinese merges with nothing', transcriptSeparator('zh') === '');
+  check('Thai merges with nothing', transcriptSeparator('th') === '');
+  check(
+    'every unspaced language is one the picker actually offers',
+    ['ja', 'zh', 'th'].every((code) => Object.values(Language).includes(code))
+  );
 
   // The store is the single source for every consumer, so it is where an unknown code has to die.
   configStore.updateConfig({ language: 'de' });
