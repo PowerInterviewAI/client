@@ -15,6 +15,15 @@ import { readFileSync } from 'node:fs';
 
 import { createChecker } from './helpers.mjs';
 
+/**
+ * Comments in this file explain the very patterns these checks forbid, so a naive substring
+ * search finds the prose rather than the code and fails on a correct implementation.
+ */
+function codeOnly(source) {
+  // `.` already excludes newlines in JS, so the line-comment pattern needs no escape for one.
+  return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*/g, '');
+}
+
 function methodBody(source, signature) {
   const start = source.indexOf(signature);
   if (start === -1) return '';
@@ -74,6 +83,7 @@ export async function run() {
   );
 
   const setStream = methodBody(source, 'async setStream(');
+  const setStreamCode = codeOnly(setStream);
   check('setStream exists', setStream.length > 0);
 
   // `convertTo16kPcm` reads ctx.sampleRate, which is fixed when the context is constructed, so a
@@ -81,11 +91,34 @@ export async function run() {
   // users whose second device runs at a different rate than their first.
   check(
     'the existing AudioContext is reused rather than rebuilt',
-    !setStream.includes('new AudioContext')
+    !codeOnly(setStream).includes('new AudioContext')
   );
   check(
     'the new source is wired back into the existing worklet',
-    setStream.includes('this.source.connect(this.workletNode)')
+    setStreamCode.includes('this.source.connect(this.workletNode)')
+  );
+
+  // start() builds `source` from `this.stream`, then awaits addModule() before assigning
+  // `workletNode`. An early return covering that window leaves `source` bound to the stream the
+  // caller is about to stop, and start() then wires that dead source into the graph: the socket
+  // stays up, the channel relays silence, and nothing reports it. So the bail-out may test the
+  // context and must not also test the node.
+  const bailout = setStreamCode.slice(0, setStreamCode.indexOf('this.source?.disconnect()'));
+  check('setStream bails out on a missing context', bailout.includes('if (!this.ctx) return'));
+  check('the bail-out is not also gated on the worklet node', !bailout.includes('workletNode'));
+
+  // Assigned before that bail-out, or a swap made before start() reaches a context is dropped -
+  // start() reads the field, so recording it is the whole job on that path.
+  check(
+    'the stream is recorded before any early return',
+    setStreamCode.indexOf('this.stream = stream') < setStreamCode.indexOf('if (!this.ctx) return')
+  );
+
+  // The connect is conditional for the same window: start() has its own
+  // `source.connect(workletNode)` and reads `this.source`, which is the replacement by then.
+  check(
+    'the worklet connect is guarded rather than assumed',
+    /if \(this\.workletNode\) this\.source\.connect\(this\.workletNode\)/.test(setStreamCode)
   );
 
   return failures;

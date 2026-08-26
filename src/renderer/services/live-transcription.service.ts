@@ -167,21 +167,28 @@ class AudioWsStream {
    * are still feeding the graph until the source below is replaced.
    */
   async setStream(stream: MediaStream): Promise<void> {
-    // No graph yet: start() has not run, or stop() tore it down. Recording the stream is enough,
-    // since start() reads the field.
-    if (!this.ctx || !this.workletNode) {
-      this.stream = stream;
-      return;
-    }
-
-    this.source?.disconnect();
     this.stream = stream;
+
+    // No context yet: start() has not reached one, or stop() tore it down. The field above is
+    // enough, because start() builds its source from it.
+    if (!this.ctx) return;
+
+    // Deliberately **not** also gated on `workletNode`. start() creates `source` from
+    // `this.stream` and only assigns `workletNode` after `await addModule()`, so there is a real
+    // window where a context and a source exist and the node does not. Returning early there
+    // would leave `source` bound to the stream the caller is about to stop, and start() would
+    // then wire that dead source into the graph - a channel that relays silence for the rest of
+    // the session, with the socket up and nothing to show it went wrong.
+    this.source?.disconnect();
 
     // Built on the existing AudioContext on purpose. Its sampleRate is fixed at construction and
     // `convertTo16kPcm` reads it, so making a new context here would silently resample against
     // the wrong rate; `createMediaStreamSource` handles a device that runs at another rate.
     this.source = this.ctx.createMediaStreamSource(stream);
-    this.source.connect(this.workletNode);
+
+    // Only if the node is already there. If it is not, start() has not reached its own
+    // `source.connect(workletNode)` yet, and that line reads `this.source` - which is now this one.
+    if (this.workletNode) this.source.connect(this.workletNode);
   }
 
   /**
