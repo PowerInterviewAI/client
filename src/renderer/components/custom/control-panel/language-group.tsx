@@ -78,13 +78,18 @@ export function LanguageGroup({ getDisabled }: LanguageGroupProps) {
                 }
                 aria-busy={switching}
               >
+                {/* Hidden from assistive tech: the button carries an aria-label, so an
+                    unlabelled decorative glyph beside it is noise. Matches AudioGroup. */}
                 {switching ? (
-                  <Loader className="h-4 w-4 animate-spin" />
+                  <Loader className="h-4 w-4 animate-spin" aria-hidden="true" />
                 ) : (
                   // Tinted rather than badged: the trigger is already carrying the code, and a
                   // second mark beside it would crowd a 32px row. The colour says the setting is
                   // only half applied without claiming which half.
-                  <Languages className={cn('h-4 w-4', halfApplied && 'text-destructive')} />
+                  <Languages
+                    className={cn('h-4 w-4', halfApplied && 'text-destructive')}
+                    aria-hidden="true"
+                  />
                 )}
                 <span className="text-[11px] font-medium tracking-wide">{option.short}</span>
               </Button>
