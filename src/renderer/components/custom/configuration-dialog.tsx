@@ -20,6 +20,34 @@ const MAX_FIELD_LENGTH = 128_000;
 // Kept in sync with the backend's MAX_USERNAME_LENGTH (app/cfg/llm.py)
 const MAX_NAME_LENGTH = 1_000;
 
+/**
+ * How much of a long field's budget is left, once it is close enough to matter.
+ *
+ * `maxLength` on a textarea truncates a paste silently, which for these two fields means a CV or
+ * a job description arriving 2,000 characters shorter than the one the user copied, with nothing
+ * on screen having said so. Hidden below the threshold: a counter over an empty box is noise,
+ * and the limit is generous enough that most sessions never approach it.
+ */
+const LIMIT_NOTICE_RATIO = 0.9;
+
+function FieldLimitNotice({ value, max }: { value: string; max: number }) {
+  if (value.length < max * LIMIT_NOTICE_RATIO) return null;
+
+  const atLimit = value.length >= max;
+  return (
+    <p
+      className={`text-[11px] tabular-nums ${atLimit ? 'text-destructive' : 'text-muted-foreground'}`}
+      // Announced when it changes rather than only on focus: the moment it matters is a paste
+      // that was cut short, which is not a keystroke the user is watching the counter for.
+      role="status"
+    >
+      {atLimit
+        ? `Character limit reached (${max.toLocaleString()}). Extra text was not added.`
+        : `${(max - value.length).toLocaleString()} characters left`}
+    </p>
+  );
+}
+
 interface ConfigurationDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -77,7 +105,11 @@ export default function ConfigurationDialog({ isOpen, onOpenChange }: Configurat
         throw new Error('Electron API not available');
       }
 
-      const result = await electron.account.update(name, profileData, context);
+      // Trimmed on the way out, not just validated. The Save button is already gated on the
+      // trimmed name being non-empty, so a name of pure whitespace could never be saved - but a
+      // name with a trailing space could, and it is the string the prompts address the candidate
+      // by. The same goes for a CV pasted with a leading blank line.
+      const result = await electron.account.update(name.trim(), profileData.trim(), context.trim());
       if (!result.success) {
         throw new Error(result.error || 'Failed to save configuration');
       }
@@ -106,10 +138,18 @@ export default function ConfigurationDialog({ isOpen, onOpenChange }: Configurat
         <div className="flex-1 overflow-auto p-2">
           <div className="space-y-5">
             <div className="grid gap-2">
-              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                Full Name <span className="text-destructive">*</span>
+              <label
+                htmlFor="config-full-name"
+                className="text-xs font-medium text-muted-foreground mb-1.5 block"
+              >
+                Full Name{' '}
+                <span className="text-destructive" aria-hidden="true">
+                  *
+                </span>
               </label>
               <Input
+                id="config-full-name"
+                required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Enter your profile name"
@@ -119,10 +159,21 @@ export default function ConfigurationDialog({ isOpen, onOpenChange }: Configurat
             </div>
 
             <div className="grid gap-2">
-              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                Profile <span className="text-destructive">*</span>
-              </label>
+              <div className="flex items-baseline justify-between gap-2 mb-1.5">
+                <label
+                  htmlFor="config-profile"
+                  className="text-xs font-medium text-muted-foreground"
+                >
+                  Profile{' '}
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
+                </label>
+                <FieldLimitNotice value={profileData} max={MAX_FIELD_LENGTH} />
+              </div>
               <Textarea
+                id="config-profile"
+                required
                 value={profileData}
                 onChange={(e) => setProfileData(e.target.value)}
                 placeholder="Enter your profile information. (e.g. your CV/resume, LinkedIn profile, or a brief bio)"
@@ -132,10 +183,17 @@ export default function ConfigurationDialog({ isOpen, onOpenChange }: Configurat
             </div>
 
             <div className="grid gap-2">
-              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                Context (Recommended)
-              </label>
+              <div className="flex items-baseline justify-between gap-2 mb-1.5">
+                <label
+                  htmlFor="config-context"
+                  className="text-xs font-medium text-muted-foreground"
+                >
+                  Context (Recommended)
+                </label>
+                <FieldLimitNotice value={context} max={MAX_FIELD_LENGTH} />
+              </div>
               <Textarea
+                id="config-context"
                 value={context}
                 onChange={(e) => setContext(e.target.value)}
                 placeholder="Enter the context you are targeting. (e.g. the job description, role requirements or any other information)"

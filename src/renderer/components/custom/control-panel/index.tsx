@@ -15,6 +15,7 @@ import { RunningState } from '@/types/app-state';
 import PermissionGateDialog from '../permission-gate-dialog';
 import ZoomControl from '../zoom-control';
 import { AudioGroup } from './audio-group';
+import { LanguageGroup } from './language-group';
 import { LLMGroup } from './llm-group';
 import { MainGroup } from './main-group';
 import { ProfessionalModeGroup } from './professional-mode-group';
@@ -35,9 +36,23 @@ export default function ControlPanel() {
   const { openConfigurationDialog } = useConfigurationDialog();
   const [permGateOpen, setPermGateOpen] = useState(false);
 
-  const audioInputDevices = useAudioInputDevices();
+  const { devices: audioInputDevices, ready: audioDevicesReady } = useAudioInputDevices();
 
   if (isStealth) return null;
+
+  const selectedAudioInputDeviceName = config?.audioInputDeviceName ?? '';
+
+  // Three states, not two. Until enumerateDevices() has settled the list is empty because
+  // nothing has been asked yet, and a bare `find(...) === undefined` reports the configured
+  // microphone as missing for the first frames after mount - a red badge on a working device,
+  // and a start that is refused if the user is quick. An unset name is not "missing" either:
+  // AudioGroup is picking the default at that moment.
+  const noAudioInputDevices = audioDevicesReady && audioInputDevices.length === 0;
+  const audioInputDeviceNotFound =
+    audioDevicesReady &&
+    audioInputDevices.length > 0 &&
+    selectedAudioInputDeviceName !== '' &&
+    !audioInputDevices.some((d) => d.name === selectedAudioInputDeviceName);
 
   const checkCanStart = () => {
     const checks: { ok: boolean; message: string; onFail?: () => void }[] = [
@@ -61,8 +76,12 @@ export default function ControlPanel() {
         onFail: openConfigurationDialog,
       },
       {
+        ok: !noAudioInputDevices,
+        message: 'No microphone was detected. Connect one and try again.',
+      },
+      {
         ok: !audioInputDeviceNotFound,
-        message: `Audio input device "${config?.audioInputDeviceName}" is not found`,
+        message: `Audio input device "${selectedAudioInputDeviceName}" is not found`,
       },
     ];
 
@@ -80,9 +99,12 @@ export default function ControlPanel() {
     try {
       await startAssistant();
     } catch (error) {
+      // No stopAssistant() here. startAssistant's own catch has already torn both services down
+      // and put runningState back to Idle; calling it again only walks the button through a
+      // three-second "Stopping" for a session that never started, and its own failure would
+      // land here as an unhandled rejection.
       console.error('Failed to start assistant:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to start assistant');
-      await stopAssistant();
     }
   };
 
@@ -138,9 +160,6 @@ export default function ControlPanel() {
   };
   const { onClick, className, icon, label } = stateConfig[runningState];
 
-  const audioInputDeviceNotFound =
-    audioInputDevices?.find((d) => d.name === config?.audioInputDeviceName) === undefined;
-
   const getDisabled = (state: RunningState, disableOnRunning: boolean = true): boolean => {
     if (disableOnRunning && state === RunningState.Running) return true;
     return state === RunningState.Starting || state === RunningState.Stopping;
@@ -160,13 +179,18 @@ export default function ControlPanel() {
 
         <div className="h-5 w-px bg-border" aria-hidden="true" />
 
-        {/* Inputs and model - both open a dialog, both lock while the assistant runs */}
+        {/* What the session runs on. Only the model locks while the assistant runs; audio and
+            language stay live, because both are things an interview can get wrong in progress
+            and neither can be fixed by restarting without losing the transcript. Language sits
+            here rather than with the presentation toggles because it is an input as much as an
+            output: it picks the speech model before it picks the answer's language. */}
         <div className="flex items-center gap-1">
           <AudioGroup
-            audioInputDevices={audioInputDevices ?? []}
+            audioInputDevices={audioInputDevices}
             audioInputDeviceNotFound={audioInputDeviceNotFound}
             getDisabled={getDisabled}
           />
+          <LanguageGroup getDisabled={getDisabled} />
           <LLMGroup getDisabled={getDisabled} />
         </div>
 

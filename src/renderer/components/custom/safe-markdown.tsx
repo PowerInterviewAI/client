@@ -131,7 +131,7 @@ function headingFactory<L extends HeadingLevel>(level: L) {
       } as React.CSSProperties;
       return React.createElement(
         Tag,
-        { className: classStr, style: mergedStyle, ...props },
+        { dir: 'auto', className: classStr, style: mergedStyle, ...props },
         children
       );
     };
@@ -160,6 +160,10 @@ const components: Components = {
     return (
       <InsidePre.Provider value={true}>
         <pre
+          // Forced, not `auto`. Code is left-to-right in every language - the prompts say so
+          // explicitly - and an RTL comment or string literal inside a fence is enough to flip
+          // the block's resolved direction and reorder the brackets around it.
+          dir="ltr"
           className={cn(
             'my-2 rounded-md bg-muted/60 p-3 text-[0.8125rem] leading-snug font-mono whitespace-pre-wrap',
             className
@@ -194,7 +198,11 @@ const components: Components = {
     void ordered;
     void node;
     return (
-      <ul className="my-1.5 list-disc pl-5 marker:text-muted-foreground first:mt-0" {...props}>
+      <ul
+        dir="auto"
+        className="my-1.5 list-disc pl-5 marker:text-muted-foreground first:mt-0"
+        {...props}
+      >
         {children}
       </ul>
     );
@@ -203,7 +211,11 @@ const components: Components = {
     void ordered;
     void node;
     return (
-      <ol className="my-1.5 list-decimal pl-5 marker:text-muted-foreground first:mt-0" {...props}>
+      <ol
+        dir="auto"
+        className="my-1.5 list-decimal pl-5 marker:text-muted-foreground first:mt-0"
+        {...props}
+      >
         {children}
       </ol>
     );
@@ -212,7 +224,7 @@ const components: Components = {
     void ordered;
     void node;
     return (
-      <li className="my-1" {...props}>
+      <li dir="auto" className="my-1" {...props}>
         {children}
       </li>
     );
@@ -224,7 +236,7 @@ const components: Components = {
   p: function MarkdownP({ children, node, ...props }: PProps) {
     void node;
     return (
-      <p className="my-2 first:mt-0 last:mb-0" {...props}>
+      <p dir="auto" className="my-2 first:mt-0 last:mb-0" {...props}>
         {children}
       </p>
     );
@@ -263,6 +275,7 @@ const components: Components = {
     void node;
     return (
       <blockquote
+        dir="auto"
         className="my-2 border-l-2 border-border pl-3 text-muted-foreground italic"
         {...props}
       >
@@ -289,7 +302,11 @@ const components: Components = {
   th: function MarkdownTh({ children, node, ...props }: CellProps) {
     void node;
     return (
-      <th className="border border-border bg-muted/50 px-2 py-1 font-semibold" {...props}>
+      <th
+        dir="auto"
+        className="border border-border bg-muted/50 px-2 py-1 font-semibold"
+        {...props}
+      >
         {children}
       </th>
     );
@@ -297,7 +314,7 @@ const components: Components = {
   td: function MarkdownTd({ children, node, ...props }: CellProps) {
     void node;
     return (
-      <td className="border border-border px-2 py-1 align-top" {...props}>
+      <td dir="auto" className="border border-border px-2 py-1 align-top" {...props}>
         {children}
       </td>
     );
@@ -310,6 +327,23 @@ const components: Components = {
   h6: headingFactory(6),
 };
 
+/**
+ * Every block element above carries `dir="auto"`, and that is what makes an Arabic or Hebrew
+ * answer readable rather than merely present.
+ *
+ * The panels are laid out left-to-right, so without it an RTL paragraph inherits an LTR base
+ * direction: the run itself still reads right-to-left, but the sentence-final punctuation is a
+ * neutral and takes the *paragraph's* direction, so it is placed at the wrong end of the line.
+ * Mixed content - and a technical answer is always mixed, since the prompts keep product names
+ * and code in Latin script - reorders around it.
+ *
+ * Per block rather than once on a wrapper: `auto` resolves from the first strong character it
+ * contains, so one wrapper would let an answer that opens on "React" set the direction for every
+ * paragraph under it. Blocks are the unit the bidi algorithm works in anyway.
+ *
+ * It is a no-op for the languages that shipped before the picker: `auto` on Latin text resolves
+ * to the `ltr` those blocks already inherited.
+ */
 export function SafeMarkdown({ content }: { content?: string }) {
   if (!content) return null;
 

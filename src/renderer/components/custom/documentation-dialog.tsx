@@ -18,6 +18,7 @@ import {
 import { APP_NAME } from '@/lib/consts';
 import { Hotkey, HOTKEY_GROUPS, HOTKEYS } from '@/lib/hotkeys';
 import { cn } from '@/lib/utils';
+import { LANGUAGES } from '@/types/language';
 
 import ExternalLink from './external-link';
 
@@ -81,6 +82,60 @@ export default function DocumentationDialog({ open, onOpenChange }: Documentatio
                   button to click. Just launch {APP_NAME} again: it does not start a second copy, it
                   brings this window back. Outside stealth mode the usual taskbar button and Dock
                   icon are there.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="language">
+              <AccordionTrigger className="text-sm font-semibold">
+                Interviewing in another language
+              </AccordionTrigger>
+              <AccordionContent>
+                <p className="text-sm text-muted-foreground">
+                  The language button on the control bar sets the language of the whole session:
+                  which speech model transcribes the call, what language suggestions are written in,
+                  and the language of the exported report.
+                </p>
+                {/* A list rather than a sentence: at 28 entries the run-on paragraph this used to
+                    be could not be scanned for one's own language, which is the only question a
+                    reader opens this section with. Derived from LANGUAGES so it cannot drift. */}
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {LANGUAGES.length} languages are supported:{' '}
+                  {/* Each name is its own isolate rather than one `dir="auto"` span around the
+                      lot. Joined into a single string, the two right-to-left names sit adjacent
+                      with only a neutral between them, so the bidi algorithm resolves that
+                      separator right-to-left too and lays the pair out as one run - printing the
+                      last two languages in the list in the opposite order to every other pair. */}
+                  {LANGUAGES.map((language, index) => (
+                    <React.Fragment key={language.code}>
+                      {index > 0 && ' · '}
+                      <bdi>{language.nativeName}</bdi>
+                    </React.Fragment>
+                  ))}
+                </p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  You can change it mid-interview. Suggestions follow immediately, from the next
+                  answer onward. Speech recognition takes a moment longer: it reconnects, so the
+                  sentence being spoken at that instant may be cut short in the transcript.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="microphone">
+              <AccordionTrigger className="text-sm font-semibold">
+                Changing microphone mid-interview
+              </AccordionTrigger>
+              <AccordionContent>
+                <p className="text-sm text-muted-foreground">
+                  The microphone button on the control bar stays available while an interview is
+                  running. If your headset dies, is unplugged, or was the wrong device to begin
+                  with, pick another one there rather than stopping the assistant - stopping it
+                  clears the transcript and the suggestions with it.
+                </p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  The change takes effect immediately and transcription keeps running, so nothing is
+                  cut short. If the device you pick cannot be opened - unplugged, or in use by
+                  another app - the interview carries on using the previous one and the app says so.
                 </p>
               </AccordionContent>
             </AccordionItem>

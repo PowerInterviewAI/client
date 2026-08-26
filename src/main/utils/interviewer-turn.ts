@@ -28,6 +28,36 @@ const NON_LEXICAL = /[[(<][^\])>]*[\])>]/g;
 const TERMINAL_PUNCTUATION = /[.!?]["')\]]*\s*$/;
 
 /**
+ * Question marks that are not `?`.
+ *
+ * Japanese and Chinese use the fullwidth form, Arabic and Persian the mirrored one, Greek the
+ * semicolon. They are folded to `?` in `normalize` so the completeness check below reads them the
+ * same way it reads an English one - which is worth doing because it is the difference between
+ * answering a finished question immediately and making it wait out the settle timer first.
+ */
+const FOREIGN_QUESTION_MARKS = /[？؟;]/g;
+
+/**
+ * Any letter, in any script.
+ *
+ * `normalize` reduces a turn to ASCII, which is right for an English lexicon and wrong as a test
+ * for whether anything was said: a Japanese question reduces to nothing at all. This tells the
+ * two apart.
+ */
+const ANY_LETTER = /\p{L}/u;
+
+/**
+ * A letter the backchannel lexicon cannot have read.
+ *
+ * `normalize` blanks every non-ASCII character, so the lexicon only ever matches against Latin
+ * residue. Script rather than codepoint is the right test: an accented Latin letter is part of a
+ * word the lexicon *does* read - blanking the umlaut in "Ähm" and matching "hm" is a correct
+ * consumption - while a Han, Cyrillic, Greek, Arabic, Hebrew, Thai or Devanagari letter is
+ * content it never saw.
+ */
+const NON_LATIN_LETTER = /(?!\p{Script=Latin})\p{L}/u;
+
+/**
  * Question and directive openers. Only consulted together with terminal punctuation, so this does
  * not have to distinguish "how" mid-sentence from "how" as an opener.
  */
@@ -129,7 +159,9 @@ const BACKCHANNEL_WORDS: string[][] = BACKCHANNEL_PHRASES.map((phrase) => phrase
  * Lowercase, drop non-speech events and every punctuation mark except `?`.
  *
  * The question mark is kept because it is the single strongest completeness signal available: the
- * ASR session runs with `format_turns`, so a finished question reliably arrives punctuated.
+ * backend opens its Deepgram session with `punctuate` and `smart_format`, so a finished question
+ * reliably arrives punctuated. (It said `format_turns` until the ASR moved off AssemblyAI - the
+ * behaviour this relies on survived the migration, the parameter that produces it did not.)
  * Apostrophes are kept so "let's" and "i'd" still match the cue list.
  */
 function normalize(text: string): string {
@@ -137,6 +169,7 @@ function normalize(text: string): string {
     .toLowerCase()
     .replace(NON_LEXICAL, ' ')
     .replace(/[‘’]/g, "'")
+    .replace(FOREIGN_QUESTION_MARKS, '?')
     .replace(/[^a-z0-9'?\s]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
@@ -167,12 +200,41 @@ export function classifyInterviewerTurn(rawText: string): TurnVerdict {
   const raw = String(rawText ?? '').trim();
   if (!raw) return TurnVerdict.Skip;
 
+  // Computed once for both script tests below. Non-speech markers go first in each: `[laugh]`
+  // and `(inaudible)` are not speech in any language, and their letters must not read as content.
+  const withoutNonSpeech = raw.replace(NON_LEXICAL, ' ');
+
   const normalized = normalize(raw);
-  // Empty only when the turn was entirely non-speech, e.g. "[laugh]" or "(inaudible)".
-  if (!normalized) return TurnVerdict.Skip;
+  if (!normalized) {
+    // Empty means one of two very different things, and the lexicon cannot tell them apart on
+    // its own. `[laugh]` and `(inaudible)` really were non-speech and are correctly dropped. A
+    // Japanese, Chinese, Thai, Russian, Arabic, Korean, Greek, Hebrew or Hindi question also
+    // reduces to nothing here, because `normalize` keeps only ASCII - and dropping *that* is a
+    // question silently answered with nothing, mid-interview, which is the one failure this
+    // classifier is built to never produce.
+    //
+    // So the test is whether any letters survived the non-speech markers. If they did, this is a
+    // language the lexicon cannot read rather than an absence of speech, and it goes to
+    // `Uncertain` - which defers to the backend gate, the one stage that can actually read it.
+    return ANY_LETTER.test(withoutNonSpeech) ? TurnVerdict.Uncertain : TurnVerdict.Skip;
+  }
 
   const core = stripLeadingBackchannel(normalized.split(' '));
-  if (core.length === 0) return TurnVerdict.Skip;
+  if (core.length === 0) {
+    // Reaching here means the lexicon consumed every word it could see - but it can only see
+    // Latin residue, and a turn is not required to be entirely in one script.
+    //
+    // "OK、では次の質問です。" normalizes to exactly "ok", because `normalize` blanks the
+    // Japanese and leaves the loanword the interviewer opened with. The lexicon eats "ok", the
+    // core comes back empty, and a real question is dropped outright: no request, no card, no
+    // error. That is the same failure the empty-normalized branch above exists to prevent, and
+    // it is not rare - a Japanese, Korean, Chinese, Russian or Greek interviewer opening on
+    // "OK" or "Yes" is ordinary, and Deepgram transcribes those loanwords in Latin script.
+    //
+    // So Skip requires that there was nothing else there. Any letter from a script the lexicon
+    // never read means it did not consume the turn, whatever it did to the Latin part of it.
+    return NON_LATIN_LETTER.test(withoutNonSpeech) ? TurnVerdict.Uncertain : TurnVerdict.Skip;
+  }
 
   const coreText = core.join(' ');
 

@@ -4,16 +4,11 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { useConfigStore } from '@/hooks/use-config-store';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
-import { newestTimestamp } from '@/lib/suggestions';
+import { newestTimestamp, truncateMiddle } from '@/lib/suggestions';
 import { type ActionSuggestion, SuggestionState } from '@/types/suggestion';
 
 // when a question is too long we truncate it in the middle to keep the UI compact
 const MAX_QUESTION_LENGTH = 256;
-function truncateMiddle(text: string, maxLen: number): string {
-  if (text.length <= maxLen) return text;
-  const half = Math.floor((maxLen - 3) / 2);
-  return text.slice(0, half) + ' ... ... ... ' + text.slice(text.length - (maxLen - 3 - half));
-}
 
 import { Button } from '../../ui/button';
 import { Checkbox } from '../../ui/checkbox';
@@ -235,6 +230,7 @@ function ActionSuggestionsPanel({
                         token would widen the card past the panel instead of wrapping */}
                     {s.last_question && s.last_question.trim() !== '' && (
                       <div
+                        dir="auto"
                         className="min-w-0 flex-1 text-xs text-muted-foreground wrap-break-word line-clamp-2"
                         title={s.last_question}
                       >

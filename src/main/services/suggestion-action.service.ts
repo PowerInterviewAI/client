@@ -218,6 +218,7 @@ export class ActionSuggestionService {
       transcripts: transcripts.slice(-TRANSCRIPT_UPLOAD_LIMIT),
       image_names: [...this.uploadedImageNames],
       mode: conf.professionalMode ? SuggestionMode.Professional : SuggestionMode.Normal,
+      language: conf.language,
     };
 
     const lastQuestion = this.getLastInterviewerQuestion(transcripts);

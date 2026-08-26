@@ -67,8 +67,9 @@ export default function PaymentPage() {
             size="icon-sm"
             onClick={handleBack}
             className="flex items-center shrink-0"
+            aria-label="Back to the interview"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           </Button>
           <h1 className="text-sm font-semibold shrink-0">Buy Credits</h1>
           <TabsList className="ml-auto">

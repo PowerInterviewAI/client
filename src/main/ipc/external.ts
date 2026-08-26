@@ -1,16 +1,12 @@
 import { ipcMain, shell } from 'electron';
 
+import { openExternally } from '../navigation-guard.js';
+
 export function registerExternalHandlers(): void {
-  ipcMain.handle('external:open', async (_event, url: string) => {
-    try {
-      if (!url || typeof url !== 'string') return { success: false, error: 'invalid-url' };
-      await shell.openExternal(url);
-      return { success: true };
-    } catch (err: unknown) {
-      console.warn('[ExternalHandlers] external:open error:', err);
-      return { success: false, error: err instanceof Error ? err.message : String(err) };
-    }
-  });
+  // Shared with the window-open handler rather than calling shell.openExternal directly, so a
+  // link takes the same route and the same scheme check whichever way it arrives. openExternal
+  // hands the URL to the OS protocol handler, so `file:` launches what the path points at.
+  ipcMain.handle('external:open', async (_event, url: string) => openExternally(url));
 
   ipcMain.handle('external:open-file', async (_event, filePath: string) => {
     const err = await shell.openPath(filePath);

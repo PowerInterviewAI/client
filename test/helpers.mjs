@@ -31,11 +31,21 @@ export function stubElectron() {
 // Records every Dock/activation-policy call in order so the macOS surface can be asserted on
 // any platform. See test/stealth-dock.test.mjs.
 const dockCalls = [];
+// Every app.on(...) registration, so a test can fire the event the module under test is
+// waiting for. See test/navigation-guard.test.mjs.
+const appListeners = new Map();
 const app = {
   getPath: () => ${JSON.stringify(userData)},
   getName: () => 'pia-test',
   getVersion: () => '0.0.0',
-  on: () => {},
+  on: (event, handler) => {
+    if (!appListeners.has(event)) appListeners.set(event, []);
+    appListeners.get(event).push(handler);
+  },
+  emit: (event, ...args) => {
+    for (const handler of appListeners.get(event) ?? []) handler(...args);
+  },
+  appListeners,
   whenReady: () => Promise.resolve(),
   setActivationPolicy: (policy) => dockCalls.push(policy),
   dock: {
@@ -46,7 +56,14 @@ const app = {
 };
 const ipcMain = { on: () => {}, handle: () => {} };
 const screen = { getPrimaryDisplay: () => ({ workAreaSize: { width: 1920, height: 1080 } }), getAllDisplays: () => [] };
-const shell = { openPath: async () => '' };
+// Records what was handed to the OS, so a test can assert that a blocked scheme never reaches it.
+const openExternalCalls = [];
+const shell = {
+  openPath: async () => '',
+  openExternal: async (url) => { openExternalCalls.push(url); },
+  openExternalCalls,
+  showItemInFolder: () => {},
+};
 export { app, ipcMain, screen, shell };
 export default { app, ipcMain, screen, shell };`,
       };
@@ -90,4 +107,34 @@ export function createChecker(name) {
     },
     failures,
   };
+}
+
+/**
+ * Strip comments from TypeScript source before matching against it.
+ *
+ * The source-level checks in this directory forbid patterns that the code's own comments
+ * describe in prose, so a naive substring search finds the explanation rather than the code and
+ * fails on a correct implementation.
+ */
+export function codeOnly(source) {
+  // `.` already excludes newlines in JS, so the line-comment pattern needs no escape for one.
+  return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*/g, '');
+}
+
+/** The body of the method whose signature starts with `signature`, braces included, or ''. */
+export function methodBody(source, signature) {
+  const start = source.indexOf(signature);
+  if (start === -1) return '';
+
+  // Walk braces from the signature's opening brace to its match.
+  const open = source.indexOf('{', start);
+  let depth = 0;
+  for (let i = open; i < source.length; i++) {
+    if (source[i] === '{') depth++;
+    else if (source[i] === '}') {
+      depth--;
+      if (depth === 0) return source.slice(open, i + 1);
+    }
+  }
+  return '';
 }

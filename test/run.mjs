@@ -15,6 +15,9 @@ const userDataDir = stubElectron();
 const failures = [];
 for (const module of [
   './config-store.test.mjs',
+  // After config-store: that one seeds the store file and asserts on the leftover pre-sync
+  // config, and this one writes to the same store.
+  './language.test.mjs',
   './app-state.test.mjs',
   './account.test.mjs',
   './stealth-surface.test.mjs',
@@ -24,10 +27,16 @@ for (const module of [
   // reads the same running state through its own copy of window-control.
   './running-surface.test.mjs',
   './tools-export.test.mjs',
+  './audio-device-switch.test.mjs',
+  './language-switch.test.mjs',
+  './rtl-rendering.test.mjs',
   './interviewer-turn.test.mjs',
+  './transcript-merge.test.mjs',
   './transcript-turn-selection.test.mjs',
   './suggestion-sentinel.test.mjs',
   './suggestion-emphasis.test.mjs',
+  './suggestion-truncate.test.mjs',
+  './navigation-guard.test.mjs',
   './mac-update-util.test.mjs',
   './change-password.test.mjs',
   './password-reset.test.mjs',

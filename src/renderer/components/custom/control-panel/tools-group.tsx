@@ -37,7 +37,7 @@ interface ToolsGroupProps {
 }
 
 export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
-  const { runningState } = useAppState();
+  const { runningState, appState } = useAppState();
   const { exporting, exportTranscript, clearAll, setPlaceholderData } = useTools();
   const { visible: transcriptVisible, toggle: onToggleTranscript } = useTranscriptPanel();
   const [clearing, setClearing] = useState(false);
@@ -57,7 +57,22 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
     }
   };
 
+  // Nothing recorded yet. Checked here as well as in the service, and this is the copy the user
+  // actually reads: an error thrown out of an ipcMain handler reaches the renderer wrapped in
+  // Electron's "Error invoking remote method 'tools:export-transcript'" prefix, which is not a
+  // sentence to put in front of someone. The service keeps its own guard because it is what
+  // stops the billed summarize call, and this state can be stale by a broadcast.
+  const nothingToExport =
+    (appState?.transcripts?.length ?? 0) === 0 && (appState?.liveSuggestions?.length ?? 0) === 0;
+
   const onExportTranscript = async (format: ExportFormat) => {
+    if (nothingToExport) {
+      toast.error('There is nothing to export yet', {
+        description: 'Run an interview first, then export the transcript and suggestions.',
+      });
+      return;
+    }
+
     try {
       const filePath = await exportTranscript(format);
       if (!filePath) return;
@@ -84,6 +99,7 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
                     size="sm"
                     variant="outline"
                     className="h-6 w-6 p-0"
+                    aria-label="Open the exported file"
                     onClick={() => electron?.openFile(filePath)}
                   >
                     <FileIcon className="h-3 w-3" />
@@ -97,6 +113,7 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
                     size="sm"
                     variant="outline"
                     className="h-6 w-6 p-0"
+                    aria-label="Show the exported file in its folder"
                     onClick={() => electron?.showInFolder(filePath)}
                   >
                     <FolderOpenIcon className="h-3 w-3" />
@@ -110,6 +127,7 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
                     size="sm"
                     variant="ghost"
                     className="h-6 w-6 p-0"
+                    aria-label="Dismiss"
                     onClick={() => toast.dismiss(toastId)}
                   >
                     <XIcon className="h-3 w-3" />
@@ -124,7 +142,9 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
       );
     } catch (error) {
       console.error(error);
-      toast.error('Failed to export interview');
+      // The message when there is nothing to export names the reason, and a generic "failed"
+      // over it would send the user looking for a fault that is not there.
+      toast.error(error instanceof Error ? error.message : 'Failed to export interview');
     }
   };
 
@@ -139,6 +159,7 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
             size="sm"
             className={cn(BAR_ICON_BUTTON, transcriptVisible ? BAR_ACTIVE : BAR_GHOST)}
             aria-pressed={transcriptVisible}
+            aria-label={transcriptVisible ? 'Hide transcription' : 'Show transcription'}
           >
             {transcriptVisible ? (
               <Captions className="h-4 w-4" />
@@ -162,6 +183,8 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
             size="sm"
             className={cn(BAR_ICON_BUTTON, BAR_GHOST)}
             disabled={getDisabled(runningState) || exporting || clearing}
+            aria-label="Clear the interview"
+            aria-busy={clearing}
           >
             {clearing ? (
               <Loader className="h-4 w-4 animate-spin" />
@@ -185,6 +208,8 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
                 size="sm"
                 className={cn(BAR_ICON_BUTTON, BAR_GHOST)}
                 disabled={getDisabled(runningState) || exporting}
+                aria-label="Export the interview"
+                aria-busy={exporting}
               >
                 {exporting ? (
                   <Loader className="h-4 w-4 animate-spin" />

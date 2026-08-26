@@ -26,6 +26,44 @@ export async function run() {
   check('an empty answer is not the sentinel', !isNoSuggestionSentinel(''));
   check('bare emphasis alone is not the sentinel', !isNoSuggestionSentinel('**'));
 
+  // Right-to-left sessions. A model writing Arabic or Hebrew routinely opens on a directional
+  // mark, and U+200F is a format character rather than whitespace - it survives `\s`, leaves the
+  // comparison starting on a character the sentinel does not, and puts NO_SUGGESTION_NEEDED on
+  // screen as the answer to a question the backend had decided needed none. Which is the failure
+  // the backend prompt singles out as the one that fails hardest.
+  check(
+    'matches a sentinel behind a right-to-left mark',
+    isNoSuggestionSentinel('\u200fNO_SUGGESTION_NEEDED')
+  );
+  check(
+    'matches one behind a mark and emphasis',
+    isNoSuggestionSentinel('\u200f**NO_SUGGESTION_NEEDED**')
+  );
+  check('matches a partial behind a mark', isNoSuggestionSentinel('\u200fNO_SUGG'));
+  check(
+    'matches one with a trailing left-to-right mark',
+    isNoSuggestionSentinel('NO_SUGGESTION_NEEDED\u200e')
+  );
+  check(
+    'matches one behind a byte order mark',
+    isNoSuggestionSentinel('\ufeffNO_SUGGESTION_NEEDED')
+  );
+  check(
+    'matches one behind an ideographic space',
+    isNoSuggestionSentinel('\u3000NO_SUGGESTION_NEEDED')
+  );
+
+  // And a real right-to-left answer opening on the same mark is still an answer.
+  check(
+    'a Hebrew answer behind a mark is kept',
+    !isNoSuggestionSentinel('\u200fכן, הובלתי את המעבר מקצה לקצה.')
+  );
+  check(
+    'an Arabic answer behind a mark is kept',
+    !isNoSuggestionSentinel('\u200fنعم، قدت عملية الترحيل بالكامل.')
+  );
+  check('a mark alone is not the sentinel', !isNoSuggestionSentinel('\u200f'));
+
   // The other half: a real answer must never be swallowed, in either mode.
   check(
     'a professional headline is kept',

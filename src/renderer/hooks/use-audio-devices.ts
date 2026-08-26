@@ -1,6 +1,6 @@
 import { type AudioDevice } from '@/types/audio-device';
 
-import { useMediaDevices } from './use-media-devices';
+import { type MediaDevicesResult, useMediaDevices } from './use-media-devices';
 
 function filterAudioDevices(devices: MediaDeviceInfo[], deviceType: string): AudioDevice[] {
   return devices
@@ -14,6 +14,6 @@ function filterAudioDevices(devices: MediaDeviceInfo[], deviceType: string): Aud
     }));
 }
 
-export function useAudioInputDevices(): AudioDevice[] {
+export function useAudioInputDevices(): MediaDevicesResult<AudioDevice> {
   return useMediaDevices('audioinput', (devices) => filterAudioDevices(devices, 'Input'));
 }

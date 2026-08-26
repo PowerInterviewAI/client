@@ -5,15 +5,14 @@ import { useConfigStore } from '@/hooks/use-config-store';
 
 const MAX_QUESTION_LENGTH = 256;
 
-function truncateMiddle(text: string, maxLen: number): string {
-  if (text.length <= maxLen) return text;
-  const half = Math.floor((maxLen - 3) / 2);
-  return text.slice(0, half) + ' ... ... ... ' + text.slice(text.length - (maxLen - 3 - half));
-}
-
 import { Card } from '@/components/ui/card';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
-import { newestTimestamp, stripDanglingEmphasis, withHardBreaks } from '@/lib/suggestions';
+import {
+  newestTimestamp,
+  stripDanglingEmphasis,
+  truncateMiddle,
+  withHardBreaks,
+} from '@/lib/suggestions';
 import { SuggestionMode } from '@/types/llm';
 import { type LiveSuggestion, SuggestionState } from '@/types/suggestion';
 
@@ -282,6 +281,7 @@ function LiveSuggestionsPanel({
                     {/* min-w-0: a flex item defaults to min-width:auto, so one long unbroken
                         token would widen the card past the panel instead of wrapping */}
                     <div
+                      dir="auto"
                       className="min-w-0 flex-1 text-xs text-muted-foreground wrap-break-word line-clamp-2"
                       title={s.last_question}
                     >

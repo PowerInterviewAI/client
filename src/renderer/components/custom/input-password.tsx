@@ -28,14 +28,26 @@ export function InputPassword({
         className={`pr-10 ${className}`}
         {...props}
       />
+      {/* The only control in the auth forms with no text of its own. Without a name it is
+          announced as "button", on a field whose value is deliberately unreadable - and
+          aria-pressed is what says which of the two states it is currently in. tabIndex -1
+          keeps it out of the tab order between the password field and the submit button,
+          where it is a stop that a keyboard user working through a form does not want. */}
       <Button
         type="button"
         variant="ghost"
         size="sm"
+        tabIndex={-1}
+        aria-label={showPassword ? 'Hide password' : 'Show password'}
+        aria-pressed={showPassword}
         className="absolute right-0 top-0 h-full px-3 py-2"
         onClick={toggleShowPassword}
       >
-        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        {showPassword ? (
+          <EyeOff className="h-4 w-4" aria-hidden="true" />
+        ) : (
+          <Eye className="h-4 w-4" aria-hidden="true" />
+        )}
       </Button>
     </div>
   );

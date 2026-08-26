@@ -125,6 +125,7 @@ class LiveSuggestionService {
         transcripts: transcripts.slice(-TRANSCRIPT_UPLOAD_LIMIT),
         mode,
         turn_verdict: turnVerdict,
+        language: conf.language,
       };
 
       armStallTimer(LIVE_SUGGESTION_TTFB_MS);

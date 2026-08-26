@@ -1,6 +1,6 @@
 import { app, BrowserWindow, Menu } from 'electron';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,6 +22,7 @@ import { registerLiveSuggestionHandlers } from './ipc/suggestion-live.js';
 import { registerToolsHandlers } from './ipc/tools.js';
 import { initializeAudioLoopback, registerTranscriptHandlers } from './ipc/transcript.js';
 import { registerWindowHandlers } from './ipc/window.js';
+import { installNavigationGuard } from './navigation-guard.js';
 import { autoUpdaterService } from './services/auto-updater.service.js';
 import { healthCheckService } from './services/health-check.service.js';
 import { transcriptService } from './services/transcript.service.js';
@@ -172,14 +173,20 @@ async function createWindow() {
   // Clear cache before loading
   await win.webContents.session.clearCache();
 
+  // Installed before the load, so the guard is in place for the app's very first document.
+  // Idempotent, because this function runs again when the single-instance lock recovers a
+  // destroyed window and `web-contents-created` is an app-level event.
   if (EnvUtil.isDev()) {
-    win.loadURL('http://localhost:15173');
+    const devUrl = 'http://localhost:15173';
+    installNavigationGuard(devUrl);
+    win.loadURL(devUrl);
     win.webContents.openDevTools();
   } else {
     // Use app.getAppPath() for conventional path resolution
     // This works correctly whether the app is packaged or not
     const distPath = path.join(app.getAppPath(), 'dist', 'index.html');
     console.log('Loading from:', distPath);
+    installNavigationGuard(pathToFileURL(distPath).href);
     win.loadFile(distPath);
   }
 }

@@ -71,9 +71,14 @@ export default function SignupPage() {
         {step === 'email' && (
           <form onSubmit={submitEmail} className="space-y-4">
             <div>
-              <label className="text-sm block mb-1">Email</label>
+              <label htmlFor="signup-email" className="text-sm block mb-1">
+                Email
+              </label>
               <Input
+                id="signup-email"
+                name="email"
                 type="email"
+                autoComplete="username"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 maxLength={254}
@@ -81,7 +86,11 @@ export default function SignupPage() {
               />
             </div>
 
-            {error && <div className="text-sm text-red-600">{error}</div>}
+            {error && (
+              <div role="alert" className="text-sm text-destructive">
+                {error}
+              </div>
+            )}
 
             <Button type="submit" disabled={loading} className="w-full">
               {loading ? 'Sending…' : 'Send code'}
@@ -98,7 +107,9 @@ export default function SignupPage() {
         {step === 'code' && (
           <form onSubmit={submitCode} className="space-y-4">
             <div>
-              <label className="text-sm block mb-1">Verification code</label>
+              <label htmlFor="signup-code" className="text-sm block mb-1">
+                Verification code
+              </label>
               {/*
                 Conditional, like the reset wizard's step two, because the backend now answers
                 the same whether or not the address already has an account. It sends a code to
@@ -108,13 +119,24 @@ export default function SignupPage() {
               */}
               <p className="text-sm text-muted-foreground mb-2">
                 If {email} does not already have an account, we sent a verification code to it.
-                Paste the code below. If it does, we sent a note explaining how to sign in
-                instead.
+                Paste the code below. If it does, we sent a note explaining how to sign in instead.
               </p>
-              <Textarea value={code} onChange={(e) => setCode(e.target.value)} rows={4} required />
+              <Textarea
+                id="signup-code"
+                name="code"
+                autoComplete="one-time-code"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                rows={4}
+                required
+              />
             </div>
 
-            {error && <div className="text-sm text-red-600">{error}</div>}
+            {error && (
+              <div role="alert" className="text-sm text-destructive">
+                {error}
+              </div>
+            )}
 
             <Button type="submit" disabled={loading} className="w-full">
               {loading ? 'Verifying…' : 'Verify'}
@@ -170,9 +192,14 @@ export default function SignupPage() {
         {step === 'details' && (
           <form onSubmit={submitDetails} className="space-y-4">
             <div>
-              <label className="text-sm block mb-1">Username</label>
+              <label htmlFor="signup-username" className="text-sm block mb-1">
+                Username
+              </label>
               <Input
+                id="signup-username"
+                name="username"
                 type="text"
+                autoComplete="nickname"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 maxLength={50}
@@ -181,8 +208,13 @@ export default function SignupPage() {
             </div>
 
             <div>
-              <label className="text-sm block mb-1">Password</label>
+              <label htmlFor="signup-password" className="text-sm block mb-1">
+                Password
+              </label>
               <InputPassword
+                id="signup-password"
+                name="new-password"
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 maxLength={128}
@@ -191,8 +223,13 @@ export default function SignupPage() {
             </div>
 
             <div>
-              <label className="text-sm block mb-1">Confirm Password</label>
+              <label htmlFor="signup-password-confirm" className="text-sm block mb-1">
+                Confirm Password
+              </label>
               <InputPassword
+                id="signup-password-confirm"
+                name="confirm-password"
+                autoComplete="new-password"
                 value={passwordConfirm}
                 onChange={(e) => setPasswordConfirm(e.target.value)}
                 maxLength={128}
@@ -200,7 +237,11 @@ export default function SignupPage() {
               />
             </div>
 
-            {error && <div className="text-sm text-red-600">{error}</div>}
+            {error && (
+              <div role="alert" className="text-sm text-destructive">
+                {error}
+              </div>
+            )}
 
             <Button type="submit" disabled={loading} className="w-full">
               {loading ? 'Creating…' : 'Create account'}

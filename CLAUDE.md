@@ -71,19 +71,173 @@ Three things this ordering buys, all of which the sentinel alone could not. A tu
 
 The classifier is deliberately asymmetric, and `test/interviewer-turn.test.mjs` pins both halves. A filler that slips through costs one request and a card that flashes; a question misread as filler produces *nothing at all*, mid-interview, with no error anywhere. So `Skip` is returned only when the backchannel lexicon consumes the whole turn from the front, and everything it cannot fully consume falls through rather than being guessed at.
 
+**The lexicon is English, and that used to leak into a test it had no business deciding.** `normalize()` reduces a turn to ASCII, which is correct for matching English backchannel and useless as a test for whether anything was said - a Japanese, Chinese, Thai, Russian, Korean, Arabic, Hindi, Greek or Hebrew turn reduces to nothing at all. Empty then hit the "entirely non-speech" branch meant for `[laugh]` and `(inaudible)`, so **every interviewer question in a non-Latin script was dropped outright**: no request, no card, no error, in roughly a third of the languages the picker offers. The two cases are now told apart by whether any letter in any script survived the non-speech markers (`\p{L}`); if one did, the verdict is `Uncertain`, which defers to the backend gate - the one stage that can actually read the language.
+
+**A turn is not required to be in one script, and that is the same bug one branch further in.** "OK、では次の質問です。" does not normalize to nothing - it normalizes to exactly `ok`, because the loanword the interviewer opened on is Latin and Deepgram transcribes it that way. The lexicon eats it, the core comes back empty, and the question is dropped by the `core.length === 0` branch without the empty-normalized branch ever running. An interviewer opening on "OK" or "Yes" is ordinary in Japanese, Korean, Chinese, Russian, Greek, Arabic, Hebrew, Thai and Hindi alike. So `Skip` there additionally requires that no letter from a script the lexicon cannot read survived. The test is on **script**, not on the codepoint being non-ASCII: an accented Latin letter belongs to a word the lexicon does read, so blanking the umlaut in "Ähm" and matching `hm` stays a correct consumption rather than becoming a gate call on every filler in seventeen Latin-script languages. Non-ASCII question marks (`？`, `؟`) are folded to `?` in `normalize`, so a finished question in those scripts still answers immediately instead of waiting out the settle timer. Greek's `;` is deliberately left alone: it is an ordinary semicolon everywhere else, and reading it as terminal would answer English fragments.
+
 `Answer` and `Uncertain` both reach the backend, as `turn_verdict` on `GenerateLiveSuggestionRequest` ([types/llm.ts](src/main/types/llm.ts) mirrors the wire values `answer` / `uncertain`; `Skip` never becomes a request and has no wire value). `Answer` tells the backend to trust the client and skip its own classifier; `Uncertain` asks it to run one. The backend's decision is speculative - it runs *beside* the generation it might cancel, not in front of it - and the client cooperates by holding the card back: `generateSuggestion()` in [suggestion-live.service.ts](src/main/services/suggestion-live.service.ts) does not append a `Pending` card on request start. It arms a `LIVE_SUGGESTION_RENDER_DELAY_MS` timer instead, so a turn the backend suppresses within that window produces no card at all rather than one that flashes and is retracted - the exact failure this whole cascade exists to remove. Any real write (loading state once headers arrive, a streamed chunk, an error) cancels the timer and renders immediately through `publish()`; a `Stopped` state from being superseded before ever rendering goes through `refresh()` instead, which is a no-op unless a card already exists, so a card the candidate never saw pending does not appear only to say it was cancelled.
 
 Action suggestions are independent of transcripts - triggered by screenshot captures (up to `ACTION_SUGGESTION_MAX_CAPTURES` = 4 images per request).
 
 **Professional mode** (`professionalMode` in ConfigStore, off by default) asks the backend for hints - a headline plus keyword bullets - instead of full sentences. Both suggestion services read the flag once at the top of `generateSuggestion` and send it as `mode` on the request; the backend defaults it to `normal`, so the field is safe to omit against an older deployment.
 
-The `NO_SUGGESTION_NEEDED` sentinel goes through `isNoSuggestionSentinel()` ([src/main/utils/suggestion-sentinel.ts](src/main/utils/suggestion-sentinel.ts)) rather than a direct comparison. It backs up the deterministic gate above for turns the lexicon cannot settle, and it is in-band by nature - a control decision travelling in the answer stream - which is why it is the fallback rather than the mechanism. It is prefix-matched because it runs on every streamed chunk, and it strips leading markdown first: the professional prompt asks for a bold headline on line 1, so a model that carries that format over emits `**NO_SUGGESTION_NEEDED**` and a bare match would leave the sentinel on screen as a card. `test/suggestion-sentinel.test.mjs` pins both halves - the wrapped forms are suppressed, real answers are not.
+The `NO_SUGGESTION_NEEDED` sentinel goes through `isNoSuggestionSentinel()` ([src/main/utils/suggestion-sentinel.ts](src/main/utils/suggestion-sentinel.ts)) rather than a direct comparison. It backs up the deterministic gate above for turns the lexicon cannot settle, and it is in-band by nature - a control decision travelling in the answer stream - which is why it is the fallback rather than the mechanism. It is prefix-matched because it runs on every streamed chunk, and it strips leading markdown first: the professional prompt asks for a bold headline on line 1, so a model that carries that format over emits `**NO_SUGGESTION_NEEDED**` and a bare match would leave the sentinel on screen as a card. Unicode format characters are stripped with the emphasis, and that is what makes the fallback hold in Arabic and Hebrew: a model writing right-to-left routinely opens on a directional mark, and U+200F is not whitespace, so it survives `\s` and leaves the comparison starting on a character the sentinel does not - putting `NO_SUGGESTION_NEEDED` on screen as the answer to a question the backend had just decided needed none. `test/suggestion-sentinel.test.mjs` pins both halves - the wrapped forms are suppressed, real answers are not, including a real Hebrew one opening on the same mark.
 
 Both live modes render through `SafeMarkdown`, the same component the action panel uses. The normal-mode prompt asks for plain text *with light formatting*, so any bold or bullet the model reached for used to land on screen as literal asterisks. Prose is passed through `withHardBreaks()` ([src/renderer/lib/suggestions.ts](src/renderer/lib/suggestions.ts)) first: Markdown folds a single newline into a space, and the `whitespace-pre-wrap` rendering it replaced showed every newline the model emitted.
 
 The backend prompts now ask for inline emphasis on the words an answer turns on, in both modes, so `strong` and `em` are declared explicitly in `SafeMarkdown` rather than left to browser defaults - body copy is deliberately regular weight so that `strong` reads as emphasis against it. Live answers additionally go through `stripDanglingEmphasis()`: the panel re-renders on every streamed chunk, so each emphasized span exists for a few frames as an opening `**` with no closing pair, which Markdown renders as literal asterisks on the card the candidate is reading. It drops that one unmatched marker, leaving the text plain until the span closes. Live only - action suggestions carry code, where an asterisk is a dereference or a glob (`test/suggestion-emphasis.test.mjs` pins both halves, including that a `*` opening a list item is a block marker and never stripped).
 
 Each `LiveSuggestion` still carries the `mode` it was *generated* under, and the panel keys off that rather than the current setting, so toggling mid-interview leaves cards already on screen alone. What the mode selects is the presentation around the Markdown: professional promotes the headline line, normal keeps the 🪄 marker in a column of its own - prepending it to the content instead would swallow whatever structure the answer opens with.
+
+### Assistant lifecycle
+
+`RunningState` is what every control on the bar is gated on, and `Starting` and `Stopping` disable
+all of them - Stop included. So the one invariant `useAssistantService` has to hold is that the
+state always lands back on a terminal value, whatever went wrong on the way. `stopAssistant`
+returns to `Idle` in a `finally`, and tears the four services down through `Promise.allSettled`
+rather than `Promise.all`: `all` rejects on the first one that throws and abandons the other three,
+so a single failing teardown used to leave the rest running *and* strand the app in `Stopping`
+with no reachable control - unrecoverable without restarting the app, mid-interview. A partial
+failure is now a toast rather than a throw, because there is nothing left for a caller to do about
+it and the session is over either way.
+
+The failed-start path is the mirror of that, and it belongs in exactly one place. `startAssistant`
+already tears both services down and returns to `Idle` in its own `catch`, so `doStart` in
+[control-panel/index.tsx](src/renderer/components/custom/control-panel/index.tsx) reports the error
+and stops there. Calling `stopAssistant()` after it, as it used to, walked the button through a
+three-second `Stopping` for a session that never started, and that call's own failure landed
+outside the `try` as an unhandled rejection.
+
+`useMediaDevices` reports `ready` alongside the device list because an empty list means two
+different things - `enumerateDevices()` has not answered yet, and this machine has none - and the
+control panel renders a destructive badge and refuses Start on the second. Reading them as one
+put a red `!` on a working microphone for the first frames after every launch, and refused a Start
+pressed quickly with a message naming a device that was there all along. An unset
+`audioInputDeviceName` is a third state again, and also not "missing": `AudioGroup` is choosing
+the default at that moment, in an effect - never in the render body, where the store write
+re-enters React mid-commit and a failed IPC call rolls the value back into the same condition that
+triggered it, one write per frame.
+
+### Interview language
+
+One setting decides three things: which speech model transcribes the call, what language suggestions come back in, and the language of the exported report. `Language` is mirrored across the processes the way `SuggestionMode` is - [src/main/types/language.ts](src/main/types/language.ts) for the request bodies, [src/renderer/types/language.ts](src/renderer/types/language.ts) for the same enum plus the display metadata the picker needs. 28 languages, which is exactly what the backend's Deepgram Nova-3 ASR streams: offering one the ASR cannot hear would not degrade, it would answer a question that was never asked.
+
+A code this build knows but an older backend does not is resolved back to English there rather than faked, so a client ahead of its backend degrades one session instead of breaking it. `test/language.test.mjs` pins the two mirrors staying in step, which is the failure the widening made likely: an enum member with no picker entry renders a blank trigger, and a picker entry with no enum member resolves straight back to English when picked. The menu is capped and scrolls, because it opens upward from the bottom-most control into an overflow-hidden `main` - an uncapped 28-item list runs off the top of the window rather than flipping.
+
+**English is the absence of the feature.** `buildStreamingUrl` sends no `language` parameter at all for English rather than `language=en`, and the backend defaults the request field, so a session that never touches the picker produces exactly the traffic it produced before this existed.
+
+`configStore.getConfig()` resolves the language on the way *out*, not on the way in. The disk holds whatever some build wrote - a code a later release dropped, or one an older release never knew - and every consumer reads through `getConfig`, so that is the single place an unknown code can be stopped before it reaches the ASR URL and three request bodies. `test/language.test.mjs` pins it.
+
+**The picker stays live mid-interview**, unlike Model, because an interview that switches language is the case it exists for and not one the candidate can prepare for by restarting. The two halves of the setting move at different speeds and `useInterviewLanguage` is where that is reconciled. Suggestions need nothing: every request reads the config store as it is built, so the next one already follows. The ASR carries its language as a *connection* parameter, so `liveTranscriptionService.setLanguage()` tears both sockets down and re-opens them - a second or two of gap, and whatever utterance was mid-flight is orphaned, which is why the button shows a spinner rather than pretending the change was instant and why the menu says so before the user commits.
+
+Three guards in `AudioWsStream` make that safe, and all three protect against the same failure - two sockets on one channel, one of them orphaned and still relaying audio into a dead session. `ws.onclose` ignores a close from a socket that is no longer `this.ws`, since that is the tail of a replacement rather than a disconnect; and the `switching` flag suppresses the ordinary backoff reconnect for the close `setLanguage` causes itself, which it then handles immediately instead of after `WS_RETRY_BASE_DELAY_MS`. `connectWebSocket` rebuilds the URL per attempt rather than capturing it, which is what lets a reconnect pick up the new language at all.
+
+The third is `switchSeq`, the generation token the microphone path already had, and it exists because the other two are per-socket while the failure is per-channel. Two switches overlap - the picker disables its trigger on `switching`, but the hook only sets that *after* awaiting the config write, so a second pick lands in the gap - and both run a `connectWithRetry` loop that assigns `this.ws` synchronously per attempt. The older loop wakes from its backoff after the newer one has opened its socket and overwrites the field with its own; the newer socket is then unreferenced, so `stop()` never closes it and the Deepgram session behind it stays open for the life of the app, billing and transcribing a language nobody selected. The loop captures the generation at entry and stops before building another socket, `connectWebSocket` re-checks on open (the window is a whole `WS_OPEN_TIMEOUT_MS`), the reconnect timer carries its own since `setLanguage` can only cancel a timer that has not fired yet, and a superseded switch leaves the backoff and the toast to whichever switch replaced it. `test/language-switch.test.mjs` pins it, source-level, for the same reason the device tests are.
+
+`useInterviewLanguage` needs the same guard one layer up, and so does `useAudioInputDevice`. A superseded switch is *abandoned* by the service, which resolves it in the hook as a success - so without a generation ref there, a switch the user has already moved off clears the warning raised by the one that replaced it and drops the spinner while that one is still reconnecting.
+
+Two consequences of that first guard. `setLanguage` has to report `channelDisconnected` itself rather than leaving it to `onclose`: `new WebSocket` assigns `this.ws` synchronously, so the old socket's close event always arrives after the replacement exists and is correctly ignored. And `setLanguage` keys its own no-op check on `this.ws` rather than on `active`, which `start()` only sets *after* its first connect returns - in that window a socket exists on the old language and an `active` check would skip it.
+
+The setting is persisted *before* the reconnect and never rolled back on failure: a failed reconnect that reverted the setting would leave the user with no route to the language they picked, whereas leaving it set means stopping and starting the assistant recovers.
+
+**That choice leaves the two halves disagreeing, and the UI has to say so for longer than a toast does.** Suggestions have moved and transcription has not, so the menu shows the new language with a check beside it while the transcript is still arriving in the old one - and a candidate reading answers in one language and a transcript in another has no other way to tell which half moved. `reconnectFailed` keeps it visible: the trigger icon goes destructive, the tooltip says "Suggestions only", and the menu replaces its reconnect notice with what actually happened. It is cleared on a switch that succeeds and on leaving `Running`, because the next start opens both sockets on the stored language and the disagreement is gone with the session that produced it.
+
+The trigger shows the code (`EN`, `ES`) next to the icon for the same reason the tooltip names the language - the one question this control has to answer at a glance is what it is currently set to.
+
+Menu items carry an explicit `textValue` of the **English** name. Radix runs its own typeahead on an open menu and matches a prefix of that; left unset it uses the item's rendered text, which is the two names run together (`PolskiPolish`), so only the endonym was ever reachable by typing. At six entries that hardly mattered. At 28 the endonym column is what the eye scans and the English name is what a user types, and they should be two access paths rather than one.
+
+**Whether two transcript blocks are joined with a space is a property of the words, not of the setting.** `Transcript` therefore carries the language it was transcribed in, stamped at ingest, and `mergeAdjacentTranscripts` reads it per block. `cleaned` is rebuilt from every stored transcript on each ingest, so a single reading of the current setting did not apply to new text - it applied to the whole session, retroactively: switching an English interview to Japanese an hour in stripped the spaces out of every block merged so far, on screen and in the transcript the next request carries. `test/transcript-merge.test.mjs` pins both directions.
+
+**Arabic and Hebrew need a text direction, and the panels are laid out left-to-right.** Every block `SafeMarkdown` emits carries `dir="auto"`, as do the transcript lines and both panels' question lines. The defect without it is not that RTL text renders left-to-right - it does not - it is that the neutrals go the wrong way: sentence-final punctuation takes the *paragraph's* direction, so the question mark lands at the wrong end, and a technical answer reorders at every switch of script, which is every answer since the prompts keep product names and code in Latin. Per block rather than once on a wrapper, because `auto` resolves from the first strong character it contains. Block code is pinned to `dir="ltr"` instead: code is left-to-right in every language and one RTL comment in a fence flips the whole block. `test/rtl-rendering.test.mjs` pins it, and it is a no-op in every language that shipped before the picker.
+
+The app's own chrome is **not** localised, deliberately: an English button on a Spanish interview is an inconvenience, an English transcript of Spanish speech is a wrong answer read out loud.
+
+**The exported report is the one exception**, because it is the one artifact that leaves the machine and is handed to someone who was not there. The summarize prompt translates the headings *it* writes; the five words the client wraps around them - Transcripts, Suggestions, Suggestion, Interviewer, Date/Time - live in [export-labels.ts](src/main/utils/export-labels.ts) and follow the same setting, or the export is the half-translated document that prompt exists to avoid. The candidate is named rather than labelled, and timestamps stay on the machine's locale. `test/tools-export.test.mjs` pins that every enum member has a full set and that an unknown code falls back to English rather than throwing.
+
+### Audio input device
+
+**The microphone can be changed mid-interview**, and for the same reason the language can: the case
+it exists for only shows up once the session is running. A headset that dies, is unplugged, or was
+the wrong device to begin with is noticed when the interviewer says they cannot hear you, and the
+control used to be locked at exactly that moment - the only fix was stopping the assistant, which
+drops the transcript and the suggestion history with it.
+
+It is cheaper than the language switch, and the difference is worth keeping straight. The device is
+only what feeds the worklet; it is **not** a connection parameter. So `AudioWsStream.setStream()`
+replaces the `MediaStreamAudioSourceNode` while the socket, the provider session and any utterance
+in flight all survive. Nothing reconnects, there is no gap in the transcript, and the dialog
+therefore promises the opposite of what the language menu warns about. Reaching for `setLanguage`'s
+machinery here would reintroduce the gap this avoids.
+
+Two things `liveTranscriptionService.setAudioInputDevice()` has to hold, both pinned by
+`test/audio-device-switch.test.mjs`. **The replacement stream is acquired before anything is torn
+down**, and the previous one stopped only after the swap succeeds, so a device that is unplugged,
+held by another app, or refused by permissions leaves the interview on the microphone it already
+had. Releasing first reads as the obvious cleanup order and works every time the new device is
+present; on the one path that matters it leaves the session with no microphone at all, mid-answer.
+And a stream that finishes opening *after* the session stopped is released rather than left holding
+the device with its indicator light on, since nothing else keeps a reference to it.
+
+`setStream` reuses the existing `AudioContext` rather than building one. Its `sampleRate` is fixed
+at construction and `convertTo16kPcm` reads it, so a fresh context would resample every frame
+against the wrong rate - quietly, and only for users whose second device runs at a different rate
+than their first.
+
+Its bail-out tests the context **alone**, never also the worklet node, and that is not tidiness.
+`start()` creates `source` from `this.stream` and only assigns `workletNode` after
+`await addModule()`, so there is a real window where a context and a source exist and the node does
+not. An early return covering that window leaves `source` bound to the stream the caller is about
+to stop, and `start()` then wires that dead source into the graph: socket up, channel relaying
+silence for the rest of the session, nothing reporting it. The worklet connect is guarded instead,
+because `start()` has its own `source.connect(workletNode)` and reads `this.source` - which is the
+replacement by then.
+
+Only `ch_1` moves. `ch_0` is loopback audio captured from the call and has no device to change.
+
+The setting is persisted before the swap and never rolled back on failure, the same as the language
+picker: a failed swap leaves the audio running, so reverting would only remove the user's route to
+the device they picked.
+
+**And the same consequence: the picker then names a microphone the session is not using.** That is
+the state where the interviewer has just said they cannot hear you, so it is carried on the control
+bar rather than only in the dialog - `failedDeviceName` raises the same badge a missing device
+raises, and the dialog names the device that failed. Nobody opens a dialog spontaneously
+mid-interview. It clears on a swap that succeeds and on leaving `Running`.
+
+The dialog's running-state line is one conditional chain rather than sibling `&&` blocks, and that
+is not style: written as siblings, retrying after a failure was both `switching` and
+`failedDeviceName` and satisfied neither, so the line vanished at exactly the moment the user was
+waiting to hear whether it had worked.
+
+The tests are source-level, unusually for this directory - every other one loads a built
+main-process module, and this is renderer code with no runtime harness. They are worth the
+awkwardness because the ordering above is what a later tidy-up breaks, with no symptom a type
+checker or a linter can see.
+
+### Navigation and external links
+
+The panels render Markdown that came from a language model, and `remark-gfm` autolinks bare URLs,
+so an anchor in this app is not necessarily one a person wrote. `installNavigationGuard()`
+([src/main/navigation-guard.ts](src/main/navigation-guard.ts)) is installed before the window's
+first load and closes the two routes that follow from that, neither of which announced itself.
+
+`setWindowOpenHandler` denies **every** new window. A `target="_blank"` anchor - which is what
+`SafeMarkdown` renders - asks Electron for one, and with no handler installed the default is to
+make it: a chromeless BrowserWindow with no address bar showing a page the user did not choose.
+A web URL is handed to the real browser instead, through `setImmediate` as Electron's own
+guidance requires.
+
+`will-navigate` pins the window to the app's own document. An anchor without a target navigates
+the frame it is in, and that frame is the app - preload runs on whatever document loads next, so
+a remote page would inherit `window.electronAPI`, and with it the session token through
+`config.get()` and the candidate's CV through `account.get()`. `file:` origins serialize to
+`"null"`, so the packaged build is matched on its exact document URL rather than on an origin
+comparison that could never hold.
+
+Both routes and the `external:open` IPC handler go through the same `openExternally()`, which
+allows `http:`, `https:` and `mailto:` only. `shell.openExternal` delegates to the OS protocol
+handler, so `file:` launches whatever the path points at and a registered custom scheme runs
+whatever claimed it. `test/navigation-guard.test.mjs` pins all three.
 
 ### Routing
 

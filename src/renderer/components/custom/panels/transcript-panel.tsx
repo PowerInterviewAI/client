@@ -149,7 +149,15 @@ function TranscriptPanel({ transcripts, isRunning = false }: TranscriptPanelProp
                           key={idx}
                           className="flex items-baseline gap-2 [content-visibility:auto] [contain-intrinsic-size:auto_1.25rem]"
                         >
-                          <p className="flex-1 min-w-0 text-sm text-foreground/90 leading-snug text-wrap">
+                          {/* The interviewer may be speaking Arabic or Hebrew. Without this the
+                              line inherits the panel's left-to-right base direction and the
+                              sentence-final punctuation lands at the wrong end of it; `auto`
+                              resolves per line from what was actually said, and is a no-op for
+                              every Latin-script language. */}
+                          <p
+                            dir="auto"
+                            className="flex-1 min-w-0 text-sm text-foreground/90 leading-snug text-wrap"
+                          >
                             {item.text}
                           </p>
                           <time

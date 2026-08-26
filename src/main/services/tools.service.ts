@@ -21,11 +21,23 @@ class ToolsService {
     const transcripts = appStateService.getState().transcripts;
     const suggestions = appStateService.getState().liveSuggestions;
 
+    // Checked before the request, not after. Summarizing an empty interview is a billed model
+    // call whose only possible output is invented, and it lands in a document the candidate is
+    // told is a record of their interview. The export button is live whenever the assistant is
+    // idle, which includes every launch before the first session.
+    if (transcripts.length === 0 && suggestions.length === 0) {
+      throw new Error('There is nothing to export yet. Run an interview first.');
+    }
+
     // Call the API to generate the summary text
+    const conf = configStore.getConfig();
     const response = await this.llmApi.generateSummary({
-      config: configStore.getConfig().llmConf,
+      config: conf.llmConf,
       username,
       transcripts,
+      // The exported report is written in the interview's language too. A Spanish interview
+      // summarised in English is a document the candidate cannot hand to anyone involved in it.
+      language: conf.language,
     } as GenerateSummarizeRequest);
     if (response.error) {
       throw new Error(response.error.message);
@@ -36,6 +48,9 @@ class ToolsService {
       summary: response.data ?? '',
       transcripts,
       suggestions,
+      // Same setting the summary was requested in, so the words this file adds around it are in
+      // the language the rest of the document is written in.
+      language: conf.language,
     });
 
     const isMarkdown = format === 'md';
