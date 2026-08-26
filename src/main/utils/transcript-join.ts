@@ -3,7 +3,7 @@ import { Language } from '../types/language.js';
 /**
  * Languages written without spaces between words.
  *
- * Kept in step with the backend's `_UNSPACED_LANGUAGES` in `app/services/asr/deepgram.py`, which
+ * Kept in step with the backend's `_UNSPACED_LANGUAGES` in `app/services/asr_service.py`, which
  * applies the same rule when it rejoins the segments of a single utterance. This one covers the
  * other half: transcripts that arrived as separate finals and are merged here because they fell
  * inside `TRANSCRIPT_INTER_TRANSCRIPT_GAP_MS` of each other.
