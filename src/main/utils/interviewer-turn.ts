@@ -47,6 +47,17 @@ const FOREIGN_QUESTION_MARKS = /[？؟;]/g;
 const ANY_LETTER = /\p{L}/u;
 
 /**
+ * A letter the backchannel lexicon cannot have read.
+ *
+ * `normalize` blanks every non-ASCII character, so the lexicon only ever matches against Latin
+ * residue. Script rather than codepoint is the right test: an accented Latin letter is part of a
+ * word the lexicon *does* read - blanking the umlaut in "Ähm" and matching "hm" is a correct
+ * consumption - while a Han, Cyrillic, Greek, Arabic, Hebrew, Thai or Devanagari letter is
+ * content it never saw.
+ */
+const NON_LATIN_LETTER = /(?!\p{Script=Latin})\p{L}/u;
+
+/**
  * Question and directive openers. Only consulted together with terminal punctuation, so this does
  * not have to distinguish "how" mid-sentence from "how" as an opener.
  */
@@ -189,6 +200,10 @@ export function classifyInterviewerTurn(rawText: string): TurnVerdict {
   const raw = String(rawText ?? '').trim();
   if (!raw) return TurnVerdict.Skip;
 
+  // Computed once for both script tests below. Non-speech markers go first in each: `[laugh]`
+  // and `(inaudible)` are not speech in any language, and their letters must not read as content.
+  const withoutNonSpeech = raw.replace(NON_LEXICAL, ' ');
+
   const normalized = normalize(raw);
   if (!normalized) {
     // Empty means one of two very different things, and the lexicon cannot tell them apart on
@@ -201,12 +216,25 @@ export function classifyInterviewerTurn(rawText: string): TurnVerdict {
     // So the test is whether any letters survived the non-speech markers. If they did, this is a
     // language the lexicon cannot read rather than an absence of speech, and it goes to
     // `Uncertain` - which defers to the backend gate, the one stage that can actually read it.
-    const withoutNonSpeech = raw.replace(NON_LEXICAL, ' ');
     return ANY_LETTER.test(withoutNonSpeech) ? TurnVerdict.Uncertain : TurnVerdict.Skip;
   }
 
   const core = stripLeadingBackchannel(normalized.split(' '));
-  if (core.length === 0) return TurnVerdict.Skip;
+  if (core.length === 0) {
+    // Reaching here means the lexicon consumed every word it could see - but it can only see
+    // Latin residue, and a turn is not required to be entirely in one script.
+    //
+    // "OK、では次の質問です。" normalizes to exactly "ok", because `normalize` blanks the
+    // Japanese and leaves the loanword the interviewer opened with. The lexicon eats "ok", the
+    // core comes back empty, and a real question is dropped outright: no request, no card, no
+    // error. That is the same failure the empty-normalized branch above exists to prevent, and
+    // it is not rare - a Japanese, Korean, Chinese, Russian or Greek interviewer opening on
+    // "OK" or "Yes" is ordinary, and Deepgram transcribes those loanwords in Latin script.
+    //
+    // So Skip requires that there was nothing else there. Any letter from a script the lexicon
+    // never read means it did not consume the turn, whatever it did to the Latin part of it.
+    return NON_LATIN_LETTER.test(withoutNonSpeech) ? TurnVerdict.Uncertain : TurnVerdict.Skip;
+  }
 
   const coreText = core.join(' ');
 

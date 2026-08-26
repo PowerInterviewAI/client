@@ -87,6 +87,35 @@ export async function run() {
   check('chinese fullwidth question mark answers', answers('你的项目是什么？'));
   check('arabic question mark answers', answers('ما هي خبرتك؟'));
 
+  // Mixed script, which is the same failure one layer further in. `normalize` blanks the
+  // non-Latin half and leaves whatever loanword the interviewer opened with, so the lexicon eats
+  // "OK", the core comes back empty and a real question is dropped - without ever reaching the
+  // branch above, because the turn did not normalize to nothing. An interviewer opening on "OK"
+  // or "Yes" is ordinary in every one of these languages, and Deepgram transcribes those in
+  // Latin script.
+  check('japanese question behind an OK is not skipped', !skips('OK、では次の質問です。'));
+  check('japanese question behind a yes is not skipped', !skips('Yes、経験を教えてください。'));
+  check('chinese question behind an OK is not skipped', !skips('OK，请介绍一下你的项目'));
+  check('russian question behind an OK is not skipped', !skips('OK, расскажите о вашем опыте'));
+  check('korean question behind an OK is not skipped', !skips('OK, 경험에 대해 말씀해 주세요'));
+  check('greek question behind an OK is not skipped', !skips('OK, πείτε μου για την εμπειρία σας'));
+  check('arabic question behind an OK is not skipped', !skips('OK، ما هي خبرتك'));
+  check('hebrew question behind an OK is not skipped', !skips('OK, ספר לי על הניסיון שלך'));
+  check('thai question behind an OK is not skipped', !skips('OK, ช่วยเล่าเกี่ยวกับงานของคุณ'));
+  check('hindi question behind an OK is not skipped', !skips('OK, अपने अनुभव के बारे में बताइए'));
+
+  // Non-speech markers are still not content, whatever script surrounds them.
+  check('a marker beside non-latin text does not rescue a pure backchannel', skips('OK [laugh]'));
+
+  // The other direction, and the reason the test is on script rather than on the codepoint being
+  // non-ASCII. An accented Latin letter belongs to a word the lexicon does read: blanking the
+  // umlaut in "Ähm" and matching "hm" is a correct consumption, and turning those into gate
+  // calls would spend a request on every filler in seventeen Latin-script languages.
+  check('german filler with an umlaut is still skipped', skips('Ähm.'));
+  check('a latin-script backchannel run is still skipped', skips('Ähm, so, okay'));
+  check('spanish accented text is unaffected', !skips('Sí, cuéntame sobre tu experiencia.'));
+  check('turkish accented text is unaffected', !skips('Peki, çalışmanızı anlatır mısınız'));
+
   // The English half of that branch has to keep working: these really are non-speech.
   check('bare laugh marker still skipped', skips('[laugh]'));
   check('bare inaudible marker still skipped', skips('(inaudible)'));
