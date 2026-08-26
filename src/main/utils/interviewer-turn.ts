@@ -148,7 +148,9 @@ const BACKCHANNEL_WORDS: string[][] = BACKCHANNEL_PHRASES.map((phrase) => phrase
  * Lowercase, drop non-speech events and every punctuation mark except `?`.
  *
  * The question mark is kept because it is the single strongest completeness signal available: the
- * ASR session runs with `format_turns`, so a finished question reliably arrives punctuated.
+ * backend opens its Deepgram session with `punctuate` and `smart_format`, so a finished question
+ * reliably arrives punctuated. (It said `format_turns` until the ASR moved off AssemblyAI - the
+ * behaviour this relies on survived the migration, the parameter that produces it did not.)
  * Apostrophes are kept so "let's" and "i'd" still match the cue list.
  */
 function normalize(text: string): string {
