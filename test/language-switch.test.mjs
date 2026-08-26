@@ -15,17 +15,20 @@
  * but the hook only sets that after awaiting the config write, so a second pick lands in
  * between. That is a guard in a different layer from the bug, which is why it is not the fix.
  */
-import { readFileSync } from 'node:fs';
-
-import { codeOnly, createChecker, methodBody } from './helpers.mjs';
+import { codeOnly, createChecker, methodBody, readSource } from './helpers.mjs';
 
 export async function run() {
   const { check, failures } = createChecker('language-switch');
 
-  const source = readFileSync(
-    new URL('../src/renderer/services/live-transcription.service.ts', import.meta.url),
-    'utf8'
+  const source = readSource(
+    new URL('../src/renderer/services/live-transcription.service.ts', import.meta.url)
   );
+
+  // The anchors below contain literal newlines, which is only safe because `readSource`
+  // normalises: `core.autocrlf` is on with no `.gitattributes`, so this source arrives CRLF on a
+  // Windows checkout and LF in CI. Read raw, every one of them matches on the runner and fails
+  // on the machine the project is developed on.
+  check('the source is read with its line endings normalised', !source.includes('\r'));
 
   // Both classes declare `async setLanguage(language: Language)`. The channel's is the first in
   // the file and the service's wraps it, so they are picked apart by what follows the brace.
@@ -143,10 +146,7 @@ export async function run() {
   // switch the user has already moved off clears the warning raised by the one that replaced it
   // and re-enables the trigger while that one is still reconnecting.
   const hook = codeOnly(
-    readFileSync(
-      new URL('../src/renderer/hooks/use-interview-language.ts', import.meta.url),
-      'utf8'
-    )
+    readSource(new URL('../src/renderer/hooks/use-interview-language.ts', import.meta.url))
   );
   check('the hook takes a generation per switch', /const seq = \+\+switchSeq\.current;/.test(hook));
   check(
@@ -165,10 +165,7 @@ export async function run() {
   // Its sibling has the identical shape and the identical race - `micSwitchSeq` abandons a
   // superseded swap in the service, and the hook has to stop reporting on it here.
   const deviceHook = codeOnly(
-    readFileSync(
-      new URL('../src/renderer/hooks/use-audio-input-device.ts', import.meta.url),
-      'utf8'
-    )
+    readSource(new URL('../src/renderer/hooks/use-audio-input-device.ts', import.meta.url))
   );
   check(
     'the microphone hook takes the same guard',
