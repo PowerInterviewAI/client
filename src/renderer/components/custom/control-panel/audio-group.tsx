@@ -139,8 +139,12 @@ export function AudioGroup({
             <label id="audio-input-label" className="text-xs text-muted-foreground mb-1 block">
               Microphone
             </label>
+            {/* `|| undefined` keeps the pre-existing binding exactly as it was. Radix reserves
+                the empty string for clearing a selection, and the hook reports an unset device as
+                `''` rather than as undefined, so passing it straight through would hand Select a
+                value it treats specially rather than the "nothing chosen yet" it means here. */}
             <Select
-              value={deviceName}
+              value={deviceName || undefined}
               disabled={switching}
               onValueChange={(v) => void setDevice(v)}
             >

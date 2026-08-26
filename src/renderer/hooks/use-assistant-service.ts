@@ -38,8 +38,9 @@ export const useAssistantService = create<AssistantService>((set) => ({
 
       // Start transcription services
       await electron.transcription.start();
-      // The language the sockets open on. It can change mid-session after this, but only
-      // through useInterviewLanguage, which reconnects them - nothing else reads it again.
+      // What the session opens on. Both of these can change mid-session after this, and neither
+      // is re-read here: useInterviewLanguage reconnects the sockets for a language change, and
+      // useAudioInputDevice swaps the microphone's stream in place for a device change.
       await liveTranscriptionService.start(
         config?.audioInputDeviceName ?? '',
         config?.sessionToken ?? '',
