@@ -50,9 +50,52 @@ export async function run() {
       JSON.stringify(Object.values(Language).slice().sort())
   );
   check('the picker lists every language in the enum', rendererCodes === rendererEnum.length);
+
+  // Parsed as whole entries rather than as columns, because the failures below are all
+  // per-entry: a short label that belongs to the line above, a name left on a copied row.
+  const memberCodes = new Map(
+    [...rendererSource.matchAll(/^  (\w+) = '([a-z]{2})',$/gm)].map((m) => [m[1], m[2]])
+  );
+  const entries = [
+    ...rendererSource.matchAll(
+      /\{ code: Language\.(\w+), name: '([^']*)', nativeName: '([^']*)', short: '([^']*)' \}/g
+    ),
+  ].map((m) => ({
+    member: m[1],
+    name: m[2],
+    nativeName: m[3],
+    short: m[4],
+    code: memberCodes.get(m[1]),
+  }));
+
+  check('every picker entry parses', entries.length === rendererEnum.length);
   check(
-    'every picker entry carries a two-character short label',
-    [...rendererSource.matchAll(/short: '([^']*)'/g)].every((m) => m[1].length === 2)
+    'every picker entry names a member the enum has',
+    entries.every((entry) => entry.code !== undefined)
+  );
+
+  // The trigger is 32px of reserved width and the one question it answers at a glance is which
+  // language the session is set to. `short` is the uppercased code rather than anything derived
+  // from the name, which is what keeps every entry two characters wide - and a row copied from
+  // the one above it keeps the wrong two, which shows the wrong language and reads as correct.
+  check(
+    'every short label is the uppercased code of its own entry',
+    entries.every((entry) => entry.short === entry.code?.toUpperCase())
+  );
+  check(
+    'no two entries share a short label',
+    new Set(entries.map((entry) => entry.short)).size === entries.length
+  );
+  check(
+    'every entry carries both a name and an endonym',
+    entries.every((entry) => entry.name.length > 0 && entry.nativeName.length > 0)
+  );
+
+  // Display order is the order of the enum, deliberately: alphabetical differs per naming
+  // column, so sorting by one leaves the other reading as scrambled.
+  check(
+    'the picker is listed in enum order',
+    JSON.stringify(entries.map((entry) => entry.code)) === JSON.stringify(rendererEnum)
   );
 
   // Absent, blank and unknown all resolve rather than throwing or passing through. A code this
