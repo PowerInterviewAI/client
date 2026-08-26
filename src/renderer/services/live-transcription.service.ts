@@ -71,6 +71,14 @@ class AudioWsStream {
   // flight leave one socket orphaned and still relaying audio into a dead session.
   private switching = false;
 
+  // Bumped per language switch, so a connect loop can tell it has been superseded while it was
+  // awaiting - the same guard `micSwitchSeq` gives the device path, and needed here for the same
+  // reason. `connectWebSocket` assigns `this.ws` synchronously, so an older loop that wakes from
+  // its backoff after a newer one has already opened its socket overwrites the field with its
+  // own. The newer socket is then unreferenced: nothing closes it on stop(), and the backend
+  // session behind it stays open for the life of the app.
+  private switchSeq = 0;
+
   constructor(
     private readonly channel: Channel,
     private stream: MediaStream,
@@ -209,6 +217,11 @@ class AudioWsStream {
     // No socket means start() has not run or stop() has cleared it, and start() reads the field.
     if (this.stopping || !this.ws) return;
 
+    // Claimed before anything is torn down, so an earlier switch or a woken reconnect that is
+    // still inside `connectWithRetry` sees it has been superseded and stops rather than racing
+    // this one for `this.ws`.
+    const seq = ++this.switchSeq;
+
     this.switching = true;
     try {
       // Cancel a pending backoff reconnect first, or it wakes up later and opens a second socket.
@@ -230,6 +243,12 @@ class AudioWsStream {
       // failed switch, and reporting it would toast an error over a deliberate action.
       if (this.stopping) return;
 
+      // Superseded by a later switch, which now owns the channel: it has its own connect in
+      // flight and its own backoff to fall back on. Scheduling a reconnect here would open a
+      // second socket beside that one, and throwing would warn the user about a language they
+      // have already moved off.
+      if (seq !== this.switchSeq) return;
+
       // Hand the channel back to the ordinary backoff loop before reporting. Five failed
       // attempts is a provider or network problem, not a permanent one, and without this the
       // channel stays silent until the assistant is stopped and started - a worse outcome than
@@ -237,7 +256,9 @@ class AudioWsStream {
       this.scheduleReconnect();
       throw error;
     } finally {
-      this.switching = false;
+      // Only the switch that still owns the channel clears the flag. An older one clearing it
+      // would re-arm the ordinary reconnect underneath the newer switch's own close.
+      if (seq === this.switchSeq) this.switching = false;
     }
   }
 
@@ -254,13 +275,23 @@ class AudioWsStream {
   }
 
   private async connectWithRetry(): Promise<void> {
+    // Captured at entry, not read per attempt: this loop belongs to whichever switch, start or
+    // reconnect began it, and a bump means a newer switch has taken the channel over.
+    const seq = this.switchSeq;
+
     let lastError: unknown;
     for (let attempt = 0; attempt < WS_RETRY_MAX_ATTEMPTS; attempt++) {
       if (this.stopping) {
         throw new Error(`WebSocket connection stopped for ${this.channel}`);
       }
+      // Checked before the socket is built rather than only after. The next line assigns
+      // `this.ws`, so a superseded loop waking from its backoff would otherwise overwrite the
+      // socket the newer switch has already opened and leave that one unreferenced.
+      if (seq !== this.switchSeq) {
+        throw new Error(`WebSocket connect superseded for ${this.channel}`);
+      }
       try {
-        await this.connectWebSocket();
+        await this.connectWebSocket(seq);
         return;
       } catch (error) {
         lastError = error;
@@ -281,7 +312,7 @@ class AudioWsStream {
       : new Error(`Failed to open websocket for ${this.channel}`);
   }
 
-  private connectWebSocket(): Promise<void> {
+  private connectWebSocket(seq: number): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       // Rebuilt per attempt rather than captured once, so a reconnect cannot outlive the
       // language the session opened with.
@@ -304,6 +335,19 @@ class AudioWsStream {
         if (settled) return;
         settled = true;
         window.clearTimeout(timeoutId);
+        // Superseded while this socket was still opening - up to WS_OPEN_TIMEOUT_MS of window,
+        // which is long enough to cover a second pick from the menu. The newer switch's socket
+        // is the one in `this.ws`; keeping this one bound would leave two open on the same
+        // session, only one of which stop() can ever close.
+        if (seq !== this.switchSeq) {
+          try {
+            ws.close();
+          } catch {
+            // noop
+          }
+          reject(new Error(`WebSocket connect superseded for ${this.channel}`));
+          return;
+        }
         this.bindWebSocketHandlers(ws);
         resolve();
       };
@@ -355,13 +399,22 @@ class AudioWsStream {
 
   private scheduleReconnect(): void {
     if (this.reconnectTimer !== null || this.stopping) return;
+    const seq = this.switchSeq;
     this.reconnectTimer = window.setTimeout(async () => {
       this.reconnectTimer = null;
       if (this.stopping || !this.active) return;
+      // A switch started after this was scheduled, and owns the channel now. setLanguage only
+      // clears a timer that is still pending, so one that had already fired reaches here on its
+      // own and would reconnect on the language the user has just moved off.
+      if (seq !== this.switchSeq) return;
       try {
         await this.connectWithRetry();
         console.info(`[LiveTranscription] Reconnected websocket for ${this.channel}`);
       } catch (error) {
+        // Superseded mid-connect - by a switch that began while this loop was awaiting. Retrying
+        // would put a second socket beside the one that switch is opening, so the channel is
+        // left to it; its own catch hands the channel back to this loop if it fails.
+        if (seq !== this.switchSeq) return;
         console.error(`[LiveTranscription] Reconnect failed for ${this.channel}:`, error);
         this.scheduleReconnect();
       }

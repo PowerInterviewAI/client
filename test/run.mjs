@@ -28,6 +28,7 @@ for (const module of [
   './running-surface.test.mjs',
   './tools-export.test.mjs',
   './audio-device-switch.test.mjs',
+  './language-switch.test.mjs',
   './interviewer-turn.test.mjs',
   './transcript-turn-selection.test.mjs',
   './suggestion-sentinel.test.mjs',

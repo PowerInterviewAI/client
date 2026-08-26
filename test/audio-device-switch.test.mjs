@@ -13,33 +13,7 @@
  */
 import { readFileSync } from 'node:fs';
 
-import { createChecker } from './helpers.mjs';
-
-/**
- * Comments in this file explain the very patterns these checks forbid, so a naive substring
- * search finds the prose rather than the code and fails on a correct implementation.
- */
-function codeOnly(source) {
-  // `.` already excludes newlines in JS, so the line-comment pattern needs no escape for one.
-  return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*/g, '');
-}
-
-function methodBody(source, signature) {
-  const start = source.indexOf(signature);
-  if (start === -1) return '';
-
-  // Walk braces from the signature's opening brace to its match.
-  const open = source.indexOf('{', start);
-  let depth = 0;
-  for (let i = open; i < source.length; i++) {
-    if (source[i] === '{') depth++;
-    else if (source[i] === '}') {
-      depth--;
-      if (depth === 0) return source.slice(open, i + 1);
-    }
-  }
-  return '';
-}
+import { codeOnly, createChecker, methodBody } from './helpers.mjs';
 
 export async function run() {
   const { check, failures } = createChecker('audio-device-switch');
