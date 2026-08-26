@@ -230,6 +230,7 @@ function ActionSuggestionsPanel({
                         token would widen the card past the panel instead of wrapping */}
                     {s.last_question && s.last_question.trim() !== '' && (
                       <div
+                        dir="auto"
                         className="min-w-0 flex-1 text-xs text-muted-foreground wrap-break-word line-clamp-2"
                         title={s.last_question}
                       >

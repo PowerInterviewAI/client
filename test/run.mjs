@@ -29,6 +29,7 @@ for (const module of [
   './tools-export.test.mjs',
   './audio-device-switch.test.mjs',
   './language-switch.test.mjs',
+  './rtl-rendering.test.mjs',
   './interviewer-turn.test.mjs',
   './transcript-merge.test.mjs',
   './transcript-turn-selection.test.mjs',

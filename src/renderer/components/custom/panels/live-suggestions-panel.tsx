@@ -281,6 +281,7 @@ function LiveSuggestionsPanel({
                     {/* min-w-0: a flex item defaults to min-width:auto, so one long unbroken
                         token would widen the card past the panel instead of wrapping */}
                     <div
+                      dir="auto"
                       className="min-w-0 flex-1 text-xs text-muted-foreground wrap-break-word line-clamp-2"
                       title={s.last_question}
                     >
