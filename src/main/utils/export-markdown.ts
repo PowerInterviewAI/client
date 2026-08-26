@@ -1,11 +1,15 @@
 import { LiveSuggestion, Speaker, Transcript } from '../types/app-state.js';
 import { ExportFormat } from '../types/export.js';
+import { Language } from '../types/language.js';
+import { getExportLabels } from './export-labels.js';
 
 interface ExportMarkdownInput {
   username: string;
   summary: string;
   transcripts: Transcript[];
   suggestions: LiveSuggestion[];
+  /** Interview language. Decides the words this file adds around the model's summary. */
+  language: Language;
 }
 
 /**
@@ -17,14 +21,20 @@ export function buildExportMarkdown({
   summary,
   transcripts,
   suggestions,
+  language,
 }: ExportMarkdownInput): string {
+  // The summary already arrives in the interview language, headings included - the summarize
+  // prompt asks for that explicitly. These are the words this file adds on top of it, and
+  // leaving them English is what made the export a half-translated document.
+  const labels = getExportLabels(language);
+
   // Add Date/Time to summary (insert after first line)
   let summaryPart = summary;
   if (summaryPart) {
     const lines = summaryPart.split('\n');
     if (lines.length > 0) {
       const datetimeNow = new Date().toLocaleString();
-      lines.splice(1, 0, `\n##### Date/Time: ${datetimeNow}`);
+      lines.splice(1, 0, `\n##### ${labels.dateTime}: ${datetimeNow}`);
       summaryPart = lines.join('\n');
     }
   }
@@ -33,20 +43,20 @@ export function buildExportMarkdown({
   const transcriptLines: string[] = [];
   for (const t of transcripts) {
     const timeStr = new Date(t.timestamp).toLocaleString();
-    const speakerName = t.speaker === Speaker.Self ? username : 'Interviewer';
+    const speakerName = t.speaker === Speaker.Self ? username : labels.interviewer;
     transcriptLines.push(`#### ***${timeStr} | ${speakerName}***\n${t.text}\n`);
   }
-  const transcriptsPart = `# **Transcripts**\n\n${transcriptLines.join('\n')}`;
+  const transcriptsPart = `# **${labels.transcripts}**\n\n${transcriptLines.join('\n')}`;
 
   // Build Suggestions section
   const suggestionLines: string[] = [];
   for (const s of suggestions) {
     const timeStr = new Date(s.timestamp).toLocaleString();
     suggestionLines.push(
-      `#### ***${timeStr} | Interviewer***\n${s.last_question}\n\n#### ***Suggestion***\n${s.answer}\n`
+      `#### ***${timeStr} | ${labels.interviewer}***\n${s.last_question}\n\n#### ***${labels.suggestion}***\n${s.answer}\n`
     );
   }
-  const suggestionsPart = `# **Suggestions**\n\n${suggestionLines.join('\n')}`;
+  const suggestionsPart = `# **${labels.suggestions}**\n\n${suggestionLines.join('\n')}`;
 
   return `${summaryPart}\n\n${transcripts.length > 0 ? transcriptsPart : ''}\n\n${suggestions.length > 0 ? suggestionsPart : ''}`.trim();
 }

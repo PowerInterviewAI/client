@@ -48,6 +48,9 @@ class ToolsService {
       summary: response.data ?? '',
       transcripts,
       suggestions,
+      // Same setting the summary was requested in, so the words this file adds around it are in
+      // the language the rest of the document is written in.
+      language: conf.language,
     });
 
     const isMarkdown = format === 'md';
