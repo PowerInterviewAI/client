@@ -116,9 +116,9 @@ triggered it, one write per frame.
 
 ### Interview language
 
-One setting decides three things: which speech model transcribes the call, what language suggestions come back in, and the language of the exported report. `Language` is mirrored across the processes the way `SuggestionMode` is - [src/main/types/language.ts](src/main/types/language.ts) for the request bodies, [src/renderer/types/language.ts](src/renderer/types/language.ts) for the same enum plus the display metadata the picker needs. 28 languages, which is what the backend's Deepgram Nova-3 provider streams: offering one the ASR cannot hear would not degrade, it would answer a question that was never asked. It was six while the backend was AssemblyAI-only.
+One setting decides three things: which speech model transcribes the call, what language suggestions come back in, and the language of the exported report. `Language` is mirrored across the processes the way `SuggestionMode` is - [src/main/types/language.ts](src/main/types/language.ts) for the request bodies, [src/renderer/types/language.ts](src/renderer/types/language.ts) for the same enum plus the display metadata the picker needs. 28 languages, which is exactly what the backend's Deepgram Nova-3 ASR streams: offering one the ASR cannot hear would not degrade, it would answer a question that was never asked.
 
-A backend still configured for AssemblyAI resolves a language it cannot hear back to English rather than faking it, so a client ahead of its backend degrades one session instead of breaking it. `test/language.test.mjs` pins the two mirrors staying in step, which is the failure the widening made likely: an enum member with no picker entry renders a blank trigger, and a picker entry with no enum member resolves straight back to English when picked. The menu is capped and scrolls, because it opens upward from the bottom-most control into an overflow-hidden `main` - an uncapped 28-item list runs off the top of the window rather than flipping.
+A code this build knows but an older backend does not is resolved back to English there rather than faked, so a client ahead of its backend degrades one session instead of breaking it. `test/language.test.mjs` pins the two mirrors staying in step, which is the failure the widening made likely: an enum member with no picker entry renders a blank trigger, and a picker entry with no enum member resolves straight back to English when picked. The menu is capped and scrolls, because it opens upward from the bottom-most control into an overflow-hidden `main` - an uncapped 28-item list runs off the top of the window rather than flipping.
 
 **English is the absence of the feature.** `buildStreamingUrl` sends no `language` parameter at all for English rather than `language=en`, and the backend defaults the request field, so a session that never touches the picker produces exactly the traffic it produced before this existed.
 
@@ -164,6 +164,15 @@ the device with its indicator light on, since nothing else keeps a reference to 
 at construction and `convertTo16kPcm` reads it, so a fresh context would resample every frame
 against the wrong rate - quietly, and only for users whose second device runs at a different rate
 than their first.
+
+Its bail-out tests the context **alone**, never also the worklet node, and that is not tidiness.
+`start()` creates `source` from `this.stream` and only assigns `workletNode` after
+`await addModule()`, so there is a real window where a context and a source exist and the node does
+not. An early return covering that window leaves `source` bound to the stream the caller is about
+to stop, and `start()` then wires that dead source into the graph: socket up, channel relaying
+silence for the rest of the session, nothing reporting it. The worklet connect is guarded instead,
+because `start()` has its own `source.connect(workletNode)` and reads `this.source` - which is the
+replacement by then.
 
 Only `ch_1` moves. `ch_0` is loopback audio captured from the call and has no device to change.
 

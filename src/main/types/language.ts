@@ -1,15 +1,13 @@
 /**
  * The language an interview runs in: what the ASR transcribes and what suggestions come back in.
  *
- * ISO 639-1 codes, mirroring `Language` in the backend's `app/schemas/language.py`. The set is
- * what the backend's streaming ASR provider can hear, and deliberately no wider: offering a
+ * ISO 639-1 codes, mirroring `Language` in the backend's `app/schemas/language.py`, which is
+ * exactly what its Deepgram Nova-3 ASR streams. Deliberately no wider than that: offering a
  * language the transcription cannot deliver produces confident answers to a question that was
  * never asked, which is worse than not offering it.
  *
- * The ceiling used to be six, because that is all AssemblyAI's `universal-streaming-multilingual`
- * transcribes. It is now what Deepgram Nova-3 streams. A backend still configured for AssemblyAI
- * resolves a language it cannot hear back to English rather than faking it, so a client ahead of
- * its backend degrades one session instead of breaking it.
+ * A code this build knows but an older backend does not is resolved back to English there rather
+ * than faked, so a client ahead of its backend degrades one session instead of breaking it.
  *
  * `src/renderer/types/language.ts` carries the same enum plus the display metadata the picker
  * needs, the way `SuggestionMode` is mirrored across the two processes.
