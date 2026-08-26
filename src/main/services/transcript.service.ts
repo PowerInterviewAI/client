@@ -32,6 +32,46 @@ export function selectTrailingOtherTurn(cleaned: Transcript[]): Transcript[] {
   return trailing;
 }
 
+/**
+ * Collapse runs of same-speaker transcripts that arrived close together into one block each.
+ *
+ * The ASR delivers a sentence as several finals when the speaker pauses inside it, so without
+ * this the panel reads as a column of fragments and the interviewer-turn gate classifies half a
+ * question. Anything further apart than TRANSCRIPT_INTER_TRANSCRIPT_GAP_MS stays its own block.
+ *
+ * Each transcript is joined under *its own* language, which is why `Transcript` carries one. The
+ * caller rebuilds this from every stored transcript on each ingest, so reading the current
+ * setting once here would re-join the whole session under it: switch to Japanese an hour in and
+ * every English block merged so far loses its spaces, on screen and in the transcript the next
+ * suggestion request carries. The separator sits in front of the text being appended, so it is
+ * that text's language that decides it.
+ *
+ * Exported standalone for the same reason `selectTrailingOtherTurn` is: the merge is testable on
+ * a plain array, without driving real wall-clock gaps through `ingest()`.
+ */
+export function mergeAdjacentTranscripts(allTranscripts: Transcript[]): Transcript[] {
+  const cleaned: Transcript[] = [];
+  for (const t of allTranscripts) {
+    const lastIndex = cleaned.length - 1;
+    if (lastIndex < 0) {
+      cleaned.push({ ...t });
+      continue;
+    }
+
+    const lastCleaned = cleaned[lastIndex];
+    if (
+      lastCleaned.speaker === t.speaker &&
+      t.timestamp - lastCleaned.endTimestamp <= TRANSCRIPT_INTER_TRANSCRIPT_GAP_MS
+    ) {
+      lastCleaned.text += transcriptSeparator(t.language) + t.text;
+      lastCleaned.endTimestamp = t.endTimestamp;
+    } else {
+      cleaned.push({ ...t });
+    }
+  }
+  return cleaned;
+}
+
 class TranscriptService {
   private isActive = false;
 
@@ -53,12 +93,17 @@ class TranscriptService {
     const isFinal = String(typeRaw).toLowerCase() === 'final';
     const now = Date.now();
 
+    // Stamped as the text arrives, not read later where it is used. A mid-session switch moves
+    // the setting and leaves every word already spoken in the language it was spoken in.
+    const language = configStore.getConfig().language;
+
     const transcript: Transcript = {
       timestamp: now,
       text,
       isFinal,
       speaker,
       endTimestamp: now,
+      language,
     };
 
     if (transcript.speaker === Speaker.Self) {
@@ -69,6 +114,7 @@ class TranscriptService {
       } else if (this.selfPartialTranscript) {
         this.selfPartialTranscript.text = transcript.text;
         this.selfPartialTranscript.endTimestamp = transcript.endTimestamp;
+        this.selfPartialTranscript.language = transcript.language;
       } else {
         this.selfPartialTranscript = transcript;
       }
@@ -79,6 +125,7 @@ class TranscriptService {
     } else if (this.otherPartialTranscript) {
       this.otherPartialTranscript.text = transcript.text;
       this.otherPartialTranscript.endTimestamp = transcript.endTimestamp;
+      this.otherPartialTranscript.language = transcript.language;
     } else {
       this.otherPartialTranscript = transcript;
     }
@@ -88,30 +135,7 @@ class TranscriptService {
     if (this.otherPartialTranscript) allTranscripts.push(this.otherPartialTranscript);
     allTranscripts = allTranscripts.filter(Boolean).sort((a, b) => a.timestamp - b.timestamp);
 
-    // Read once per ingest rather than per merge. `getConfig()` reads an in-memory store, and
-    // this function already rebuilds `cleaned` from scratch on every partial, so the cost is
-    // noise next to the loop below.
-    const separator = transcriptSeparator(configStore.getConfig().language);
-
-    const cleaned: Transcript[] = [];
-    for (const t of allTranscripts) {
-      const lastIndex = cleaned.length - 1;
-      if (lastIndex < 0) {
-        cleaned.push({ ...t });
-        continue;
-      }
-
-      const lastCleaned = cleaned[lastIndex];
-      if (
-        lastCleaned.speaker === t.speaker &&
-        t.timestamp - lastCleaned.endTimestamp <= TRANSCRIPT_INTER_TRANSCRIPT_GAP_MS
-      ) {
-        lastCleaned.text += separator + t.text;
-        lastCleaned.endTimestamp = t.endTimestamp;
-      } else {
-        cleaned.push({ ...t });
-      }
-    }
+    const cleaned = mergeAdjacentTranscripts(allTranscripts);
 
     // Read by the settle timer, which fires after this call has returned and must see the turn as
     // it stands then, not as it stood when the timer was armed.

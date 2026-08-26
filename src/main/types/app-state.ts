@@ -3,6 +3,7 @@
  */
 
 import { UserRole } from './health-check.js';
+import { Language } from './language.js';
 import { SuggestionMode } from './llm.js';
 
 export enum Speaker {
@@ -33,6 +34,14 @@ export interface Transcript {
   speaker: Speaker;
   isFinal: boolean;
   endTimestamp: number;
+  /**
+   * The interview language this text was transcribed in.
+   *
+   * Recorded per transcript rather than read from the config when it is needed, because the
+   * setting moves mid-session and the text does not: whether two blocks are joined with a space
+   * is a property of the words, not of what the picker says now. See `transcriptSeparator`.
+   */
+  language: Language;
 }
 
 export interface LiveSuggestion {

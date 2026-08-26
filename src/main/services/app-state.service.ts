@@ -12,6 +12,7 @@ import {
   Speaker,
   SuggestionState,
 } from '../types/app-state.js';
+import { DEFAULT_LANGUAGE } from '../types/language.js';
 import { SuggestionMode } from '../types/llm.js';
 import { getWindowReference, refreshWindowSurfaces } from './window-control.service.js';
 
@@ -57,6 +58,7 @@ export class AppStateService {
           speaker: Speaker.Other,
           isFinal: false,
           endTimestamp: tstampNow + 5000,
+          language: DEFAULT_LANGUAGE,
         },
       ],
       liveSuggestions: [

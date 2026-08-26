@@ -30,6 +30,7 @@ for (const module of [
   './audio-device-switch.test.mjs',
   './language-switch.test.mjs',
   './interviewer-turn.test.mjs',
+  './transcript-merge.test.mjs',
   './transcript-turn-selection.test.mjs',
   './suggestion-sentinel.test.mjs',
   './suggestion-emphasis.test.mjs',
