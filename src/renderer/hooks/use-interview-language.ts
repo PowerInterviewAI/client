@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { liveTranscriptionService } from '@/services/live-transcription.service';
@@ -31,9 +31,19 @@ export function useInterviewLanguage() {
   const [reconnectFailed, setReconnectFailed] = useState(false);
   const option = getLanguageOption(config?.language);
 
+  // Bumped per switch, so a call that has been superseded cannot report its own outcome over the
+  // one that replaced it. The menu's trigger is disabled while `switching`, which looks like it
+  // makes this unreachable and does not: `switching` is only set *after* the config write below
+  // is awaited, so a second pick lands in that gap. A superseded switch then returns through the
+  // service's own generation guard - success, and up to a backoff delay later - which would
+  // clear a warning the newer switch had already raised and re-enable the trigger under it.
+  const switchSeq = useRef(0);
+
   const setLanguage = useCallback(async (language: Language) => {
     const { config: current, updateConfig } = useConfigStore.getState();
     if (current?.language === language) return;
+
+    const seq = ++switchSeq.current;
 
     try {
       await updateConfig({ language });
@@ -49,16 +59,20 @@ export function useInterviewLanguage() {
     setSwitching(true);
     try {
       await liveTranscriptionService.setLanguage(language);
+      if (seq !== switchSeq.current) return;
       // Cleared on success, so a retry that works takes the warning down with it.
       setReconnectFailed(false);
     } catch (e) {
+      if (seq !== switchSeq.current) return;
       console.error('Failed to switch transcription language', e);
       setReconnectFailed(true);
       toast.warning('Suggestions switched language; transcription is still reconnecting', {
         description: 'It keeps retrying. Stop and start the assistant if it does not come back.',
       });
     } finally {
-      setSwitching(false);
+      // Left set by a superseded switch: the one that replaced it is still in flight, and the
+      // spinner belongs to that one until it finishes.
+      if (seq === switchSeq.current) setSwitching(false);
     }
   }, []);
 

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { liveTranscriptionService } from '@/services/live-transcription.service';
@@ -30,9 +30,17 @@ export function useAudioInputDevice() {
   const [failedDeviceName, setFailedDeviceName] = useState<string | null>(null);
   const deviceName = config?.audioInputDeviceName ?? '';
 
+  // The same guard `useInterviewLanguage` takes, for the same reason. `micSwitchSeq` in the
+  // service abandons a superseded swap, which resolves it as a success here; without this, a
+  // swap the user has already moved off would clear the warning raised by the one that replaced
+  // it and re-enable the picker while that one is still acquiring its device.
+  const switchSeq = useRef(0);
+
   const setDevice = useCallback(async (name: string) => {
     const { config: current, updateConfig } = useConfigStore.getState();
     if (current?.audioInputDeviceName === name) return;
+
+    const seq = ++switchSeq.current;
 
     try {
       await updateConfig({ audioInputDeviceName: name });
@@ -45,10 +53,12 @@ export function useAudioInputDevice() {
     setSwitching(true);
     try {
       await liveTranscriptionService.setAudioInputDevice(name);
+      if (seq !== switchSeq.current) return;
       // Cleared on success rather than only set on failure: a later swap that works is what
       // resolves the disagreement, and leaving the warning up after it would be its own lie.
       setFailedDeviceName(null);
     } catch (e) {
+      if (seq !== switchSeq.current) return;
       // Unplugged, held by another app, or refused by permissions. The session is still running
       // on the previous device, so this is a warning rather than an error, and it says which
       // state the user is actually in - the setting took, the audio did not move.
@@ -58,7 +68,9 @@ export function useAudioInputDevice() {
         description: 'Check the device is connected, then stop and start the assistant.',
       });
     } finally {
-      setSwitching(false);
+      // Left set by a superseded swap: the one that replaced it is still in flight, and the
+      // spinner belongs to that one until it finishes.
+      if (seq === switchSeq.current) setSwitching(false);
     }
   }, []);
 

@@ -138,6 +138,44 @@ export async function run() {
   check('the service-level setLanguage exists', service.length > 0);
   check('both channels are settled before reporting', service.includes('Promise.allSettled'));
 
+  // The hook that drives all of the above needs the same guard, one layer up. The service
+  // abandons a superseded switch, which resolves it here as a *success* - so without this, a
+  // switch the user has already moved off clears the warning raised by the one that replaced it
+  // and re-enables the trigger while that one is still reconnecting.
+  const hook = codeOnly(
+    readFileSync(
+      new URL('../src/renderer/hooks/use-interview-language.ts', import.meta.url),
+      'utf8'
+    )
+  );
+  check('the hook takes a generation per switch', /const seq = \+\+switchSeq\.current;/.test(hook));
+  check(
+    'it is taken before the config write is awaited',
+    hook.indexOf('++switchSeq.current') < hook.indexOf('await updateConfig')
+  );
+  check(
+    'a superseded switch reports neither success nor failure',
+    (hook.match(/seq !== switchSeq\.current\) return;/g) ?? []).length === 2
+  );
+  check(
+    'and leaves the spinner to the switch that replaced it',
+    /if \(seq === switchSeq\.current\) setSwitching\(false\);/.test(hook)
+  );
+
+  // Its sibling has the identical shape and the identical race - `micSwitchSeq` abandons a
+  // superseded swap in the service, and the hook has to stop reporting on it here.
+  const deviceHook = codeOnly(
+    readFileSync(
+      new URL('../src/renderer/hooks/use-audio-input-device.ts', import.meta.url),
+      'utf8'
+    )
+  );
+  check(
+    'the microphone hook takes the same guard',
+    /const seq = \+\+switchSeq\.current;/.test(deviceHook) &&
+      (deviceHook.match(/seq !== switchSeq\.current\) return;/g) ?? []).length === 2
+  );
+
   // English is sent as no parameter at all, so a session in the default language stays
   // byte-identical to what every client released before the picker existed sends.
   const url = codeOnly(methodBody(source, 'function buildStreamingUrl('));
