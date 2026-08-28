@@ -55,6 +55,12 @@ const app = {
   dockCalls,
 };
 const ipcMain = { on: () => {}, handle: () => {} };
+// Named imports are resolved at link time, so a module under test that merely *mentions* one of
+// these fails to load even on paths that never call it. tools.service reaches the export guard
+// before it touches the save dialog, and pulls in the capture service on the way.
+const BrowserWindow = { getAllWindows: () => [], fromWebContents: () => null };
+const desktopCapturer = { getSources: async () => [] };
+const dialog = { showSaveDialog: async () => ({ canceled: true, filePath: undefined }) };
 const screen = { getPrimaryDisplay: () => ({ workAreaSize: { width: 1920, height: 1080 } }), getAllDisplays: () => [] };
 // Records what was handed to the OS, so a test can assert that a blocked scheme never reaches it.
 const openExternalCalls = [];
@@ -64,8 +70,8 @@ const shell = {
   openExternalCalls,
   showItemInFolder: () => {},
 };
-export { app, ipcMain, screen, shell };
-export default { app, ipcMain, screen, shell };`,
+export { app, BrowserWindow, desktopCapturer, dialog, ipcMain, screen, shell };
+export default { app, BrowserWindow, desktopCapturer, dialog, ipcMain, screen, shell };`,
       };
     },
   });

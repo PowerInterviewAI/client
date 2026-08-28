@@ -101,6 +101,15 @@ export interface AppState {
   interviewConfig: InterviewConfig;
   /** False until the account's config has been read this session; editing is unsafe before then. */
   interviewConfigLoaded: boolean;
+  /**
+   * Whether the three arrays above hold a real interview rather than the placeholder copy.
+   *
+   * Derived, never set by a caller. The panels are seeded with one transcript and two
+   * suggestions so an empty app has something to show, so a length check cannot tell an
+   * interview worth saving from the sample text - and everything that destroys history asks
+   * before it does, which is a question nobody should be asked about placeholder data.
+   */
+  hasHistory: boolean;
 }
 
 /** The app state as sent to the renderer, with the interview config reduced to a summary. */

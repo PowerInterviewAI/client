@@ -191,6 +191,12 @@ declare global {
     minimize: () => void;
     maximize: () => void;
 
+    // Main vetoes a close that would drop an unsaved interview and asks here instead. Exactly
+    // one of confirmClose/cancelClose has to be sent back, or the window never closes.
+    onSaveHistoryPrompt: (callback: () => void) => () => void;
+    confirmClose: () => void;
+    cancelClose: () => void;
+
     // Zoom controls
     zoom: {
       increase: () => void;

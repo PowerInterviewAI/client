@@ -29,7 +29,12 @@ const DEFAULT_STATE: AppState = {
   providedLLMModel: undefined,
   interviewConfig: { fullName: '', profileData: '', context: '' },
   interviewConfigLoaded: false,
+  hasHistory: false,
 };
+
+/** The three arrays that together make up an interview's history. */
+const HISTORY_KEYS = ['transcripts', 'liveSuggestions', 'actionSuggestions'] as const;
+type HistoryKey = (typeof HISTORY_KEYS)[number];
 
 // Every broadcast structured-clones the whole renderer state, and they fire on each streamed
 // token and each ASR partial - roughly 20/second across two channels, against a transcript array
@@ -41,12 +46,21 @@ export class AppStateService {
   private state: AppState;
   private broadcastTimer: ReturnType<typeof setTimeout> | null = null;
 
+  /**
+   * Whether the history arrays currently hold the placeholder copy.
+   *
+   * Tracked here rather than inferred from the contents, because the placeholder is
+   * indistinguishable from a one-line interview by shape and only this class ever writes it.
+   */
+  private placeholderActive = false;
+
   constructor() {
     this.state = { ...DEFAULT_STATE };
     this.setPlaceholderState();
   }
 
   setPlaceholderState() {
+    this.placeholderActive = true;
     const tstampNow = Date.now();
     this.state = {
       ...this.state,
@@ -82,6 +96,9 @@ export class AppStateService {
           error: '',
         },
       ],
+      // Sample copy is not an interview. Everything that destroys history asks to save it
+      // first, and this is the state a freshly launched app sits in.
+      hasHistory: false,
     };
     // Clear reaches main and resets the state here, but the renderer only ever learns about
     // state through this broadcast - it does not poll while the push API exists. Without this
@@ -112,7 +129,40 @@ export class AppStateService {
     };
   }
 
-  updateState(updates: Partial<AppState>): AppState {
+  /**
+   * Fold a write into `updates` so that `hasHistory` follows it.
+   *
+   * Only the transcript and suggestion services write the history keys, and they only ever
+   * write real interview content - the placeholder comes from here alone. So a write to any
+   * one of them retires the placeholder, and the flag is recomputed from what the write leaves
+   * behind rather than tracked by each caller.
+   *
+   * The untouched arrays are emptied along with it. `clearAll` runs before every session so
+   * that mixed state is not reachable in practice, but a real transcript sitting beside two
+   * lines of sample suggestion copy is the one shape that would put placeholder text into an
+   * exported report.
+   */
+  private withHistory(updates: Partial<AppState>): Partial<AppState> {
+    const touched = HISTORY_KEYS.filter((key) => updates[key] !== undefined);
+    if (touched.length === 0) return updates;
+
+    const next: Partial<AppState> = { ...updates };
+    if (this.placeholderActive) {
+      for (const key of HISTORY_KEYS) {
+        if (!touched.includes(key)) next[key] = [] as never;
+      }
+      this.placeholderActive = false;
+    }
+
+    next.hasHistory = HISTORY_KEYS.some(
+      (key: HistoryKey) => (next[key] ?? this.state[key]).length > 0
+    );
+    return next;
+  }
+
+  updateState(updatesIn: Partial<AppState>): AppState {
+    const updates = this.withHistory(updatesIn);
+
     // The health-check loops re-report identical values every 1-5s. Broadcasting those would
     // re-render every subscriber for nothing, so only notify when something actually moved.
     const changed = (Object.keys(updates) as (keyof AppState)[]).some(
@@ -184,13 +234,11 @@ export class AppStateService {
   }
 
   addLiveSuggestion(s: LiveSuggestion): void {
-    this.state = { ...this.state, liveSuggestions: [...this.state.liveSuggestions, s] };
-    this.notifyRenderer();
+    this.updateState({ liveSuggestions: [...this.state.liveSuggestions, s] });
   }
 
   addActionSuggestion(s: ActionSuggestion): void {
-    this.state = { ...this.state, actionSuggestions: [...this.state.actionSuggestions, s] };
-    this.notifyRenderer();
+    this.updateState({ actionSuggestions: [...this.state.actionSuggestions, s] });
   }
 }
 

@@ -163,6 +163,16 @@ const electronApi = {
   minimize: () => ipcRenderer.send('window:minimize'),
   maximize: () => ipcRenderer.send('window:maximize'),
 
+  // Main vetoes a close that would drop an unsaved interview and asks here instead. The reply
+  // is what actually closes the window, so exactly one of these two has to be sent back.
+  onSaveHistoryPrompt: (callback: () => void) => {
+    const handler = () => callback();
+    ipcRenderer.on('app:save-history-prompt', handler);
+    return () => ipcRenderer.removeListener('app:save-history-prompt', handler);
+  },
+  confirmClose: () => ipcRenderer.send('window:close-confirmed'),
+  cancelClose: () => ipcRenderer.send('window:close-cancelled'),
+
   zoom: {
     increase: () => ipcRenderer.send('zoom:in'),
     decrease: () => ipcRenderer.send('zoom:out'),
