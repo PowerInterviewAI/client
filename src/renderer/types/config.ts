@@ -31,4 +31,7 @@ export interface Config {
 
   // Suggestions come back as headline + keyword bullets instead of full sentences
   professionalMode: boolean;
+
+  // The user has silenced the headphone notice shown before each session starts
+  headphoneNoticeAcknowledged: boolean;
 }

@@ -34,6 +34,15 @@ export interface RuntimeConfig {
 
   // suggestions come back as headline + keyword bullets instead of full sentences
   professionalMode: boolean;
+
+  /**
+   * The user has ticked "do not show this again" on the headphone notice.
+   *
+   * Opt-out rather than opt-in: whether the call is coming out of speakers is a property of the
+   * machine and the meeting, not a setting this app can read, so the only reliable signal is
+   * the user's own answer and it is asked for again on every session until they silence it.
+   */
+  headphoneNoticeAcknowledged: boolean;
 }
 
 // Default runtime configuration
@@ -57,6 +66,8 @@ const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
 
   // opt-in: prose is what every existing user already expects from the panel
   professionalMode: false,
+
+  headphoneNoticeAcknowledged: false,
 };
 
 // interviewConf (full name, profile, context) used to be cached under `runtime`, but it's now
@@ -254,6 +265,9 @@ export const configStore = new ConfigStore();
   }
   if (raw?.professionalMode === undefined) {
     migration.professionalMode = false;
+  }
+  if (raw?.headphoneNoticeAcknowledged === undefined) {
+    migration.headphoneNoticeAcknowledged = false;
   }
   // perform migration only if there are values to set
   if (Object.keys(migration).length > 0) {
