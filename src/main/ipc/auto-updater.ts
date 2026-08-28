@@ -1,7 +1,11 @@
 import { ipcMain } from 'electron';
 
 import { autoUpdaterService } from '../services/auto-updater.service.js';
-import { allowNextClose, rearmCloseGuard } from '../window-close-guard.js';
+import {
+  allowNextClose,
+  rearmCloseGuard,
+  rearmCloseGuardIfStillRunning,
+} from '../window-close-guard.js';
 
 export function registerAutoUpdaterHandlers(): void {
   ipcMain.handle('auto-updater:check-for-updates', async () => {
@@ -25,9 +29,16 @@ export function registerAutoUpdaterHandlers(): void {
     allowNextClose();
     try {
       const quitting = await autoUpdaterService.quitAndInstall();
-      // Nothing was launched, so the app is staying and the guard goes back on.
-      if (!quitting) rearmCloseGuard();
-      return { success: quitting };
+      if (!quitting) {
+        // Nothing was launched, so the app is staying and the guard goes back on.
+        rearmCloseGuard();
+        return { success: false };
+      }
+
+      // The install was started, but electron-updater says nothing when one fails - it just
+      // does not quit. So the guard is put back unless the quit really begins.
+      rearmCloseGuardIfStillRunning();
+      return { success: true };
     } catch (error) {
       console.error('[IPC] Failed to quit and install:', error);
       rearmCloseGuard();

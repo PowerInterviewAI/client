@@ -181,10 +181,20 @@ an app that refuses to exit, which on Windows ends with the installer killing it
 lost anyway, and the prompt asking about it was on screen for a second. So the updater IPC handler
 calls `allowNextClose()` before it installs, and `rearmCloseGuard()` if nothing was launched
 (`quitAndInstall` returns whether it committed to quitting, which the macOS "no downloaded file"
-path does not). The question is asked one layer up instead, in `update-notification.tsx`, in front
-of the install rather than behind it. `confirmDiscard` is held in a ref there: it closes over the
-app state, so it is a new function on every broadcast from main, and naming it as a dependency
-would re-run the update-status effect several times a second during an interview.
+path does not).
+
+**A failed install reports nothing - it simply does not quit** - so `rearmCloseGuardIfStillRunning()`
+puts the guard back unless `before-quit` has fired by then. Without it one failed update disarms
+the guard for the rest of the session and the next close takes the interview with it, which is
+precisely what the guard exists to stop. The test is `quitting` rather than a window count,
+because re-arming a quit that *is* under way turns the guard into a veto of the close it just
+approved.
+
+The question is asked one layer up, in `update-notification.tsx`, in front of the install rather
+than behind it. It reads `hasHistory` over `appState.get()` on the click instead of through
+`useSaveHistoryGuard`: that hook subscribes to the app state, which during an interview is a new
+object several times a second, and this component would then re-render and re-arm its status
+effect on every ASR partial to answer a question it only asks when a button is pressed.
 
 ### Interview language
 

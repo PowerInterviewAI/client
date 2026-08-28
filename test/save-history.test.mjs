@@ -7,7 +7,7 @@
  * writes rather than the array lengths, and that an export refuses the placeholder - which the
  * length check let through, producing a billed summary of "Transcripts will be here".
  */
-import { createChecker, loadMain, readSource } from './helpers.mjs';
+import { codeOnly, createChecker, loadMain, readSource } from './helpers.mjs';
 
 export async function run() {
   const { check, failures } = createChecker('save-history');
@@ -134,9 +134,18 @@ export async function run() {
   );
   check(
     'and re-arms it when nothing was launched',
-    updaterIpc.includes('if (!quitting) rearmCloseGuard();') &&
-      updaterIpc.includes('catch') &&
-      updaterIpc.split('rearmCloseGuard()').length === 3
+    updaterIpc.includes('rearmCloseGuard();') && updaterIpc.includes('return { success: false };')
+  );
+  // electron-updater says nothing when an install fails - it simply does not quit - so without
+  // this one failed update disarms the guard for the rest of the session and the next close
+  // takes the interview with it.
+  check(
+    'and re-arms it when the install was started but never quit',
+    updaterIpc.includes('rearmCloseGuardIfStillRunning();')
+  );
+  check(
+    'the delayed re-arm stands down for a quit that did start',
+    guard.includes('if (!quitting) closeConfirmed = false;')
   );
 
   const updateToast = readSource(
@@ -144,11 +153,14 @@ export async function run() {
   );
   check(
     'the install asks about an unsaved interview first',
-    updateToast.includes("confirmDiscardRef.current('update')")
+    updateToast.includes("useSaveHistoryPrompt.getState().prompt('update')")
   );
+  check('and only installs when the answer is yes', updateToast.includes('if (!proceed) return;'));
+  // Reading it off the subscribed app state would re-render this component - and re-arm its
+  // status effect - on every ASR partial, to answer a question it only asks on a click.
   check(
-    'and only installs when the answer is yes',
-    updateToast.includes('if (proceed) void quitAndInstall();')
+    'and does not subscribe to the app state to find that out',
+    !codeOnly(updateToast).includes('useSaveHistoryGuard') && updateToast.includes('appState.get()')
   );
 
   return failures;
