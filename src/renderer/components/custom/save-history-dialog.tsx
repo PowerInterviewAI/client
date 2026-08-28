@@ -39,6 +39,11 @@ const COPY: Record<SaveHistoryReason, { title: string; body: string; discard: st
     body: 'Closing drops the transcript and the suggestions from this session.',
     discard: 'Close without saving',
   },
+  update: {
+    title: 'Save this interview before installing the update?',
+    body: 'Installing restarts the app and drops the transcript and the suggestions from this session.',
+    discard: 'Install without saving',
+  },
 };
 
 /**

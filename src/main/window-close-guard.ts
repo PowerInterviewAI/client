@@ -28,6 +28,18 @@ let prompting = false;
 let quitting = false;
 
 export function installCloseGuard(win: BrowserWindow): void {
+  // This module's state outlives the window - the single-instance lock rebuilds one that was
+  // destroyed - and a stale `closeConfirmed` would let the replacement close unasked.
+  closeConfirmed = false;
+  prompting = false;
+
+  // A load replaces the renderer that was going to answer, so the question dies with it.
+  // Without this the flag stays set and every later close is vetoed without a prompt being
+  // sent: a window that cannot be closed at all.
+  win.webContents.on('did-finish-load', () => {
+    prompting = false;
+  });
+
   win.on('close', (event) => {
     if (closeConfirmed || !appStateService.getState().hasHistory) return;
 
@@ -42,6 +54,26 @@ export function installCloseGuard(win: BrowserWindow): void {
     prompting = true;
     wc.send('app:save-history-prompt');
   });
+}
+
+/**
+ * Let the next close through without asking, and put the guard back.
+ *
+ * For a quit that commits to something irreversible *before* it calls `app.quit()`.
+ * `autoUpdater.quitAndInstall()` spawns the installer - and on macOS `shell.openPath` has
+ * already opened the .dmg - and only then quits, so vetoing that quit does not cancel the
+ * update. It leaves an installer running against an app that refuses to exit, which on Windows
+ * ends with the installer killing it: the interview is lost anyway, and the prompt asking about
+ * it was on screen for a second. The question belongs before the install starts, and the
+ * renderer asks it there.
+ */
+export function allowNextClose(): void {
+  closeConfirmed = true;
+}
+
+/** Re-arm after an `allowNextClose()` whose quit never happened. */
+export function rearmCloseGuard(): void {
+  closeConfirmed = false;
 }
 
 export function registerCloseGuardHandlers(): void {

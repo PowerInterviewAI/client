@@ -32,9 +32,22 @@ const DEFAULT_STATE: AppState = {
   hasHistory: false,
 };
 
-/** The three arrays that together make up an interview's history. */
+/** The three arrays a session fills, and that the placeholder seeds. */
 const HISTORY_KEYS = ['transcripts', 'liveSuggestions', 'actionSuggestions'] as const;
-type HistoryKey = (typeof HISTORY_KEYS)[number];
+
+/**
+ * The two an export actually reads.
+ *
+ * `hasHistory` drives the save prompt and the export guard, and for both it has to mean "there
+ * is an interview that saving would capture". `exportTranscript` builds the report from
+ * transcripts and live suggestions alone - action suggestions have never been in it - so
+ * counting them would offer to save something the save cannot contain, and would let the export
+ * guard through on a session whose only content is a screenshot: a billed summarize call over
+ * an empty transcript, writing a report out of nothing. That is the exact failure the guard
+ * exists to stop, reached through a different door.
+ */
+const EXPORTABLE_KEYS = ['transcripts', 'liveSuggestions'] as const;
+type ExportableKey = (typeof EXPORTABLE_KEYS)[number];
 
 // Every broadcast structured-clones the whole renderer state, and they fire on each streamed
 // token and each ASR partial - roughly 20/second across two channels, against a transcript array
@@ -142,11 +155,16 @@ export class AppStateService {
    * lines of sample suggestion copy is the one shape that would put placeholder text into an
    * exported report.
    */
-  private withHistory(updates: Partial<AppState>): Partial<AppState> {
-    const touched = HISTORY_KEYS.filter((key) => updates[key] !== undefined);
-    if (touched.length === 0) return updates;
+  private withHistory(updatesIn: Partial<AppState>): Partial<AppState> {
+    // Derived here and nowhere else. It crosses IPC inside a `Partial<AppState>` the renderer
+    // composes, and the close guard trusts it, so a caller that set it - by mistake, or by
+    // echoing back state it was sent - would switch the save prompt off with no symptom.
+    const next: Partial<AppState> = { ...updatesIn };
+    delete next.hasHistory;
 
-    const next: Partial<AppState> = { ...updates };
+    const touched = HISTORY_KEYS.filter((key) => next[key] !== undefined);
+    if (touched.length === 0) return next;
+
     if (this.placeholderActive) {
       for (const key of HISTORY_KEYS) {
         if (!touched.includes(key)) next[key] = [] as never;
@@ -154,8 +172,8 @@ export class AppStateService {
       this.placeholderActive = false;
     }
 
-    next.hasHistory = HISTORY_KEYS.some(
-      (key: HistoryKey) => (next[key] ?? this.state[key]).length > 0
+    next.hasHistory = EXPORTABLE_KEYS.some(
+      (key: ExportableKey) => (next[key] ?? this.state[key]).length > 0
     );
     return next;
   }

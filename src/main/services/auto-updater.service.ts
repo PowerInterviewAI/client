@@ -277,17 +277,22 @@ class AutoUpdaterService {
     }
   }
 
-  async quitAndInstall(): Promise<void> {
+  /**
+   * @returns whether the app is now on its way out. False means nothing was launched and
+   * nothing was quit, which the close guard has to know so it can re-arm.
+   */
+  async quitAndInstall(): Promise<boolean> {
     if (process.platform === 'darwin') {
       if (!this.macDownloadedFilePath) {
-        return;
+        return false;
       }
       await shell.openPath(this.macDownloadedFilePath);
       app.quit();
-      return;
+      return true;
     }
 
     autoUpdater.quitAndInstall(false, true);
+    return true;
   }
 
   getCurrentVersion(): string {

@@ -136,13 +136,21 @@ already a live defect on the export path: Export on a machine that had never run
 passed the length check and billed a summarize call on "Transcripts will be here", then wrote the
 model's answer into a document titled as a record of the candidate's interview.
 
-`AppState.hasHistory` is the replacement, derived in `withHistory()` and never set by a caller.
-Only the transcript and suggestion services write the three history keys and they only ever write
-real content, so a write to any of them retires the placeholder and the flag is recomputed from
-what the write leaves behind. The untouched arrays are emptied in the same write: `clearAll()`
-runs before every session so mixed state is not reachable today, but a real transcript sitting
-beside two lines of sample suggestion copy is the one shape that would put placeholder text into
-an exported report. The export guard and `nothingToExport` both read the flag now, and
+`AppState.hasHistory` is the replacement, derived in `withHistory()` and never set by a caller -
+`updateState` strips it off incoming updates, because it arrives inside a `Partial<AppState>` the
+renderer composes and the close guard trusts it. Only the transcript and suggestion services
+write the three history keys and they only ever write real content, so a write to any of them
+retires the placeholder and the flag is recomputed from what the write leaves behind. The
+untouched arrays are emptied in the same write: `clearAll()` runs before every session so mixed
+state is not reachable today, but a real transcript sitting beside two lines of sample suggestion
+copy is the one shape that would put placeholder text into an exported report.
+
+**The flag is read from the transcripts and live suggestions only, not from all three.** Those are
+what `exportTranscript` builds the report out of; action suggestions have never been in it. So a
+session whose only content is a screenshot has nothing a save could capture, and counting it would
+both offer to save what the save cannot contain and let the export guard through on an empty
+transcript - the billed summarize call over nothing that the guard exists to stop, reached through
+a different door. The export guard and `nothingToExport` both read the flag now, and
 `test/save-history.test.mjs` pins it.
 
 **Closing is the one that cannot ask on its own behalf.** Clear and Start are renderer-initiated
@@ -165,6 +173,18 @@ chose to keep.
 A save that the user cancels at the system save dialog leaves the prompt open rather than reading
 as a decision to discard, and so does a failed export - going ahead there would destroy the
 interview on the one path where keeping it did not work.
+
+**Installing an update is a quit the guard must not veto.** `quitAndInstall()` launches the
+installer - on macOS `shell.openPath` has already opened the .dmg - and requests the quit
+*afterwards*, so a veto there does not cancel the update. It leaves an installer running against
+an app that refuses to exit, which on Windows ends with the installer killing it: the interview is
+lost anyway, and the prompt asking about it was on screen for a second. So the updater IPC handler
+calls `allowNextClose()` before it installs, and `rearmCloseGuard()` if nothing was launched
+(`quitAndInstall` returns whether it committed to quitting, which the macOS "no downloaded file"
+path does not). The question is asked one layer up instead, in `update-notification.tsx`, in front
+of the install rather than behind it. `confirmDiscard` is held in a ref there: it closes over the
+app state, so it is a new function on every broadcast from main, and naming it as a dependency
+would re-run the update-status effect several times a second during an interview.
 
 ### Interview language
 

@@ -22,10 +22,7 @@ export async function run() {
     placeholder.transcripts.length > 0 && placeholder.liveSuggestions.length > 0
   );
   check('the placeholder is not history', placeholder.hasHistory === false);
-  check(
-    'the renderer is told the same',
-    appStateService.getRendererState().hasHistory === false
-  );
+  check('the renderer is told the same', appStateService.getRendererState().hasHistory === false);
 
   let exportError = null;
   try {
@@ -64,6 +61,39 @@ export async function run() {
   });
   check('a suggestion alone is history too', appStateService.getState().hasHistory === true);
 
+  // Action suggestions are not in the exported report - `exportTranscript` builds from
+  // transcripts and live suggestions alone - so a session holding only a screenshot has nothing
+  // a save could capture. Counting it would offer to save what the save cannot contain, and
+  // would put a billed summarize call over an empty transcript back on the table.
+  appStateService.updateState({ liveSuggestions: [] });
+  appStateService.updateState({
+    actionSuggestions: [{ timestamp: 3, last_question: 'q', answer: 'a', image_urls: [] }],
+  });
+  check(
+    'a screenshot alone is not something a save could capture',
+    appStateService.getState().hasHistory === false
+  );
+
+  let screenshotExportError = null;
+  try {
+    await toolsService.exportTranscript('md');
+  } catch (e) {
+    screenshotExportError = e;
+  }
+  check('and exporting it is refused rather than billed', screenshotExportError !== null);
+  appStateService.updateState({ actionSuggestions: [] });
+
+  // Derived in main and trusted by the close guard, so a caller must not be able to set it.
+  // It reaches `updateState` inside a Partial<AppState> the renderer composes.
+  appStateService.updateState({
+    transcripts: [{ timestamp: 4, text: 'real', speaker: 'other', isFinal: true }],
+  });
+  appStateService.updateState({ hasHistory: false });
+  check('an incoming hasHistory is ignored', appStateService.getState().hasHistory === true);
+  appStateService.updateState({ transcripts: [] });
+  appStateService.updateState({ hasHistory: true });
+  check('in both directions', appStateService.getState().hasHistory === false);
+
   appStateService.setPlaceholderState();
   check(
     're-seeding the placeholder is not history again',
@@ -87,6 +117,38 @@ export async function run() {
   check(
     'a crashed renderer cannot hold the window open',
     guard.includes('wc.isDestroyed() || wc.isCrashed()')
+  );
+  check(
+    'a reload cannot strand the veto with nobody left to answer',
+    guard.includes("win.webContents.on('did-finish-load'")
+  );
+
+  // The installer is launched *inside* quitAndInstall and the quit requested after it, so a
+  // guard still armed at that point vetoes a quit the update has already committed to - leaving
+  // an installer running against an app that will not exit. Source-level because driving
+  // electron-updater in this harness is not something the stub can do.
+  const updaterIpc = readSource(new URL('../src/main/ipc/auto-updater.ts', import.meta.url));
+  check(
+    'the updater disarms the close guard before installing',
+    updaterIpc.indexOf('allowNextClose()') < updaterIpc.indexOf('quitAndInstall()')
+  );
+  check(
+    'and re-arms it when nothing was launched',
+    updaterIpc.includes('if (!quitting) rearmCloseGuard();') &&
+      updaterIpc.includes('catch') &&
+      updaterIpc.split('rearmCloseGuard()').length === 3
+  );
+
+  const updateToast = readSource(
+    new URL('../src/renderer/components/custom/update-notification.tsx', import.meta.url)
+  );
+  check(
+    'the install asks about an unsaved interview first',
+    updateToast.includes("confirmDiscardRef.current('update')")
+  );
+  check(
+    'and only installs when the answer is yes',
+    updateToast.includes('if (proceed) void quitAndInstall();')
   );
 
   return failures;
