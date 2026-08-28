@@ -35,9 +35,27 @@ const MAX_LAG_MS = 800;
 // every estimate toward the noise floor.
 const REF_FLOOR_DBFS = -55;
 
-// Below this the correlation is noise. Reported rather than enforced: the point of the run is to
-// find out where the real threshold should sit.
+// Peak height alone cannot tell coupling from noise, and this is the single most important thing
+// the probe has measured so far. The search takes the MAX over ~120 candidate lags, and the max of
+// many correlations is biased upward, so unrelated signals score far higher than intuition
+// suggests: measured 0.53 on pure silence and 0.57 on two independent bursty signals. A threshold
+// of 0.5 - which looks entirely reasonable written down - would call both of those "coupled".
+//
+// Getting that wrong has an asymmetric cost. A false "coupled" on a HEADPHONE user is what leads a
+// gate to start cutting a microphone that was never echoing anything.
+//
+// So the discriminator is peak PROMINENCE: how far the best lag stands above the typical lag. A
+// real echo puts a sharp peak on an otherwise flat correlation surface; unrelated signals produce
+// a surface that is uniformly mediocre, with a high maximum and no peak.
+//
+// A starting threshold, to be re-derived from real runs rather than trusted. Against synthetic
+// signals an unrelated pair scored 0.28 and a clean echo 0.87-1.13, so 0.5 sits in the gap - but
+// the synthetic echo is a perfectly scaled copy and a real one will score lower, while the
+// synthetic "unrelated" pair shares a burst grid and so scores HIGHER than truly unrelated audio.
+// Both ends of that gap are therefore optimistic. The per-second output prints the raw numbers
+// regardless of this threshold, which is the point: measure the real distribution, then set it.
 const CORR_MIN = 0.5;
+const PROMINENCE_MIN = 0.5;
 
 const MIN_OVERLAP_FRAMES = 50; // 0.5 s
 
@@ -103,6 +121,7 @@ class CouplingMeter {
     this.lastXcorrAt = 0;
     this.lag = null;
     this.correlation = null;
+    this.prominence = null;
     this.erlDb = null;
     this.samples = [];
   }
@@ -113,6 +132,11 @@ class CouplingMeter {
     if (this.refDb.length > HISTORY_FRAMES) this.refDb.shift();
     if (this.micDb.length > HISTORY_FRAMES) this.micDb.shift();
 
+    // Paced on the wall clock, which is fine here because frames genuinely arrive at 100/s from a
+    // live capture. Worth knowing before this is copied into the gate: it makes the class
+    // untestable from synthetic input, since a test loop feeds thousands of frames in a few
+    // milliseconds and no interval ever elapses. A gate that needs unit tests should pace on a
+    // frame counter instead.
     const now = performance.now();
     if (now - this.lastXcorrAt >= XCORR_INTERVAL_MS) {
       this.lastXcorrAt = now;
@@ -126,9 +150,11 @@ class CouplingMeter {
 
     let bestLag = null;
     let bestCorr = -2;
+    const all = [];
     for (let lag = minLag; lag <= maxLag; lag++) {
       const corr = correlateAt(this.refDb, this.micDb, lag);
       if (corr === null) continue;
+      all.push(corr);
       if (corr > bestCorr) {
         bestCorr = corr;
         bestLag = lag;
@@ -138,6 +164,10 @@ class CouplingMeter {
 
     this.lag = bestLag;
     this.correlation = bestCorr;
+    // Against the median rather than the mean: a true echo's peak is broad enough to span several
+    // lags, and those neighbours would drag a mean up with it and hide the very prominence being
+    // measured.
+    this.prominence = bestCorr - median(all);
 
     // Only over frames with a live reference, or the ratio is two noise floors divided.
     const ratios = [];
@@ -150,12 +180,16 @@ class CouplingMeter {
     }
     this.erlDb = median(ratios);
 
-    // A live reference is required, not just a high peak. Two noise floors correlate: a silent
-    // run of this probe reached 0.53 with nothing playing at all, which is above the 0.5 that
-    // looked like a reasonable CORR_MIN. So the correlation alone cannot tell coupling from
-    // silence, and any gate built on this has to carry the same reference-active condition.
-    if (bestCorr >= CORR_MIN && this.erlDb !== null) {
-      this.samples.push({ delayMs: bestLag * FRAME_MS, correlation: bestCorr, erlDb: this.erlDb });
+    // All three conditions, and each rules out a different way of being wrong: a live reference
+    // (or the ratio is two noise floors divided), a peak worth having, and a peak that actually
+    // stands out from its neighbours rather than merely topping a flat surface.
+    if (this.isCoupled()) {
+      this.samples.push({
+        delayMs: bestLag * FRAME_MS,
+        correlation: bestCorr,
+        prominence: this.prominence,
+        erlDb: this.erlDb,
+      });
     }
   }
 
@@ -165,14 +199,25 @@ class CouplingMeter {
     return (100 * active) / series.length;
   }
 
+  isCoupled() {
+    return (
+      this.correlation !== null &&
+      this.correlation >= CORR_MIN &&
+      this.prominence !== null &&
+      this.prominence >= PROMINENCE_MIN &&
+      this.erlDb !== null
+    );
+  }
+
   snapshot() {
     return {
       delayMs: this.lag === null ? null : this.lag * FRAME_MS,
       correlation: this.correlation,
+      prominence: this.prominence,
       erlDb: this.erlDb,
       refActivePct: this.activePct(this.refDb),
       micActivePct: this.activePct(this.micDb),
-      coupled: this.correlation !== null && this.correlation >= CORR_MIN && this.erlDb !== null,
+      coupled: this.isCoupled(),
     };
   }
 
@@ -180,6 +225,7 @@ class CouplingMeter {
     if (this.samples.length === 0) return { samples: 0, searchWindow: [MIN_LAG_MS, MAX_LAG_MS] };
     const delays = this.samples.map((s) => s.delayMs);
     const corrs = this.samples.map((s) => s.correlation);
+    const proms = this.samples.map((s) => s.prominence);
     const erls = this.samples.map((s) => s.erlDb).filter((v) => v !== null);
     return {
       samples: this.samples.length,
@@ -187,6 +233,7 @@ class CouplingMeter {
       delayMsMin: Math.min(...delays),
       delayMsMax: Math.max(...delays),
       correlationMedian: median(corrs),
+      prominenceMedian: median(proms),
       erlDbMedian: median(erls),
       searchWindow: [MIN_LAG_MS, MAX_LAG_MS],
     };

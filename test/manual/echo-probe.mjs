@@ -43,14 +43,38 @@ import { fileURLToPath } from 'node:url';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
 const args = process.argv.slice(2);
+
+const FLAGS = ['--no-aec', '--no-ns', '--no-agc'];
+const VALUES = ['seconds', 'device'];
+
+// Rejected rather than ignored, because the whole point of the flags is the A/B: a mistyped
+// `--noaec` that is silently dropped runs with echo cancellation ON and reports a perfectly
+// plausible number for the configuration you were trying to rule out.
+const unknown = args.filter(
+  (a) => !FLAGS.includes(a) && !VALUES.some((name) => a.startsWith(`--${name}=`))
+);
+if (unknown.length > 0) {
+  console.error(`Unknown argument(s): ${unknown.join(' ')}`);
+  console.error(`Expected: ${FLAGS.join(' ')} ${VALUES.map((v) => `--${v}=...`).join(' ')}`);
+  process.exit(2);
+}
+
 const flag = (name) => args.includes(name);
 const value = (name, fallback) => {
   const hit = args.find((a) => a.startsWith(`--${name}=`));
   return hit === undefined ? fallback : hit.slice(name.length + 3);
 };
 
+const seconds = Number(value('seconds', 45));
+if (!Number.isFinite(seconds) || seconds <= 0) {
+  // Left unchecked this reaches setTimeout as NaN, which fires immediately - so the run ends
+  // before it starts and reports "no correlated frames", which reads like a headphone result.
+  console.error(`--seconds must be a positive number, got "${value('seconds', '')}"`);
+  process.exit(2);
+}
+
 const options = {
-  seconds: Number(value('seconds', 45)),
+  seconds,
   device: value('device', ''),
   echoCancellation: !flag('--no-aec'),
   noiseSuppression: !flag('--no-ns'),
@@ -79,8 +103,8 @@ ipcMain.on('probe:ready', (_event, info) => {
   console.log(
     `\nPlay interviewer audio through the speakers for ${options.seconds}s. Stay quiet.\n`
   );
-  console.log('    delayMs   corr    erlDb   ref%   mic%   coupled');
-  console.log('    -------   ----    -----   ----   ----   -------');
+  console.log('    delayMs   corr   prom    erlDb   ref%   mic%   coupled');
+  console.log('    -------   ----   ----    -----   ----   ----   -------');
 });
 
 ipcMain.on('probe:metrics', (_event, m) => {
@@ -88,6 +112,7 @@ ipcMain.on('probe:metrics', (_event, m) => {
   console.log(
     `    ${String(m.delayMs === null ? '--' : m.delayMs).padStart(7)}` +
       `   ${num(m.correlation, 2).padStart(4)}` +
+      `   ${num(m.prominence, 2).padStart(4)}` +
       `   ${num(m.erlDb).padStart(6)}` +
       `   ${num(m.refActivePct, 0).padStart(4)}` +
       `   ${num(m.micActivePct, 0).padStart(4)}` +
@@ -107,6 +132,7 @@ ipcMain.on('probe:done', (_event, summary) => {
       `delayMs            : median ${summary.delayMsMedian}, range ${summary.delayMsMin}..${summary.delayMsMax}`
     );
     console.log(`correlation        : median ${num(summary.correlationMedian, 2)}`);
+    console.log(`prominence         : median ${num(summary.prominenceMedian, 2)}`);
     console.log(`erlDb              : median ${num(summary.erlDbMedian)}`);
     console.log(`search window      : ${summary.searchWindow[0]}..${summary.searchWindow[1]} ms`);
 
