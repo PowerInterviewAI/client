@@ -101,6 +101,20 @@ export interface AppState {
   interviewConfig: InterviewConfig;
   /** False until the account's config has been read this session; editing is unsafe before then. */
   interviewConfigLoaded: boolean;
+  /**
+   * Whether there is an interview that saving would actually capture.
+   *
+   * Derived, never set by a caller - `updateState` strips it off incoming updates. The panels
+   * are seeded with one transcript and two suggestions so an empty app has something to show,
+   * so a length check cannot tell an interview worth saving from the sample text, and
+   * everything that destroys history asks before it does - a question nobody should be asked
+   * about placeholder copy.
+   *
+   * Read from the transcripts and live suggestions only, because those are what the export
+   * writes. Action suggestions are not in the report, so a session holding nothing else has
+   * nothing to save.
+   */
+  hasHistory: boolean;
 }
 
 /** The app state as sent to the renderer, with the interview config reduced to a summary. */

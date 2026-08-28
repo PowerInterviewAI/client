@@ -2,11 +2,22 @@ import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 
 import { UpdateStatus, useAutoUpdater } from '@/hooks/use-auto-updater';
+import { useSaveHistoryGuard } from '@/hooks/use-save-history-guard';
 
 export function UpdateNotification() {
   const { updateStatus, quitAndInstall } = useAutoUpdater();
+  const { confirmDiscard } = useSaveHistoryGuard();
   const lastStatusRef = useRef<UpdateStatus | null>(null);
   const downloadToastIdRef = useRef<string | number | null>(null);
+
+  // Held in a ref rather than listed as a dependency. `confirmDiscard` closes over the current
+  // app state, so it is a new function on every broadcast from main - several a second during
+  // an interview - and naming it in the effect below would re-run the whole status machine
+  // that often.
+  const confirmDiscardRef = useRef(confirmDiscard);
+  useEffect(() => {
+    confirmDiscardRef.current = confirmDiscard;
+  });
 
   useEffect(() => {
     if (!updateStatus) return;
@@ -65,7 +76,14 @@ export function UpdateNotification() {
             duration: Infinity,
             action: {
               label: isMac ? 'Open Installer' : 'Restart Now',
-              onClick: () => quitAndInstall(),
+              // Installing takes the app down, so it loses the interview exactly as closing
+              // does - and the install cannot be vetoed once started, because the installer is
+              // launched before the quit. So the question is asked here, in front of it.
+              onClick: () => {
+                void confirmDiscardRef.current('update').then((proceed) => {
+                  if (proceed) void quitAndInstall();
+                });
+              },
             },
           });
         }

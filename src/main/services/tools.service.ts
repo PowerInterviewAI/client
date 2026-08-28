@@ -25,7 +25,12 @@ class ToolsService {
     // call whose only possible output is invented, and it lands in a document the candidate is
     // told is a record of their interview. The export button is live whenever the assistant is
     // idle, which includes every launch before the first session.
-    if (transcripts.length === 0 && suggestions.length === 0) {
+    //
+    // On `hasHistory` rather than on the array lengths: those are never zero, because the panels
+    // are seeded with placeholder copy on launch and again after every Clear. So the length
+    // check passed on a machine that had never run an interview, and the document it produced
+    // was a model's summary of "Transcripts will be here".
+    if (!appStateService.getState().hasHistory) {
       throw new Error('There is nothing to export yet. Run an interview first.');
     }
 

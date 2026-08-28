@@ -42,4 +42,9 @@ export interface AppState {
   providedLLMModel?: string;
   interviewConfig: InterviewConfigSummary;
   interviewConfigLoaded: boolean;
+  /**
+   * Whether the arrays above hold a real interview rather than the placeholder copy the panels
+   * are seeded with. Derived in main; the renderer only reads it.
+   */
+  hasHistory: boolean;
 }

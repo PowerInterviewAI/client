@@ -7,6 +7,7 @@ import usePointerLockGuard from '@/hooks/use-pointer-lock-guard';
 import type { PushNotification } from '@/types/push-notification';
 
 import ConfigurationDialog from './configuration-dialog';
+import SaveHistoryDialog from './save-history-dialog';
 import Titlebar from './titlebar';
 import { UpdateNotification } from './update-notification';
 
@@ -60,6 +61,9 @@ export default function MainFrame({ children }: { children: React.ReactNode }) {
         </main>
 
         <ConfigurationDialog isOpen={isConfigOpen} onOpenChange={setIsConfigOpen} />
+        {/* Mounted here rather than on the interview page: it also answers a close prompt from
+            main, which can arrive while the user is on the login or payment route. */}
+        <SaveHistoryDialog />
       </MainContainerContext.Provider>
     </ConfigurationDialogContext.Provider>
   );

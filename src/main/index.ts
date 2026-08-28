@@ -30,6 +30,7 @@ import { restoreWindow, setWindowReference } from './services/window-control.ser
 import { setWindowReference as setZoomWindowReference } from './services/zoom.service.js';
 import { configStore } from './store/config.store.js';
 import { EnvUtil } from './utils/env.js';
+import { installCloseGuard, registerCloseGuardHandlers } from './window-close-guard.js';
 
 let win: BrowserWindow | null = null;
 
@@ -170,6 +171,10 @@ async function createWindow() {
     }
   });
 
+  // After the bounds listener, so a close the guard vetoes has still recorded where the window
+  // was - the user is about to be asked a question, not to have their layout forgotten.
+  installCloseGuard(win);
+
   // Clear cache before loading
   await win.webContents.session.clearCache();
 
@@ -209,6 +214,7 @@ app.whenReady().then(async () => {
   registerToolsHandlers();
   registerAutoUpdaterHandlers();
   registerExternalHandlers();
+  registerCloseGuardHandlers();
 
   // Create window
   await createWindow();

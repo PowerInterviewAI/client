@@ -118,6 +118,74 @@ the default at that moment, in an effect - never in the render body, where the s
 re-enters React mid-commit and a failed IPC call rolls the value back into the same condition that
 triggered it, one write per frame.
 
+### Saving the interview before it is lost
+
+The transcript and the suggestions live only in main-process memory. Nothing is written to disk
+until an export, so the three actions that empty them - Clear, Start (which opens with
+`clearAll()`), and closing the app - are the only paths in the app that destroy work with no way
+back. All three now ask first, through one dialog:
+[save-history-dialog.tsx](src/renderer/components/custom/save-history-dialog.tsx), mounted once in
+`MainFrame` because the three do not share a screen - the control panel is not rendered in stealth
+mode, and the close prompt arrives from main with no component of its own.
+
+**The question is only worth asking about a real interview, and length cannot tell you that.**
+`setPlaceholderState()` seeds the panels with one transcript and two suggestions so an empty app
+has something to show, and it runs on launch and again after every Clear - so
+`transcripts.length === 0` is never true and the old guard let the placeholder through. That was
+already a live defect on the export path: Export on a machine that had never run an interview
+passed the length check and billed a summarize call on "Transcripts will be here", then wrote the
+model's answer into a document titled as a record of the candidate's interview.
+
+`AppState.hasHistory` is the replacement, derived in `withHistory()` and never set by a caller -
+`updateState` strips it off incoming updates, because it arrives inside a `Partial<AppState>` the
+renderer composes and the close guard trusts it. Only the transcript and suggestion services
+write the three history keys and they only ever write real content, so a write to any of them
+retires the placeholder and the flag is recomputed from what the write leaves behind. The
+untouched arrays are emptied in the same write: `clearAll()` runs before every session so mixed
+state is not reachable today, but a real transcript sitting beside two lines of sample suggestion
+copy is the one shape that would put placeholder text into an exported report.
+
+**The flag is read from the transcripts and live suggestions only, not from all three.** Those are
+what `exportTranscript` builds the report out of; action suggestions have never been in it. So a
+session whose only content is a screenshot has nothing a save could capture, and counting it would
+both offer to save what the save cannot contain and let the export guard through on an empty
+transcript - the billed summarize call over nothing that the guard exists to stop, reached through
+a different door. The export guard and `nothingToExport` both read the flag now, and
+`test/save-history.test.mjs` pins it.
+
+**Closing is the one that cannot ask on its own behalf.** Clear and Start are renderer-initiated
+and confirm before they act; a close is decided in main - the window button, Cmd+Q, `app.quit()` -
+and the renderer would hear about it too late to matter. So
+[window-close-guard.ts](src/main/window-close-guard.ts) vetoes the close, sends
+`app:save-history-prompt`, and the renderer closes the window itself by replying. Exactly one of
+`window:close-confirmed` / `window:close-cancelled` has to come back or the app cannot be closed
+at all, which is why the guard gives up on a renderer that is destroyed or crashed rather than
+holding the window open with nobody to ask.
+
+Three pieces of state, each for a failure the others do not cover. `closeConfirmed` lets the
+answered close through instead of re-prompting on it. `prompting` stops a second close - the
+window button pressed while the dialog is up - stacking another prompt. And `quitting`, set from
+`before-quit`, is what makes Cmd+Q work: vetoing the close *cancels the quit*, so confirming has
+to call `app.quit()` again rather than `win.close()`, or the app would sit there with one window
+fewer. Cancelling resets it, or the next Cmd+Q would take that branch for a session the user just
+chose to keep.
+
+A save that the user cancels at the system save dialog leaves the prompt open rather than reading
+as a decision to discard, and so does a failed export - going ahead there would destroy the
+interview on the one path where keeping it did not work.
+
+**Installing an update is a quit the guard must not veto.** `quitAndInstall()` launches the
+installer - on macOS `shell.openPath` has already opened the .dmg - and requests the quit
+*afterwards*, so a veto there does not cancel the update. It leaves an installer running against
+an app that refuses to exit, which on Windows ends with the installer killing it: the interview is
+lost anyway, and the prompt asking about it was on screen for a second. So the updater IPC handler
+calls `allowNextClose()` before it installs, and `rearmCloseGuard()` if nothing was launched
+(`quitAndInstall` returns whether it committed to quitting, which the macOS "no downloaded file"
+path does not). The question is asked one layer up instead, in `update-notification.tsx`, in front
+of the install rather than behind it. `confirmDiscard` is held in a ref there: it closes over the
+app state, so it is a new function on every broadcast from main, and naming it as a dependency
+would re-run the update-status effect several times a second during an interview.
+
 ### Interview language
 
 One setting decides three things: which speech model transcribes the call, what language suggestions come back in, and the language of the exported report. `Language` is mirrored across the processes the way `SuggestionMode` is - [src/main/types/language.ts](src/main/types/language.ts) for the request bodies, [src/renderer/types/language.ts](src/renderer/types/language.ts) for the same enum plus the display metadata the picker needs. 28 languages, which is exactly what the backend's Deepgram Nova-3 ASR streams: offering one the ASR cannot hear would not degrade, it would answer a question that was never asked.

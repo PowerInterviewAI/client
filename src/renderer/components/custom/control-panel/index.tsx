@@ -8,6 +8,7 @@ import { useAudioInputDevices } from '@/hooks/use-audio-devices';
 import { useConfigStore } from '@/hooks/use-config-store';
 import { useConfigurationDialog } from '@/hooks/use-configuration-dialog';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
+import { useSaveHistoryGuard } from '@/hooks/use-save-history-guard';
 import { isMac } from '@/lib/consts';
 import { getElectron } from '@/lib/utils';
 import { RunningState } from '@/types/app-state';
@@ -34,6 +35,7 @@ export default function ControlPanel() {
   const { runningState, appState } = useAppState();
   const { config } = useConfigStore();
   const { openConfigurationDialog } = useConfigurationDialog();
+  const { confirmDiscard } = useSaveHistoryGuard();
   const [permGateOpen, setPermGateOpen] = useState(false);
 
   const { devices: audioInputDevices, ready: audioDevicesReady } = useAudioInputDevices();
@@ -110,6 +112,12 @@ export default function ControlPanel() {
 
   const handleStartClick = async () => {
     if (!checkCanStart()) return;
+
+    // `startAssistant` opens with `clearAll()`, so the previous interview is gone the moment
+    // this goes ahead. Asked before the permission gate rather than after: a user who is about
+    // to be sent into System Settings should not have answered a question first that the trip
+    // makes moot.
+    if (!(await confirmDiscard('start'))) return;
 
     if (isMac) {
       const electron = getElectron();
