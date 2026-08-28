@@ -40,6 +40,14 @@ export async function run(userDataDir) {
     cfg.email === 'a@b.c' && cfg.autoScrollTranscript === false
   );
 
+  // Backfilled by the migration IIFE at the bottom of the store, which runs on import. A key
+  // that arrives undefined reads as "not acknowledged" either way, but the notice this one
+  // gates is shown on every Start until it is set, so an absent key must not read as silenced.
+  check(
+    'a store written before the headphone notice existed defaults to showing it',
+    cfg.headphoneNoticeAcknowledged === false
+  );
+
   // The data-loss trap: an unrelated write must not drop the not-yet-migrated copy.
   store.configStore.updateConfig({ sessionToken: 'tok' });
   const afterWrite = store.configStore.getStoredRuntime();

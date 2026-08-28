@@ -222,6 +222,37 @@ The app's own chrome is **not** localised, deliberately: an English button on a 
 
 **The exported report is the one exception**, because it is the one artifact that leaves the machine and is handed to someone who was not there. The summarize prompt translates the headings *it* writes; the five words the client wraps around them - Transcripts, Suggestions, Suggestion, Interviewer, Date/Time - live in [export-labels.ts](src/main/utils/export-labels.ts) and follow the same setting, or the export is the half-translated document that prompt exists to avoid. The candidate is named rather than labelled, and timestamps stay on the machine's locale. `test/tools-export.test.mjs` pins that every enum member has a full set and that an unknown code falls back to English rather than throwing.
 
+### Headphones
+
+`ch_0` is a loopback of the system's render endpoint, which is the same sound the speakers are
+playing. So on speakers the microphone hears the interviewer a fraction of a second after the
+loopback does, and the same words arrive on **both** channels. The transcript duplicates, which is
+visible; the damaging half is not. The echo lands as a recent `Self` final, so
+`skipDueToRecentSelf` in [transcript.service.ts](src/main/services/transcript.service.ts)
+suppresses the live suggestion **for the question that was just asked**, with no error anywhere.
+See #111 for the measurements and the longer-term suppression work.
+
+[headphone-notice-dialog.tsx](src/renderer/components/custom/headphone-notice-dialog.tsx) is shown
+before every session until the user silences it, and it says what actually goes wrong rather than
+recommending headphones for "best results" - the cost of ignoring it is answers that never appear.
+
+**Nothing here detects the output route, and the dialog does not pretend to.**
+`enumerateDevices()` reports what exists, not what the sound is coming out of, and a label match on
+"headset" would be wrong in both directions: it would clear a user whose headphones are plugged in
+but not selected, and nag one whose USB interface is named after a mixer. The user's answer is the
+only signal available, so it is asked for.
+
+It is the first thing Start asks, ahead of the save prompt and the macOS permission gate, because
+on speakers the echo is already in the audio before the first question and because it is the
+cheapest of the three to back out of - cancelling here means the other two were never asked.
+`startAfterNotice` holds everything after it so the dialog can hand the start back without
+duplicating those checks.
+
+`headphoneNoticeAcknowledged` is opt-out rather than opt-in: whether the call is on speakers is a
+property of the machine and the meeting, not a setting, so it can change between sessions on the
+same install. The preference is written when the user goes through, not when they tick the box - a
+tick followed by Cancel would otherwise silence a warning they never acted on.
+
 ### Audio input device
 
 **The microphone can be changed mid-interview**, and for the same reason the language can: the case
