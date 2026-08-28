@@ -1,23 +1,37 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 
 import { UpdateStatus, useAutoUpdater } from '@/hooks/use-auto-updater';
-import { useSaveHistoryGuard } from '@/hooks/use-save-history-guard';
+import { useSaveHistoryPrompt } from '@/hooks/use-save-history-guard';
+import { getElectron } from '@/lib/utils';
 
 export function UpdateNotification() {
   const { updateStatus, quitAndInstall } = useAutoUpdater();
-  const { confirmDiscard } = useSaveHistoryGuard();
   const lastStatusRef = useRef<UpdateStatus | null>(null);
   const downloadToastIdRef = useRef<string | number | null>(null);
 
-  // Held in a ref rather than listed as a dependency. `confirmDiscard` closes over the current
-  // app state, so it is a new function on every broadcast from main - several a second during
-  // an interview - and naming it in the effect below would re-run the whole status machine
-  // that often.
-  const confirmDiscardRef = useRef(confirmDiscard);
-  useEffect(() => {
-    confirmDiscardRef.current = confirmDiscard;
-  });
+  /**
+   * Installing takes the app down, so it loses the interview exactly as closing does - and
+   * unlike a close it cannot be vetoed once started, because the installer is launched before
+   * the quit is requested. So the question is asked here, in front of it.
+   *
+   * `hasHistory` is read from main on the click rather than through `useSaveHistoryGuard`.
+   * That hook subscribes to the app state, which during an interview is a new object several
+   * times a second, and this component would then re-render - and re-arm its status effect -
+   * on every ASR partial to answer a question it only asks when a button is pressed. One round
+   * trip on the click also reads the flag where it is derived rather than a broadcast behind.
+   */
+  const confirmThenInstall = useCallback(async () => {
+    const electron = getElectron();
+    const state = await electron?.appState.get();
+
+    if (state?.hasHistory) {
+      const proceed = await useSaveHistoryPrompt.getState().prompt('update');
+      if (!proceed) return;
+    }
+
+    await quitAndInstall();
+  }, [quitAndInstall]);
 
   useEffect(() => {
     if (!updateStatus) return;
@@ -76,14 +90,7 @@ export function UpdateNotification() {
             duration: Infinity,
             action: {
               label: isMac ? 'Open Installer' : 'Restart Now',
-              // Installing takes the app down, so it loses the interview exactly as closing
-              // does - and the install cannot be vetoed once started, because the installer is
-              // launched before the quit. So the question is asked here, in front of it.
-              onClick: () => {
-                void confirmDiscardRef.current('update').then((proceed) => {
-                  if (proceed) void quitAndInstall();
-                });
-              },
+              onClick: () => void confirmThenInstall(),
             },
           });
         }
@@ -97,7 +104,7 @@ export function UpdateNotification() {
         console.error('[UpdateNotification] Update error:', error);
         break;
     }
-  }, [updateStatus, quitAndInstall]);
+  }, [updateStatus, confirmThenInstall]);
 
   return null;
 }

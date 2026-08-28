@@ -76,6 +76,27 @@ export function rearmCloseGuard(): void {
   closeConfirmed = false;
 }
 
+// Long enough for `app.quit()` to have emitted `before-quit`, which happens in the tick after
+// the installer is spawned. Nothing waits on this, so being generous costs nothing.
+const QUIT_GRACE_MS = 5_000;
+
+/**
+ * Re-arm unless the quit actually started.
+ *
+ * `autoUpdater.quitAndInstall()` reports nothing back when the install fails - it simply does
+ * not quit - so this is the only way to notice that the app is still here. Left unchecked, one
+ * failed update would disarm the guard for the rest of the session and the next close would
+ * take the interview with it, silently, which is the whole thing this file exists to stop.
+ *
+ * `quitting` is the test rather than a window count, because re-arming a quit that *is* under
+ * way would turn the guard into a veto of the close it had just approved.
+ */
+export function rearmCloseGuardIfStillRunning(): void {
+  setTimeout(() => {
+    if (!quitting) closeConfirmed = false;
+  }, QUIT_GRACE_MS).unref();
+}
+
 export function registerCloseGuardHandlers(): void {
   app.on('before-quit', () => {
     quitting = true;
