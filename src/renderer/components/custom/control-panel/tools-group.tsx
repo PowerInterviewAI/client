@@ -1,19 +1,8 @@
-import {
-  Captions,
-  CaptionsOff,
-  CircleCheck,
-  FileIcon,
-  FileText,
-  FolderOpenIcon,
-  Hash,
-  Loader,
-  Save,
-  Trash2,
-  XIcon,
-} from 'lucide-react';
+import { Captions, CaptionsOff, FileText, Hash, Loader, Save, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { showExportSuccessToast } from '@/components/custom/export-success-toast';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -23,10 +12,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAppState } from '@/hooks/use-app-state';
+import { useSaveHistoryGuard } from '@/hooks/use-save-history-guard';
 import useTools from '@/hooks/use-tools';
 import { useTranscriptPanel } from '@/hooks/use-transcript-panel';
 import { Hotkey, HOTKEYS } from '@/lib/hotkeys';
-import { cn, getElectron } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { RunningState } from '@/types/app-state';
 import type { ExportFormat } from '@/types/export';
 
@@ -40,9 +30,14 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
   const { runningState, appState } = useAppState();
   const { exporting, exportTranscript, clearAll, setPlaceholderData } = useTools();
   const { visible: transcriptVisible, toggle: onToggleTranscript } = useTranscriptPanel();
+  const { confirmDiscard } = useSaveHistoryGuard();
   const [clearing, setClearing] = useState(false);
 
   const onClear = async () => {
+    // Asked before the spinner goes up, and a no-op when there is nothing but placeholder copy
+    // to lose. The transcript and the suggestions exist only in main-process memory.
+    if (!(await confirmDiscard('clear'))) return;
+
     setClearing(true);
     try {
       // Placeholder state only rewrites what the renderer sees. The service buffers keep the
@@ -62,8 +57,11 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
   // Electron's "Error invoking remote method 'tools:export-transcript'" prefix, which is not a
   // sentence to put in front of someone. The service keeps its own guard because it is what
   // stops the billed summarize call, and this state can be stale by a broadcast.
-  const nothingToExport =
-    (appState?.transcripts?.length ?? 0) === 0 && (appState?.liveSuggestions?.length ?? 0) === 0;
+  //
+  // On `hasHistory` rather than on the array lengths, which are never zero: the panels carry
+  // placeholder copy on launch and again after every Clear, so the old check let a summarize
+  // request be billed for a document about "Transcripts will be here".
+  const nothingToExport = !appState?.hasHistory;
 
   const onExportTranscript = async (format: ExportFormat) => {
     if (nothingToExport) {
@@ -76,70 +74,7 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
     try {
       const filePath = await exportTranscript(format);
       if (!filePath) return;
-      const electron = getElectron();
-      const toastId = `export-${Date.now()}`;
-      toast.custom(
-        () => (
-          <div
-            className="flex items-center gap-2 w-full px-4 py-3 rounded-lg border shadow-md"
-            style={{
-              background: 'var(--success-bg)',
-              borderColor: 'var(--success-border)',
-              color: 'var(--success-text)',
-            }}
-          >
-            <CircleCheck className="h-4 w-4 shrink-0" />
-            <span className="flex-1 text-sm font-medium">
-              Interview exported as {format === 'md' ? 'Markdown' : 'Word'}
-            </span>
-            <div className="flex items-center gap-1">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-6 w-6 p-0"
-                    aria-label="Open the exported file"
-                    onClick={() => electron?.openFile(filePath)}
-                  >
-                    <FileIcon className="h-3 w-3" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Open file</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-6 w-6 p-0"
-                    aria-label="Show the exported file in its folder"
-                    onClick={() => electron?.showInFolder(filePath)}
-                  >
-                    <FolderOpenIcon className="h-3 w-3" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Show in folder</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-6 w-6 p-0"
-                    aria-label="Dismiss"
-                    onClick={() => toast.dismiss(toastId)}
-                  >
-                    <XIcon className="h-3 w-3" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Dismiss</TooltipContent>
-              </Tooltip>
-            </div>
-          </div>
-        ),
-        { id: toastId, duration: 10_000, style: { width: 'var(--width, 356px)' } }
-      );
+      showExportSuccessToast(filePath, format);
     } catch (error) {
       console.error(error);
       // The message when there is nothing to export names the reason, and a generic "failed"

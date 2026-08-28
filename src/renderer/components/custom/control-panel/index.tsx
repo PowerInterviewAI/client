@@ -8,10 +8,12 @@ import { useAudioInputDevices } from '@/hooks/use-audio-devices';
 import { useConfigStore } from '@/hooks/use-config-store';
 import { useConfigurationDialog } from '@/hooks/use-configuration-dialog';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
+import { useSaveHistoryGuard } from '@/hooks/use-save-history-guard';
 import { isMac } from '@/lib/consts';
 import { getElectron } from '@/lib/utils';
 import { RunningState } from '@/types/app-state';
 
+import HeadphoneNoticeDialog from '../headphone-notice-dialog';
 import PermissionGateDialog from '../permission-gate-dialog';
 import ZoomControl from '../zoom-control';
 import { AudioGroup } from './audio-group';
@@ -34,7 +36,9 @@ export default function ControlPanel() {
   const { runningState, appState } = useAppState();
   const { config } = useConfigStore();
   const { openConfigurationDialog } = useConfigurationDialog();
+  const { confirmDiscard } = useSaveHistoryGuard();
   const [permGateOpen, setPermGateOpen] = useState(false);
+  const [headphoneNoticeOpen, setHeadphoneNoticeOpen] = useState(false);
 
   const { devices: audioInputDevices, ready: audioDevicesReady } = useAudioInputDevices();
 
@@ -108,8 +112,14 @@ export default function ControlPanel() {
     }
   };
 
-  const handleStartClick = async () => {
-    if (!checkCanStart()) return;
+  // Everything after the headphone notice. Split out so the notice can hand the start back once
+  // the user acknowledges it, without duplicating what follows.
+  const startAfterNotice = async () => {
+    // `startAssistant` opens with `clearAll()`, so the previous interview is gone the moment
+    // this goes ahead. Asked before the permission gate rather than after: a user who is about
+    // to be sent into System Settings should not have answered a question first that the trip
+    // makes moot.
+    if (!(await confirmDiscard('start'))) return;
 
     if (isMac) {
       const electron = getElectron();
@@ -127,6 +137,20 @@ export default function ControlPanel() {
     }
 
     await doStart();
+  };
+
+  const handleStartClick = async () => {
+    if (!checkCanStart()) return;
+
+    // Before the permission gate, and before anything opens a socket: on speakers the echo is
+    // already in the audio by the time the first question is asked, and the failure it causes
+    // is silent. Nothing here can detect the output route, so the user is asked.
+    if (!config?.headphoneNoticeAcknowledged) {
+      setHeadphoneNoticeOpen(true);
+      return;
+    }
+
+    await startAfterNotice();
   };
 
   const stateConfig: Record<RunningState, StateConfig> = {
@@ -204,6 +228,12 @@ export default function ControlPanel() {
           <ZoomControl />
         </div>
       </div>
+
+      <HeadphoneNoticeDialog
+        open={headphoneNoticeOpen}
+        onOpenChange={setHeadphoneNoticeOpen}
+        onProceed={() => void startAfterNotice()}
+      />
 
       {isMac && (
         <PermissionGateDialog

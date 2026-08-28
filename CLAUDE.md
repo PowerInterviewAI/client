@@ -118,6 +118,84 @@ the default at that moment, in an effect - never in the render body, where the s
 re-enters React mid-commit and a failed IPC call rolls the value back into the same condition that
 triggered it, one write per frame.
 
+### Saving the interview before it is lost
+
+The transcript and the suggestions live only in main-process memory. Nothing is written to disk
+until an export, so the three actions that empty them - Clear, Start (which opens with
+`clearAll()`), and closing the app - are the only paths in the app that destroy work with no way
+back. All three now ask first, through one dialog:
+[save-history-dialog.tsx](src/renderer/components/custom/save-history-dialog.tsx), mounted once in
+`MainFrame` because the three do not share a screen - the control panel is not rendered in stealth
+mode, and the close prompt arrives from main with no component of its own.
+
+**The question is only worth asking about a real interview, and length cannot tell you that.**
+`setPlaceholderState()` seeds the panels with one transcript and two suggestions so an empty app
+has something to show, and it runs on launch and again after every Clear - so
+`transcripts.length === 0` is never true and the old guard let the placeholder through. That was
+already a live defect on the export path: Export on a machine that had never run an interview
+passed the length check and billed a summarize call on "Transcripts will be here", then wrote the
+model's answer into a document titled as a record of the candidate's interview.
+
+`AppState.hasHistory` is the replacement, derived in `withHistory()` and never set by a caller -
+`updateState` strips it off incoming updates, because it arrives inside a `Partial<AppState>` the
+renderer composes and the close guard trusts it. Only the transcript and suggestion services
+write the three history keys and they only ever write real content, so a write to any of them
+retires the placeholder and the flag is recomputed from what the write leaves behind. The
+untouched arrays are emptied in the same write: `clearAll()` runs before every session so mixed
+state is not reachable today, but a real transcript sitting beside two lines of sample suggestion
+copy is the one shape that would put placeholder text into an exported report.
+
+**The flag is read from the transcripts and live suggestions only, not from all three.** Those are
+what `exportTranscript` builds the report out of; action suggestions have never been in it. So a
+session whose only content is a screenshot has nothing a save could capture, and counting it would
+both offer to save what the save cannot contain and let the export guard through on an empty
+transcript - the billed summarize call over nothing that the guard exists to stop, reached through
+a different door. The export guard and `nothingToExport` both read the flag now, and
+`test/save-history.test.mjs` pins it.
+
+**Closing is the one that cannot ask on its own behalf.** Clear and Start are renderer-initiated
+and confirm before they act; a close is decided in main - the window button, Cmd+Q, `app.quit()` -
+and the renderer would hear about it too late to matter. So
+[window-close-guard.ts](src/main/window-close-guard.ts) vetoes the close, sends
+`app:save-history-prompt`, and the renderer closes the window itself by replying. Exactly one of
+`window:close-confirmed` / `window:close-cancelled` has to come back or the app cannot be closed
+at all, which is why the guard gives up on a renderer that is destroyed or crashed rather than
+holding the window open with nobody to ask.
+
+Three pieces of state, each for a failure the others do not cover. `closeConfirmed` lets the
+answered close through instead of re-prompting on it. `prompting` stops a second close - the
+window button pressed while the dialog is up - stacking another prompt. And `quitting`, set from
+`before-quit`, is what makes Cmd+Q work: vetoing the close *cancels the quit*, so confirming has
+to call `app.quit()` again rather than `win.close()`, or the app would sit there with one window
+fewer. Cancelling resets it, or the next Cmd+Q would take that branch for a session the user just
+chose to keep.
+
+A save that the user cancels at the system save dialog leaves the prompt open rather than reading
+as a decision to discard, and so does a failed export - going ahead there would destroy the
+interview on the one path where keeping it did not work.
+
+**Installing an update is a quit the guard must not veto.** `quitAndInstall()` launches the
+installer - on macOS `shell.openPath` has already opened the .dmg - and requests the quit
+*afterwards*, so a veto there does not cancel the update. It leaves an installer running against
+an app that refuses to exit, which on Windows ends with the installer killing it: the interview is
+lost anyway, and the prompt asking about it was on screen for a second. So the updater IPC handler
+calls `allowNextClose()` before it installs, and `rearmCloseGuard()` if nothing was launched
+(`quitAndInstall` returns whether it committed to quitting, which the macOS "no downloaded file"
+path does not).
+
+**A failed install reports nothing - it simply does not quit** - so `rearmCloseGuardIfStillRunning()`
+puts the guard back unless `before-quit` has fired by then. Without it one failed update disarms
+the guard for the rest of the session and the next close takes the interview with it, which is
+precisely what the guard exists to stop. The test is `quitting` rather than a window count,
+because re-arming a quit that *is* under way turns the guard into a veto of the close it just
+approved.
+
+The question is asked one layer up, in `update-notification.tsx`, in front of the install rather
+than behind it. It reads `hasHistory` over `appState.get()` on the click instead of through
+`useSaveHistoryGuard`: that hook subscribes to the app state, which during an interview is a new
+object several times a second, and this component would then re-render and re-arm its status
+effect on every ASR partial to answer a question it only asks when a button is pressed.
+
 ### Interview language
 
 One setting decides three things: which speech model transcribes the call, what language suggestions come back in, and the language of the exported report. `Language` is mirrored across the processes the way `SuggestionMode` is - [src/main/types/language.ts](src/main/types/language.ts) for the request bodies, [src/renderer/types/language.ts](src/renderer/types/language.ts) for the same enum plus the display metadata the picker needs. 28 languages, which is exactly what the backend's Deepgram Nova-3 ASR streams: offering one the ASR cannot hear would not degrade, it would answer a question that was never asked.
@@ -153,6 +231,37 @@ Menu items carry an explicit `textValue` of the **English** name. Radix runs its
 The app's own chrome is **not** localised, deliberately: an English button on a Spanish interview is an inconvenience, an English transcript of Spanish speech is a wrong answer read out loud.
 
 **The exported report is the one exception**, because it is the one artifact that leaves the machine and is handed to someone who was not there. The summarize prompt translates the headings *it* writes; the five words the client wraps around them - Transcripts, Suggestions, Suggestion, Interviewer, Date/Time - live in [export-labels.ts](src/main/utils/export-labels.ts) and follow the same setting, or the export is the half-translated document that prompt exists to avoid. The candidate is named rather than labelled, and timestamps stay on the machine's locale. `test/tools-export.test.mjs` pins that every enum member has a full set and that an unknown code falls back to English rather than throwing.
+
+### Headphones
+
+`ch_0` is a loopback of the system's render endpoint, which is the same sound the speakers are
+playing. So on speakers the microphone hears the interviewer a fraction of a second after the
+loopback does, and the same words arrive on **both** channels. The transcript duplicates, which is
+visible; the damaging half is not. The echo lands as a recent `Self` final, so
+`skipDueToRecentSelf` in [transcript.service.ts](src/main/services/transcript.service.ts)
+suppresses the live suggestion **for the question that was just asked**, with no error anywhere.
+See #111 for the measurements and the longer-term suppression work.
+
+[headphone-notice-dialog.tsx](src/renderer/components/custom/headphone-notice-dialog.tsx) is shown
+before every session until the user silences it, and it says what actually goes wrong rather than
+recommending headphones for "best results" - the cost of ignoring it is answers that never appear.
+
+**Nothing here detects the output route, and the dialog does not pretend to.**
+`enumerateDevices()` reports what exists, not what the sound is coming out of, and a label match on
+"headset" would be wrong in both directions: it would clear a user whose headphones are plugged in
+but not selected, and nag one whose USB interface is named after a mixer. The user's answer is the
+only signal available, so it is asked for.
+
+It is the first thing Start asks, ahead of the save prompt and the macOS permission gate, because
+on speakers the echo is already in the audio before the first question and because it is the
+cheapest of the three to back out of - cancelling here means the other two were never asked.
+`startAfterNotice` holds everything after it so the dialog can hand the start back without
+duplicating those checks.
+
+`headphoneNoticeAcknowledged` is opt-out rather than opt-in: whether the call is on speakers is a
+property of the machine and the meeting, not a setting, so it can change between sessions on the
+same install. The preference is written when the user goes through, not when they tick the box - a
+tick followed by Cancel would otherwise silence a warning they never acted on.
 
 ### Audio input device
 

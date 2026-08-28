@@ -27,6 +27,9 @@ for (const module of [
   // reads the same running state through its own copy of window-control.
   './running-surface.test.mjs',
   './tools-export.test.mjs',
+  // After tools-export: it drives the shared appStateService singleton through the placeholder
+  // and back, which the export helpers above do not read.
+  './save-history.test.mjs',
   './audio-device-switch.test.mjs',
   './language-switch.test.mjs',
   './rtl-rendering.test.mjs',
