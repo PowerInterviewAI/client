@@ -48,16 +48,26 @@ const REF_FLOOR_DBFS = -55;
 // real echo puts a sharp peak on an otherwise flat correlation surface; unrelated signals produce
 // a surface that is uniformly mediocre, with a high maximum and no peak.
 //
-// A starting threshold, to be re-derived from real runs rather than trusted. Against synthetic
-// signals an unrelated pair scored 0.28 and a clean echo 0.87-1.13, so 0.5 sits in the gap - but
-// the synthetic echo is a perfectly scaled copy and a real one will score lower, while the
-// synthetic "unrelated" pair shares a burst grid and so scores HIGHER than truly unrelated audio.
-// Both ends of that gap are therefore optimistic. The per-second output prints the raw numbers
-// regardless of this threshold, which is the point: measure the real distribution, then set it.
+// CORR_MIN is kept alongside it as a cheap floor, not as the discriminator - on its own it is
+// exactly the threshold shown above to be useless. Both must pass.
+//
+// A starting threshold, to be re-derived from real runs rather than trusted. Synthetic signals
+// suggested a comfortable gap - 0.28 for an unrelated pair against 0.87-1.13 for a clean echo -
+// but a live run of this probe on a silent room reached 0.47, which leaves almost nothing between
+// the noise and the threshold. Both ends of the synthetic gap are optimistic: that echo is a
+// perfectly scaled copy and a real one scores lower, while that "unrelated" pair shares a burst
+// grid and so scores higher than truly unrelated audio.
+//
+// This is why the run-level verdict requires several coupled reports rather than one. A single
+// report crossing this line is exactly what a quiet room produces from time to time.
+//
+// The per-second output prints the raw numbers whatever this is set to, which is the point:
+// measure the real distribution first, then set it.
 const CORR_MIN = 0.5;
 const PROMINENCE_MIN = 0.5;
 
 const MIN_OVERLAP_FRAMES = 50; // 0.5 s
+const DISPLAY_MEDIA_TIMEOUT_MS = 20000;
 
 const status = (text) => {
   document.getElementById('status').textContent = text;
@@ -124,9 +134,11 @@ class CouplingMeter {
     this.prominence = null;
     this.erlDb = null;
     this.samples = [];
+    this.frames = 0;
   }
 
   push(ref, mic) {
+    this.frames++;
     this.refDb.push(toDb(meanSquare(ref)));
     this.micDb.push(toDb(meanSquare(mic)));
     if (this.refDb.length > HISTORY_FRAMES) this.refDb.shift();
@@ -218,6 +230,10 @@ class CouplingMeter {
       refActivePct: this.activePct(this.refDb),
       micActivePct: this.activePct(this.micDb),
       coupled: this.isCoupled(),
+      // Reported so a stalled capture is visible. Nothing else here would show it: push() simply
+      // stops being called, the report timer keeps firing, and the same numbers print every
+      // second looking exactly like a steady measurement.
+      frames: this.frames,
     };
   }
 
@@ -275,7 +291,14 @@ async function main() {
   await ipcRenderer.invoke('enable-loopback-audio');
   let displayStream;
   try {
-    displayStream = await navigator.mediaDevices.getDisplayMedia({ audio: true, video: true });
+    // Bounded the same way live-transcription.service.ts bounds it. Unbounded, a loopback that
+    // never resolves leaves the probe sitting silently with no output and nothing to read.
+    displayStream = await Promise.race([
+      navigator.mediaDevices.getDisplayMedia({ audio: true, video: true }),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Loopback capture timed out')), DISPLAY_MEDIA_TIMEOUT_MS)
+      ),
+    ]);
   } finally {
     await ipcRenderer.invoke('disable-loopback-audio').catch(() => {});
   }

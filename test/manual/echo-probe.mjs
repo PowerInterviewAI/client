@@ -87,7 +87,13 @@ loopbackPkg.initMain();
 
 const num = (v, digits = 1) => (v === null || v === undefined ? '  --' : v.toFixed(digits));
 
-let sawCoupling = false;
+// Counted, not latched. A single coupled report out of forty is noise, not a speaker setup, and
+// the whole reason prominence exists is that spurious single-report verdicts are reachable. A
+// boolean here would let one of them decide the headline finding for the entire run.
+let coupledReports = 0;
+let totalReports = 0;
+let lastFrames = 0;
+let stalled = false;
 
 ipcMain.handle('probe:options', () => options);
 
@@ -108,7 +114,20 @@ ipcMain.on('probe:ready', (_event, info) => {
 });
 
 ipcMain.on('probe:metrics', (_event, m) => {
-  if (m.coupled) sawCoupling = true;
+  totalReports++;
+  if (m.coupled) coupledReports++;
+
+  // No new frames since the last report means the capture has stopped feeding the graph - an
+  // unplugged device, or a suspended context. Every column below is then a stale reading of a
+  // dead stream, which is worse than no reading at all because it looks like data.
+  const advanced = m.frames - lastFrames;
+  lastFrames = m.frames;
+  if (advanced === 0) {
+    stalled = true;
+    console.log('    -- no audio frames received since the last report (capture stalled) --');
+    return;
+  }
+
   console.log(
     `    ${String(m.delayMs === null ? '--' : m.delayMs).padStart(7)}` +
       `   ${num(m.correlation, 2).padStart(4)}` +
@@ -150,9 +169,23 @@ ipcMain.on('probe:done', (_event, summary) => {
       console.log('the mic to keep its decisions causal.');
     }
   }
-  console.log(
-    `\ncoupling seen      : ${sawCoupling ? 'yes (speakers)' : 'no (headphones, or silence)'}`
-  );
+  const pct = totalReports > 0 ? Math.round((100 * coupledReports) / totalReports) : 0;
+  console.log('');
+  console.log(`coupled reports    : ${coupledReports}/${totalReports} (${pct}%)`);
+  if (coupledReports === 0) {
+    console.log('verdict            : no coupling (headphones, or nothing played through them)');
+  } else if (coupledReports >= 3 && pct >= 20) {
+    console.log('verdict            : coupled (speakers)');
+  } else {
+    console.log('verdict            : INCONCLUSIVE - too few coupled reports to call it either');
+    console.log('                     way. Re-run with audio playing for the whole duration.');
+  }
+  if (stalled) {
+    console.log('');
+    console.log('WARNING: the capture stalled during this run, so the numbers above cover');
+    console.log('less audio than the requested duration. Re-run before recording them.');
+    console.log('audio than the requested duration. Re-run before recording them.');
+  }
   app.quit();
 });
 
