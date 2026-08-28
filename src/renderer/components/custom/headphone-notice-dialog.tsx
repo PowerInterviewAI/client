@@ -1,5 +1,5 @@
 import { Headphones, MicOff, Volume2 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -39,6 +39,13 @@ export default function HeadphoneNoticeDialog({
 }: HeadphoneNoticeDialogProps) {
   const { config, updateConfig } = useConfigStore();
   const [dontShowAgain, setDontShowAgain] = useState(false);
+
+  // The dialog is mounted for the life of the control panel, so the tick would otherwise
+  // survive a Cancel and be waiting - already checked - the next time it opens. Silencing a
+  // warning is then one click the user did not knowingly make.
+  useEffect(() => {
+    if (open) setDontShowAgain(false);
+  }, [open]);
 
   const handleProceed = () => {
     // Persisted on the way through rather than on the tick, so a user who changes their mind and
