@@ -7,7 +7,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import type { MockInterviewSessionState } from '@/types/mock-interview';
 
@@ -63,6 +63,9 @@ export function ReportScreen({ session, onExport, onPracticeAgain, onDone }: Rep
   return (
     <div className="flex-1 flex flex-col items-center overflow-y-auto p-8">
       <div className="w-full max-w-3xl space-y-6">
+        {/* Visually hidden: the score is the visual headline, but this route still needs a
+            landmark for screen-reader heading navigation to land on. */}
+        <h1 className="sr-only">Mock interview report</h1>
         {reportError && (
           <Alert variant="destructive">
             <AlertDescription>
@@ -75,6 +78,10 @@ export function ReportScreen({ session, onExport, onPracticeAgain, onDone }: Rep
         {report && (
           <Card>
             <CardHeader className="items-center text-center">
+              {/* The number and verdict below read as two unrelated lines to a screen reader
+                  without this - visually the "82" is self-evidently a score because of its
+                  size and position, which carries no meaning once read aloud in sequence. */}
+              <h2 className="sr-only">Overall score</h2>
               <p className="text-5xl font-semibold tabular-nums">{report.overall_score}</p>
               <p className="text-sm text-muted-foreground">{scoreVerdict(report.overall_score)}</p>
               <div className="w-full pt-2">
@@ -88,7 +95,7 @@ export function ReportScreen({ session, onExport, onPracticeAgain, onDone }: Rep
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Strengths</CardTitle>
+                <h2 className="leading-none font-semibold text-sm">Strengths</h2>
               </CardHeader>
               <CardContent>
                 {report.strengths.length > 0 ? (
@@ -104,7 +111,7 @@ export function ReportScreen({ session, onExport, onPracticeAgain, onDone }: Rep
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Gaps</CardTitle>
+                <h2 className="leading-none font-semibold text-sm">Gaps</h2>
               </CardHeader>
               <CardContent>
                 {report.gaps.length > 0 ? (
@@ -123,7 +130,7 @@ export function ReportScreen({ session, onExport, onPracticeAgain, onDone }: Rep
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm">Per-question breakdown</CardTitle>
+            <h2 className="leading-none font-semibold text-sm">Per-question breakdown</h2>
           </CardHeader>
           <CardContent>
             <Accordion type="single" collapsible>

@@ -5,14 +5,7 @@ import HeadphoneNoticeDialog from '@/components/custom/headphone-notice-dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -144,7 +137,10 @@ export function SetupScreen({ onStart }: SetupScreenProps) {
     <div className="flex-1 flex items-start justify-center overflow-y-auto p-8">
       <Card className="w-full max-w-2xl">
         <CardHeader>
-          <CardTitle className="text-xl">Mock interview</CardTitle>
+          {/* CardTitle renders a <div>, not a heading, and has no `asChild` to promote it - this
+              route otherwise has no landmark a screen reader's heading navigation can land on, so
+              this carries CardTitle's own classes directly on a real <h1>. */}
+          <h1 className="leading-none font-semibold text-xl">Mock interview</h1>
           <CardDescription>
             The AI asks, you answer out loud. Nothing is saved unless you export it.
           </CardDescription>

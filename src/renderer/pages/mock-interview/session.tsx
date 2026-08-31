@@ -82,6 +82,9 @@ export function SessionScreen({ session, onSkip, onDone, onRepeat, onEnd }: Sess
   return (
     <div className="flex-1 flex flex-col items-center overflow-y-auto p-8">
       <div className="w-full max-w-3xl space-y-6">
+        {/* Visually hidden: the screen is deliberately chrome-free while a question is live, but
+            this route still needs a landmark for screen-reader heading navigation to land on. */}
+        <h1 className="sr-only">Mock interview session</h1>
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <span>
