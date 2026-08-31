@@ -7,7 +7,9 @@ import { configStore } from '../store/config.store.js';
 import { ExportFormat } from '../types/export.js';
 import { GenerateSummarizeRequest } from '../types/llm.js';
 import { buildExportMarkdown, generateExportFilename } from '../utils/export-markdown.js';
+import { buildMockExportMarkdown } from '../utils/export-mock-markdown.js';
 import { appStateService } from './app-state.service.js';
+import { mockInterviewService } from './mock-interview.service.js';
 import { actionSuggestionService } from './suggestion-action.service.js';
 import { liveSuggestionService } from './suggestion-live.service.js';
 import { transcriptService } from './transcript.service.js';
@@ -63,6 +65,56 @@ class ToolsService {
     const { canceled, filePath } = await dialog.showSaveDialog({
       title: 'Save Transcript',
       defaultPath: generateExportFilename(format),
+      filters: isMarkdown
+        ? [{ name: 'Markdown', extensions: ['md'] }]
+        : [{ name: 'Word Document', extensions: ['docx'] }],
+    });
+
+    if (canceled || !filePath) return null;
+
+    if (isMarkdown) {
+      await fs.writeFile(filePath, fullMarkdown, 'utf8');
+      return filePath;
+    }
+
+    const docxBlob = await convertMarkdownToDocx(fullMarkdown, {
+      documentType: 'document',
+      style: {
+        heading1Alignment: 'CENTER',
+        heading5Alignment: 'CENTER',
+      },
+    });
+
+    await fs.writeFile(filePath, Buffer.from(await docxBlob.arrayBuffer()));
+    return filePath;
+  }
+
+  /**
+   * Export the mock interview report - own guard, own filename prefix, own save dialog.
+   *
+   * Guarded on real answer content, the same standard `hasMockContent` uses, so this cannot bill
+   * nothing into a document titled as a record of an interview that did not happen.
+   */
+  async exportMockReport(format: ExportFormat = 'docx'): Promise<string | null> {
+    const session = mockInterviewService.getState();
+    const hasContent = session.answers.some((a) => !a.skipped && a.answer.trim().length > 0);
+    if (!hasContent || !session.setup) {
+      throw new Error('There is nothing to export yet. Answer at least one question first.');
+    }
+
+    const conf = configStore.getConfig();
+    const fullMarkdown = buildMockExportMarkdown({
+      setup: session.setup,
+      answers: session.answers,
+      report: session.report,
+      language: conf.language,
+    });
+
+    const isMarkdown = format === 'md';
+
+    const { canceled, filePath } = await dialog.showSaveDialog({
+      title: 'Save Mock Interview Report',
+      defaultPath: generateExportFilename(format, 'mock-interview'),
       filters: isMarkdown
         ? [{ name: 'Markdown', extensions: ['md'] }]
         : [{ name: 'Word Document', extensions: ['docx'] }],
