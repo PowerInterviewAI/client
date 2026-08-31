@@ -18,3 +18,13 @@ export const SUGGESTION_MIN_HEIGHT = 100;
 // The drag handle between them. Both panels are explicitly sized, so this has to come out of the
 // budget or the pair overflows the container by exactly the handle.
 export const DOCK_HANDLE_HEIGHT = 6;
+
+// Mock interview: how long the microphone stays gated after the interviewer's audio finishes, to
+// cover room reverb and Deepgram's own lookahead. Mirrors the main-process constant of the same
+// name in src/main/consts.ts - kept separate because renderer and main code are compiled and
+// bundled independently and cannot import across that boundary.
+export const MOCK_TTS_TAIL_MS = 600;
+
+// Backstop only, the same role ACTION_LOCK_MAX_HOLD_MS plays for the action-suggestion lock - see
+// MicGate in mock-tts.service.ts for why a `finally` alone is not enough.
+export const MOCK_TTS_GATE_MAX_HOLD_MS = 120_000;
