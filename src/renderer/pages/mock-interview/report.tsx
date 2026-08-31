@@ -1,5 +1,5 @@
 import { FileText, Hash, Loader } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { SafeMarkdown } from '@/components/custom/safe-markdown';
@@ -29,6 +29,13 @@ export function ReportScreen({ session, onExport, onPracticeAgain, onDone }: Rep
   const { report, reportError, answers } = session;
   const [saving, setSaving] = useState<'docx' | 'md' | null>(null);
   const [busy, setBusy] = useState<'again' | 'done' | null>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+
+  // This screen replaces SessionScreen the moment the session reaches Finished, not through a
+  // real navigation, so nothing else moves focus here on its own.
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, []);
 
   const save = async (format: 'docx' | 'md') => {
     setSaving(format);
@@ -65,7 +72,9 @@ export function ReportScreen({ session, onExport, onPracticeAgain, onDone }: Rep
       <div className="w-full max-w-3xl space-y-6">
         {/* Visually hidden: the score is the visual headline, but this route still needs a
             landmark for screen-reader heading navigation to land on. */}
-        <h1 className="sr-only">Mock interview report</h1>
+        <h1 ref={headingRef} tabIndex={-1} className="sr-only">
+          Mock interview report
+        </h1>
         {reportError && (
           <Alert variant="destructive">
             <AlertDescription>

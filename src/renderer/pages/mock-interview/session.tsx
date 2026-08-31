@@ -30,7 +30,18 @@ export function SessionScreen({ session, onSkip, onDone, onRepeat, onEnd }: Sess
   const [busy, setBusy] = useState<'skip' | 'done' | 'end' | 'repeat' | null>(null);
   const [answerReady, setAnswerReady] = useState(currentQuestion?.hasAudio ?? true);
   const levelRingRef = useRef<HTMLDivElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
   const levelRef = useMicLevel(mockTranscriptionService.getStream());
+
+  // This screen mounts once per session (SetupScreen unmounts, this replaces it) and stays
+  // mounted across every question until the report screen takes over - not a real navigation, so
+  // nothing moves focus here on its own. Runs once on mount rather than per-question: within-
+  // session updates (state, question text) are already announced through the aria-live region
+  // below, and refocusing the heading on every question would fight the candidate's own focus
+  // while they are mid-interaction with a control.
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, []);
 
   // Reset the "I'm ready" gate whenever the on-screen question actually changes.
   const questionKey = currentQuestion?.text ?? '';
@@ -84,7 +95,9 @@ export function SessionScreen({ session, onSkip, onDone, onRepeat, onEnd }: Sess
       <div className="w-full max-w-3xl space-y-6">
         {/* Visually hidden: the screen is deliberately chrome-free while a question is live, but
             this route still needs a landmark for screen-reader heading navigation to land on. */}
-        <h1 className="sr-only">Mock interview session</h1>
+        <h1 ref={headingRef} tabIndex={-1} className="sr-only">
+          Mock interview session
+        </h1>
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <span>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import HeadphoneNoticeDialog from '@/components/custom/headphone-notice-dialog';
@@ -68,6 +68,16 @@ export function SetupScreen({ onStart }: SetupScreenProps) {
   const [questionCount, setQuestionCount] = useState(8);
   const [starting, setStarting] = useState(false);
   const [headphoneNoticeOpen, setHeadphoneNoticeOpen] = useState(false);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+
+  // This screen is reached by unmounting whatever was on screen before (SessionScreen after
+  // "Practise again", or nothing on the very first visit) rather than by a real navigation, so
+  // the browser has no route-change moment to move focus on its own. Without this, focus is
+  // simply lost - it falls back to <body>, and a keyboard or screen-reader user has to find
+  // their way back into the app from the very top.
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, []);
 
   const language = config?.language;
   const languageOption = getLanguageOption(language);
@@ -142,7 +152,9 @@ export function SetupScreen({ onStart }: SetupScreenProps) {
           {/* CardTitle renders a <div>, not a heading, and has no `asChild` to promote it - this
               route otherwise has no landmark a screen reader's heading navigation can land on, so
               this carries CardTitle's own classes directly on a real <h1>. */}
-          <h1 className="leading-none font-semibold text-xl">Mock interview</h1>
+          <h1 ref={headingRef} tabIndex={-1} className="leading-none font-semibold text-xl">
+            Mock interview
+          </h1>
           <CardDescription>
             The AI asks, you answer out loud. Nothing is saved unless you export it.
           </CardDescription>
