@@ -91,11 +91,15 @@ export function ReportScreen({ session, onExport, onPracticeAgain, onDone }: Rep
                 <CardTitle className="text-sm">Strengths</CardTitle>
               </CardHeader>
               <CardContent>
-                <ul className="list-disc space-y-1 pl-4 text-sm">
-                  {report.strengths.map((s, i) => (
-                    <li key={i}>{s}</li>
-                  ))}
-                </ul>
+                {report.strengths.length > 0 ? (
+                  <ul className="list-disc space-y-1 pl-4 text-sm">
+                    {report.strengths.map((s, i) => (
+                      <li key={i}>{s}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Nothing specific noted.</p>
+                )}
               </CardContent>
             </Card>
             <Card>
@@ -103,11 +107,15 @@ export function ReportScreen({ session, onExport, onPracticeAgain, onDone }: Rep
                 <CardTitle className="text-sm">Gaps</CardTitle>
               </CardHeader>
               <CardContent>
-                <ul className="list-disc space-y-1 pl-4 text-sm">
-                  {report.gaps.map((g, i) => (
-                    <li key={i}>{g}</li>
-                  ))}
-                </ul>
+                {report.gaps.length > 0 ? (
+                  <ul className="list-disc space-y-1 pl-4 text-sm">
+                    {report.gaps.map((g, i) => (
+                      <li key={i}>{g}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Nothing specific noted.</p>
+                )}
               </CardContent>
             </Card>
           </div>

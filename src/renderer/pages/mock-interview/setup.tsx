@@ -136,6 +136,8 @@ export function SetupScreen({ onStart }: SetupScreenProps) {
             <Label htmlFor="mock-role">Role</Label>
             <Input
               id="mock-role"
+              name="role"
+              autoComplete="organization-title"
               placeholder="e.g. Backend Engineer"
               value={role}
               onChange={(e) => setRole(e.target.value)}
@@ -144,9 +146,11 @@ export function SetupScreen({ onStart }: SetupScreenProps) {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Seniority</Label>
+              {/* A Radix Select trigger is a button, not a form control, so htmlFor does not
+                  reach it. id + aria-labelledby is what associates the two - see llm-group.tsx. */}
+              <Label id="mock-seniority-label">Seniority</Label>
               <Select value={seniority} onValueChange={(v) => setSeniority(v as MockSeniority)}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger aria-labelledby="mock-seniority-label" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -160,18 +164,18 @@ export function SetupScreen({ onStart }: SetupScreenProps) {
             </div>
 
             <div className="space-y-2">
-              <Label>Questions</Label>
+              <Label id="mock-question-count-label">Questions</Label>
               <Select
                 value={String(questionCount)}
                 onValueChange={(v) => setQuestionCount(Number(v))}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger aria-labelledby="mock-question-count-label" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {QUESTION_COUNTS.map((n) => (
                     <SelectItem key={n} value={String(n)}>
-                      {n} questions, about {Math.round((n * 2.5) / 1)} minutes
+                      {n} questions, about {Math.round(n * 2.5)} minutes
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -180,8 +184,10 @@ export function SetupScreen({ onStart }: SetupScreenProps) {
           </div>
 
           <div className="space-y-2">
-            <Label>Difficulty</Label>
+            {/* No htmlFor: this labels the group via aria-labelledby below, not one control. */}
+            <Label id="mock-difficulty-label">Difficulty</Label>
             <RadioGroup
+              aria-labelledby="mock-difficulty-label"
               value={difficulty}
               onValueChange={(v) => setDifficulty(v as MockDifficulty)}
               className="grid grid-cols-1 gap-2 sm:grid-cols-3"

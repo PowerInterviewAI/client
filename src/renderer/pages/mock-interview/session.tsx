@@ -40,8 +40,16 @@ export function SessionScreen({ session, onSkip, onDone, onRepeat, onEnd }: Sess
 
   // Live level ring, written directly to the DOM so this does not re-render at animation-frame
   // rate - see use-mic-level.ts.
+  //
+  // The ring carries no `transition-transform`: this writes `transform` every frame, and a
+  // transition on the same property makes the browser interpolate towards each new value instead
+  // of applying it, so the ring lags the voice it is meant to track and never reaches the peaks.
+  //
+  // Reduced motion stops the loop rather than damping it. The ring is decorative - the transcript
+  // below is what actually reports that speech is being heard - so a static ring loses nothing.
   useEffect(() => {
     if (state !== MockInterviewState.Listening) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     let raf = 0;
     const tick = () => {
       const scale = 1 + Math.min(levelRef.current, 1) * 0.4;
@@ -91,20 +99,26 @@ export function SessionScreen({ session, onSkip, onDone, onRepeat, onEnd }: Sess
                 <div className="h-8 w-8 rounded-full bg-primary/70 animate-pulse" aria-hidden="true" />
               )}
               {state === MockInterviewState.Listening && (
+                // No `transition-transform`: use-mic-level.ts writes `transform` every frame, and
+                // a transition on that property interpolates towards each new value instead of
+                // applying it, so the ring would lag the voice it is meant to track.
                 <div
                   ref={levelRingRef}
-                  className="h-8 w-8 rounded-full bg-primary/30 border-2 border-primary transition-transform"
+                  className="h-8 w-8 rounded-full bg-primary/30 border-2 border-primary"
                   aria-hidden="true"
                 />
               )}
               {isThinking && (
-                <div className="h-6 w-6 rounded-full border-2 border-muted-foreground/40 border-t-primary animate-spin" aria-hidden="true" />
+                <div
+                  className="h-6 w-6 rounded-full border-2 border-muted-foreground/40 border-t-primary animate-spin"
+                  aria-hidden="true"
+                />
               )}
             </div>
 
-            <div className="min-w-0 flex-1 space-y-2">
+            <div className="min-w-0 flex-1 space-y-2" aria-live="polite">
               {currentQuestion && !isThinking ? (
-                <p dir="auto" className="text-xl leading-relaxed">
+                <p dir="auto" className="text-xl leading-relaxed wrap-break-word">
                   {currentQuestion.text}
                 </p>
               ) : (
@@ -135,7 +149,7 @@ export function SessionScreen({ session, onSkip, onDone, onRepeat, onEnd }: Sess
           <CardContent className="pt-2">
             <ScrollArea className="h-40">
               {currentAnswerText ? (
-                <p dir="auto" className="text-sm leading-relaxed">
+                <p dir="auto" className="text-sm leading-relaxed wrap-break-word">
                   {currentAnswerText}
                 </p>
               ) : (
