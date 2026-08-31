@@ -105,7 +105,7 @@ export default function HeadphoneNoticeDialog({
           ))}
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter>
           <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
