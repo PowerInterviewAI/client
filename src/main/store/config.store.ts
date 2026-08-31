@@ -34,6 +34,10 @@ export interface RuntimeConfig {
 
   // suggestions come back as headline + keyword bullets instead of full sentences
   professionalMode: boolean;
+
+  // mock interview: also generate what the live assistant would have suggested for each
+  // question. On by default - trying this out is one of the two reasons the feature exists.
+  mockLiveSuggestionsEnabled: boolean;
 }
 
 // Default runtime configuration
@@ -57,6 +61,9 @@ const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
 
   // opt-in: prose is what every existing user already expects from the panel
   professionalMode: false,
+
+  // opt-out: showing what the live assistant would have said is the point of trying this
+  mockLiveSuggestionsEnabled: true,
 };
 
 // interviewConf (full name, profile, context) used to be cached under `runtime`, but it's now
@@ -254,6 +261,9 @@ export const configStore = new ConfigStore();
   }
   if (raw?.professionalMode === undefined) {
     migration.professionalMode = false;
+  }
+  if (raw?.mockLiveSuggestionsEnabled === undefined) {
+    migration.mockLiveSuggestionsEnabled = true;
   }
   // perform migration only if there are values to set
   if (Object.keys(migration).length > 0) {

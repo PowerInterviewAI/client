@@ -6,6 +6,7 @@
  * translation layer at the API boundary.
  */
 
+import type { LiveSuggestion } from './app-state.js';
 import { Language } from './language.js';
 import { LLMRequest } from './llm.js';
 
@@ -160,6 +161,13 @@ export interface MockInterviewSessionState {
   answers: MockAnswer[];
   /** The partial/final transcript of the answer currently being given. */
   currentAnswerText: string;
+  /**
+   * What the live assistant would have suggested for each question, on by default - practising
+   * with it is one of the two things this feature is for, the other being the interview itself.
+   * See `mockLiveSuggestionsEnabled` in `RuntimeConfig`. One entry per question asked (follow-ups
+   * included), oldest first, in the same shape the live panel already renders.
+   */
+  liveHints: LiveSuggestion[];
   report: MockReport | null;
   /** Set when report generation failed - the transcript is still shown and still exportable. */
   reportError: string | null;

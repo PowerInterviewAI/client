@@ -1,11 +1,18 @@
+import { Check, Lightbulb, RotateCcw, Square, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
-import { Badge } from '@/components/ui/badge';
+import {
+  BAR_ACTIVE,
+  BAR_GHOST,
+  BAR_ICON_BUTTON,
+} from '@/components/custom/control-panel/bar';
+import LiveSuggestionsPanel from '@/components/custom/panels/live-suggestions-panel';
+import MockTranscriptPanel from '@/components/custom/panels/mock-transcript-panel';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMicLevel } from '@/hooks/use-mic-level';
+import { useMockLiveSuggestions } from '@/hooks/use-mock-live-suggestions';
+import { cn } from '@/lib/utils';
 import { mockTranscriptionService } from '@/services/mock-transcription.service';
 import type { MockInterviewSessionState } from '@/types/mock-interview';
 import { MockInterviewState } from '@/types/mock-interview';
@@ -26,12 +33,13 @@ const THINKING_LABEL: Partial<Record<MockInterviewState, string>> = {
 };
 
 export function SessionScreen({ session, onSkip, onDone, onRepeat, onEnd }: SessionScreenProps) {
-  const { state, currentQuestion, setup, questionNumber, currentAnswerText } = session;
+  const { state, currentQuestion } = session;
   const [busy, setBusy] = useState<'skip' | 'done' | 'end' | 'repeat' | null>(null);
   const [answerReady, setAnswerReady] = useState(currentQuestion?.hasAudio ?? true);
   const levelRingRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const levelRef = useMicLevel(mockTranscriptionService.getStream());
+  const { enabled: hintsEnabled, toggle: toggleHints } = useMockLiveSuggestions();
 
   // This screen mounts once per session (SetupScreen unmounts, this replaces it) and stays
   // mounted across every question until the report screen takes over - not a real navigation, so
@@ -57,7 +65,7 @@ export function SessionScreen({ session, onSkip, onDone, onRepeat, onEnd }: Sess
   // of applying it, so the ring lags the voice it is meant to track and never reaches the peaks.
   //
   // Reduced motion stops the loop rather than damping it. The ring is decorative - the transcript
-  // below is what actually reports that speech is being heard - so a static ring loses nothing.
+  // panel is what actually reports that speech is being heard - so a static ring loses nothing.
   useEffect(() => {
     if (state !== MockInterviewState.Listening) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -82,136 +90,183 @@ export function SessionScreen({ session, onSkip, onDone, onRepeat, onEnd }: Sess
     }
   };
 
-  const isFollowUp = currentQuestion?.isFollowUp ?? false;
-  const totalQuestions = setup?.question_count ?? 0;
-  const progressValue = totalQuestions > 0 ? (questionNumber / totalQuestions) * 100 : 0;
   const showReadyPrompt =
     state === MockInterviewState.Listening && currentQuestion && !currentQuestion.hasAudio && !answerReady;
   const isThinking = state in THINKING_LABEL;
   const canControl = state === MockInterviewState.Speaking || state === MockInterviewState.Listening;
+  // Shown for the whole active session once hints are on, not just once the first one arrives -
+  // otherwise the panel would pop in mid-question the moment the first hint request resolves,
+  // shifting the transcript panel it sits beside.
+  const showHintsPanel =
+    hintsEnabled && state !== MockInterviewState.Idle && state !== MockInterviewState.Finished;
+
+  const statusText = isThinking
+    ? THINKING_LABEL[state]
+    : state === MockInterviewState.Speaking
+      ? 'Interviewer is speaking. Your mic is off while the question plays.'
+      : state === MockInterviewState.Listening
+        ? showReadyPrompt
+          ? 'Read the question, then answer.'
+          : 'Listening…'
+        : '';
 
   return (
-    <div className="flex-1 flex flex-col items-center overflow-y-auto p-8">
-      <div className="w-full max-w-3xl space-y-6">
-        {/* Visually hidden: the screen is deliberately chrome-free while a question is live, but
-            this route still needs a landmark for screen-reader heading navigation to land on. */}
-        <h1 ref={headingRef} tabIndex={-1} className="sr-only">
-          Mock interview session
-        </h1>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <span>
-              {isFollowUp ? 'Follow-up' : `Question ${questionNumber} of ${totalQuestions}`}
-            </span>
-            {isFollowUp && <Badge variant="secondary">Follow-up</Badge>}
+    <div className="flex-1 flex flex-col w-full bg-background p-1 space-y-1">
+      {/* Visually hidden: the panels below carry their own visible headings, but the route still
+          needs a landmark for screen-reader heading navigation to land on. */}
+      <h1 ref={headingRef} tabIndex={-1} className="sr-only">
+        Mock interview session
+      </h1>
+
+      <div className="flex-1 flex flex-col overflow-y-hidden gap-1">
+        <div className="flex-1 min-h-0 flex gap-1">
+          <div className="flex-1 min-w-0">
+            <MockTranscriptPanel session={session} />
           </div>
-          <Progress value={progressValue} />
+          {showHintsPanel && (
+            <div className="flex-1 min-w-0">
+              <LiveSuggestionsPanel
+                suggestions={session.liveHints}
+                isRunning={state === MockInterviewState.Listening}
+              />
+            </div>
+          )}
         </div>
 
-        <Card>
-          <CardContent className="flex items-start gap-4 pt-2">
-            <div className="mt-1 flex h-12 w-12 shrink-0 items-center justify-center">
-              {state === MockInterviewState.Speaking && (
-                <div className="h-8 w-8 rounded-full bg-primary/70 animate-pulse" aria-hidden="true" />
-              )}
-              {state === MockInterviewState.Listening && (
-                // No `transition-transform`: use-mic-level.ts writes `transform` every frame, and
-                // a transition on that property interpolates towards each new value instead of
-                // applying it, so the ring would lag the voice it is meant to track.
-                <div
-                  ref={levelRingRef}
-                  className="h-8 w-8 rounded-full bg-primary/30 border-2 border-primary"
-                  aria-hidden="true"
-                />
-              )}
-              {isThinking && (
-                <div
-                  className="h-6 w-6 rounded-full border-2 border-muted-foreground/40 border-t-primary animate-spin"
-                  aria-hidden="true"
-                />
-              )}
-            </div>
-
-            <div className="min-w-0 flex-1 space-y-2" aria-live="polite">
-              {currentQuestion && !isThinking ? (
-                <p dir="auto" className="text-xl leading-relaxed wrap-break-word">
-                  {currentQuestion.text}
-                </p>
-              ) : (
-                <p className="text-sm text-muted-foreground">{isThinking ? THINKING_LABEL[state] : 'Preparing…'}</p>
-              )}
-
-              {state === MockInterviewState.Speaking && (
-                <p className="text-xs text-muted-foreground">
-                  Interviewer is speaking. Your mic is off while the question plays.
-                </p>
-              )}
-              {state === MockInterviewState.Listening && !showReadyPrompt && (
-                <p className="text-xs text-muted-foreground">Listening…</p>
-              )}
-              {showReadyPrompt && (
-                <div className="flex items-center gap-3 pt-1">
-                  <p className="text-xs text-muted-foreground">Read the question, then answer.</p>
-                  <Button size="sm" variant="outline" onClick={() => setAnswerReady(true)}>
-                    I&apos;m ready
-                  </Button>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-2">
-            <ScrollArea className="h-40">
-              {currentAnswerText ? (
-                <p dir="auto" className="text-sm leading-relaxed wrap-break-word">
-                  {currentAnswerText}
-                </p>
-              ) : (
-                <p className="text-sm text-muted-foreground">Your answer will appear here as you speak.</p>
-              )}
-            </ScrollArea>
-          </CardContent>
-        </Card>
-
-        <div className="flex items-center justify-between">
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!canControl || busy !== null || !currentQuestion?.chunks.length}
-              onClick={withBusy('repeat', onRepeat)}
-            >
-              Repeat question
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!canControl || busy !== null}
-              onClick={withBusy('skip', onSkip)}
-            >
-              Skip question
-            </Button>
+        {/* Status line: what is currently happening, plus the one control that only makes sense
+            in the moment (the "I'm ready" gate for a question with no audio). Kept as a single
+            slim row rather than a big centred card - the transcript panel above is what the
+            candidate actually reads. */}
+        <div
+          className="flex items-center justify-center gap-2 py-1 text-xs text-muted-foreground shrink-0"
+          aria-live="polite"
+        >
+          <div className="h-4 w-4 flex items-center justify-center shrink-0" aria-hidden="true">
+            {state === MockInterviewState.Speaking && (
+              <span className="h-2.5 w-2.5 rounded-full bg-primary/70 animate-pulse" />
+            )}
+            {state === MockInterviewState.Listening && (
+              <span
+                ref={levelRingRef}
+                className="h-2.5 w-2.5 rounded-full bg-primary/30 border-2 border-primary"
+              />
+            )}
+            {isThinking && (
+              <span className="h-3 w-3 rounded-full border-2 border-muted-foreground/40 border-t-primary animate-spin" />
+            )}
           </div>
-          <div className="flex gap-2">
+          {statusText && <span>{statusText}</span>}
+          {showReadyPrompt && (
+            <Button size="sm" variant="outline" className="h-6 text-xs" onClick={() => setAnswerReady(true)}>
+              I&apos;m ready
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Control bar - same 32px row, icon buttons and grouping as the live assistant's, so the
+          two interview modes share the one piece of chrome the candidate has to operate on. */}
+      <div className="flex items-center justify-center gap-4 px-1 pb-1 pt-0.5">
+        <div className="flex items-center gap-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={cn(BAR_ICON_BUTTON, BAR_GHOST)}
+                disabled={!canControl || busy !== null || !currentQuestion?.chunks.length}
+                aria-label="Repeat question"
+                onClick={withBusy('repeat', onRepeat)}
+              >
+                <RotateCcw className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Repeat question</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={cn(BAR_ICON_BUTTON, BAR_GHOST)}
+                disabled={!canControl || busy !== null}
+                aria-label="Skip question"
+                onClick={withBusy('skip', onSkip)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Skip question</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+
+        <div className="h-5 w-px bg-border" aria-hidden="true" />
+
+        <Tooltip>
+          <TooltipTrigger asChild>
             <Button
               size="sm"
+              className="h-8 gap-1.5 rounded-lg px-4 text-xs font-semibold bg-blue-600 hover:bg-blue-600/90"
               disabled={state !== MockInterviewState.Listening || busy !== null || (showReadyPrompt ?? false)}
               onClick={withBusy('done', onDone)}
             >
+              <Check className="h-3.5 w-3.5" />
               Done answering
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-destructive hover:text-destructive"
-              disabled={busy !== null}
-              onClick={withBusy('end', onEnd)}
-            >
-              End interview
-            </Button>
-          </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Submit your answer and move on</p>
+          </TooltipContent>
+        </Tooltip>
+
+        <div className="h-5 w-px bg-border" aria-hidden="true" />
+
+        <div className="flex items-center gap-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={cn(BAR_ICON_BUTTON, hintsEnabled ? BAR_ACTIVE : BAR_GHOST)}
+                aria-pressed={hintsEnabled}
+                aria-label="Toggle live suggestions"
+                onClick={toggleHints}
+              >
+                <Lightbulb className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Live Suggestions: {hintsEnabled ? 'On' : 'Off'}</p>
+              <p className="text-xs text-muted-foreground">
+                {hintsEnabled
+                  ? 'Shows what the live assistant would answer'
+                  : 'Practise without a hint'}
+              </p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={cn(BAR_ICON_BUTTON, 'text-destructive hover:text-destructive hover:bg-destructive/10')}
+                disabled={busy !== null}
+                aria-label="End interview"
+                onClick={withBusy('end', onEnd)}
+              >
+                <Square className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>End interview</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
       </div>
     </div>

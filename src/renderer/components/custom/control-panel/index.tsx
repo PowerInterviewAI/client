@@ -1,5 +1,6 @@
 import { Ellipsis, Play, Square } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { useAppState } from '@/hooks/use-app-state';
@@ -12,8 +13,10 @@ import { useSaveHistoryGuard } from '@/hooks/use-save-history-guard';
 import { isMac } from '@/lib/consts';
 import { getElectron } from '@/lib/utils';
 import { RunningState } from '@/types/app-state';
+import type { MockInterviewSetup } from '@/types/mock-interview';
 
 import HeadphoneNoticeDialog from '../headphone-notice-dialog';
+import { MockInterviewSetupDialog } from '../mock-interview-setup-dialog';
 import PermissionGateDialog from '../permission-gate-dialog';
 import ZoomControl from '../zoom-control';
 import { AudioGroup } from './audio-group';
@@ -32,6 +35,7 @@ type StateConfig = {
 
 export default function ControlPanel() {
   const isStealth = useIsStealthMode();
+  const navigate = useNavigate();
   const { startAssistant, stopAssistant } = useAssistantService();
   const { runningState, appState } = useAppState();
   const { config } = useConfigStore();
@@ -39,6 +43,7 @@ export default function ControlPanel() {
   const { confirmDiscard } = useSaveHistoryGuard();
   const [permGateOpen, setPermGateOpen] = useState(false);
   const [headphoneNoticeOpen, setHeadphoneNoticeOpen] = useState(false);
+  const [mockSetupOpen, setMockSetupOpen] = useState(false);
 
   const { devices: audioInputDevices, ready: audioDevicesReady } = useAudioInputDevices();
 
@@ -150,6 +155,16 @@ export default function ControlPanel() {
     setHeadphoneNoticeOpen(true);
   };
 
+  // The dialog has already validated and shown its own headphone notice by the time this runs -
+  // starting the session itself happens on `/mock-interview`, not here, so that only one
+  // `useMockInterview()` instance is ever mounted at once. Starting it from this page as well
+  // would leave two instances reacting to the same `Speaking` transition for the moment before
+  // the route swap finishes, which is what plays (or replays) the question's audio twice.
+  const handleMockInterviewStart = async (setup: MockInterviewSetup) => {
+    setMockSetupOpen(false);
+    navigate('/mock-interview', { state: { pendingSetup: setup } });
+  };
+
   const stateConfig: Record<RunningState, StateConfig> = {
     [RunningState.Idle]: {
       onClick: handleStartClick,
@@ -196,7 +211,11 @@ export default function ControlPanel() {
           Zoom is held at the right edge by ml-auto: it changes how the app is viewed rather than
           what it does, and mixing it into the run would make it read as another interview control. */}
       <div id="control-panel" className="flex items-center gap-4 px-1 pb-1 pt-0.5">
-        <MainGroup stateConfig={{ onClick, className, icon, label }} getDisabled={getDisabled} />
+        <MainGroup
+          stateConfig={{ onClick, className, icon, label }}
+          getDisabled={getDisabled}
+          onStartMockInterview={() => setMockSetupOpen(true)}
+        />
 
         <div className="h-5 w-px bg-border" aria-hidden="true" />
 
@@ -230,6 +249,12 @@ export default function ControlPanel() {
         open={headphoneNoticeOpen}
         onOpenChange={setHeadphoneNoticeOpen}
         onProceed={() => void startAfterNotice()}
+      />
+
+      <MockInterviewSetupDialog
+        open={mockSetupOpen}
+        onOpenChange={setMockSetupOpen}
+        onStart={handleMockInterviewStart}
       />
 
       {isMac && (

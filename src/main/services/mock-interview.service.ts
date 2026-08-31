@@ -1,11 +1,16 @@
+import { LLMApi } from '../api/llm.js';
 import { MockInterviewApi } from '../api/mock-interview.js';
 import {
+  LIVE_SUGGESTION_TTFB_MS,
   MOCK_ANSWER_SILENCE_MS,
   MOCK_LISTENING_SILENCE_MS,
   MOCK_MAX_FOLLOW_UPS_PER_QUESTION,
+  SUGGESTION_STALL_MS,
 } from '../consts.js';
 import { configStore } from '../store/config.store.js';
+import { LiveSuggestion, Speaker, SuggestionState, Transcript } from '../types/app-state.js';
 import { Language, TTS_LANGUAGES } from '../types/language.js';
+import { GenerateLiveSuggestionRequest, RequestTurnVerdict, SuggestionMode } from '../types/llm.js';
 import {
   EvaluateMockTurnRequest,
   GenerateMockQuestionRequest,
@@ -19,6 +24,7 @@ import {
   MockTurnAction,
 } from '../types/mock-interview.js';
 import { splitIntoSpeechChunks } from '../utils/speech-chunks.js';
+import { getSuggestionErrorMessage } from '../utils/suggestion-error.js';
 import { transcriptSeparator } from '../utils/transcript-join.js';
 import { appStateService } from './app-state.service.js';
 
@@ -30,6 +36,7 @@ function initialSession(): MockInterviewSessionState {
     questionNumber: 0,
     answers: [],
     currentAnswerText: '',
+    liveHints: [],
     report: null,
     reportError: null,
     error: null,
@@ -51,6 +58,7 @@ function initialSession(): MockInterviewSessionState {
  */
 class MockInterviewService {
   private api = new MockInterviewApi();
+  private llmApi = new LLMApi();
   private session: MockInterviewSessionState = initialSession();
   private sessionSeq = 0;
   private followUpCount = 0;
@@ -58,6 +66,16 @@ class MockInterviewService {
   private silenceTimer: NodeJS.Timeout | null = null;
   /** Captured at `start()` and fixed for the session - see the docstring on `start`. */
   private language: Language = Language.English;
+
+  /**
+   * One hint per question, keyed by its own timestamp the way `LiveSuggestionService` keys its
+   * suggestions - a Map rather than mutating `session.liveHints` in place, so a superseded stream
+   * (skip/next while a hint is still generating) cannot resurrect a hint for a question the
+   * candidate has already moved past.
+   */
+  private hintsByTimestamp: Map<number, LiveSuggestion> = new Map();
+  /** The one hint that can be generating at a time - questions are asked one at a time. */
+  private hintAbortController: AbortController | null = null;
 
   isActive(): boolean {
     return (
@@ -88,6 +106,8 @@ class MockInterviewService {
     const seq = ++this.sessionSeq;
     this.followUpCount = 0;
     this.finalAnswerText = '';
+    this.stopLiveHint();
+    this.hintsByTimestamp.clear();
     this.language = configStore.getConfig().language;
     this.session = { ...initialSession(), setup, state: MockInterviewState.Starting };
     this.broadcast();
@@ -224,6 +244,12 @@ class MockInterviewService {
     };
     if (!hasAudio) this.armSilenceTimer(MOCK_LISTENING_SILENCE_MS);
     this.broadcast();
+
+    // The question text is already final the moment it is installed - unlike the live path,
+    // there is no ASR to wait for - so the hint can start generating immediately rather than
+    // waiting for Listening. Fire-and-forget: a hint is a bonus the candidate can read while they
+    // answer, never something the turn itself waits on.
+    void this.generateLiveHint(this.sessionSeq, text);
   }
 
   /** One chunk's audio, by index into the current question's `chunks`. Null if Aura has no voice. */
@@ -438,6 +464,7 @@ class MockInterviewService {
   async endSession(): Promise<void> {
     if (!this.isActive()) return;
     this.clearSilenceTimer();
+    this.stopLiveHint();
     const seq = ++this.sessionSeq;
     this.setState(MockInterviewState.Stopping);
     this.broadcast();
@@ -459,6 +486,8 @@ class MockInterviewService {
    */
   clear(): void {
     this.clearSilenceTimer();
+    this.stopLiveHint();
+    this.hintsByTimestamp.clear();
     this.sessionSeq += 1;
     this.followUpCount = 0;
     this.finalAnswerText = '';
@@ -468,6 +497,166 @@ class MockInterviewService {
 
   getState(): MockInterviewSessionState {
     return { ...this.session };
+  }
+
+  private stopLiveHint(): void {
+    this.hintAbortController?.abort();
+    this.hintAbortController = null;
+  }
+
+  private publishHints(seq: number): void {
+    if (seq !== this.sessionSeq) return;
+    this.session = { ...this.session, liveHints: Array.from(this.hintsByTimestamp.values()) };
+    this.broadcast();
+  }
+
+  /**
+   * Build the transcript `GenerateLiveSuggestionRequest` expects out of the session so far, ending
+   * on the question just asked. Every prior turn is included, unlike the live path's rolling
+   * `TRANSCRIPT_UPLOAD_LIMIT` window - a mock session runs a handful of questions, not an hour of
+   * conversation, so there is nothing to trim.
+   */
+  private buildHintTranscripts(question: string): Transcript[] {
+    const transcripts: Transcript[] = [];
+    let t = 0;
+    for (const a of this.session.answers) {
+      transcripts.push({
+        timestamp: t++,
+        text: a.question,
+        speaker: Speaker.Other,
+        isFinal: true,
+        endTimestamp: t,
+        language: this.language,
+      });
+      if (a.answer) {
+        transcripts.push({
+          timestamp: t++,
+          text: a.answer,
+          speaker: Speaker.Self,
+          isFinal: true,
+          endTimestamp: t,
+          language: this.language,
+        });
+      }
+    }
+    transcripts.push({
+      timestamp: t++,
+      text: question,
+      speaker: Speaker.Other,
+      isFinal: true,
+      endTimestamp: t,
+      language: this.language,
+    });
+    return transcripts;
+  }
+
+  /**
+   * What the live assistant would have suggested for this question - the same request
+   * `LiveSuggestionService` makes, aimed at the mock session's own history instead of the live
+   * transcript, and written to `session.liveHints` rather than `AppState.liveSuggestions` so a
+   * mock session never touches the live panels or `hasHistory` (see the class docstring).
+   *
+   * `turn_verdict` is always `Answer`: every question here is the interviewer's whole turn, never
+   * an ASR fragment, so there is nothing for the backend's own classifier to resolve - unlike the
+   * live path, this never reaches `NO_SUGGESTION_NEEDED`.
+   *
+   * No render-delay gate either. That exists on the live path to stop a card flashing onto screen
+   * only to be retracted when the backend's speculative classifier suppresses the turn a moment
+   * later - `Answer` skips that classifier entirely, so there is nothing here to be retracted.
+   */
+  private async generateLiveHint(seq: number, question: string): Promise<void> {
+    const conf = configStore.getConfig();
+    if (!conf.mockLiveSuggestionsEnabled) return;
+
+    this.stopLiveHint();
+    const controller = new AbortController();
+    this.hintAbortController = controller;
+
+    const mode = conf.professionalMode ? SuggestionMode.Professional : SuggestionMode.Normal;
+    const timestamp = Date.now();
+    const hint: LiveSuggestion = {
+      timestamp,
+      last_question: question,
+      answer: '',
+      state: SuggestionState.Loading,
+      error: '',
+      mode,
+    };
+    this.hintsByTimestamp.set(timestamp, hint);
+    this.publishHints(seq);
+
+    let stallTimer: NodeJS.Timeout | null = null;
+    const armStallTimer = (ms: number): void => {
+      if (stallTimer) clearTimeout(stallTimer);
+      stallTimer = setTimeout(() => {
+        controller.abort(new DOMException('stalled', 'TimeoutError'));
+      }, ms);
+    };
+
+    try {
+      const interviewConfig = appStateService.getState().interviewConfig;
+      const requestBody: GenerateLiveSuggestionRequest = {
+        config: conf.llmConf,
+        profile_data: interviewConfig.profileData,
+        context: interviewConfig.context,
+        transcripts: this.buildHintTranscripts(question),
+        mode,
+        turn_verdict: RequestTurnVerdict.Answer,
+        language: this.language,
+      };
+
+      armStallTimer(LIVE_SUGGESTION_TTFB_MS);
+      const response = await this.llmApi.generateLiveSuggestions(requestBody, controller.signal);
+      if (!response) throw new Error('No response from suggestion API');
+
+      const reader = response.getReader();
+      const decoder = new TextDecoder('utf-8');
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          if (value) {
+            armStallTimer(SUGGESTION_STALL_MS);
+            hint.answer += decoder.decode(value, { stream: true });
+            this.publishHints(seq);
+          }
+        }
+        if (hint.answer.length === 0) {
+          hint.state = SuggestionState.Error;
+          hint.error = 'The model returned an empty response.';
+        } else {
+          hint.state = SuggestionState.Success;
+        }
+      } finally {
+        await reader.cancel().catch(() => {});
+        reader.releaseLock();
+      }
+    } catch (error) {
+      // Keyed on the signal rather than the error, the same way the live path reads it: an abort
+      // rejects with its *reason*, so a stall surfaces as TimeoutError and a check on the error
+      // itself would miss it.
+      const aborted = controller.signal.aborted;
+      const stalled =
+        aborted &&
+        controller.signal.reason instanceof Error &&
+        controller.signal.reason.name === 'TimeoutError';
+
+      if (aborted && !stalled) {
+        // Superseded by the next question before this one finished streaming. Left on screen as
+        // Stopped rather than removed - the panel already knows how to render an unfinished card,
+        // and a hint vanishing the moment the candidate moves on reads as a bug, not a feature.
+        hint.state = SuggestionState.Stopped;
+      } else {
+        hint.state = SuggestionState.Error;
+        hint.error = stalled
+          ? 'The response timed out. Please try again.'
+          : getSuggestionErrorMessage(error);
+      }
+    } finally {
+      if (stallTimer) clearTimeout(stallTimer);
+      if (this.hintAbortController === controller) this.hintAbortController = null;
+    }
+    this.publishHints(seq);
   }
 }
 

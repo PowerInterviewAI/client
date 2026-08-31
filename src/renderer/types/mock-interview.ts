@@ -5,6 +5,8 @@
  * counterpart - same enum values, so the broadcast state needs no translation at the IPC boundary.
  */
 
+import { type LiveSuggestion } from './suggestion';
+
 export enum MockSeniority {
   Junior = 'junior',
   Mid = 'mid',
@@ -81,6 +83,8 @@ export interface MockInterviewSessionState {
   questionNumber: number;
   answers: MockAnswer[];
   currentAnswerText: string;
+  /** What the live assistant would have suggested for each question, on by default. */
+  liveHints: LiveSuggestion[];
   report: MockReport | null;
   reportError: string | null;
   error: string | null;

@@ -31,4 +31,7 @@ export interface Config {
 
   // Suggestions come back as headline + keyword bullets instead of full sentences
   professionalMode: boolean;
+
+  // Mock interview: also show what the live assistant would have suggested. On by default.
+  mockLiveSuggestionsEnabled: boolean;
 }
