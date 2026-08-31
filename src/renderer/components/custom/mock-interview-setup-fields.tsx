@@ -1,6 +1,5 @@
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
@@ -41,38 +40,18 @@ const SENIORITIES: { value: MockSeniority; label: string }[] = [
 const QUESTION_COUNTS = [3, 5, 8, 12] as const;
 
 /**
- * The form body shared by the full-page setup screen and the control bar's setup dialog - role,
+ * The form body shared by the full-page setup screen and the control bar's setup dialog -
  * seniority, question count, difficulty, and the current (read-only here) interview language.
- * Nothing here asks for the CV or job context: those come from the same account-level
- * `interviewConfig` the live assistant already reads, not from a copy gathered in this form.
+ * Nothing here asks for the CV, job context or role: those come from the same account-level
+ * `interviewConfig` the live assistant already reads. The backend frames the interview around
+ * whatever role that context names, rather than a short label collected a second time here.
  */
 export function MockInterviewSetupFields({ form }: { form: MockInterviewSetupForm }) {
-  const {
-    role,
-    setRole,
-    seniority,
-    setSeniority,
-    difficulty,
-    setDifficulty,
-    questionCount,
-    setQuestionCount,
-    languageOption,
-  } = form;
+  const { seniority, setSeniority, difficulty, setDifficulty, questionCount, setQuestionCount, languageOption } =
+    form;
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <Label htmlFor="mock-role">Role</Label>
-        <Input
-          id="mock-role"
-          name="role"
-          autoComplete="organization-title"
-          placeholder="e.g. Backend Engineer"
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-        />
-      </div>
-
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           {/* A Radix Select trigger is a button, not a form control, so htmlFor does not reach

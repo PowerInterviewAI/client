@@ -25,7 +25,6 @@ export function useMockInterviewSetupForm(onStart: (setup: MockInterviewSetup) =
   const { openConfigurationDialog } = useConfigurationDialog();
   const { devices: audioInputDevices, ready: audioDevicesReady } = useAudioInputDevices();
 
-  const [role, setRole] = useState('');
   const [seniority, setSeniority] = useState<MockSeniority>(MockSeniority.Mid);
   const [difficulty, setDifficulty] = useState<MockDifficulty>(MockDifficulty.Standard);
   const [questionCount, setQuestionCount] = useState(8);
@@ -69,18 +68,16 @@ export function useMockInterviewSetupForm(onStart: (setup: MockInterviewSetup) =
       );
       return false;
     }
-    if (!role.trim()) {
-      toast.error('Enter the role you are practicing for');
-      return false;
-    }
     return true;
   };
 
   const startAfterNotice = async () => {
     setStarting(true);
     try {
+      // No role: the backend falls back to the account's own job context to frame the
+      // interview when it is absent (`MockInterviewService._role_framing`), so there is
+      // nothing to collect here that the account does not already have.
       await onStart({
-        role: role.trim(),
         seniority,
         difficulty,
         question_count: questionCount,
@@ -99,8 +96,6 @@ export function useMockInterviewSetupForm(onStart: (setup: MockInterviewSetup) =
   };
 
   return {
-    role,
-    setRole,
     seniority,
     setSeniority,
     difficulty,

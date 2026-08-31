@@ -63,7 +63,12 @@ export enum MockInterviewState {
 }
 
 export interface MockInterviewSetup {
-  role: string;
+  /**
+   * No longer collected on the setup screen - the account's job context almost always already
+   * names the role. Optional on the wire too; the backend falls back to pointing at that context
+   * when this is absent (`MockInterviewService._role_framing`).
+   */
+  role?: string;
   seniority: MockSeniority;
   difficulty: MockDifficulty;
   question_count: number;
