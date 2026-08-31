@@ -53,13 +53,14 @@ export async function run() {
   );
   const entries = [
     ...rendererSource.matchAll(
-      /\{ code: Language\.(\w+), name: '([^']*)', nativeName: '([^']*)', short: '([^']*)' \}/g
+      /\{ code: Language\.(\w+), name: '([^']*)', nativeName: '([^']*)', short: '([^']*)', hasVoice: (true|false) \}/g
     ),
   ].map((m) => ({
     member: m[1],
     name: m[2],
     nativeName: m[3],
     short: m[4],
+    hasVoice: m[5] === 'true',
     code: memberCodes.get(m[1]),
   }));
 
@@ -116,6 +117,16 @@ export async function run() {
   check(
     'every unspaced language is one the picker actually offers',
     ['ja', 'zh', 'th'].every((code) => Object.values(Language).includes(code))
+  );
+
+  // Deepgram's Aura TTS speaks 7 of these 28 languages, mirroring the backend's
+  // DEEPGRAM_TTS_VOICES map. Getting this wrong is quiet in both directions: a language wrongly
+  // marked hasVoice sends a mock-interview /speak request that always comes back empty, and one
+  // wrongly marked false denies a real voice to a user who has one.
+  const ttsLanguages = new Set(['en', 'es', 'de', 'fr', 'nl', 'it', 'ja']);
+  check(
+    'hasVoice is exactly the 7 Aura-supported languages',
+    entries.every((entry) => entry.hasVoice === ttsLanguages.has(entry.code))
   );
 
   // The store is the single source for every consumer, so it is where an unknown code has to die.

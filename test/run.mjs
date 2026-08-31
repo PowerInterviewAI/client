@@ -27,9 +27,20 @@ for (const module of [
   // reads the same running state through its own copy of window-control.
   './running-surface.test.mjs',
   './tools-export.test.mjs',
+  './mock-export.test.mjs',
   // After tools-export: it drives the shared appStateService singleton through the placeholder
   // and back, which the export helpers above do not read.
   './save-history.test.mjs',
+  // Drives mockInterviewService through a real session via a fake global fetch - after
+  // save-history, which is the last test to depend on appStateService's placeholder state.
+  './mock-interview-state.test.mjs',
+  // Drives appStateService.runningState and mockInterview together, so it must run after
+  // mock-interview-state seeds no lasting mockInterview state of its own (mock-interview-state
+  // clears the service on every branch, and the service's own clear() resets appState too).
+  './mock-action-suggestion-block.test.mjs',
+  './mock-interview-gate.test.mjs',
+  './mock-transcription-isolation.test.mjs',
+  './speech-chunks.test.mjs',
   './audio-device-switch.test.mjs',
   './language-switch.test.mjs',
   './rtl-rendering.test.mjs',
