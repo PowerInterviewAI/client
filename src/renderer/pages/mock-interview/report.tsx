@@ -110,7 +110,9 @@ export function ReportScreen({ session, onExport, onPracticeAgain, onDone }: Rep
                 {report.strengths.length > 0 ? (
                   <ul className="list-disc space-y-1 pl-4 text-sm">
                     {report.strengths.map((s, i) => (
-                      <li key={i}>{s}</li>
+                      <li key={i} dir="auto">
+                        {s}
+                      </li>
                     ))}
                   </ul>
                 ) : (
@@ -126,7 +128,9 @@ export function ReportScreen({ session, onExport, onPracticeAgain, onDone }: Rep
                 {report.gaps.length > 0 ? (
                   <ul className="list-disc space-y-1 pl-4 text-sm">
                     {report.gaps.map((g, i) => (
-                      <li key={i}>{g}</li>
+                      <li key={i} dir="auto">
+                        {g}
+                      </li>
                     ))}
                   </ul>
                 ) : (
@@ -166,7 +170,9 @@ export function ReportScreen({ session, onExport, onPracticeAgain, onDone }: Rep
                         <>
                           <div>
                             <p className="text-xs font-medium text-muted-foreground">Score</p>
-                            <p className="text-sm">{scored.justification}</p>
+                            <p dir="auto" className="text-sm">
+                              {scored.justification}
+                            </p>
                           </div>
                           <div>
                             <p className="text-xs font-medium text-muted-foreground">Stronger answer</p>
