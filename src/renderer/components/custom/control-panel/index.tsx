@@ -38,7 +38,7 @@ export default function ControlPanel() {
   const navigate = useNavigate();
   const { startAssistant, stopAssistant } = useAssistantService();
   const { runningState, appState } = useAppState();
-  const { config } = useConfigStore();
+  const { config, updateConfig } = useConfigStore();
   const { openConfigurationDialog } = useConfigurationDialog();
   const { confirmDiscard } = useSaveHistoryGuard();
   const [permGateOpen, setPermGateOpen] = useState(false);
@@ -120,6 +120,13 @@ export default function ControlPanel() {
   // Everything after the headphone notice. Split out so the notice can hand the start back once
   // the user acknowledges it, without duplicating what follows.
   const startAfterNotice = async () => {
+    // Remembered regardless of how this was reached - the primary button replaying last time's
+    // mode, or the dropdown's explicit "Start live assistant" - both mean the candidate is
+    // starting live right now, which is what the remembered mode is tracking.
+    void updateConfig({ lastSessionMode: 'live' }).catch((e) =>
+      console.error('Failed to persist last session mode', e)
+    );
+
     // `startAssistant` opens with `clearAll()`, so the previous interview is gone the moment
     // this goes ahead. Asked before the permission gate rather than after: a user who is about
     // to be sent into System Settings should not have answered a question first that the trip
@@ -161,8 +168,24 @@ export default function ControlPanel() {
   // would leave two instances reacting to the same `Speaking` transition for the moment before
   // the route swap finishes, which is what plays (or replays) the question's audio twice.
   const handleMockInterviewStart = async (setup: MockInterviewSetup) => {
+    void updateConfig({ lastSessionMode: 'mock' }).catch((e) =>
+      console.error('Failed to persist last session mode', e)
+    );
     setMockSetupOpen(false);
     navigate('/mock-interview', { state: { pendingSetup: setup } });
+  };
+
+  // What the primary button starts when nothing has been chosen explicitly - whichever mode was
+  // last actually started, defaulting to mock for a candidate who has never started either. The
+  // dropdown's own two items bypass this and always name a specific mode; this is only for the
+  // half of the split button that has no menu attached to it.
+  const defaultSessionMode: 'live' | 'mock' = config?.lastSessionMode ?? 'mock';
+  const handleStartDefault = () => {
+    if (defaultSessionMode === 'mock') {
+      setMockSetupOpen(true);
+    } else {
+      void handleStartClick();
+    }
   };
 
   const stateConfig: Record<RunningState, StateConfig> = {
@@ -214,6 +237,8 @@ export default function ControlPanel() {
         <MainGroup
           stateConfig={{ onClick, className, icon, label }}
           getDisabled={getDisabled}
+          defaultMode={defaultSessionMode}
+          onStartDefault={handleStartDefault}
           onStartMockInterview={() => setMockSetupOpen(true)}
         />
 

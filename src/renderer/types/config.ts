@@ -34,4 +34,8 @@ export interface Config {
 
   // Mock interview: also show what the live assistant would have suggested. On by default.
   mockLiveSuggestionsEnabled: boolean;
+
+  // Which session the control bar's primary Start button launches directly - whichever the
+  // candidate last actually started. Defaults to 'mock'.
+  lastSessionMode: 'live' | 'mock';
 }

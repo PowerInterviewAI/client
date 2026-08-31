@@ -38,6 +38,11 @@ export interface RuntimeConfig {
   // mock interview: also generate what the live assistant would have suggested for each
   // question. On by default - trying this out is one of the two reasons the feature exists.
   mockLiveSuggestionsEnabled: boolean;
+
+  // Which session the control bar's primary Start button launches directly, without going
+  // through the dropdown - whichever the candidate last actually started. Defaults to 'mock':
+  // a first-time user is far more likely to be trying the app out than walking into a real call.
+  lastSessionMode: 'live' | 'mock';
 }
 
 // Default runtime configuration
@@ -64,6 +69,8 @@ const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
 
   // opt-out: showing what the live assistant would have said is the point of trying this
   mockLiveSuggestionsEnabled: true,
+
+  lastSessionMode: 'mock',
 };
 
 // interviewConf (full name, profile, context) used to be cached under `runtime`, but it's now
@@ -264,6 +271,9 @@ export const configStore = new ConfigStore();
   }
   if (raw?.mockLiveSuggestionsEnabled === undefined) {
     migration.mockLiveSuggestionsEnabled = true;
+  }
+  if (raw?.lastSessionMode === undefined) {
+    migration.lastSessionMode = 'mock';
   }
   // perform migration only if there are values to set
   if (Object.keys(migration).length > 0) {

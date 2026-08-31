@@ -20,6 +20,10 @@ interface MainGroupProps {
     label: string;
   };
   getDisabled: (state: RunningState, disableOnRunning?: boolean) => boolean;
+  /** Which session `onStartDefault` launches - whichever was last actually started. */
+  defaultMode: 'live' | 'mock';
+  /** The primary button's own action while idle: start `defaultMode` directly, no menu involved. */
+  onStartDefault: () => void;
   /** Opens the mock interview's setup dialog. Only offered while nothing is running. */
   onStartMockInterview: () => void;
 }
@@ -32,7 +36,13 @@ interface MainGroupProps {
  * Fixed width rather than auto: the label changes with the running state, and an auto-width
  * primary would shift the rest of the bar sideways at the exact moment the user is watching it.
  */
-export function MainGroup({ stateConfig, getDisabled, onStartMockInterview }: MainGroupProps) {
+export function MainGroup({
+  stateConfig,
+  getDisabled,
+  defaultMode,
+  onStartDefault,
+  onStartMockInterview,
+}: MainGroupProps) {
   const { runningState } = useAppState();
 
   const { onClick, className, icon, label } = stateConfig;
@@ -60,6 +70,20 @@ export function MainGroup({ stateConfig, getDisabled, onStartMockInterview }: Ma
       console.error(err);
     }
   };
+
+  // Idle-only counterpart to handleStartStopClick, for the half of the split button that has no
+  // running-state machine of its own to wait on - starting either session is either a dialog
+  // opening (mock, synchronous) or handleStartClick's own headphone-notice flow (live, which
+  // reports its own errors), so there is nothing here for a caller to await.
+  const handlePrimaryClick = () => {
+    try {
+      onStartDefault();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const primaryIcon = defaultMode === 'mock' ? <Mic className="h-3.5 w-3.5" /> : icon;
 
   // Idle only: the dropdown offers a choice of what to start, and once something is running the
   // only meaningful action left is Stop - a chevron with nothing behind it would just be visual
@@ -93,7 +117,7 @@ export function MainGroup({ stateConfig, getDisabled, onStartMockInterview }: Ma
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
-            onClick={handleStartStopClick}
+            onClick={handlePrimaryClick}
             size="sm"
             className={cn(
               'h-8 w-24 gap-1.5 rounded-r-none rounded-l-lg text-xs font-semibold cursor-pointer',
@@ -101,12 +125,13 @@ export function MainGroup({ stateConfig, getDisabled, onStartMockInterview }: Ma
             )}
             disabled={getDisabled(runningState, false)}
           >
-            {icon}
+            {primaryIcon}
             {label}
           </Button>
         </TooltipTrigger>
         <TooltipContent>
-          <p>Start the live assistant</p>
+          <p>{defaultMode === 'mock' ? 'Start a mock interview' : 'Start the live assistant'}</p>
+          <p className="text-xs text-muted-foreground">Last session's mode - see the menu for the other one</p>
         </TooltipContent>
       </Tooltip>
 
