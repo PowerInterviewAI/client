@@ -1,5 +1,9 @@
 import { MockInterviewApi } from '../api/mock-interview.js';
-import { MOCK_ANSWER_SILENCE_MS, MOCK_MAX_FOLLOW_UPS_PER_QUESTION } from '../consts.js';
+import {
+  MOCK_ANSWER_SILENCE_MS,
+  MOCK_LISTENING_SILENCE_MS,
+  MOCK_MAX_FOLLOW_UPS_PER_QUESTION,
+} from '../consts.js';
 import { configStore } from '../store/config.store.js';
 import { Language, TTS_LANGUAGES } from '../types/language.js';
 import {
@@ -159,10 +163,22 @@ class MockInterviewService {
   }
 
   /**
-   * Silence backstop for "Done answering" - a candidate who stops talking for
-   * `MOCK_ANSWER_SILENCE_MS` without pressing the button is treated as finished. Armed only from
-   * `ingestAnswer`, once real speech has actually arrived, so a pause to think before answering
-   * never auto-submits an empty answer.
+   * Silence backstop, covering two different ways "Done answering" never gets pressed.
+   *
+   * Armed at two points, with two different delays and a shared decision at the deadline: if
+   * `finalAnswerText` holds anything, treat it as "Done answering" was pressed
+   * (`answerFinished()`); if it is still empty, there is nothing to submit, so treat it as
+   * "Skip question" instead (`skipQuestion()`).
+   *
+   * - `ingestAnswer`, once real speech has actually arrived, with `MOCK_ANSWER_SILENCE_MS` - a
+   *   candidate who stops talking without pressing the button. Short, because the candidate is
+   *   mid-answer and has already engaged.
+   * - Entering `Listening` with nothing said yet (`installQuestion` for a text-only question,
+   *   `speechFinished`/`speechFailed` for a voiced one), with the far longer
+   *   `MOCK_LISTENING_SILENCE_MS` - a dead microphone that produces no transcript at all, not a
+   *   candidate who is merely thinking. Without this half, a mic that failed before the candidate
+   *   said a word left the session waiting forever, recoverable only by noticing and clicking
+   *   "Skip question" by hand.
    */
   private clearSilenceTimer(): void {
     if (this.silenceTimer !== null) {
@@ -171,12 +187,16 @@ class MockInterviewService {
     }
   }
 
-  private armSilenceTimer(): void {
+  private armSilenceTimer(delayMs: number): void {
     this.clearSilenceTimer();
     this.silenceTimer = setTimeout(() => {
       this.silenceTimer = null;
-      void this.answerFinished();
-    }, MOCK_ANSWER_SILENCE_MS);
+      if (this.finalAnswerText.trim()) {
+        void this.answerFinished();
+      } else {
+        void this.skipQuestion();
+      }
+    }, delayMs);
   }
 
   private installQuestion(text: string, kind: MockQuestionKind, isFollowUp: boolean): void {
@@ -202,6 +222,7 @@ class MockInterviewService {
       currentAnswerText: '',
       state: hasAudio ? MockInterviewState.Speaking : MockInterviewState.Listening,
     };
+    if (!hasAudio) this.armSilenceTimer(MOCK_LISTENING_SILENCE_MS);
     this.broadcast();
   }
 
@@ -216,6 +237,7 @@ class MockInterviewService {
   async speechFinished(): Promise<void> {
     if (this.session.state !== MockInterviewState.Speaking) return;
     this.setState(MockInterviewState.Listening);
+    this.armSilenceTimer(MOCK_LISTENING_SILENCE_MS);
     this.broadcast();
   }
 
@@ -234,6 +256,7 @@ class MockInterviewService {
       };
     }
     this.setState(MockInterviewState.Listening);
+    this.armSilenceTimer(MOCK_LISTENING_SILENCE_MS);
     this.broadcast();
   }
 
@@ -255,7 +278,7 @@ class MockInterviewService {
         currentAnswerText: `${this.finalAnswerText}${partialSep}${trimmed}`,
       };
     }
-    this.armSilenceTimer();
+    this.armSilenceTimer(MOCK_ANSWER_SILENCE_MS);
     this.broadcast();
   }
 

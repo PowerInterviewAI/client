@@ -221,6 +221,62 @@ export async function run() {
       'and the trailing answer was captured before the timeout fired',
       mockInterviewService.getState().answers[0]?.answer === 'Answered, then silence.'
     );
+
+    // The dead-mic watchdog: Listening begins and nothing is ever said - a mic that failed
+    // before the candidate spoke a word, not a candidate who is merely thinking. The armed
+    // timer must skip the question on its own once it fires, since there is no answer to submit,
+    // rather than stranding the session in Listening indefinitely.
+    mockInterviewService.clear();
+    await mockInterviewService.start({ ...setup, question_count: 3 });
+    // No ingestAnswer() before this - TTS just finished and nothing has been said yet, which is
+    // exactly the case the watchdog exists for.
+    let watchdogCallback = null;
+    let watchdogDelay = null;
+    globalThis.setTimeout = (callback, delay) => {
+      watchdogCallback = callback;
+      watchdogDelay = delay;
+      const timer = originalSetTimeout(() => {}, delay);
+      timer.unref?.();
+      return timer;
+    };
+    try {
+      await toListening();
+      check('entering Listening with nothing said arms a watchdog', typeof watchdogCallback === 'function');
+      check(
+        'using the long dead-mic delay, not the short post-speech one',
+        typeof watchdogDelay === 'number' && watchdogDelay >= 30000
+      );
+    } finally {
+      globalThis.setTimeout = originalSetTimeout;
+    }
+
+    const questionNumberBeforeWatchdog = mockInterviewService.getState().questionNumber;
+    watchdogCallback();
+    await new Promise((resolve) => originalSetTimeout(resolve, 50));
+    check(
+      'firing the watchdog with nothing said skips the question, not submits an empty answer',
+      mockInterviewService.getState().answers[0]?.skipped === true
+    );
+    check(
+      'and advances rather than hanging in Listening',
+      mockInterviewService.getState().questionNumber === questionNumberBeforeWatchdog + 1
+    );
+
+    // Real speech arriving must disarm the dead-mic watchdog and hand off to the short
+    // post-speech backstop - the two must not both end up armed, or fire in the wrong order.
+    mockInterviewService.clear();
+    await mockInterviewService.start({ ...setup, question_count: 1 });
+    await toListening();
+    mockInterviewService.ingestAnswer('final', 'The mic works fine.');
+    await mockInterviewService.answerFinished();
+    check(
+      'real speech after entering Listening submits normally, not as skipped',
+      mockInterviewService.getState().answers[0]?.skipped === false
+    );
+    check(
+      'with the actual answer text preserved',
+      mockInterviewService.getState().answers[0]?.answer === 'The mic works fine.'
+    );
   } finally {
     globalThis.fetch = originalFetch;
     mockInterviewService.clear();

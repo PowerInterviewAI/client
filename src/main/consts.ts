@@ -137,3 +137,12 @@ export const MOCK_MAX_FOLLOW_UPS_PER_QUESTION = 2;
 // pressing the button is treated as finished. The button is the real mechanism; this only covers
 // someone who forgets it exists. Deliberately generous: a pause to think must not auto-submit.
 export const MOCK_ANSWER_SILENCE_MS = 8_000;
+
+// Backstop for a Listening state that never receives a single word - a dead microphone (unplugged,
+// permission revoked mid-session, a device error), not a candidate who is merely thinking. Far more
+// generous than MOCK_ANSWER_SILENCE_MS because normal think-time before answering starts must never
+// trigger it: this only fires when nothing at all - not one partial transcript - arrives while
+// Listening. Without it, a mic that dies before the candidate says anything left the session
+// waiting forever with no automatic recovery, recoverable only by the candidate noticing and
+// clicking "Skip question" by hand.
+export const MOCK_LISTENING_SILENCE_MS = 60_000;
