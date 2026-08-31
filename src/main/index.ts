@@ -15,6 +15,7 @@ import { registerAutoUpdaterHandlers } from './ipc/auto-updater.js';
 import { registerConfigHandlers } from './ipc/config.js';
 import { registerExternalHandlers } from './ipc/external.js';
 import { registerLLMHandlers } from './ipc/llm.js';
+import { registerMockInterviewHandlers } from './ipc/mock-interview.js';
 import { registerPaymentHandlers } from './ipc/payment.js';
 import { registerPermissionHandlers } from './ipc/permissions.js';
 import { registerActionSuggestionHandlers } from './ipc/suggestion-action.js';
@@ -211,6 +212,7 @@ app.whenReady().then(async () => {
   registerTranscriptHandlers();
   registerLiveSuggestionHandlers();
   registerActionSuggestionHandlers();
+  registerMockInterviewHandlers();
   registerToolsHandlers();
   registerAutoUpdaterHandlers();
   registerExternalHandlers();
