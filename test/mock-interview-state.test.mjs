@@ -183,6 +183,44 @@ export async function run() {
     mockInterviewService.ingestAnswer('final', 'Last one.');
     await mockInterviewService.answerFinished();
     check('isActive() is false when Finished', mockInterviewService.isActive() === false);
+
+    // The silence backstop: real speech arrives, then nothing more. The armed timer must fire
+    // answerFinished() on its own, exactly as if "Done answering" had been clicked - a candidate
+    // who trails off must not be stranded in Listening forever.
+    mockInterviewService.clear();
+    await mockInterviewService.start({ ...setup, question_count: 1 });
+    await toListening();
+
+    const originalSetTimeout = globalThis.setTimeout;
+    let silenceCallback = null;
+    globalThis.setTimeout = (callback, delay) => {
+      silenceCallback = callback;
+      // A real, inert timer standing in for the captured one, so the service's own
+      // `clearTimeout(this.silenceTimer)` calls stay valid - unref'd so it cannot hold the test
+      // process open if this branch is ever reached without the manual fire below.
+      const timer = originalSetTimeout(() => {}, delay);
+      timer.unref?.();
+      return timer;
+    };
+    try {
+      mockInterviewService.ingestAnswer('final', 'Answered, then silence.');
+      check('a silence timer is armed once real speech arrives', typeof silenceCallback === 'function');
+    } finally {
+      globalThis.setTimeout = originalSetTimeout;
+    }
+
+    silenceCallback();
+    // answerFinished() runs its own chain of mocked-but-async fetch calls from here; give it a
+    // few real ticks to resolve rather than asserting on the exact microtask it is on.
+    await new Promise((resolve) => originalSetTimeout(resolve, 50));
+    check(
+      'firing the silence timeout reaches Finished, the same as clicking Done answering',
+      mockInterviewService.getState().state === MockInterviewState.Finished
+    );
+    check(
+      'and the trailing answer was captured before the timeout fired',
+      mockInterviewService.getState().answers[0]?.answer === 'Answered, then silence.'
+    );
   } finally {
     globalThis.fetch = originalFetch;
     mockInterviewService.clear();

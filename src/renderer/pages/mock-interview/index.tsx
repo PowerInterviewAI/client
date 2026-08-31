@@ -32,6 +32,8 @@ export default function MockInterviewPage() {
   const { exportMockReport } = useTools();
   const redirectedToLogin = useRef(false);
   const endedOnUnmount = useRef(false);
+  const sessionRef = useRef(session);
+  sessionRef.current = session;
 
   useEffect(() => {
     getElectron()?.setStealth(false);
@@ -44,11 +46,15 @@ export default function MockInterviewPage() {
   }, [appState?.isLoggedIn, navigate]);
 
   // Ends an in-progress session if this page unmounts without going through the report screen -
-  // see the module docstring for why this is a fallback rather than the intended UX.
+  // see the module docstring for why this is a fallback rather than the intended UX. Reads
+  // `sessionRef` rather than `session` directly: this effect only runs once (mount/unmount), so a
+  // cleanup closing over `session` would see whatever it was at mount - almost always `null`,
+  // before a session has even started - never the live state at the moment the page actually
+  // unmounts. The ref is kept current on every render instead.
   useEffect(() => {
     return () => {
       if (endedOnUnmount.current) return;
-      const state = session?.state;
+      const state = sessionRef.current?.state;
       if (state && state !== MockInterviewState.Idle && state !== MockInterviewState.Finished) {
         endedOnUnmount.current = true;
         void endSession();

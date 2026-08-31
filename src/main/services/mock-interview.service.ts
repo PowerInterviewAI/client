@@ -1,5 +1,5 @@
 import { MockInterviewApi } from '../api/mock-interview.js';
-import { MOCK_MAX_FOLLOW_UPS_PER_QUESTION } from '../consts.js';
+import { MOCK_ANSWER_SILENCE_MS, MOCK_MAX_FOLLOW_UPS_PER_QUESTION } from '../consts.js';
 import { configStore } from '../store/config.store.js';
 import { Language, TTS_LANGUAGES } from '../types/language.js';
 import {
@@ -51,6 +51,7 @@ class MockInterviewService {
   private sessionSeq = 0;
   private followUpCount = 0;
   private finalAnswerText = '';
+  private silenceTimer: NodeJS.Timeout | null = null;
   /** Captured at `start()` and fixed for the session - see the docstring on `start`. */
   private language: Language = Language.English;
 
@@ -157,7 +158,29 @@ class MockInterviewService {
     }
   }
 
+  /**
+   * Silence backstop for "Done answering" - a candidate who stops talking for
+   * `MOCK_ANSWER_SILENCE_MS` without pressing the button is treated as finished. Armed only from
+   * `ingestAnswer`, once real speech has actually arrived, so a pause to think before answering
+   * never auto-submits an empty answer.
+   */
+  private clearSilenceTimer(): void {
+    if (this.silenceTimer !== null) {
+      clearTimeout(this.silenceTimer);
+      this.silenceTimer = null;
+    }
+  }
+
+  private armSilenceTimer(): void {
+    this.clearSilenceTimer();
+    this.silenceTimer = setTimeout(() => {
+      this.silenceTimer = null;
+      void this.answerFinished();
+    }, MOCK_ANSWER_SILENCE_MS);
+  }
+
   private installQuestion(text: string, kind: MockQuestionKind, isFollowUp: boolean): void {
+    this.clearSilenceTimer();
     const hasAudio = TTS_LANGUAGES.has(this.language);
     const question: MockCurrentQuestion = {
       text,
@@ -232,6 +255,7 @@ class MockInterviewService {
         currentAnswerText: `${this.finalAnswerText}${partialSep}${trimmed}`,
       };
     }
+    this.armSilenceTimer();
     this.broadcast();
   }
 
@@ -240,6 +264,7 @@ class MockInterviewService {
     if (this.session.state !== MockInterviewState.Listening || !this.session.currentQuestion) {
       return;
     }
+    this.clearSilenceTimer();
     const seq = this.sessionSeq;
     const question = this.session.currentQuestion;
     const answerText = this.finalAnswerText.trim();
@@ -304,6 +329,7 @@ class MockInterviewService {
     ) {
       return;
     }
+    this.clearSilenceTimer();
     const seq = this.sessionSeq;
     const question = this.session.currentQuestion;
     if (question) {
@@ -388,6 +414,7 @@ class MockInterviewService {
    */
   async endSession(): Promise<void> {
     if (!this.isActive()) return;
+    this.clearSilenceTimer();
     const seq = ++this.sessionSeq;
     this.setState(MockInterviewState.Stopping);
     this.broadcast();
@@ -408,6 +435,7 @@ class MockInterviewService {
    * "Practise again" never scores a new session's answers against the previous one's.
    */
   clear(): void {
+    this.clearSilenceTimer();
     this.sessionSeq += 1;
     this.followUpCount = 0;
     this.finalAnswerText = '';
