@@ -30,6 +30,8 @@ const DEFAULT_STATE: AppState = {
   interviewConfig: { fullName: '', profileData: '', context: '' },
   interviewConfigLoaded: false,
   hasHistory: false,
+  mockInterview: null,
+  hasMockContent: false,
 };
 
 /** The three arrays a session fills, and that the placeholder seeds. */
@@ -178,8 +180,35 @@ export class AppStateService {
     return next;
   }
 
+  /**
+   * Fold a `mockInterview` write into `updates` so that `hasMockContent` follows it, the same
+   * mechanism `withHistory` is for the live transcript.
+   *
+   * Independent of `hasHistory` on purpose: a mock session and a live interview never run at the
+   * same time (mutual exclusion is enforced elsewhere), but they are still two separate things a
+   * close can destroy, and conflating them would let one mask the other in the guard that reads
+   * them.
+   */
+  private withMockContent(updatesIn: Partial<AppState>): Partial<AppState> {
+    const next: Partial<AppState> = { ...updatesIn };
+    // Derived here and nowhere else, for the same reason `hasHistory` is stripped above: this
+    // crosses IPC inside a `Partial<AppState>` the renderer composes, and the close guard trusts
+    // it - a caller that set it directly would switch the save prompt off with no symptom.
+    delete next.hasMockContent;
+
+    if (next.mockInterview === undefined) return next;
+
+    const session = next.mockInterview;
+    // A skipped question is not content: `answer` is empty for those by construction, so the
+    // trim check already excludes them without needing to read the `skipped` flag directly.
+    next.hasMockContent =
+      session !== null && session.answers.some((a) => !a.skipped && a.answer.trim().length > 0);
+
+    return next;
+  }
+
   updateState(updatesIn: Partial<AppState>): AppState {
-    const updates = this.withHistory(updatesIn);
+    const updates = this.withMockContent(this.withHistory(updatesIn));
 
     // The health-check loops re-report identical values every 1-5s. Broadcasting those would
     // re-render every subscriber for nothing, so only notify when something actually moved.
