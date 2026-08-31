@@ -144,13 +144,10 @@ export default function ControlPanel() {
 
     // Before the permission gate, and before anything opens a socket: on speakers the echo is
     // already in the audio by the time the first question is asked, and the failure it causes
-    // is silent. Nothing here can detect the output route, so the user is asked.
-    if (!config?.headphoneNoticeAcknowledged) {
-      setHeadphoneNoticeOpen(true);
-      return;
-    }
-
-    await startAfterNotice();
+    // is silent. Nothing here can detect the output route, so the user is asked - every session,
+    // since whether the call is on speakers is a property of the machine and the meeting, not a
+    // setting that stays true once answered.
+    setHeadphoneNoticeOpen(true);
   };
 
   const stateConfig: Record<RunningState, StateConfig> = {

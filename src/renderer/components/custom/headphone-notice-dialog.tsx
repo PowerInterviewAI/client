@@ -1,8 +1,6 @@
 import { Headphones, MicOff, Volume2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -11,7 +9,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { useConfigStore } from '@/hooks/use-config-store';
 
 interface HeadphoneNoticeDialogProps {
   open: boolean;
@@ -31,30 +28,18 @@ interface HeadphoneNoticeDialogProps {
  * There is no reliable way to detect this from the renderer - `enumerateDevices()` reports what
  * exists, not what the sound is coming out of - so the user's own answer is the only signal
  * available, and it is asked for rather than guessed at.
+ *
+ * Shown before every session, deliberately with no "don't show again" - whether the call is on
+ * speakers is a property of the machine and the meeting, not a setting, and it can change between
+ * any two sessions on the same install. A permanent silence option contradicted that: the one
+ * fact this dialog exists to establish was the one fact a stale tick could no longer speak to.
  */
 export default function HeadphoneNoticeDialog({
   open,
   onOpenChange,
   onProceed,
 }: HeadphoneNoticeDialogProps) {
-  const { config, updateConfig } = useConfigStore();
-  const [dontShowAgain, setDontShowAgain] = useState(false);
-
-  // The dialog is mounted for the life of the control panel, so the tick would otherwise
-  // survive a Cancel and be waiting - already checked - the next time it opens. Silencing a
-  // warning is then one click the user did not knowingly make.
-  useEffect(() => {
-    if (open) setDontShowAgain(false);
-  }, [open]);
-
   const handleProceed = () => {
-    // Persisted on the way through rather than on the tick, so a user who changes their mind and
-    // cancels has not already silenced a warning they never acted on.
-    if (dontShowAgain && !config?.headphoneNoticeAcknowledged) {
-      updateConfig({ headphoneNoticeAcknowledged: true }).catch((e) =>
-        console.error('Failed to persist the headphone notice preference', e)
-      );
-    }
     onOpenChange(false);
     onProceed();
   };
@@ -83,14 +68,6 @@ export default function HeadphoneNoticeDialog({
             text="The app then reads their question as something you said, and stops answering it - with no error to tell you why."
           />
         </div>
-
-        <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
-          <Checkbox
-            checked={dontShowAgain}
-            onCheckedChange={(checked) => setDontShowAgain(checked === true)}
-          />
-          Do not show this again
-        </label>
 
         <DialogFooter className="gap-2 sm:gap-0">
           <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
