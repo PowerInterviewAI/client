@@ -14,16 +14,28 @@ interface HeadphoneNoticeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onProceed: () => void;
+  /**
+   * Which capture pipeline this session runs, since the two fail differently on speakers and the
+   * copy below is specific to the mechanism, not just "sounds better with headphones":
+   *
+   * `live` (default) - the interviewer is captured over loopback of the system's render endpoint,
+   * so on speakers the microphone hears the same words a fraction of a second later. That echo
+   * arrives as a `Self` final, and `skipDueToRecentSelf` in `transcript.service.ts` then
+   * suppresses the live suggestion for the question that was just asked - silently, at the moment
+   * the candidate needs it. See #111.
+   *
+   * `mock` - a mock interview never captures loopback at all (see
+   * `mock-transcription.service.ts`); the AI's own question comes out of the speakers instead,
+   * and `mock-tts.service.ts`'s mic gate mutes the candidate's track for the duration plus a tail
+   * covering room reverb. On speakers the residual failure is narrower - the tail of the
+   * question's echo landing at the start of the transcribed answer, not a suppressed suggestion -
+   * so the copy names that instead of borrowing the live session's mechanism.
+   */
+  variant?: 'live' | 'mock';
 }
 
 /**
  * Ask for headphones before the session opens.
- *
- * The app captures the interviewer through a loopback of the system's render endpoint, so on
- * speakers the microphone hears the same words a fraction of a second later. What that costs is
- * not cosmetic: the echo arrives as a `Self` final, and `skipDueToRecentSelf` in
- * `transcript.service.ts` then suppresses the live suggestion for the question that was just
- * asked. Silently, at the moment the candidate needs it. See #111.
  *
  * There is no reliable way to detect this from the renderer - `enumerateDevices()` reports what
  * exists, not what the sound is coming out of - so the user's own answer is the only signal
@@ -38,11 +50,43 @@ export default function HeadphoneNoticeDialog({
   open,
   onOpenChange,
   onProceed,
+  variant = 'live',
 }: HeadphoneNoticeDialogProps) {
   const handleProceed = () => {
     onOpenChange(false);
     onProceed();
   };
+
+  const description = "This session needs the interviewer's voice going to your ears only.";
+  const copy =
+    variant === 'mock'
+      ? {
+          description,
+          rows: [
+            {
+              icon: <Volume2 className="h-4 w-4" />,
+              text: 'On speakers, the question you just heard can echo into the start of your answer.',
+            },
+            {
+              icon: <MicOff className="h-4 w-4" />,
+              text: 'Your mic is muted while the interviewer speaks, but room reverb after it stops can still slip in as stray words.',
+            },
+          ],
+        }
+      : {
+          description,
+          rows: [
+            {
+              icon: <Volume2 className="h-4 w-4" />,
+              text: 'On speakers, your microphone hears the interviewer as well as you do.',
+            },
+            {
+              icon: <MicOff className="h-4 w-4" />,
+              // The failure is the quiet one, so it is named rather than left as "quality issues".
+              text: 'The app then reads their question as something you said, and stops answering it - with no error to tell you why.',
+            },
+          ],
+        };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -52,21 +96,13 @@ export default function HeadphoneNoticeDialog({
             <Headphones className="h-4 w-4" />
             Put your headphones on
           </DialogTitle>
-          <DialogDescription>
-            This session needs the interviewer&apos;s voice going to your ears only.
-          </DialogDescription>
+          <DialogDescription>{copy.description}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3 py-1">
-          <NoticeRow
-            icon={<Volume2 className="h-4 w-4" />}
-            text="On speakers, your microphone hears the interviewer as well as you do."
-          />
-          <NoticeRow
-            icon={<MicOff className="h-4 w-4" />}
-            // The failure is the quiet one, so it is named rather than left as "quality issues".
-            text="The app then reads their question as something you said, and stops answering it - with no error to tell you why."
-          />
+          {copy.rows.map((row, i) => (
+            <NoticeRow key={i} icon={row.icon} text={row.text} />
+          ))}
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">

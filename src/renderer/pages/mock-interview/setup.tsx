@@ -5,7 +5,14 @@ import HeadphoneNoticeDialog from '@/components/custom/headphone-notice-dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -26,9 +33,21 @@ import type { MockInterviewSetup } from '@/types/mock-interview';
 import { MockDifficulty, MockSeniority } from '@/types/mock-interview';
 
 const DIFFICULTIES: { value: MockDifficulty; label: string; description: string }[] = [
-  { value: MockDifficulty.Easy, label: 'Warm-up', description: 'Straightforward questions, one clear ask each.' },
-  { value: MockDifficulty.Standard, label: 'Standard', description: 'What an ordinary interviewer would actually ask.' },
-  { value: MockDifficulty.Hard, label: 'Hard', description: 'Probing questions on trade-offs and edge cases.' },
+  {
+    value: MockDifficulty.Easy,
+    label: 'Warm-up',
+    description: 'Straightforward questions, one clear ask each.',
+  },
+  {
+    value: MockDifficulty.Standard,
+    label: 'Standard',
+    description: 'What an ordinary interviewer would actually ask.',
+  },
+  {
+    value: MockDifficulty.Hard,
+    label: 'Hard',
+    description: 'Probing questions on trade-offs and edge cases.',
+  },
 ];
 
 const SENIORITIES: { value: MockSeniority; label: string }[] = [
@@ -243,6 +262,7 @@ export function SetupScreen({ onStart }: SetupScreenProps) {
         open={headphoneNoticeOpen}
         onOpenChange={setHeadphoneNoticeOpen}
         onProceed={() => void startAfterNotice()}
+        variant="mock"
       />
     </div>
   );
