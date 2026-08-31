@@ -6,6 +6,7 @@ import {
   LogOut,
   Mail,
   Menu,
+  Mic,
   Moon,
   SettingsIcon,
   Sun,
@@ -136,6 +137,13 @@ export default function TitlebarMenu({ style }: { style?: React.CSSProperties })
               <DropdownMenuItem onClick={() => navigate('/payment')} disabled={disabled}>
                 <CreditCard className="mr-2 h-4 w-4" />
                 Buy Credits
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => !disabled && navigate('/mock-interview')}
+                disabled={disabled}
+              >
+                <Mic className="mr-2 h-4 w-4" />
+                Mock interview
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleToggleStealth}>
