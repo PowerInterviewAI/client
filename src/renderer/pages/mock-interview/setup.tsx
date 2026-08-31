@@ -101,7 +101,9 @@ export function SetupScreen({ onStart }: SetupScreenProps) {
       return false;
     }
     if (audioInputDeviceNotFound) {
-      toast.error(`Audio input device "${selectedAudioInputDeviceName}" is not found`);
+      toast.error(
+        `Audio input device "${selectedAudioInputDeviceName}" is not found. Choose a different one from the main screen's audio settings.`
+      );
       return false;
     }
     if (!role.trim()) {
