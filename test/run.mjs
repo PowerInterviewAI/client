@@ -34,6 +34,9 @@ for (const module of [
   // Drives mockInterviewService through a real session via a fake global fetch - after
   // save-history, which is the last test to depend on appStateService's placeholder state.
   './mock-interview-state.test.mjs',
+  // Same harness and the same shared service singleton, so it follows the state machine's own
+  // file rather than running beside it.
+  './mock-live-hint.test.mjs',
   // Drives appStateService.runningState and mockInterview together, so it must run after
   // mock-interview-state seeds no lasting mockInterview state of its own (mock-interview-state
   // clears the service on every branch, and the service's own clear() resets appState too).
