@@ -1,3 +1,4 @@
+import { ApiRequestError } from '../api/client.js';
 import { LLMApi } from '../api/llm.js';
 import { MockInterviewApi } from '../api/mock-interview.js';
 import {
@@ -27,6 +28,24 @@ import { splitIntoSpeechChunks } from '../utils/speech-chunks.js';
 import { getSuggestionErrorMessage } from '../utils/suggestion-error.js';
 import { transcriptSeparator } from '../utils/transcript-join.js';
 import { appStateService } from './app-state.service.js';
+
+/**
+ * A description of a failed request that names what actually went wrong.
+ *
+ * `ApiRequestError.message` is only the HTTP status text ("Unprocessable Entity"), which does not
+ * distinguish the cases a user can act on - a session that has expired, a field this build sends
+ * that the deployed backend rejects, a provider outage - so the status and the body come with it.
+ * The body is what carries a validation error's actual field, and is bounded because it is put in
+ * front of a person.
+ */
+function describeApiError(error: unknown): string {
+  if (error instanceof ApiRequestError) {
+    const body = typeof error.content === 'string' ? error.content : JSON.stringify(error.content ?? '');
+    const detail = body && body !== '""' ? ` - ${body.slice(0, 300)}` : '';
+    return `${error.status} ${error.message}${detail}`;
+  }
+  return error instanceof Error ? error.message : String(error);
+}
 
 function initialSession(): MockInterviewSessionState {
   return {
@@ -63,6 +82,8 @@ class MockInterviewService {
   private sessionSeq = 0;
   private followUpCount = 0;
   private finalAnswerText = '';
+  /** Why the last question generation failed, for the message the setup screen shows. */
+  private lastQuestionError = '';
   private silenceTimer: NodeJS.Timeout | null = null;
   /** Captured at `start()` and fixed for the session - see the docstring on `start`. */
   private language: Language = Language.English;
@@ -106,6 +127,7 @@ class MockInterviewService {
     const seq = ++this.sessionSeq;
     this.followUpCount = 0;
     this.finalAnswerText = '';
+    this.lastQuestionError = '';
     this.stopLiveHint();
     this.hintsByTimestamp.clear();
     this.language = configStore.getConfig().language;
@@ -124,7 +146,15 @@ class MockInterviewService {
       // nothing with no explanation, so this is the one call site that turns that silence into
       // an error the setup screen can show.
       if (seq === this.sessionSeq && this.session.state === MockInterviewState.Idle) {
-        throw new Error('Failed to generate the first question. Please try again.');
+        // Carrying what actually failed, not just that something did. Both attempts are gone by
+        // here and the reason was the one thing the candidate was never told - which, for the
+        // failures this hits in practice (a session that has expired, a request a deployed
+        // backend rejects), is the whole of what they need to act on.
+        throw new Error(
+          this.lastQuestionError
+            ? `Could not generate the first question: ${this.lastQuestionError}`
+            : 'Failed to generate the first question. Please try again.'
+        );
       }
     } catch (error) {
       if (seq !== this.sessionSeq) return;
@@ -174,8 +204,20 @@ class MockInterviewService {
         }
         this.installQuestion(response.data.text, response.data.kind, isFollowUp);
         return;
-      } catch {
+      } catch (error) {
         if (seq !== this.sessionSeq) return;
+
+        // The failure the candidate actually meets, and the only path in this service that
+        // recorded nothing whatsoever: a bare `catch {}` discarded the reason, so a question that
+        // could not be generated - a rejected request, an expired session, a provider error -
+        // reached the screen as "please try again" with nothing anywhere saying what to try
+        // differently, and nothing in the log to read afterwards either.
+        this.lastQuestionError = describeApiError(error);
+        console.error(
+          `[MockInterviewService] question generation failed (attempt ${attempt + 1}): ${this.lastQuestionError}`,
+          error
+        );
+
         attempt += 1;
         if (attempt > 1) {
           await this.finishToScoring(seq);
@@ -502,6 +544,25 @@ class MockInterviewService {
     if (!this.isActive()) return;
     this.clearSilenceTimer();
     this.stopLiveHint();
+
+    // Whatever the candidate has already said for the question on screen counts as an answer.
+    // It was dropped: `finalAnswerText` is only folded into `answers` by `answerFinished`, so
+    // ending part-way through the first answer left `hasRealAnswers()` false and the branch
+    // below reset the whole session - no report, nothing to export, and the setup form back with
+    // no explanation. The silence backstop already treats this same text as "Done answering",
+    // which made the explicit End button the one path that threw it away.
+    const pending = this.finalAnswerText.trim();
+    if (pending && this.session.currentQuestion) {
+      const question = this.session.currentQuestion;
+      this.finalAnswerText = '';
+      this.session = {
+        ...this.session,
+        answers: [
+          ...this.session.answers,
+          { question: question.text, kind: question.kind, answer: pending, skipped: false },
+        ],
+      };
+    }
 
     // Ending *during* scoring abandons the report rather than starting another one. The control
     // bar deliberately leaves End reachable while an action is in flight - it is the way out of a

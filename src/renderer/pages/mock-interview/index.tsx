@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { LoadingPage } from '@/components/custom/loading';
 import { useAppState } from '@/hooks/use-app-state';
 import { useMockInterview } from '@/hooks/use-mock-interview';
+import { useSaveHistoryGuard } from '@/hooks/use-save-history-guard';
 import useTools from '@/hooks/use-tools';
 import { getElectron } from '@/lib/utils';
 import { type MockInterviewSetup, MockInterviewState } from '@/types/mock-interview';
@@ -32,6 +33,7 @@ export default function MockInterviewPage() {
   const { session, startSession, endSession, skipQuestion, answerFinished, repeatQuestion, clear } =
     useMockInterview();
   const { exportMockReport } = useTools();
+  const { confirmDiscard } = useSaveHistoryGuard();
   const redirectedToLogin = useRef(false);
   const endedOnUnmount = useRef(false);
   const sessionRef = useRef(session);
@@ -109,13 +111,19 @@ export default function MockInterviewPage() {
 
   if (state === MockInterviewState.Finished) {
     return (
+      // Both exits ask first. They are the only two paths that destroy a finished report from
+      // inside the app, and the same content is guarded on the window close and in front of an
+      // update install - so leaving these two unguarded meant the protection depended on which
+      // way the user happened to leave.
       <ReportScreen
         session={session!}
         onExport={(format) => exportMockReport(format)}
         onPracticeAgain={async () => {
+          if (!(await confirmDiscard('clear'))) return;
           await clear();
         }}
         onDone={async () => {
+          if (!(await confirmDiscard('clear'))) return;
           await clear();
           navigate('/main');
         }}

@@ -144,6 +144,19 @@ class ToolsService {
     transcriptService.clear();
     liveSuggestionService.clear();
     actionSuggestionService.clear();
+
+    // The mock session is in-memory state too, and leaving it here made "Clear" a lie about the
+    // one subject it did not touch: `hasMockContent` stayed true, so the close guard kept asking
+    // about a session that had been cleared and the save dialog - which picks the mock export
+    // whenever mock content is the only content - would have written a report for it.
+    //
+    // Guarded on `isActive()` rather than unconditional. Every caller here (the Clear button, and
+    // `startAssistant` opening a live session) is reachable only from the live control bar, which
+    // a running mock session excludes, so this is belt: clearing a session that is still running
+    // would drop the interview out from under the screen showing it.
+    if (!mockInterviewService.isActive()) {
+      mockInterviewService.clear();
+    }
   }
 
   async setPlaceholderData(): Promise<void> {
