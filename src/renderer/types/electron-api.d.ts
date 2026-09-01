@@ -156,6 +156,7 @@ declare global {
       speechFailed: () => Promise<void>;
       ingestAnswer: (payload: { type: 'partial' | 'final'; text: string }) => Promise<void>;
       answerFinished: () => Promise<void>;
+      repeatQuestion: () => Promise<void>;
       skipQuestion: () => Promise<void>;
       endSession: () => Promise<void>;
       clear: () => Promise<void>;

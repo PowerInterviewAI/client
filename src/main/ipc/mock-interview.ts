@@ -31,6 +31,10 @@ export function registerMockInterviewHandlers(): void {
     await mockInterviewService.answerFinished();
   });
 
+  ipcMain.handle('mock-interview:repeat-question', async () => {
+    mockInterviewService.repeatQuestion();
+  });
+
   ipcMain.handle('mock-interview:skip-question', async () => {
     await mockInterviewService.skipQuestion();
   });

@@ -74,10 +74,12 @@ export function useMockInterviewSetupForm(onStart: (setup: MockInterviewSetup) =
   const startAfterNotice = async () => {
     setStarting(true);
     try {
-      // No role: the backend falls back to the account's own job context to frame the
-      // interview when it is absent (`MockInterviewService._role_framing`), so there is
-      // nothing to collect here that the account does not already have.
+      // Empty rather than absent, and never collected: the account's job context already
+      // names the role, a backend that knows that frames the interview from it, and one that
+      // predates the change still requires the field - where omitting it is a 422 on every
+      // question rather than a degraded prompt. See `MockInterviewSetup.role`.
       await onStart({
+        role: '',
         seniority,
         difficulty,
         question_count: questionCount,

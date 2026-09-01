@@ -92,6 +92,8 @@ class MockTtsService {
   private audio: HTMLAudioElement | null = null;
   private cache = new Map<number, Blob>();
   private playSeq = 0;
+  /** Settles the promise of a playback `stop()` interrupted; null when nothing is playing. */
+  private settleStoppedPlayback: (() => void) | null = null;
 
   setMicTrack(track: MediaStreamTrack | null): void {
     this.gate.setTrack(track);
@@ -112,7 +114,7 @@ class MockTtsService {
     try {
       for (let i = 0; i < chunks.length; i++) {
         if (seq !== this.playSeq) return; // superseded - skip/end-interview/next question
-        const blob = await this.getChunkBlob(i, chunks.length);
+        const blob = await this.getChunkBlob(i, chunks.length, seq);
         if (seq !== this.playSeq) return;
         if (!blob) throw new Error('Synthesis returned no audio');
         await this.playBlob(blob);
@@ -150,21 +152,32 @@ class MockTtsService {
       }
       this.audio = null;
     }
+    // `pause()` fires neither `ended` nor `error`, so without this the promise `playBlob` handed
+    // back never settles: its object URL is never revoked and `playQuestion` never reaches its
+    // own `finally`. The gate survives that (this force-releases, and the watchdog backs it up),
+    // but one blob and one parked async frame are leaked per stop, and a session can stop often.
+    this.settleStoppedPlayback?.();
     this.gate.forceReleaseNow();
   }
 
-  private async getChunkBlob(index: number, total: number): Promise<Blob | null> {
+  /**
+   * Both writes carry the generation they were started under, because the cache is keyed by
+   * chunk index and `resetCache()` runs between questions. A fetch begun for the old question -
+   * the lookahead especially, which nothing awaits - otherwise lands after that reset and
+   * re-populates index *n* of the *new* question with the previous one's audio.
+   */
+  private async getChunkBlob(index: number, total: number, seq: number): Promise<Blob | null> {
     const cached = this.cache.get(index);
     if (cached) return cached;
 
     const blob = await this.fetchChunk(index);
-    if (blob) this.cache.set(index, blob);
+    if (blob && seq === this.playSeq) this.cache.set(index, blob);
 
     // Lookahead of one: kick off the next chunk's synthesis without waiting for it, so it is
     // likely ready by the time the current chunk finishes playing.
     if (index + 1 < total && !this.cache.has(index + 1)) {
       void this.fetchChunk(index + 1).then((next) => {
-        if (next) this.cache.set(index + 1, next);
+        if (next && seq === this.playSeq) this.cache.set(index + 1, next);
       });
     }
 
@@ -191,7 +204,17 @@ class MockTtsService {
 
       const cleanup = () => {
         URL.revokeObjectURL(url);
+        this.settleStoppedPlayback = null;
         if (this.audio === audio) this.audio = null;
+      };
+
+      // How `stop()` settles a playback it interrupted - see the note there. Rejecting rather
+      // than resolving keeps `playQuestion` out of its own success path, and it reports nothing:
+      // `stop()` bumps `playSeq` first, so the `seq === this.playSeq` guard in that catch is
+      // already false and no `speechFailed` is sent for a question deliberately abandoned.
+      this.settleStoppedPlayback = () => {
+        cleanup();
+        reject(new DOMException('playback stopped', 'AbortError'));
       };
 
       audio.onended = () => {

@@ -143,5 +143,5 @@ export default function MockInterviewPage() {
     return <LoadingPage disclaimer="Starting mock interview…" />;
   }
 
-  return <SetupScreen onStart={startSession} />;
+  return <SetupScreen onStart={startSession} error={session?.error} />;
 }

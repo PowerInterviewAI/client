@@ -370,6 +370,21 @@ class MockInterviewService {
     await this.advanceOrScore(seq);
   }
 
+  /**
+   * The candidate asked to hear the question again.
+   *
+   * Only the silence backstop cares, and it has to. The replay gates the microphone for its
+   * whole duration, so nothing is transcribed and nothing re-arms the timer - while an
+   * `MOCK_ANSWER_SILENCE_MS` deadline armed by whatever they said before pressing it keeps
+   * counting, fires mid-question, and submits that half-finished answer as though they had
+   * stopped talking. Re-armed at the listening delay, which is what "the question has just been
+   * asked and nothing has been said since" means everywhere else this timer is set.
+   */
+  repeatQuestion(): void {
+    if (this.session.state !== MockInterviewState.Listening) return;
+    this.armSilenceTimer(MOCK_LISTENING_SILENCE_MS);
+  }
+
   /** Skip the current question without an answer - always moves on, never follows up. */
   async skipQuestion(): Promise<void> {
     if (
@@ -413,8 +428,20 @@ class MockInterviewService {
 
     // The mock analogue of the export guard: a billed report call over a session with no real
     // answers would produce a document scoring an interview that did not happen.
+    //
+    // Reached without the user asking for it, though - the silence backstop skipping its way to
+    // the end of a session nobody was heard in, which is what a dead microphone looks like from
+    // here. Resetting silently put them back on the setup form with no explanation and nothing
+    // to act on, so the reset carries the reason: `start()`'s own failure path already renders
+    // `error` on that screen, and this is the same kind of dead end.
     if (!this.hasRealAnswers()) {
-      this.session = { ...initialSession() };
+      const answered = this.session.answers.length > 0;
+      this.session = {
+        ...initialSession(),
+        error: answered
+          ? 'The interview ended with nothing recorded. Check that the right microphone is selected and that it is not muted, then try again.'
+          : null,
+      };
       this.broadcast();
       return;
     }

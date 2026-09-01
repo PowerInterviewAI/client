@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 
 import HeadphoneNoticeDialog from '@/components/custom/headphone-notice-dialog';
 import { MockInterviewSetupFields } from '@/components/custom/mock-interview-setup-fields';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/components/ui/card';
 import { useMockInterviewSetupForm } from '@/hooks/use-mock-interview-setup-form';
@@ -9,9 +10,16 @@ import type { MockInterviewSetup } from '@/types/mock-interview';
 
 interface SetupScreenProps {
   onStart: (setup: MockInterviewSetup) => Promise<void>;
+  /**
+   * Why the last attempt ended up back here, when it did. Main sets `session.error` on the two
+   * dead ends that land on this screen without the user asking - a first question that could not
+   * be generated, and a session that reached the end with nothing recorded - and until this was
+   * rendered it was written and never read, so both looked like the app forgetting the session.
+   */
+  error?: string | null;
 }
 
-export function SetupScreen({ onStart }: SetupScreenProps) {
+export function SetupScreen({ onStart, error }: SetupScreenProps) {
   const form = useMockInterviewSetupForm(onStart);
   const { starting, headphoneNoticeOpen, setHeadphoneNoticeOpen, handleStartClick, startAfterNotice } =
     form;
@@ -41,7 +49,12 @@ export function SetupScreen({ onStart }: SetupScreenProps) {
           </CardDescription>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="space-y-6">
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           <MockInterviewSetupFields form={form} />
         </CardContent>
 

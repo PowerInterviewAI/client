@@ -40,12 +40,22 @@ export function useMockInterview() {
     const previous = prevStateRef.current;
     prevStateRef.current = state;
 
-    if (state !== MockInterviewState.Speaking) {
+    // Every move off `Speaking` except into `Listening`, which is the one main only ever reaches
+    // by `speechFinished`/`speechFailed` - that is, playback reporting its own completion. There
+    // `playQuestion` has already released the gate, and the release schedules the
+    // `MOCK_TTS_TAIL_MS` tail that covers room reverb and Deepgram's lookahead. `stop()` force
+    // releases, which clears that timer, so calling it here cancelled the tail on the *normal*
+    // path - every question, leaving exactly the "reverb slipping in as stray words" the mock
+    // headphone notice warns about with nothing mitigating it.
+    if (state !== MockInterviewState.Speaking && state !== MockInterviewState.Listening) {
       mockTtsService.stop();
     }
 
     if (state === MockInterviewState.Speaking && session?.currentQuestion) {
-      if (previous !== MockInterviewState.Speaking && !session.currentQuestion.isFollowUp) {
+      // Every question, follow-ups included. The cache is keyed by chunk *index*, and a follow-up
+      // replaces `currentQuestion` with different text under the same indices - so keeping it
+      // across one played the previous question's audio while the screen showed the follow-up.
+      if (previous !== MockInterviewState.Speaking) {
         mockTtsService.resetCache();
       }
       void mockTtsService.playQuestion(session.currentQuestion.chunks);
@@ -112,6 +122,10 @@ export function useMockInterview() {
 
   const repeatQuestion = async (): Promise<void> => {
     if (!session?.currentQuestion?.chunks.length) return;
+    // Before playback starts, not after: the replay gates the microphone, and main's silence
+    // backstop is what would otherwise submit a half-finished answer while the question is
+    // still being read back. See `mockInterviewService.repeatQuestion`.
+    await window.electronAPI?.mockInterview.repeatQuestion();
     await mockTtsService.repeat(session.currentQuestion.chunks);
   };
 

@@ -42,9 +42,17 @@ export enum MockInterviewState {
 export interface MockInterviewSetup {
   /**
    * No longer collected on the setup screen - the account's job context almost always already
-   * names the role, and the backend falls back to pointing at that context when this is absent.
+   * names the role, and a backend that understands that falls back to pointing at the context.
+   *
+   * **Required here, and sent empty rather than omitted.** A deployment that predates that
+   * backend change still declares `role` as required, and an absent field is a 422 on every
+   * question - the whole feature dead, not degraded - while an empty one passes its validation
+   * and merely leaves the role out of a prompt whose context names it anyway. This mirrors what
+   * `language` and `SuggestionMode` already do: a client ahead of its backend costs one session
+   * something, never the feature. Required in the type so the field cannot be quietly dropped
+   * again by a caller that only has the current backend in mind.
    */
-  role?: string;
+  role: string;
   seniority: MockSeniority;
   difficulty: MockDifficulty;
   question_count: number;
