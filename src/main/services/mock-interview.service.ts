@@ -307,7 +307,14 @@ class MockInterviewService {
         currentAnswerText: `${this.finalAnswerText}${partialSep}${trimmed}`,
       };
     }
-    this.armSilenceTimer(MOCK_ANSWER_SILENCE_MS);
+    // The short deadline belongs to finals only, because the deadline's own decision does: it
+    // submits when `finalAnswerText` holds something and *skips* when it does not. A partial
+    // arming it therefore demoted the 60s think-time backstop to 8s on the strength of speech
+    // that had not been finalised yet - and if that utterance never finalised (a dropped socket,
+    // an utterance the ASR discarded) the deadline took the skip branch, recording the turn as
+    // skipped and throwing away the words already on screen. A partial still re-arms the long
+    // one: it is evidence the candidate is talking, which is a reason to keep waiting.
+    this.armSilenceTimer(type === 'final' ? MOCK_ANSWER_SILENCE_MS : MOCK_LISTENING_SILENCE_MS);
     this.broadcast();
   }
 
@@ -495,6 +502,25 @@ class MockInterviewService {
     if (!this.isActive()) return;
     this.clearSilenceTimer();
     this.stopLiveHint();
+
+    // Ending *during* scoring abandons the report rather than starting another one. The control
+    // bar deliberately leaves End reachable while an action is in flight - it is the way out of a
+    // session that has stopped responding, and a hung report is one of the ways that happens - so
+    // this is reachable, and falling through would discard the in-flight report only to bill a
+    // second one for the same session. The answers are still on screen and still exportable,
+    // which is what `reportError` already means everywhere else.
+    if (this.session.state === MockInterviewState.Scoring) {
+      this.sessionSeq += 1;
+      this.session = {
+        ...this.session,
+        report: null,
+        reportError: 'The interview was ended before scoring finished.',
+        state: MockInterviewState.Finished,
+      };
+      this.broadcast();
+      return;
+    }
+
     const seq = ++this.sessionSeq;
     this.setState(MockInterviewState.Stopping);
     this.broadcast();

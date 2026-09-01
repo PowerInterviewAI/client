@@ -201,7 +201,16 @@ export function SessionScreen({ session, onSkip, onDone, onRepeat, onEnd }: Sess
                 variant="ghost"
                 size="sm"
                 className={cn(BAR_ICON_BUTTON, BAR_GHOST)}
-                disabled={!canControl || busy !== null || !currentQuestion?.chunks.length}
+                // `hasAudio` as well as the chunks, because `speechFailed()` clears the first and
+                // keeps the second: after a synthesis failure the question is on screen as text,
+                // and a Repeat offered there would take the microphone for the length of another
+                // failing attempt while the status line still says the candidate is being heard.
+                disabled={
+                  !canControl ||
+                  busy !== null ||
+                  !currentQuestion?.hasAudio ||
+                  !currentQuestion?.chunks.length
+                }
                 aria-label="Repeat question"
                 onClick={withBusy('repeat', onRepeat)}
               >

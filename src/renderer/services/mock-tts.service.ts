@@ -257,10 +257,25 @@ class MockTtsService {
       this.audio = audio;
 
       let timer = 0;
+      let settle: (() => void) | null = null;
+
       const cleanup = () => {
         window.clearTimeout(timer);
+        // Every exit from this promise stops the element, not just the ones that pause it on the
+        // way in. The timeout below is the case that matters: it abandons a stalled element and
+        // drops the only reference to it, so one that later un-stalls would read the question out
+        // over a reopened microphone and the next question's audio, reachable by nothing.
+        try {
+          audio.pause();
+        } catch {
+          // noop - the element is being discarded either way
+        }
         URL.revokeObjectURL(url);
-        this.settleStoppedPlayback = null;
+        // By identity, like `this.audio` below. A late `ended` or `error` from an element that
+        // has already settled would otherwise clear the *current* playback's settler, and the
+        // next `stop()` would then leave that playback parked forever - the gate's `finally`
+        // never running, and the control bar's `busy` never released.
+        if (this.settleStoppedPlayback === settle) this.settleStoppedPlayback = null;
         if (this.audio === audio) this.audio = null;
       };
 
@@ -280,10 +295,11 @@ class MockTtsService {
       // than resolving keeps `playQuestion` out of its own success path, and it reports nothing:
       // `stop()` bumps `playSeq` first, so the `seq === this.playSeq` guard in that catch is
       // already false and no `speechFailed` is sent for a question deliberately abandoned.
-      this.settleStoppedPlayback = () => {
+      settle = () => {
         cleanup();
         reject(new DOMException('playback stopped', 'AbortError'));
       };
+      this.settleStoppedPlayback = settle;
 
       audio.onended = () => {
         cleanup();

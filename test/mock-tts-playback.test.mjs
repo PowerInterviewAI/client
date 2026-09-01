@@ -75,6 +75,18 @@ export async function run() {
   check('a playback that never reports back is bounded', playBlob.includes('MOCK_TTS_CHUNK_TIMEOUT_MS'));
   check('and the bound rejects, so the turn falls through to speechFailed', /timer = window\.setTimeout\([\s\S]{0,200}reject\(/.test(playBlob));
 
+  // Every exit stops the element, not only the ones that pause it on the way in. The timeout
+  // abandons a stalled element and drops the last reference to it, so one that later un-stalls
+  // would read the question out over a reopened microphone, reachable by nothing.
+  check('every exit from a playback stops its element', /const cleanup = \(\) => \{[\s\S]{0,400}audio\.pause\(\)/.test(playBlob));
+
+  // By identity, like `this.audio`: a late `ended` from an already-settled element would
+  // otherwise clear the *current* playback's settler, and the next `stop()` would park it.
+  check(
+    'and the stop-settler is cleared only by the playback that installed it',
+    playBlob.includes('this.settleStoppedPlayback === settle')
+  );
+
   // A follow-up replaces `currentQuestion` with different text under the same chunk indices, so
   // keeping the cache across one made the interviewer read the *previous* question aloud while
   // the screen showed the follow-up. Skipping the reset for follow-ups reads like an
