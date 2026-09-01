@@ -1,6 +1,6 @@
 import { Ellipsis, Play, Square } from 'lucide-react';
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { useAppState } from '@/hooks/use-app-state';
@@ -36,6 +36,7 @@ type StateConfig = {
 export default function ControlPanel() {
   const isStealth = useIsStealthMode();
   const navigate = useNavigate();
+  const location = useLocation();
   const { startAssistant, stopAssistant } = useAssistantService();
   const { runningState, appState } = useAppState();
   const { config, updateConfig } = useConfigStore();
@@ -46,6 +47,20 @@ export default function ControlPanel() {
   const [mockSetupOpen, setMockSetupOpen] = useState(false);
 
   const { devices: audioInputDevices, ready: audioDevicesReady } = useAudioInputDevices();
+
+  // "Practise again" on the report screen has nowhere left to configure a new session other than
+  // here, so it navigates back to /main and hands this flag through router state to reopen the
+  // dialog on arrival - one click instead of the two it would take otherwise. Consumed once: the
+  // state is cleared in the same navigate that opens the dialog, so returning to this route later
+  // (Back, or a second visit) does not reopen it uninvited.
+  const openedMockSetupFromState = useRef(false);
+  useEffect(() => {
+    const navState = location.state as { openMockSetup?: boolean } | null;
+    if (!navState?.openMockSetup || openedMockSetupFromState.current) return;
+    openedMockSetupFromState.current = true;
+    setMockSetupOpen(true);
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location, navigate]);
 
   if (isStealth) return null;
 

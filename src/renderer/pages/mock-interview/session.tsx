@@ -45,12 +45,13 @@ export function SessionScreen({ session, onSkip, onDone, onRepeat, onEnd }: Sess
   const levelRef = useMicLevel(mockTranscriptionService.getStream());
   const { enabled: hintsEnabled, toggle: toggleHints } = useMockLiveSuggestions();
 
-  // This screen mounts once per session (SetupScreen unmounts, this replaces it) and stays
-  // mounted across every question until the report screen takes over - not a real navigation, so
-  // nothing moves focus here on its own. Runs once on mount rather than per-question: within-
-  // session updates (state, question text) are already announced through the aria-live region
-  // below, and refocusing the heading on every question would fight the candidate's own focus
-  // while they are mid-interaction with a control.
+  // This screen mounts once a session actually starts (the auto-start loading state on
+  // mock-interview/index.tsx unmounts, this replaces it) and stays mounted across every question
+  // until the report screen takes over - not a real navigation, so nothing moves focus here on
+  // its own. Runs once on mount rather than per-question: within-session updates (state, question
+  // text) are already announced through the aria-live region below, and refocusing the heading on
+  // every question would fight the candidate's own focus while they are mid-interaction with a
+  // control.
   useEffect(() => {
     headingRef.current?.focus();
   }, []);
@@ -115,14 +116,22 @@ export function SessionScreen({ session, onSkip, onDone, onRepeat, onEnd }: Sess
         : '';
 
   return (
-    <div className="flex-1 flex flex-col w-full bg-background p-1 space-y-1">
+    // min-h-0 on this div and the one below it, neither of which sets its own `overflow` and so
+    // gets no automatic min-size-0 from that: without it, a flex item's default min-height is its
+    // content's, which the row's own `min-h-0` cannot override upward through an unclamped
+    // ancestor. The panels' `overflow-y-auto` was fighting a box that had already grown to fit
+    // them - MainFrame's outer container (`overflow-auto hide-scrollbar`) absorbed the excess
+    // instead, so the page scrolled with no visible scrollbar and the panels never got their own.
+    // The live control bar avoids this a different way, by measuring pixel heights in JS; this
+    // route has no draggable dock to justify that, so it leans on the CSS chain being complete.
+    <div className="flex-1 min-h-0 flex flex-col w-full bg-background p-1 space-y-1">
       {/* Visually hidden: the panels below carry their own visible headings, but the route still
           needs a landmark for screen-reader heading navigation to land on. */}
       <h1 ref={headingRef} tabIndex={-1} className="sr-only">
         Mock interview session
       </h1>
 
-      <div className="flex-1 flex flex-col overflow-y-hidden gap-1">
+      <div className="flex-1 min-h-0 flex flex-col overflow-y-hidden gap-1">
         <div className="flex-1 min-h-0 flex gap-1">
           <div className="flex-1 min-w-0">
             <MockTranscriptPanel session={session} />

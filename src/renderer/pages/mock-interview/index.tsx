@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { LoadingPage } from '@/components/custom/loading';
@@ -12,13 +12,20 @@ import { type MockInterviewSetup, MockInterviewState } from '@/types/mock-interv
 
 import { ReportScreen } from './report';
 import { SessionScreen } from './session';
-import { SetupScreen } from './setup';
 
 /**
  * Mock interview: styled after the live control bar's own panels now rather than against them -
  * see `session.tsx`. It still needs no always-on-top and no taskbar/Dock hiding:
  * `shouldHideSurfaces()` only reacts to stealth and `RunningState.Running`, and a mock session
  * sets neither.
+ *
+ * Setup lives entirely on `/main` now, through the control bar's split Start button
+ * (`MockInterviewSetupDialog`) - this route is reached only with a setup already handed off
+ * through router state (`pendingSetup`), and its job is to run the session and show the report,
+ * nothing else. Idle with no setup to start is not a state this route presents on its own: it
+ * sends the candidate back to `/main`, which is where Start - and the dialog that used to be a
+ * page here - actually is. "Practise again" is what reaches that fallback most often, since
+ * clearing a finished session back to Idle is the whole of what it does.
  *
  * Known gap: leaving this route mid-session currently ends it outright (scoring whatever was
  * answered) rather than raising a confirmation dialog first, the way closing the app does via
@@ -51,7 +58,15 @@ export default function MockInterviewPage() {
   // clears the session back to Idle, and a handed-off setup plus a one-shot request flag were
   // both still true, so the render sat on this loading screen forever waiting for a start that
   // had already happened and would never happen again.
-  const [autoStarting, setAutoStarting] = useState(false);
+  //
+  // Seeded from `pendingSetup` rather than starting `false` unconditionally, and that is no
+  // longer cosmetic now that the Idle fallback below redirects. React fires a child's mount
+  // effect before this component's own later ones, so a first render that reached the Idle
+  // branch here - true on every fresh navigation, since `session` has not caught up to the
+  // broadcast yet - would have mounted `<Navigate>` and sent the candidate straight back to
+  // /main before the effect that starts the session ever ran. Seeding this true when a setup is
+  // waiting keeps that render on the loading screen instead.
+  const [autoStarting, setAutoStarting] = useState(() => Boolean(pendingSetup));
 
   useEffect(() => {
     if (!pendingSetup || autoStartRequested.current) return;
@@ -121,6 +136,10 @@ export default function MockInterviewPage() {
         onPracticeAgain={async () => {
           if (!(await confirmDiscard('clear'))) return;
           await clear();
+          // Setup has nowhere to happen on this route any more - back to /main, with a flag
+          // ControlPanel reads once to reopen the dialog itself, so "practise again" costs one
+          // click rather than the two it would if this just landed on the plain control bar.
+          navigate('/main', { state: { openMockSetup: true } });
         }}
         onDone={async () => {
           if (!(await confirmDiscard('clear'))) return;
@@ -143,13 +162,14 @@ export default function MockInterviewPage() {
     );
   }
 
-  // The handed-off start is still in flight: showing the full setup form here would be a step
-  // backward from the dialog that just collected the same fields, so this waits for the state to
-  // move rather than falling through to it. A start that fails clears the flag in its `finally`,
-  // so the form is still the way back rather than a dead end.
+  // The handed-off start is still in flight: this waits for the state to move rather than
+  // rendering anything of its own. A start that fails clears the flag in its own `catch`, so the
+  // branch below is still reachable rather than this being a dead end.
   if (autoStarting) {
     return <LoadingPage disclaimer="Starting mock interview…" />;
   }
 
-  return <SetupScreen onStart={startSession} error={session?.error} />;
+  // Idle with nothing pending - a start that just failed (the toast already said why), or this
+  // route opened directly with no handoff at all. Either way, Start lives on /main now.
+  return <Navigate to="/main" replace />;
 }
