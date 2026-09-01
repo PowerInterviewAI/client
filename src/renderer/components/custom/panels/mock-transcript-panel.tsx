@@ -27,6 +27,14 @@ interface Turn {
  * speaker rows never occur except across a skipped question, where the candidate's row is kept
  * (as "Skipped") rather than dropped - losing the row would make the interviewer's next question
  * read as a second question the candidate never got, with no explanation for the gap.
+ *
+ * **`currentQuestion` outlives the turn it belongs to**, and reading it as "the live turn" is
+ * what duplicated every question on screen. Main folds the finished turn into `answers` and only
+ * replaces `currentQuestion` when the *next* question is installed, so between the two - through
+ * Evaluating, Generating, Scoring and Stopping, which is every gap between questions - the same
+ * question (and its answer) is present in both places at once. The state is the discriminator:
+ * the question is live only while the candidate can still act on it, which is exactly `Speaking`
+ * and `Listening`. Everywhere else it has either not been asked yet or is already in `answers`.
  */
 function buildTurns(session: MockInterviewSessionState): Turn[] {
   const turns: Turn[] = [];
@@ -41,7 +49,10 @@ function buildTurns(session: MockInterviewSessionState): Turn[] {
     });
   });
 
-  if (session.currentQuestion) {
+  const questionIsLive =
+    session.state === MockInterviewState.Speaking || session.state === MockInterviewState.Listening;
+
+  if (session.currentQuestion && questionIsLive) {
     turns.push({
       key: 'current-q',
       speaker: 'interviewer',
@@ -49,11 +60,10 @@ function buildTurns(session: MockInterviewSessionState): Turn[] {
       isFollowUp: session.currentQuestion.isFollowUp,
     });
 
-    if (
-      session.currentAnswerText ||
-      session.state === MockInterviewState.Listening ||
-      session.state === MockInterviewState.Evaluating
-    ) {
+    // Only once something has actually been transcribed. Pushed on entering `Listening` instead,
+    // it was a row carrying the candidate's name and nothing else for as long as they were still
+    // thinking - and the status line below the panel already says the microphone is open.
+    if (session.currentAnswerText) {
       turns.push({ key: 'current-a', speaker: 'candidate', text: session.currentAnswerText });
     }
   }
@@ -178,8 +188,15 @@ function MockTranscriptPanel({ session }: MockTranscriptPanelProps) {
                       Follow-up
                     </Badge>
                   )}
-                  {turn.skipped ? (
-                    <p className="text-sm text-muted-foreground italic">Skipped</p>
+                  {/* An answered turn can still be empty - "Done answering" pressed with nothing
+                      transcribed, or the silence backstop firing on a dead microphone - and that
+                      is not the same as a skip. Left as the bare text it would render a speaker
+                      label above an empty line, which reads as a rendering fault rather than as
+                      what happened. The export says the same thing with its own placeholder. */}
+                  {turn.skipped || !turn.text ? (
+                    <p className="text-sm text-muted-foreground italic">
+                      {turn.skipped ? 'Skipped' : 'No answer'}
+                    </p>
                   ) : (
                     <p
                       dir="auto"

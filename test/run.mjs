@@ -43,6 +43,7 @@ for (const module of [
   './mock-action-suggestion-block.test.mjs',
   './mock-interview-gate.test.mjs',
   './mock-transcription-isolation.test.mjs',
+  './mock-transcript-turns.test.mjs',
   './speech-chunks.test.mjs',
   './audio-device-switch.test.mjs',
   './language-switch.test.mjs',
