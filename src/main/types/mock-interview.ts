@@ -115,6 +115,16 @@ export interface GenerateMockQuestionRequest extends LLMRequest {
   profile_data: string;
   context: string;
   history: MockQuestionHistoryEntry[];
+  /**
+   * Which question of `setup.question_count` this one is, 1-indexed.
+   *
+   * The backend cannot derive it: `history` counts turns, so it runs ahead of the question
+   * number wherever a follow-up was asked. Without it the model was asked to mark the last
+   * question as `closing` with no way to know which one that was, so a session never ended on a
+   * closing question - it just stopped when this side's count ran out. Optional on the wire, so
+   * an older backend ignores it.
+   */
+  question_number: number;
 }
 
 export interface EvaluateMockTurnRequest extends LLMRequest {

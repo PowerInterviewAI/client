@@ -156,6 +156,9 @@ class MockInterviewService {
       profile_data: interviewConfig.profileData,
       context: interviewConfig.context,
       history: this.session.answers.map((a) => ({ question: a.question, answer: a.answer })),
+      // The number this question will carry once installed. `installQuestion` advances the
+      // counter only for a new question, so a follow-up keeps the one on screen.
+      question_number: isFollowUp ? this.session.questionNumber : this.session.questionNumber + 1,
     };
 
     let attempt = 0;
