@@ -19,11 +19,13 @@ import { useConfigStore } from './use-config-store';
  *   first question, so a denied permission is a cheap failure caught before any backend call
  *   rather than a mismatch between "main thinks Speaking" and "renderer has no microphone".
  * - Playback starts when the broadcast state becomes `Speaking`.
- * - `mockTtsService.stop()` runs on every transition where the new state is not `Speaking` - a
- *   no-op if nothing was playing, and what stops a stray Speaking-driven playback dead the moment
- *   Skip or End interview moves main on to something else. It does not touch a `Repeat` the user
- *   triggers while genuinely `Listening`, because that never changes `session.state` and so never
- *   re-runs this effect.
+ * - `mockTtsService.stop()` runs on every transition off `Speaking` other than into `Listening` -
+ *   a no-op if nothing was playing, and what stops a stray Speaking-driven playback dead the
+ *   moment Skip or End interview moves main on to something else. `Listening` is exempt because
+ *   it is the one state with no playback left to abort and a tail that must survive; the effect
+ *   itself carries the whole reason. It does not touch a `Repeat` the user triggers while
+ *   genuinely `Listening` either, because that never changes `session.state` and so never re-runs
+ *   this effect - superseding an in-flight playback is `playQuestion`'s own job.
  * - Capture stops when the session reaches `Idle` or `Finished`.
  */
 export function useMockInterview() {
@@ -40,13 +42,16 @@ export function useMockInterview() {
     const previous = prevStateRef.current;
     prevStateRef.current = state;
 
-    // Every move off `Speaking` except into `Listening`, which is the one main only ever reaches
-    // by `speechFinished`/`speechFailed` - that is, playback reporting its own completion. There
-    // `playQuestion` has already released the gate, and the release schedules the
-    // `MOCK_TTS_TAIL_MS` tail that covers room reverb and Deepgram's lookahead. `stop()` force
-    // releases, which clears that timer, so calling it here cancelled the tail on the *normal*
-    // path - every question, leaving exactly the "reverb slipping in as stray words" the mock
-    // headphone notice warns about with nothing mitigating it.
+    // Every move off `Speaking` except into `Listening`, which is the one state there is never
+    // playback left to abort in. Main reaches it two ways and neither is a supersede: from
+    // `speechFinished`/`speechFailed`, which playback calls about itself, and straight from
+    // `installQuestion` for a question with no audio, which never started any.
+    //
+    // The first of those is why the exception has to exist. `playQuestion` releases the gate in
+    // its `finally`, and that release schedules the `MOCK_TTS_TAIL_MS` tail covering room reverb
+    // and Deepgram's lookahead; `stop()` force releases, which clears that timer. Calling it here
+    // therefore cancelled the tail on the *normal* path, every question, leaving exactly the
+    // "reverb slipping in as stray words" the mock headphone notice warns about unmitigated.
     if (state !== MockInterviewState.Speaking && state !== MockInterviewState.Listening) {
       mockTtsService.stop();
     }

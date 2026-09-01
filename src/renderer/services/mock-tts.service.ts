@@ -110,6 +110,14 @@ class MockTtsService {
     const electron = getElectron();
     if (!electron) return;
 
+    // Supersede the element an older run is playing, without going through `stop()` - the gate
+    // must stay shut across the handover, and `stop()` force-releases it. Bumping `playSeq` alone
+    // only stops the *older loop* at its next check, which is after the chunk it is already
+    // playing finishes: `Repeat question` is offered during `Speaking`, so pressing it left two
+    // voices reading the question at once, and the first element - no longer `this.audio` -
+    // unreachable by any later `stop()`.
+    this.abortPlayback();
+
     const mySeq = this.gate.acquire();
     try {
       for (let i = 0; i < chunks.length; i++) {
@@ -144,6 +152,23 @@ class MockTtsService {
    */
   stop(): void {
     this.playSeq += 1;
+    this.abortPlayback();
+    this.gate.forceReleaseNow();
+  }
+
+  /**
+   * Tear down whatever is playing, leaving the gate exactly as it is.
+   *
+   * The two callers want opposite things from the microphone - `stop()` opens it, `playQuestion`
+   * is about to shut it for the next question - and only this half is common to both.
+   *
+   * `pause()` fires neither `ended` nor `error`, so settling the promise is this function's real
+   * work: without it the one `playBlob` handed back never resolves or rejects, its object URL is
+   * never revoked, and `playQuestion` never reaches its own `finally`. The gate survives that
+   * (`stop()` force-releases and the watchdog backs it up), but a blob and a parked async frame
+   * leak on every stop, and a session stops often.
+   */
+  private abortPlayback(): void {
     if (this.audio) {
       try {
         this.audio.pause();
@@ -152,12 +177,7 @@ class MockTtsService {
       }
       this.audio = null;
     }
-    // `pause()` fires neither `ended` nor `error`, so without this the promise `playBlob` handed
-    // back never settles: its object URL is never revoked and `playQuestion` never reaches its
-    // own `finally`. The gate survives that (this force-releases, and the watchdog backs it up),
-    // but one blob and one parked async frame are leaked per stop, and a session can stop often.
     this.settleStoppedPlayback?.();
-    this.gate.forceReleaseNow();
   }
 
   /**
