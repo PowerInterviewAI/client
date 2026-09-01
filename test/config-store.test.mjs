@@ -87,5 +87,25 @@ export async function run(userDataDir) {
     store.configStore.getConfig().professionalMode === true
   );
 
+  // Which session the control bar's primary Start button launches without going through its
+  // dropdown. A product decision rather than a convenience default - a first-time user is far
+  // likelier to be trying the app out than walking into a real call - and one that a later edit
+  // could flip with no symptom other than Start quietly doing the other thing.
+  check('lastSessionMode defaults to mock', store.configStore.getConfig().lastSessionMode === 'mock');
+
+  store.configStore.updateConfig({ lastSessionMode: 'live' });
+  check(
+    'the last session mode is remembered across reads',
+    store.configStore.getConfig().lastSessionMode === 'live'
+  );
+
+  store.configStore.updateConfig({ sessionToken: 'tok3' });
+  check(
+    'and survives an unrelated write',
+    store.configStore.getConfig().lastSessionMode === 'live'
+  );
+
+  store.configStore.updateConfig({ lastSessionMode: 'mock' });
+
   return failures;
 }
