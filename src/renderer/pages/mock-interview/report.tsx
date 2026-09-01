@@ -2,6 +2,7 @@ import { FileText, Hash, Loader } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
+import { showExportSuccessToast } from '@/components/custom/export-success-toast';
 import { SafeMarkdown } from '@/components/custom/safe-markdown';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -41,7 +42,10 @@ export function ReportScreen({ session, onExport, onPracticeAgain, onDone }: Rep
     setSaving(format);
     try {
       const filePath = await onExport(format);
-      if (filePath) toast.success(`Report saved${format === 'md' ? ' as Markdown' : ' as Word'}`);
+      // The same confirmation the live export and the save-before-clearing prompt give, rather
+      // than a plain toast: a save dialog's own path is gone the moment it closes, and this was
+      // the one export of the three that left "where did that go" unanswered.
+      if (filePath) showExportSuccessToast(filePath, format);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to export the report');
     } finally {
