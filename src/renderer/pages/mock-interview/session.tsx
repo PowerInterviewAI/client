@@ -263,7 +263,14 @@ export function SessionScreen({ session, onSkip, onDone, onRepeat, onEnd }: Sess
                 variant="ghost"
                 size="sm"
                 className={cn(BAR_ICON_BUTTON, 'text-destructive hover:text-destructive hover:bg-destructive/10')}
-                disabled={busy !== null}
+                // Only while ending is itself in flight, never while another action is. `withBusy`
+                // holds `busy` for the whole main-side transition - an evaluate plus a generate,
+                // each with its own retry and timeout, or the entire playback for a repeat - and
+                // this is the one way out of a session that has stopped responding. Disabling it
+                // exactly then took the escape hatch away at the moment it is reached for. Main's
+                // `sessionSeq` is what makes ending mid-transition safe: the call already running
+                // sees the generation move and abandons its own result.
+                disabled={busy === 'end'}
                 aria-label="End interview"
                 onClick={withBusy('end', onEnd)}
               >

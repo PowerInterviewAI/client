@@ -53,13 +53,27 @@ export async function run() {
   check('an interrupted playback is settled rather than left pending', abortPlayback.includes('this.settleStoppedPlayback?.()'));
   check('and its element is dropped', abortPlayback.includes('this.audio = null'));
 
-  // The cache is keyed by chunk index, so a fetch that outlives its question writes the previous
-  // question's audio into the new one's slot. Both writes carry the generation.
-  const getChunkBlob = methodBody(tts, 'private async getChunkBlob(');
+  // The cache is keyed by chunk index, so a fetch that outlives its question would write the
+  // previous question's audio into the new one's slot. There is one write, and it is guarded.
+  const fetchOnce = methodBody(tts, 'private fetchOnce(');
+  check('the chunk cache has a single write site', (tts.match(/this\.cache\.set\(/g) ?? []).length === 1);
   check(
-    'the chunk cache is only written for the generation that asked for it',
-    (getChunkBlob.match(/seq === this\.playSeq/g) ?? []).length >= 2
+    'and it only writes for the generation that asked for it',
+    fetchOnce.includes('this.cache.set(') && fetchOnce.includes('seq === this.playSeq')
   );
+
+  // Keyed by index like the cache, so a request still running for the old question would be
+  // handed to the new one as its own chunk of the same number.
+  const resetCache = methodBody(tts, 'resetCache(): void {');
+  check('resetting the cache drops the requests in flight with it', resetCache.includes('this.inFlight.clear()'));
+
+  // An element that fires neither `ended` nor `error` is the documented reason the gate carries a
+  // watchdog, and that watchdog only reopens the microphone: without a bound here the promise
+  // never settles, `speechFinished` is never sent, and main sits in `Speaking` - the one state it
+  // arms no silence backstop in - discarding everything the candidate says.
+  const playBlob = methodBody(tts, 'private playBlob(');
+  check('a playback that never reports back is bounded', playBlob.includes('MOCK_TTS_CHUNK_TIMEOUT_MS'));
+  check('and the bound rejects, so the turn falls through to speechFailed', /timer = window\.setTimeout\([\s\S]{0,200}reject\(/.test(playBlob));
 
   // A follow-up replaces `currentQuestion` with different text under the same chunk indices, so
   // keeping the cache across one made the interviewer read the *previous* question aloud while

@@ -1,4 +1,8 @@
-import { MOCK_TTS_GATE_MAX_HOLD_MS, MOCK_TTS_TAIL_MS } from '@/lib/consts';
+import {
+  MOCK_TTS_CHUNK_TIMEOUT_MS,
+  MOCK_TTS_GATE_MAX_HOLD_MS,
+  MOCK_TTS_TAIL_MS,
+} from '@/lib/consts';
 import { getElectron } from '@/lib/utils';
 
 /**
@@ -91,6 +95,8 @@ class MockTtsService {
   private gate = new MicGate();
   private audio: HTMLAudioElement | null = null;
   private cache = new Map<number, Blob>();
+  /** Synthesis requests still running, so two callers never bill the same chunk twice. */
+  private inFlight = new Map<number, Promise<Blob | null>>();
   private playSeq = 0;
   /** Settles the promise of a playback `stop()` interrupted; null when nothing is playing. */
   private settleStoppedPlayback: (() => void) | null = null;
@@ -102,6 +108,9 @@ class MockTtsService {
   /** Called whenever the question changes, so a long session does not accumulate every chunk. */
   resetCache(): void {
     this.cache.clear();
+    // The in-flight map is keyed by index too, so a request still running for the old question
+    // would otherwise be handed to the new one as its own chunk of the same number.
+    this.inFlight.clear();
   }
 
   /** Plays every chunk in order, gating the mic for the duration, then reports the outcome. */
@@ -190,18 +199,43 @@ class MockTtsService {
     const cached = this.cache.get(index);
     if (cached) return cached;
 
-    const blob = await this.fetchChunk(index);
-    if (blob && seq === this.playSeq) this.cache.set(index, blob);
+    const blob = await this.fetchOnce(index, seq);
 
     // Lookahead of one: kick off the next chunk's synthesis without waiting for it, so it is
     // likely ready by the time the current chunk finishes playing.
     if (index + 1 < total && !this.cache.has(index + 1)) {
-      void this.fetchChunk(index + 1).then((next) => {
-        if (next && seq === this.playSeq) this.cache.set(index + 1, next);
-      });
+      void this.fetchOnce(index + 1, seq);
     }
 
     return blob;
+  }
+
+  /**
+   * Synthesize a chunk once, however many callers ask for it while it is in flight.
+   *
+   * A request only became visible to the next caller once it had resolved *into the cache*, so a
+   * short chunk followed by a slow one had the loop ask for the chunk the lookahead was already
+   * fetching - a second billed synthesis of the same sentence, and it cascaded, since that
+   * duplicate then launched a lookahead of its own.
+   */
+  private fetchOnce(index: number, seq: number): Promise<Blob | null> {
+    const inFlight = this.inFlight.get(index);
+    if (inFlight) return inFlight;
+
+    const request = this.fetchChunk(index)
+      .then((blob) => {
+        // The generation the fetch started under, because the cache is keyed by chunk index and
+        // `resetCache()` runs between questions: a fetch begun for the old question otherwise
+        // lands after that reset and fills index *n* of the *new* one with the previous audio.
+        if (blob && seq === this.playSeq) this.cache.set(index, blob);
+        return blob;
+      })
+      .finally(() => {
+        if (this.inFlight.get(index) === request) this.inFlight.delete(index);
+      });
+
+    this.inFlight.set(index, request);
+    return request;
   }
 
   private async fetchChunk(index: number): Promise<Blob | null> {
@@ -222,11 +256,25 @@ class MockTtsService {
       const audio = new Audio(url);
       this.audio = audio;
 
+      let timer = 0;
       const cleanup = () => {
+        window.clearTimeout(timer);
         URL.revokeObjectURL(url);
         this.settleStoppedPlayback = null;
         if (this.audio === audio) this.audio = null;
       };
+
+      // The element firing neither `ended` nor `error` is the documented reason the gate carries
+      // a watchdog - but that watchdog only reopens the microphone. Nothing covered the session:
+      // this promise never settled, so `playQuestion` never sent `speechFinished`, main stayed in
+      // `Speaking`, and `ingestAnswer` dropped every word the candidate said because the state
+      // was wrong. `Speaking` is also the one state main arms no silence backstop in, so the
+      // session simply stopped with the interviewer apparently mid-question. Rejecting here puts
+      // it through the same path a decode failure takes: `speechFailed`, and on to `Listening`.
+      timer = window.setTimeout(() => {
+        cleanup();
+        reject(new Error('Audio playback did not start or finish'));
+      }, MOCK_TTS_CHUNK_TIMEOUT_MS);
 
       // How `stop()` settles a playback it interrupted - see the note there. Rejecting rather
       // than resolving keeps `playQuestion` out of its own success path, and it reports nothing:

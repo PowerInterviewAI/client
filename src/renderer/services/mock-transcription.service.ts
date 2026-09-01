@@ -49,8 +49,17 @@ class MockTranscriptionService {
       await electron.mockInterview.ingestAnswer(payload);
     };
 
-    this.channel = new AudioWsStream('ch_1', this.micStream, language, onTranscript);
-    await this.channel.start();
+    try {
+      this.channel = new AudioWsStream('ch_1', this.micStream, language, onTranscript);
+      await this.channel.start();
+    } catch (error) {
+      // The microphone is already open by this point, and a caller that never saw `start()`
+      // return has no reason to think it needs stopping - `useMockInterview` only arms its own
+      // teardown *after* this resolves. Left as it was, a failed start held the device with its
+      // indicator light on for the life of the app, and every retry took another one.
+      await this.stop();
+      throw error;
+    }
   }
 
   async stop(): Promise<void> {
