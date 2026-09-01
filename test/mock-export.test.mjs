@@ -50,6 +50,34 @@ export async function run() {
     'titles the document with the role',
     withReport.includes('Mock Interview - Backend Engineer')
   );
+
+  // The setup form no longer collects a role, so this is what every real export now takes. The
+  // suffix has to disappear with it rather than interpolating the absent value: the shipped
+  // build titled every report "Mock Interview - undefined" until this was made conditional.
+  const withoutRole = buildMockExportMarkdown({
+    setup: { seniority: 'mid', difficulty: 'standard', question_count: 2 },
+    answers: [
+      {
+        question: 'Tell me about yourself.',
+        kind: 'behavioral',
+        answer: 'I am an engineer.',
+        skipped: false,
+      },
+    ],
+    report: null,
+    language: Language.English,
+  });
+
+  check('a missing role does not reach the title', !withoutRole.includes('undefined'));
+  check('and leaves no dangling separator', withoutRole.includes('# Mock Interview\n'));
+  const withBlankRole = buildMockExportMarkdown({
+    setup: { role: '   ', seniority: 'mid', difficulty: 'standard', question_count: 2 },
+    answers: [],
+    report: null,
+    language: Language.English,
+  });
+
+  check('a blank role is treated as absent', withBlankRole.includes('# Mock Interview\n'));
   check('includes the overall score', withReport.includes('Score: 82/100'));
   check('includes strengths', withReport.includes('Clear communication'));
   check('includes gaps', withReport.includes('Limited depth on scaling'));

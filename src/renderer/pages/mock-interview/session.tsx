@@ -8,6 +8,7 @@ import {
 } from '@/components/custom/control-panel/bar';
 import LiveSuggestionsPanel from '@/components/custom/panels/live-suggestions-panel';
 import MockTranscriptPanel from '@/components/custom/panels/mock-transcript-panel';
+import ZoomControl from '@/components/custom/zoom-control';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMicLevel } from '@/hooks/use-mic-level';
@@ -30,6 +31,9 @@ const THINKING_LABEL: Partial<Record<MockInterviewState, string>> = {
   [MockInterviewState.Generating]: 'Thinking of the next question…',
   [MockInterviewState.Evaluating]: 'Thinking…',
   [MockInterviewState.Scoring]: 'Scoring the interview…',
+  // Reached by "End interview", and the only state that had neither a spinner nor a line: the
+  // screen sat unchanged with a dead control bar while the session was being wound up.
+  [MockInterviewState.Stopping]: 'Ending the interview…',
 };
 
 export function SessionScreen({ session, onSkip, onDone, onRepeat, onEnd }: SessionScreenProps) {
@@ -164,9 +168,32 @@ export function SessionScreen({ session, onSkip, onDone, onRepeat, onEnd }: Sess
         </div>
       </div>
 
-      {/* Control bar - same 32px row, icon buttons and grouping as the live assistant's, so the
-          two interview modes share the one piece of chrome the candidate has to operate on. */}
-      <div className="flex items-center justify-center gap-4 px-1 pb-1 pt-0.5">
+      {/* Control bar - the live assistant's row, rebuilt around this mode's actions: same 32px
+          height, same icon-button tokens, same reading order (the one consequential action first,
+          then the things that shape the turn), same single hairline before the settings, and zoom
+          held at the right edge by ml-auto because it changes how the app is viewed rather than
+          what it does. */}
+      <div className="flex items-center gap-4 px-1 pb-1 pt-0.5">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              size="sm"
+              className="h-8 gap-1.5 rounded-lg px-4 text-xs font-semibold bg-blue-600 hover:bg-blue-600/90"
+              disabled={state !== MockInterviewState.Listening || busy !== null || (showReadyPrompt ?? false)}
+              onClick={withBusy('done', onDone)}
+            >
+              <Check className="h-3.5 w-3.5" />
+              Done answering
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Submit your answer and move on</p>
+          </TooltipContent>
+        </Tooltip>
+
+        <div className="h-5 w-px bg-border" aria-hidden="true" />
+
+        {/* What to do with the question on screen */}
         <div className="flex items-center gap-1">
           <Tooltip>
             <TooltipTrigger asChild>
@@ -205,27 +232,7 @@ export function SessionScreen({ session, onSkip, onDone, onRepeat, onEnd }: Sess
           </Tooltip>
         </div>
 
-        <div className="h-5 w-px bg-border" aria-hidden="true" />
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              size="sm"
-              className="h-8 gap-1.5 rounded-lg px-4 text-xs font-semibold bg-blue-600 hover:bg-blue-600/90"
-              disabled={state !== MockInterviewState.Listening || busy !== null || (showReadyPrompt ?? false)}
-              onClick={withBusy('done', onDone)}
-            >
-              <Check className="h-3.5 w-3.5" />
-              Done answering
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Submit your answer and move on</p>
-          </TooltipContent>
-        </Tooltip>
-
-        <div className="h-5 w-px bg-border" aria-hidden="true" />
-
+        {/* What the session produces, and how to end it */}
         <div className="flex items-center gap-1">
           <Tooltip>
             <TooltipTrigger asChild>
@@ -267,6 +274,10 @@ export function SessionScreen({ session, onSkip, onDone, onRepeat, onEnd }: Sess
               <p>End interview</p>
             </TooltipContent>
           </Tooltip>
+        </div>
+
+        <div className="ml-auto">
+          <ZoomControl />
         </div>
       </div>
     </div>

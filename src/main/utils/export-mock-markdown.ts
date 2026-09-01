@@ -33,8 +33,13 @@ export function buildMockExportMarkdown({
   const labels = getExportLabels(language);
   const datetimeNow = new Date().toLocaleString();
 
+  // The role is optional and the setup form no longer collects one, so the suffix is conditional:
+  // interpolating it unconditionally titled every exported report "Mock interview - undefined",
+  // in the one artifact of this feature that leaves the machine and is read by someone else.
+  const role = setup.role?.trim();
+
   const lines: string[] = [];
-  lines.push(`# ${labels.mockInterview} - ${setup.role}`);
+  lines.push(`# ${labels.mockInterview}${role ? ` - ${role}` : ''}`);
   lines.push(`##### ${labels.dateTime}: ${datetimeNow}`);
   lines.push('');
 

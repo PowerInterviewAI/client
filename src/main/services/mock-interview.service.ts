@@ -565,10 +565,15 @@ class MockInterviewService {
    * later - `Answer` skips that classifier entirely, so there is nothing here to be retracted.
    */
   private async generateLiveHint(seq: number, question: string): Promise<void> {
+    // Before the toggle is read, not after. The previous question's hint is superseded by this
+    // question whether or not a new one is generated, and returning early on a toggle the
+    // candidate switched off mid-session used to leave that stream running - still streaming,
+    // still writing hints into the session state, for a panel that is no longer on screen.
+    this.stopLiveHint();
+
     const conf = configStore.getConfig();
     if (!conf.mockLiveSuggestionsEnabled) return;
 
-    this.stopLiveHint();
     const controller = new AbortController();
     this.hintAbortController = controller;
 

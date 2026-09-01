@@ -36,7 +36,14 @@ export function MockInterviewSetupDialog({
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      {/* Handed off to the headphone notice rather than stacked under it. Two modal dialogs open
+          at once each hold their own scroll lock and pointer-events layer, and here they would
+          both unmount in the same commit as a route change - the shape that already left this app
+          unclickable once with menus, which is why every menu in it is `modal={false}`.
+
+          Only `open` is computed; this component stays mounted either way, so the form state
+          lives through the notice and comes back untouched if the candidate cancels out of it. */}
+      <Dialog open={open && !headphoneNoticeOpen} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Mock interview</DialogTitle>

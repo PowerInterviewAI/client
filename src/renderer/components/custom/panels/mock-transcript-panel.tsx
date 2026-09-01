@@ -1,9 +1,13 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import { ArrowDown } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { useAppState } from '@/hooks/use-app-state';
+import { useConfigStore } from '@/hooks/use-config-store';
 import { cn } from '@/lib/utils';
 import { type MockInterviewSessionState, MockInterviewState } from '@/types/mock-interview';
 
@@ -68,10 +72,35 @@ interface MockTranscriptPanelProps {
  */
 function MockTranscriptPanel({ session }: MockTranscriptPanelProps) {
   const { appState } = useAppState();
+  const { config, updateConfig } = useConfigStore();
   const username = appState?.interviewConfig?.fullName || 'You';
   const endRef = useRef<HTMLDivElement>(null);
+  const [autoScroll, setAutoScroll] = useState<boolean>(() => config?.autoScrollTranscript ?? true);
 
-  const turns = useMemo(() => buildTurns(session), [session]);
+  useEffect(() => {
+    if (typeof config?.autoScrollTranscript === 'boolean') {
+      setAutoScroll(config.autoScrollTranscript);
+    }
+  }, [config?.autoScrollTranscript]);
+
+  // Keyed on values, never on `session` or on any object hanging off it. Main broadcasts a fresh
+  // session on every write - which during a question includes every streamed token of the live
+  // hint - and the whole state is structure-cloned across IPC, so *every* array and object in it
+  // arrives with a new identity each time however little changed. Memoising on any of those
+  // rebuilt this list and re-armed the smooth scroll below dozens of times a second for content
+  // that was identical. `answers.length` is a sound proxy for the list: entries are appended and
+  // never edited in place, and the only other reset is back to empty.
+  const turns = useMemo(
+    () => buildTurns(session),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      session.answers.length,
+      session.currentQuestion?.text,
+      session.currentQuestion?.isFollowUp,
+      session.currentAnswerText,
+      session.state,
+    ]
+  );
   const totalQuestions = session.setup?.question_count ?? 0;
   const questionNumber = Math.min(session.questionNumber, totalQuestions || session.questionNumber);
   const progressValue = totalQuestions > 0 ? (questionNumber / totalQuestions) * 100 : 0;
@@ -79,8 +108,9 @@ function MockTranscriptPanel({ session }: MockTranscriptPanelProps) {
     session.state !== MockInterviewState.Idle && session.state !== MockInterviewState.Finished;
 
   useEffect(() => {
+    if (!autoScroll) return;
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [turns]);
+  }, [turns, autoScroll]);
 
   return (
     <Card className="relative flex flex-col w-full h-full bg-card p-0 rounded-md gap-1">
@@ -94,11 +124,31 @@ function MockTranscriptPanel({ session }: MockTranscriptPanelProps) {
           )}
           <h3 className="font-semibold text-foreground text-xs">Mock Interview</h3>
         </div>
-        {totalQuestions > 0 && (
-          <span className="text-xs text-muted-foreground shrink-0">
-            Question {questionNumber} of {totalQuestions}
-          </span>
-        )}
+        <div className="flex items-center gap-3 shrink-0">
+          {totalQuestions > 0 && (
+            <span className="text-xs text-muted-foreground">
+              Question {questionNumber} of {totalQuestions}
+            </span>
+          )}
+          {/* Same control and the same stored preference as the live transcript dock. Without it
+              every ASR partial pulled the panel back to the bottom, so re-reading an earlier
+              answer mid-interview was not possible while the candidate was still speaking. */}
+          <label className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Checkbox
+              checked={autoScroll}
+              onCheckedChange={(v) => {
+                const enabled = v === true;
+                setAutoScroll(enabled);
+                updateConfig({ autoScrollTranscript: enabled }).catch((e) =>
+                  console.error('Failed to persist auto-scroll setting', e)
+                );
+              }}
+              className="h-4 w-4 rounded border-border bg-background"
+              aria-label="Enable auto-scroll"
+            />
+            <span className="select-none">Auto-scroll</span>
+          </label>
+        </div>
       </div>
 
       {totalQuestions > 0 && <Progress value={progressValue} className="h-1 rounded-none shrink-0" />}
@@ -145,6 +195,17 @@ function MockTranscriptPanel({ session }: MockTranscriptPanelProps) {
         )}
         <div ref={endRef} />
       </div>
+
+      {!autoScroll && (
+        <Button
+          size="icon-sm"
+          className="absolute bottom-3 right-3 rounded-full shadow-md bg-blue-600 text-white hover:bg-blue-600/90"
+          onClick={() => endRef.current?.scrollIntoView({ behavior: 'smooth' })}
+          aria-label="Scroll to bottom"
+        >
+          <ArrowDown className="size-4" />
+        </Button>
+      )}
     </Card>
   );
 }

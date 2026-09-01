@@ -44,22 +44,35 @@ export default function MockInterviewPage() {
   const pendingSetup = (location.state as { pendingSetup?: MockInterviewSetup } | null)
     ?.pendingSetup;
   const autoStartRequested = useRef(false);
-  // A failed auto-start still leaves `autoStartRequested` true (it is one-shot, not a retry
-  // guard), so this is what lets the render fall through to the full setup form instead of
-  // being stuck on a loading screen for a start that is never coming.
-  const [autoStartFailed, setAutoStartFailed] = useState(false);
+  // Tracks the request itself rather than being derived from `pendingSetup`, which stays in the
+  // router state for the whole life of this route. Deriving it stranded "Practise again": that
+  // clears the session back to Idle, and a handed-off setup plus a one-shot request flag were
+  // both still true, so the render sat on this loading screen forever waiting for a start that
+  // had already happened and would never happen again.
+  const [autoStarting, setAutoStarting] = useState(false);
 
   useEffect(() => {
     if (!pendingSetup || autoStartRequested.current) return;
     if (sessionRef.current && sessionRef.current.state !== MockInterviewState.Idle) return;
     autoStartRequested.current = true;
+    setAutoStarting(true);
     startSession(pendingSetup).catch((error) => {
       console.error('Failed to auto-start mock interview:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to start the mock interview');
-      setAutoStartFailed(true);
+      setAutoStarting(false);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingSetup]);
+
+  // Cleared when the session actually moves off Idle, not when the IPC call resolves: the state
+  // broadcast and that call's own reply are separate messages, so clearing on the reply can leave
+  // a frame with no start in flight and the state still Idle - which renders the very setup form
+  // the dialog just stood in for. A start that fails clears it in its own catch instead, and
+  // `start()` in main throws rather than landing back on Idle silently, so neither path hangs.
+  useEffect(() => {
+    if (!autoStarting) return;
+    if (session && session.state !== MockInterviewState.Idle) setAutoStarting(false);
+  }, [autoStarting, session]);
 
   useEffect(() => {
     getElectron()?.setStealth(false);
@@ -122,10 +135,11 @@ export default function MockInterviewPage() {
     );
   }
 
-  // Still Idle with a setup in hand and the auto-start already requested: showing the full
-  // setup form here would be a step backward from the dialog that just collected the same
-  // fields, so this waits for the state to move rather than falling through to it.
-  if (pendingSetup && autoStartRequested.current && !autoStartFailed) {
+  // The handed-off start is still in flight: showing the full setup form here would be a step
+  // backward from the dialog that just collected the same fields, so this waits for the state to
+  // move rather than falling through to it. A start that fails clears the flag in its `finally`,
+  // so the form is still the way back rather than a dead end.
+  if (autoStarting) {
     return <LoadingPage disclaimer="Starting mock interview…" />;
   }
 
