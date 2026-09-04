@@ -16,11 +16,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { APP_NAME } from '@/lib/consts';
-import { Hotkey, HOTKEY_GROUPS, HOTKEYS } from '@/lib/hotkeys';
-import { cn } from '@/lib/utils';
 import { LANGUAGES } from '@/types/language';
 
 import ExternalLink from './external-link';
+import { HotkeyCheatsheet } from './hotkey-cheatsheet';
 
 interface DocumentationDialogProps {
   open: boolean;
@@ -143,35 +142,7 @@ export default function DocumentationDialog({ open, onOpenChange }: Documentatio
             <AccordionItem value="hotkeys">
               <AccordionTrigger className="text-sm font-semibold">Hotkeys</AccordionTrigger>
               <AccordionContent>
-                {HOTKEY_GROUPS.map((group) => (
-                  <div key={group.label} className="mb-4 last:mb-0">
-                    <h4 className="text-xs font-medium mb-1">{group.label}</h4>
-                    <div className="grid grid-cols-3 gap-2">
-                      {group.keys.map((hk) => {
-                        const info = HOTKEYS[hk];
-                        return (
-                          <React.Fragment key={hk}>
-                            <div className="col-span-1">
-                              <div
-                                className={cn(
-                                  'px-2 py-1 rounded text-[11px] font-semibold min-w-22.5',
-                                  hk === Hotkey.StopAll
-                                    ? 'bg-destructive/80 text-primary-foreground'
-                                    : hk === Hotkey.ToggleStealth
-                                      ? 'bg-primary/80 text-primary-foreground'
-                                      : 'bg-muted'
-                                )}
-                              >
-                                {info.combo}
-                              </div>
-                            </div>
-                            <div className="col-span-2 text-sm">{info.description}</div>
-                          </React.Fragment>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
+                <HotkeyCheatsheet />
               </AccordionContent>
             </AccordionItem>
           </Accordion>
