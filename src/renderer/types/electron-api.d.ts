@@ -144,6 +144,9 @@ declare global {
     actionSuggestion: {
       clear: () => Promise<void>;
       stop: () => Promise<void>;
+      capture: () => Promise<void>;
+      clearImages: () => Promise<void>;
+      trigger: () => Promise<void>;
     };
 
     // Push notification listener
