@@ -6,6 +6,7 @@ import { MainContainerContext } from '@/hooks/use-main-container';
 import usePointerLockGuard from '@/hooks/use-pointer-lock-guard';
 import type { PushNotification } from '@/types/push-notification';
 
+import { CommandPalette } from './command-palette';
 import ConfigurationDialog from './configuration-dialog';
 import SaveHistoryDialog from './save-history-dialog';
 import Titlebar from './titlebar';
@@ -64,6 +65,9 @@ export default function MainFrame({ children }: { children: React.ReactNode }) {
         {/* Mounted here rather than on the interview page: it also answers a close prompt from
             main, which can arrive while the user is on the login or payment route. */}
         <SaveHistoryDialog />
+        {/* Mounted once at the app shell so Cmd/Ctrl+K and the titlebar button work from any
+            route, not just /main. */}
+        <CommandPalette />
       </MainContainerContext.Provider>
     </ConfigurationDialogContext.Provider>
   );
