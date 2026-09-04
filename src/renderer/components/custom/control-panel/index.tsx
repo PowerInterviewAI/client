@@ -202,11 +202,11 @@ export default function ControlPanel() {
 
         <div className="h-5 w-px bg-border" aria-hidden="true" />
 
-        {/* What the session runs on. Only the model locks while the assistant runs; audio and
-            language stay live, because both are things an interview can get wrong in progress
-            and neither can be fixed by restarting without losing the transcript. Language sits
-            here rather than with the presentation toggles because it is an input as much as an
-            output: it picks the speech model before it picks the answer's language. */}
+        {/* What the session runs on. Both stay live while the assistant runs, because audio and
+            language are things an interview can get wrong in progress and neither can be fixed
+            by restarting without losing the transcript. Language sits here rather than with the
+            presentation toggles because it is an input as much as an output: it picks the speech
+            model before it picks the answer's language. */}
         <div className="flex items-center gap-1">
           <AudioGroup
             audioInputDevices={audioInputDevices}
