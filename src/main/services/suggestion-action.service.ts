@@ -245,7 +245,6 @@ export class ActionSuggestionService {
     const interviewConfig = appStateService.getState().interviewConfig;
 
     const payload: GenerateActionSuggestionRequest = {
-      config: conf.llmConf,
       profile_data: interviewConfig.profileData,
       context: interviewConfig.context,
       transcripts: transcripts.slice(-TRANSCRIPT_UPLOAD_LIMIT),

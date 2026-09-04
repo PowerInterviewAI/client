@@ -177,10 +177,8 @@ class MockInterviewService {
     if (!this.session.setup) return;
 
     const interviewConfig = appStateService.getState().interviewConfig;
-    const conf = configStore.getConfig();
 
     const request: GenerateMockQuestionRequest = {
-      config: conf.llmConf,
       language: this.language,
       setup: this.session.setup,
       profile_data: interviewConfig.profileData,
@@ -383,9 +381,7 @@ class MockInterviewService {
     let action: MockTurnAction = MockTurnAction.Next;
     let followUpQuestion = '';
     try {
-      const conf = configStore.getConfig();
       const request: EvaluateMockTurnRequest = {
-        config: conf.llmConf,
         language: this.language,
         question: question.text,
         answer: answerText,
@@ -504,9 +500,7 @@ class MockInterviewService {
     if (!this.session.setup) return;
     try {
       const interviewConfig = appStateService.getState().interviewConfig;
-      const conf = configStore.getConfig();
       const request: GenerateMockReportRequest = {
-        config: conf.llmConf,
         language: this.language,
         setup: this.session.setup,
         profile_data: interviewConfig.profileData,
@@ -718,7 +712,6 @@ class MockInterviewService {
     try {
       const interviewConfig = appStateService.getState().interviewConfig;
       const requestBody: GenerateLiveSuggestionRequest = {
-        config: conf.llmConf,
         profile_data: interviewConfig.profileData,
         context: interviewConfig.context,
         transcripts: this.buildHintTranscripts(question),

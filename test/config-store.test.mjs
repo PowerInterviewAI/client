@@ -22,6 +22,10 @@ export async function run(userDataDir) {
         email: 'a@b.c',
         autoScrollTranscript: false,
         interviewConf: { username: 'Jane', profileData: 'MY CV', jobDescription: 'MY JD' },
+        // Leftover from the removed bring-your-own-API-key feature. Seeded here, never written
+        // by anything in this test, to pin that the scrub IIFE at import time actually removes
+        // it rather than merely that RuntimeConfig no longer declares the field.
+        llmConf: { provider: 'openai', apikey: 'sk-leftover-secret', model: 'gpt-4o' },
       },
     })
   );
@@ -106,6 +110,19 @@ export async function run(userDataDir) {
   );
 
   store.configStore.updateConfig({ lastSessionMode: 'mock' });
+
+  // Security cleanup: llmConf could hold a real provider API key in plaintext. Removing the
+  // field from RuntimeConfig does not erase it from an existing install's disk - the scrub IIFE
+  // at the bottom of the store has to actually delete it, and the write has to reach the file,
+  // not just the in-memory store, or the key survives the next getConfig/updateConfig spread.
+  check(
+    'a pre-upgrade install with a stored llmConf has it scrubbed on load',
+    !('llmConf' in (store.configStore.getStoredRuntime() ?? {}))
+  );
+  check(
+    'the scrub is written back to disk, not just held in memory',
+    !('llmConf' in (JSON.parse(fs.readFileSync(configFile, 'utf8')).runtime ?? {}))
+  );
 
   return failures;
 }

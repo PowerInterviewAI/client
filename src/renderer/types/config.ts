@@ -1,5 +1,4 @@
 import type { Language } from './language';
-import type { LLMConfig } from './llm';
 
 export type { Language };
 
@@ -15,8 +14,6 @@ export interface Config {
 
   // Transcription options
   audioInputDeviceName: string;
-
-  llmConf: LLMConfig | null;
 
   // Panel auto-scroll preferences (persisted between sessions)
   autoScrollLiveSuggestions: boolean;

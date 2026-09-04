@@ -39,7 +39,6 @@ class ToolsService {
     // Call the API to generate the summary text
     const conf = configStore.getConfig();
     const response = await this.llmApi.generateSummary({
-      config: conf.llmConf,
       username,
       transcripts,
       // The exported report is written in the interview's language too. A Spanish interview

@@ -55,7 +55,7 @@ export function MockInterviewSetupFields({ form }: { form: MockInterviewSetupFor
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           {/* A Radix Select trigger is a button, not a form control, so htmlFor does not reach
-              it. id + aria-labelledby is what associates the two - see llm-group.tsx. */}
+              it. id + aria-labelledby is what associates the two - see audio-group.tsx. */}
           <Label id="mock-seniority-label">Seniority</Label>
           <Select value={seniority} onValueChange={(v) => setSeniority(v as MockSeniority)}>
             <SelectTrigger aria-labelledby="mock-seniority-label" className="w-full">

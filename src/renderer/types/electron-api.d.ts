@@ -1,7 +1,6 @@
 import type { AppState } from './app-state';
 import type { Config } from './config';
 import type { ExportFormat } from './export';
-import type { LLMConfig, LLMConfigValidationResult, LLMModelInfo } from './llm';
 import type { MockInterviewSetup } from './mock-interview';
 import type {
   AvailableCurrency,
@@ -100,14 +99,6 @@ declare global {
       ) => Promise<{ success: boolean; data?: PaymentStatusResponse; error?: string }>;
       getHistory: () => Promise<{ success: boolean; data?: PaymentHistory[]; error?: string }>;
       getCredits: () => Promise<{ success: boolean; credits?: number; error?: string }>;
-    };
-
-    // LLM management
-    llm: {
-      listModels: () => Promise<{ success: boolean; data?: LLMModelInfo[]; error?: string }>;
-      validate: (
-        config: LLMConfig | null
-      ) => Promise<{ success: boolean; data?: LLMConfigValidationResult; error?: string }>;
     };
 
     // App state management

@@ -89,12 +89,6 @@ const electronApi = {
     getCredits: () => ipcRenderer.invoke('payment:get-credits'),
   },
 
-  llm: {
-    listModels: () => ipcRenderer.invoke('llm:list-models'),
-    validate: (config: Record<string, unknown> | null) =>
-      ipcRenderer.invoke('llm:validate', config),
-  },
-
   appState: {
     get: () => ipcRenderer.invoke('app:get-state'),
     update: (updates: Record<string, unknown>) => ipcRenderer.invoke('app:update-state', updates),
