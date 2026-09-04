@@ -119,7 +119,6 @@ class LiveSuggestionService {
     try {
       const interviewConfig = appStateService.getState().interviewConfig;
       const requestBody: GenerateLiveSuggestionRequest = {
-        config: conf.llmConf,
         profile_data: interviewConfig.profileData,
         context: interviewConfig.context,
         transcripts: transcripts.slice(-TRANSCRIPT_UPLOAD_LIMIT),
