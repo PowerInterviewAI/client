@@ -16,14 +16,14 @@ tells you which surface it belongs on.
 | **T0 — Always-visible** | Part of the primary loop, or changed multiple times per session | The control bar (`components/custom/control-panel/*-group.tsx`, styled via `control-panel/bar.ts`) |
 | **T1 — Discoverable-on-demand** | Used occasionally per session or per week, not moment-to-moment | The command palette and/or a consolidated Settings entry point — never a bar icon |
 | **T2 — Configure-once** | Set rarely, persists across sessions | The Settings hub (`configuration-dialog.tsx`) |
-| **T3 — Power-user / hotkey** | Frequent during a live session but must not cost bar space | A hotkey (`lib/hotkeys.ts`), but it must also be listed in the hotkey cheat-sheet and, once it exists, the command palette — hotkey-only with zero on-screen affordance anywhere is not an acceptable end state |
+| **T3 — Power-user / hotkey** | Frequent during a live session but must not cost bar space | A hotkey (`lib/hotkeys.ts`), listed in the hotkey cheat-sheet (`hotkey-cheatsheet.tsx`) and, if it has a real renderer-callable action, the command palette (`command-palette.tsx`) — hotkey-only with zero on-screen affordance anywhere is not an acceptable end state |
 
 If a PR adds a new setting or action, its description should say which tier it is and name the
 file(s) touched per this table. A tier that doesn't fit cleanly is a signal to ask, not to guess.
 
-> **Status note:** the command palette referenced above (T1/T3 discovery surface) is planned but
-> not yet built. Until it exists, T1 actions land in Settings and T3 actions rely on the hotkey
-> cheat-sheet alone. Update this note when the palette ships.
+A directional or parameterized hotkey (window placement, move, resize, zoom, panel scroll) has no
+single "run it" action to put in the palette - those stay hotkey + cheat-sheet only, and that is
+the correct, final placement for them, not a gap to fill later.
 
 ## 2. The control bar has a fixed budget
 
@@ -31,8 +31,8 @@ The control bar is deliberately compact (every control is 32px tall, one radius,
 spacing rather than dividing rules — see the comment in `control-panel/bar.ts`) because it
 overlays the user's screen during a live interview and must not obstruct it. Space there is the
 scarcest resource in the app. Adding a control to the bar is a T0 decision, not a default —
-prefer Settings, the cheat-sheet, or (once it exists) the command palette for anything that
-isn't part of the primary loop.
+prefer Settings, the cheat-sheet, or the command palette for anything that isn't part of the
+primary loop.
 
 ## 3. Dialog and notice composition
 
