@@ -17,7 +17,6 @@ import {
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import DocumentationDialog from '@/components/custom/documentation-dialog';
 import { HotkeyCheatsheetDialog } from '@/components/custom/hotkey-cheatsheet';
 import {
   CommandDialog,
@@ -32,7 +31,6 @@ import { useAppState } from '@/hooks/use-app-state';
 import { useAssistantService } from '@/hooks/use-assistant-service';
 import useAuth from '@/hooks/use-auth';
 import { useCommandPaletteStore } from '@/hooks/use-command-palette';
-import { useConfigurationDialog } from '@/hooks/use-configuration-dialog';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { useProfessionalMode } from '@/hooks/use-professional-mode';
 import { useThemeStore } from '@/hooks/use-theme-store';
@@ -73,12 +71,10 @@ export function CommandPalette() {
   const { appState, runningState } = useAppState();
   const { stopAssistant } = useAssistantService();
   const { logout } = useAuth();
-  const { openConfigurationDialog } = useConfigurationDialog();
   const { enabled: professionalMode, toggle: toggleProfessionalMode } = useProfessionalMode();
   const { visible: transcriptVisible, toggle: toggleTranscript } = useTranscriptPanel();
   const { isDark, toggleTheme } = useThemeStore();
 
-  const [isDocsOpen, setIsDocsOpen] = useState(false);
   const [isHotkeysOpen, setIsHotkeysOpen] = useState(false);
 
   // Stealth mode hides the app's visible surface during screen share - a palette popping up
@@ -142,11 +138,11 @@ export function CommandPalette() {
           <CommandSeparator />
 
           <CommandGroup heading="App">
-            <CommandItem onSelect={() => run(() => openConfigurationDialog())}>
+            <CommandItem onSelect={() => run(() => navigate('/settings'))}>
               <SettingsIcon />
               Settings
             </CommandItem>
-            <CommandItem onSelect={() => run(() => setIsDocsOpen(true))}>
+            <CommandItem onSelect={() => run(() => navigate('/documentation'))}>
               <BookOpen />
               Documentation
             </CommandItem>
@@ -174,7 +170,6 @@ export function CommandPalette() {
         </CommandList>
       </CommandDialog>
 
-      <DocumentationDialog open={isDocsOpen} onOpenChange={setIsDocsOpen} />
       <HotkeyCheatsheetDialog open={isHotkeysOpen} onOpenChange={setIsHotkeysOpen} />
     </>
   );

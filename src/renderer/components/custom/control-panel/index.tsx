@@ -1,12 +1,12 @@
 import { Ellipsis, Play, Square } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { useAppState } from '@/hooks/use-app-state';
 import { useAssistantService } from '@/hooks/use-assistant-service';
 import { useAudioInputDevices } from '@/hooks/use-audio-devices';
 import { useConfigStore } from '@/hooks/use-config-store';
-import { useConfigurationDialog } from '@/hooks/use-configuration-dialog';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { useSaveHistoryGuard } from '@/hooks/use-save-history-guard';
 import { isMac } from '@/lib/consts';
@@ -32,10 +32,10 @@ type StateConfig = {
 
 export default function ControlPanel() {
   const isStealth = useIsStealthMode();
+  const navigate = useNavigate();
   const { startAssistant, stopAssistant } = useAssistantService();
   const { runningState, appState } = useAppState();
   const { config } = useConfigStore();
-  const { openConfigurationDialog } = useConfigurationDialog();
   const { confirmDiscard } = useSaveHistoryGuard();
   const [permGateOpen, setPermGateOpen] = useState(false);
   const [headphoneNoticeOpen, setHeadphoneNoticeOpen] = useState(false);
@@ -72,12 +72,12 @@ export default function ControlPanel() {
       {
         ok: !!appState?.interviewConfig?.fullName,
         message: 'Full name is not set',
-        onFail: openConfigurationDialog,
+        onFail: () => navigate('/settings'),
       },
       {
         ok: appState?.interviewConfig?.hasProfileData ?? false,
         message: 'Profile data is not set',
-        onFail: openConfigurationDialog,
+        onFail: () => navigate('/settings'),
       },
       {
         ok: !noAudioInputDevices,

@@ -14,8 +14,8 @@ tells you which surface it belongs on.
 | Tier | Definition | Where it lives |
 |---|---|---|
 | **T0 — Always-visible** | Part of the primary loop, or changed multiple times per session | The control bar (`components/custom/control-panel/*-group.tsx`, styled via `control-panel/bar.ts`) |
-| **T1 — Discoverable-on-demand** | Used occasionally per session or per week, not moment-to-moment | The command palette and/or a consolidated Settings entry point — never a bar icon |
-| **T2 — Configure-once** | Set rarely, persists across sessions | The Settings hub (`configuration-dialog.tsx`) |
+| **T1 — Discoverable-on-demand** | Used occasionally per session or per week, not moment-to-moment | The command palette and/or the Settings page — never a bar icon |
+| **T2 — Configure-once** | Set rarely, persists across sessions | The Settings page (`pages/settings/index.tsx`) |
 | **T3 — Power-user / hotkey** | Frequent during a live session but must not cost bar space | A hotkey (`lib/hotkeys.ts`), listed in the hotkey cheat-sheet (`hotkey-cheatsheet.tsx`) and, if it has a real renderer-callable action, the command palette (`command-palette.tsx`) — hotkey-only with zero on-screen affordance anywhere is not an acceptable end state |
 
 If a PR adds a new setting or action, its description should say which tier it is and name the
@@ -34,14 +34,21 @@ scarcest resource in the app. Adding a control to the bar is a T0 decision, not 
 prefer Settings, the cheat-sheet, or the command palette for anything that isn't part of the
 primary loop.
 
-## 3. Dialog and notice composition
+## 3. Dialog vs. page
+
+A **transient, in-context action** (confirm a password change, a permission prompt, a save-before-
+leaving guard) is a dialog. A **destination** — somewhere a user goes to do a batch of related
+things, or that outlives the screen it was opened from — is a routed page, following the same
+pattern `pages/payment/index.tsx` already established: a sticky header with a back button, content
+below. Settings (`pages/settings/index.tsx`) and Documentation (`pages/documentation/index.tsx`)
+are pages for this reason; the hotkey cheat-sheet (`hotkey-cheatsheet.tsx`'s `HotkeyCheatsheetDialog`)
+stays a dialog because it's a quick glance meant not to lose your place mid-session.
 
 The app has several independently hand-built dialogs (`change-password-dialog.tsx`,
-`configuration-dialog.tsx`, `documentation-dialog.tsx`, `headphone-notice-dialog.tsx`,
-`mock-interview-setup-dialog.tsx`, `permission-gate-dialog.tsx`, `save-history-dialog.tsx`) and
-notices (`connecting-notice.tsx`, `trial-user-notice.tsx`). Each composes `components/ui/dialog.tsx`
-independently today, which is how small inconsistencies (header spacing, footer button order,
-scroll behavior) drift in over time.
+`headphone-notice-dialog.tsx`, `mock-interview-setup-dialog.tsx`, `permission-gate-dialog.tsx`,
+`save-history-dialog.tsx`) and notices (`connecting-notice.tsx`, `trial-user-notice.tsx`). Each
+composes `components/ui/dialog.tsx` independently today, which is how small inconsistencies
+(header spacing, footer button order, scroll behavior) drift in over time.
 
 New dialogs and notices should compose a shared wrapper once one exists in
 `components/custom/app-dialog.tsx` / `app-notice.tsx` (tracked as follow-up work). Until then,

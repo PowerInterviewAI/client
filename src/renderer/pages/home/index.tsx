@@ -1,20 +1,16 @@
 import { BookOpen, CreditCard, Play, SettingsIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import DocumentationDialog from '@/components/custom/documentation-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAppState } from '@/hooks/use-app-state';
 import { useConfigStore } from '@/hooks/use-config-store';
-import { useConfigurationDialog } from '@/hooks/use-configuration-dialog';
 
 export default function HomePage() {
   const navigate = useNavigate();
   const { appState } = useAppState();
   const { config, isLoading: configLoading, loadConfig } = useConfigStore();
-  const { openConfigurationDialog } = useConfigurationDialog();
-  const [isDocsOpen, setIsDocsOpen] = useState(false);
 
   useEffect(() => {
     loadConfig();
@@ -93,18 +89,16 @@ export default function HomePage() {
         </Card>
 
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={() => openConfigurationDialog()}>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/settings')}>
             <SettingsIcon className="h-4 w-4" aria-hidden="true" />
             Settings
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setIsDocsOpen(true)}>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/documentation')}>
             <BookOpen className="h-4 w-4" aria-hidden="true" />
             Documentation
           </Button>
         </div>
       </div>
-
-      <DocumentationDialog open={isDocsOpen} onOpenChange={setIsDocsOpen} />
     </div>
   );
 }
