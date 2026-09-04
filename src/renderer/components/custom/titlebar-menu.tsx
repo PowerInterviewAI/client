@@ -1,17 +1,5 @@
-import {
-  BookOpen,
-  CreditCard,
-  EyeOff,
-  Key,
-  LogOut,
-  Mail,
-  Menu,
-  Moon,
-  SettingsIcon,
-  Sun,
-} from 'lucide-react';
+import { BookOpen, EyeOff, LogOut, Mail, Menu, Moon, SettingsIcon, Sun } from 'lucide-react';
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import DocumentationDialog from '@/components/custom/documentation-dialog';
@@ -33,17 +21,13 @@ import { Hotkey, HOTKEYS } from '@/lib/hotkeys';
 import { getElectron } from '@/lib/utils';
 import { RunningState } from '@/types/app-state';
 
-import { ChangePasswordDialog } from './change-password-dialog';
-
 export default function TitlebarMenu({ style }: { style?: React.CSSProperties }) {
-  const navigate = useNavigate();
   const { appState, runningState } = useAppState();
   const { config } = useConfigStore();
   const { isDark, toggleTheme } = useThemeStore();
-  const { logout, changePassword, loading, error, setError } = useAuth();
+  const { logout } = useAuth();
   const { openConfigurationDialog } = useConfigurationDialog();
   const [isDocsOpen, setIsDocsOpen] = useState(false);
-  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
   const isLoggedIn = appState?.isLoggedIn ?? false;
   // Account actions rewrite state the running assistant depends on; theme, docs and stealth do not.
@@ -56,22 +40,6 @@ export default function TitlebarMenu({ style }: { style?: React.CSSProperties })
     } else {
       console.warn('Electron API not available for toggling stealth mode');
     }
-  };
-
-  const handleChangePassword = async (
-    currentPassword: string,
-    newPassword: string
-  ): Promise<boolean> => {
-    let res = false;
-    try {
-      if (await changePassword(currentPassword, newPassword)) {
-        res = true;
-      }
-    } catch (err) {
-      // Error is handled by the useAuth hook
-      console.error('Password change failed:', err);
-    }
-    return res;
   };
 
   const handleSignOut = async () => {
@@ -115,27 +83,14 @@ export default function TitlebarMenu({ style }: { style?: React.CSSProperties })
                 {config?.email}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
+              {/* Account, password, and billing all live in Settings now - one guessable entry
+                  point instead of three separate, unrelated-looking rows. */}
               <DropdownMenuItem
                 onClick={() => !disabled && openConfigurationDialog()}
                 disabled={disabled}
               >
                 <SettingsIcon className="mr-2 h-4 w-4" />
-                Configuration
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  if (disabled) return;
-                  setError(null);
-                  setIsChangePasswordOpen(true);
-                }}
-                disabled={disabled}
-              >
-                <Key className="mr-2 h-4 w-4" />
-                Change password
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/payment')} disabled={disabled}>
-                <CreditCard className="mr-2 h-4 w-4" />
-                Buy Credits
+                Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleToggleStealth}>
@@ -169,17 +124,9 @@ export default function TitlebarMenu({ style }: { style?: React.CSSProperties })
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Rendered unconditionally: gating these on isLoggedIn would unmount an open dialog the
+      {/* Rendered unconditionally: gating this on isLoggedIn would unmount an open dialog the
           moment a session ends, stranding the pointer-events lock it holds. */}
       <DocumentationDialog open={isDocsOpen} onOpenChange={setIsDocsOpen} />
-
-      <ChangePasswordDialog
-        open={isChangePasswordOpen}
-        onOpenChange={setIsChangePasswordOpen}
-        onChangePassword={handleChangePassword}
-        loading={loading}
-        error={error}
-      />
     </>
   );
 }
