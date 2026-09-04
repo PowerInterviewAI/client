@@ -18,7 +18,6 @@ import PermissionGateDialog from '../permission-gate-dialog';
 import ZoomControl from '../zoom-control';
 import { AudioGroup } from './audio-group';
 import { LanguageGroup } from './language-group';
-import { LLMGroup } from './llm-group';
 import { MainGroup } from './main-group';
 import { ProfessionalModeGroup } from './professional-mode-group';
 import { ToolsGroup } from './tools-group';
@@ -215,7 +214,6 @@ export default function ControlPanel() {
             getDisabled={getDisabled}
           />
           <LanguageGroup getDisabled={getDisabled} />
-          <LLMGroup getDisabled={getDisabled} />
         </div>
 
         {/* What the interview produces: how suggestions read, and what to do with the session */}

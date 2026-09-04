@@ -7,7 +7,6 @@ import ElectronStore from 'electron-store';
 
 import { OPACITY_DEFAULT } from '../consts.js';
 import { DEFAULT_LANGUAGE, Language, resolveLanguage } from '../types/language.js';
-import { LLMConfig } from '../types/llm.js';
 
 // Runtime configuration (matches Config type in frontend)
 export interface RuntimeConfig {
@@ -18,8 +17,6 @@ export interface RuntimeConfig {
   email: string;
   password: string;
   audioInputDeviceName: string;
-
-  llmConf: LLMConfig | null;
 
   // panel auto-scroll preferences
   autoScrollLiveSuggestions: boolean;
@@ -53,8 +50,6 @@ const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
   email: '',
   password: '',
   audioInputDeviceName: '',
-
-  llmConf: null,
 
   // default autoscroll preferences are enabled
   autoScrollLiveSuggestions: true,
@@ -274,6 +269,18 @@ export const configStore = new ConfigStore();
     configStore.updateConfig(migration);
   }
 })(); // migration block
+
+// One-time cleanup: `llmConf` backed the removed bring-your-own-API-key feature and could hold a
+// real provider key in plaintext on disk. `RuntimeConfig` no longer declares it, but every read
+// and write here spreads the raw stored object through - nothing strips a key TypeScript no
+// longer knows about - so a leftover value would otherwise survive on an upgraded install forever.
+(() => {
+  const raw = configStore.getStoredRuntime() as (StoredRuntime & { llmConf?: unknown }) | undefined;
+  if (raw && 'llmConf' in raw) {
+    delete raw.llmConf;
+    configStore.setStoredRuntime(raw);
+  }
+})(); // llmConf scrub
 
 // Read (but do not yet delete) any leftover local copy, so AccountService can migrate it
 // onto the account. Deleting here unconditionally would destroy the only copy whenever the
