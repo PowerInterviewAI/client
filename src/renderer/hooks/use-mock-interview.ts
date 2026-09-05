@@ -134,9 +134,22 @@ export function useMockInterview() {
     await mockTtsService.repeat(session.currentQuestion.chunks);
   };
 
+  const answerReady = async (): Promise<void> => {
+    await window.electronAPI?.mockInterview.answerReady();
+  };
+
   const clear = async (): Promise<void> => {
     await window.electronAPI?.mockInterview.clear();
   };
 
-  return { session, startSession, endSession, skipQuestion, answerFinished, repeatQuestion, clear };
+  return {
+    session,
+    startSession,
+    endSession,
+    skipQuestion,
+    answerFinished,
+    repeatQuestion,
+    answerReady,
+    clear,
+  };
 }

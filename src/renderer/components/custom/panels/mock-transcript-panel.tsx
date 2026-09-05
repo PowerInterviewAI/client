@@ -9,7 +9,11 @@ import { Progress } from '@/components/ui/progress';
 import { useAppState } from '@/hooks/use-app-state';
 import { useConfigStore } from '@/hooks/use-config-store';
 import { cn } from '@/lib/utils';
-import { type MockInterviewSessionState, MockInterviewState } from '@/types/mock-interview';
+import {
+  isMockInterviewSessionActive,
+  type MockInterviewSessionState,
+  MockInterviewState,
+} from '@/types/mock-interview';
 
 interface Turn {
   key: string;
@@ -112,10 +116,12 @@ function MockTranscriptPanel({ session }: MockTranscriptPanelProps) {
     ]
   );
   const totalQuestions = session.setup?.question_count ?? 0;
-  const questionNumber = Math.min(session.questionNumber, totalQuestions || session.questionNumber);
+  // Clamped to the total once it's known; passed through unchanged before then (there is nothing
+  // to clamp against yet).
+  const questionNumber =
+    totalQuestions > 0 ? Math.min(session.questionNumber, totalQuestions) : session.questionNumber;
   const progressValue = totalQuestions > 0 ? (questionNumber / totalQuestions) * 100 : 0;
-  const isRunning =
-    session.state !== MockInterviewState.Idle && session.state !== MockInterviewState.Finished;
+  const isRunning = isMockInterviewSessionActive(session);
 
   useEffect(() => {
     if (!autoScroll) return;

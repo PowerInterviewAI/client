@@ -16,9 +16,14 @@ import { getElectron } from '@/lib/utils';
  * A stranded mute must be impossible, so this holds four independent layers:
  *   1. The caller wraps every play attempt in a `finally` that releases the gate - a rejected
  *      `play()`, a decode error, an abort, and a normal `ended` all reach it.
- *   2. A watchdog armed at `acquire()` force-releases past `MOCK_TTS_GATE_MAX_HOLD_MS`, covering
- *      the one case a `finally` cannot: an `HTMLAudioElement` that never fires `ended` or `error`.
- *      Precedent: `ACTION_LOCK_MAX_HOLD_MS` in `consts.ts`.
+ *   2. A watchdog armed at `acquire()` force-releases past `MOCK_TTS_GATE_MAX_HOLD_MS`. An
+ *      `HTMLAudioElement` that never fires `ended` or `error` is *not* what this covers -
+ *      `playBlob`'s own `MOCK_TTS_CHUNK_TIMEOUT_MS` timer already rejects that case and reaches
+ *      layer 1's `finally` well inside this watchdog's window. What is left uncovered by every
+ *      other layer is a hang *before* any audio element exists: `fetchChunk`'s
+ *      `electron.mockInterview.synthesizeChunk()` IPC call has no timeout of its own, so a stalled
+ *      main process leaves the whole `await` chain suspended with nothing to reach a `finally`
+ *      from. Precedent: `ACTION_LOCK_MAX_HOLD_MS` in `consts.ts`.
  *   3. `release()` takes the token `acquire()` returned, not a boolean, so a late release from a
  *      superseded acquisition cannot reopen the mic out from under a newer one.
  *   4. `forceReleaseNow()` is the state-driven belt `use-mock-interview.ts` calls whenever the

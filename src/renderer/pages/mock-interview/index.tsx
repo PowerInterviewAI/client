@@ -37,7 +37,16 @@ export default function MockInterviewPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { appState } = useAppState();
-  const { session, startSession, endSession, skipQuestion, answerFinished, repeatQuestion, clear } =
+  const {
+    session,
+    startSession,
+    endSession,
+    skipQuestion,
+    answerFinished,
+    repeatQuestion,
+    answerReady,
+    clear,
+  } =
     useMockInterview();
   const { exportMockReport } = useTools();
   const { confirmDiscard } = useSaveHistoryGuard();
@@ -158,6 +167,7 @@ export default function MockInterviewPage() {
         onDone={answerFinished}
         onRepeat={repeatQuestion}
         onEnd={endSession}
+        onAnswerReady={answerReady}
       />
     );
   }

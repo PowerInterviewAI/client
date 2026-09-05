@@ -101,12 +101,11 @@ class ToolsService {
       throw new Error('There is nothing to export yet. Answer at least one question first.');
     }
 
-    const conf = configStore.getConfig();
     const fullMarkdown = buildMockExportMarkdown({
       setup: session.setup,
       answers: session.answers,
       report: session.report,
-      language: conf.language,
+      language: mockInterviewService.getLanguage(),
     });
 
     const isMarkdown = format === 'md';

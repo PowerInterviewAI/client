@@ -26,6 +26,9 @@ export async function run(userDataDir) {
         // by anything in this test, to pin that the scrub IIFE at import time actually removes
         // it rather than merely that RuntimeConfig no longer declares the field.
         llmConf: { provider: 'openai', apikey: 'sk-leftover-secret', model: 'gpt-4o' },
+        // Leftover from the retired "don't show again" headphone notice preference - same scrub
+        // mechanism (scrubRetiredKey), a different retired key.
+        headphoneNoticeAcknowledged: true,
       },
     })
   );
@@ -122,6 +125,13 @@ export async function run(userDataDir) {
   check(
     'the scrub is written back to disk, not just held in memory',
     !('llmConf' in (JSON.parse(fs.readFileSync(configFile, 'utf8')).runtime ?? {}))
+  );
+
+  // Same scrub, a second retired key - not sensitive like llmConf, but nothing else will ever
+  // remove it either, so it would otherwise sit on disk forever on an upgraded install.
+  check(
+    'a pre-upgrade install with a stored headphoneNoticeAcknowledged has it scrubbed on load',
+    !('headphoneNoticeAcknowledged' in (store.configStore.getStoredRuntime() ?? {}))
   );
 
   return failures;

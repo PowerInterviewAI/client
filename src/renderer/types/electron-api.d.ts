@@ -148,6 +148,7 @@ declare global {
       ingestAnswer: (payload: { type: 'partial' | 'final'; text: string }) => Promise<void>;
       answerFinished: () => Promise<void>;
       repeatQuestion: () => Promise<void>;
+      answerReady: () => Promise<void>;
       skipQuestion: () => Promise<void>;
       endSession: () => Promise<void>;
       clear: () => Promise<void>;

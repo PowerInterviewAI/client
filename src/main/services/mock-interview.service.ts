@@ -9,13 +9,14 @@ import {
   SUGGESTION_STALL_MS,
 } from '../consts.js';
 import { configStore } from '../store/config.store.js';
-import { LiveSuggestion, Speaker, SuggestionState, Transcript } from '../types/app-state.js';
+import { LiveSuggestion, RunningState, Speaker, SuggestionState, Transcript } from '../types/app-state.js';
 import { Language, TTS_LANGUAGES } from '../types/language.js';
 import { GenerateLiveSuggestionRequest, RequestTurnVerdict, SuggestionMode } from '../types/llm.js';
 import {
   EvaluateMockTurnRequest,
   GenerateMockQuestionRequest,
   GenerateMockReportRequest,
+  isMockInterviewSessionActive,
   MockAnswer,
   MockCurrentQuestion,
   MockInterviewSessionState,
@@ -99,10 +100,7 @@ class MockInterviewService {
   private hintAbortController: AbortController | null = null;
 
   isActive(): boolean {
-    return (
-      this.session.state !== MockInterviewState.Idle &&
-      this.session.state !== MockInterviewState.Finished
-    );
+    return isMockInterviewSessionActive(this.session);
   }
 
   private broadcast(): void {
@@ -123,6 +121,15 @@ class MockInterviewService {
    */
   async start(setup: MockInterviewSetup): Promise<void> {
     if (this.isActive()) return;
+
+    // Mutually exclusive with the live assistant, for the same reason use-assistant-service.ts's
+    // startAssistant() refuses while a mock session is active: both want the microphone and an
+    // ASR socket, and running both would bill twice. That check only protects the other
+    // direction - there is no start hotkey into a mock session for it to intercept the way it
+    // intercepts every route into the live assistant, so this side needed its own guard.
+    if (appStateService.getState().runningState !== RunningState.Idle) {
+      throw new Error('Stop the live interview before starting a mock interview.');
+    }
 
     const seq = ++this.sessionSeq;
     this.followUpCount = 0;
@@ -285,7 +292,13 @@ class MockInterviewService {
       currentAnswerText: '',
       state: hasAudio ? MockInterviewState.Speaking : MockInterviewState.Listening,
     };
-    if (!hasAudio) this.armSilenceTimer(MOCK_LISTENING_SILENCE_MS);
+    // Not armed here for a no-audio question: the renderer gates a question with no audio behind
+    // its own "I'm ready" confirmation (session.tsx), and arming the silence backstop before the
+    // candidate has even said they are ready to answer starts counting down against time spent
+    // reading the question, not against silence after being asked for an answer - a long question
+    // could time out and auto-skip before "I'm ready" is ever clicked. `answerReady()` arms it
+    // instead, at the same "candidate can now answer" moment `speechFinished`/`speechFailed` arm
+    // it for a question that does have audio.
     this.broadcast();
 
     // The question text is already final the moment it is installed - unlike the live path,
@@ -305,9 +318,7 @@ class MockInterviewService {
   /** Playback of every chunk finished normally. */
   async speechFinished(): Promise<void> {
     if (this.session.state !== MockInterviewState.Speaking) return;
-    this.setState(MockInterviewState.Listening);
-    this.armSilenceTimer(MOCK_LISTENING_SILENCE_MS);
-    this.broadcast();
+    this.enterListeningAfterSpeech();
   }
 
   /**
@@ -324,6 +335,17 @@ class MockInterviewService {
         currentQuestion: { ...this.session.currentQuestion, hasAudio: false },
       };
     }
+    this.enterListeningAfterSpeech();
+  }
+
+  /**
+   * The common tail of leaving `Speaking`, whether it ended normally or failed: move to
+   * `Listening`, arm the backstop that catches a dead microphone or a candidate who never answers,
+   * and tell the renderer. Split out so the one difference between `speechFinished` and
+   * `speechFailed` - the `hasAudio` patch the latter applies first - is the only thing left in
+   * either of them.
+   */
+  private enterListeningAfterSpeech(): void {
     this.setState(MockInterviewState.Listening);
     this.armSilenceTimer(MOCK_LISTENING_SILENCE_MS);
     this.broadcast();
@@ -367,6 +389,12 @@ class MockInterviewService {
     const seq = this.sessionSeq;
     const question = this.session.currentQuestion;
     const answerText = this.finalAnswerText.trim();
+    // Consumed now, not left for `installQuestion` to clear later: `endSession`'s "resurrect a
+    // pending answer" branch below reads this same field, and the round trip to `evaluateTurn`
+    // and then to the next `installQuestion` can take long enough for End to land in between -
+    // finding this text still here and `currentQuestion` still pointing at the question it was
+    // just folded into `answers` for, and pushing the identical answer a second time.
+    this.finalAnswerText = '';
 
     const answer: MockAnswer = {
       question: question.text,
@@ -419,6 +447,21 @@ class MockInterviewService {
   }
 
   /**
+   * The candidate confirmed they are ready to answer a question that has no audio.
+   *
+   * Arms the silence backstop at the moment answering can actually start, the same moment
+   * `speechFinished`/`speechFailed` arm it for a question that does have audio - see the comment
+   * in `installQuestion` for why arming it any earlier (when the question is merely installed,
+   * before the candidate has read it) is the bug this exists to avoid.
+   */
+  answerReady(): void {
+    if (this.session.state !== MockInterviewState.Listening || this.session.currentQuestion?.hasAudio) {
+      return;
+    }
+    this.armSilenceTimer(MOCK_LISTENING_SILENCE_MS);
+  }
+
+  /**
    * The candidate asked to hear the question again.
    *
    * Only the silence backstop cares, and it has to. The replay gates the microphone for its
@@ -444,6 +487,12 @@ class MockInterviewService {
     this.clearSilenceTimer();
     const seq = this.sessionSeq;
     const question = this.session.currentQuestion;
+    // A partial the candidate had spoken but not submitted no longer applies to a question they
+    // just chose to skip - left alone, it is still here (and `currentQuestion` still names this
+    // same question) for the entire `advanceOrScore` round trip, which is exactly the window
+    // `endSession`'s "resurrect a pending answer" branch reads from. See `answerFinished` for the
+    // same fix on the submit path.
+    this.finalAnswerText = '';
     if (question) {
       const answer: MockAnswer = {
         question: question.text,
@@ -608,6 +657,21 @@ class MockInterviewService {
 
   getState(): MockInterviewSessionState {
     return { ...this.session };
+  }
+
+  /**
+   * The language this session is actually running in - frozen at `start()`, not the live config.
+   *
+   * `exportMockReport` needs this rather than reading `configStore.getConfig().language` itself:
+   * a `Finished` session sits on screen until the candidate navigates away or exports, and nothing
+   * clears it just because the app's language setting changed in the meantime (`LanguageGroup` is
+   * reachable again once the mock session stops holding the mic). Exporting with the live value
+   * there would produce a report with headings in one language wrapped around a transcript and
+   * questions generated in another - the exact "half-translated report" `export-labels.ts` exists
+   * to prevent for the live path.
+   */
+  getLanguage(): Language {
+    return this.language;
   }
 
   private stopLiveHint(): void {

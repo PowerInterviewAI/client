@@ -199,6 +199,18 @@ export class AppStateService {
     if (next.mockInterview === undefined) return next;
 
     const session = next.mockInterview;
+
+    // `ingestAnswer` broadcasts roughly 20 times a second while the candidate is talking, and
+    // every one of those carries a `mockInterview` payload - but `answers` is only ever
+    // reassigned (a new array) when a turn actually completes, never by `ingestAnswer` itself, so
+    // an unchanged reference means the derived value below cannot have changed either. Skipping
+    // the rescan on the hot path avoids trimming every answer string ~20 times a second for a
+    // boolean that changes at most once per turn.
+    if (session?.answers === this.state.mockInterview?.answers) {
+      next.hasMockContent = this.state.hasMockContent;
+      return next;
+    }
+
     // A skipped question is not content: `answer` is empty for those by construction, so the
     // trim check already excludes them without needing to read the `skipped` flag directly.
     next.hasMockContent =

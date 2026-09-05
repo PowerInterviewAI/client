@@ -276,17 +276,28 @@ export const configStore = new ConfigStore();
   }
 })(); // migration block
 
-// One-time cleanup: `llmConf` backed the removed bring-your-own-API-key feature and could hold a
-// real provider key in plaintext on disk. `RuntimeConfig` no longer declares it, but every read
-// and write here spreads the raw stored object through - nothing strips a key TypeScript no
-// longer knows about - so a leftover value would otherwise survive on an upgraded install forever.
-(() => {
-  const raw = configStore.getStoredRuntime() as (StoredRuntime & { llmConf?: unknown }) | undefined;
-  if (raw && 'llmConf' in raw) {
-    delete raw.llmConf;
+/**
+ * Drop a key `RuntimeConfig` no longer declares, so a value from before it was retired does not
+ * survive forever on an upgraded install - every read and write in this file spreads the raw
+ * stored object through, and nothing else strips a key TypeScript no longer knows about.
+ */
+function scrubRetiredKey(key: string): void {
+  const raw = configStore.getStoredRuntime() as (StoredRuntime & Record<string, unknown>) | undefined;
+  if (raw && key in raw) {
+    delete raw[key];
     configStore.setStoredRuntime(raw);
   }
-})(); // llmConf scrub
+}
+
+// `llmConf` backed the removed bring-your-own-API-key feature and could hold a real provider key
+// in plaintext - this one matters for more than tidiness.
+scrubRetiredKey('llmConf');
+
+// `headphoneNoticeAcknowledged` was replaced by the mock-interview-aware `HeadphoneNoticeDialog`
+// variant, which no longer has a "do not show this again" option to acknowledge (see its own
+// docstring for why). Not sensitive, but left here for the same reason `llmConf` is: nothing else
+// will ever remove it.
+scrubRetiredKey('headphoneNoticeAcknowledged');
 
 // Read (but do not yet delete) any leftover local copy, so AccountService can migrate it
 // onto the account. Deleting here unconditionally would destroy the only copy whenever the

@@ -16,7 +16,7 @@ import { useMockLiveSuggestions } from '@/hooks/use-mock-live-suggestions';
 import { cn } from '@/lib/utils';
 import { mockTranscriptionService } from '@/services/mock-transcription.service';
 import type { MockInterviewSessionState } from '@/types/mock-interview';
-import { MockInterviewState } from '@/types/mock-interview';
+import { isMockInterviewSessionActive, MockInterviewState } from '@/types/mock-interview';
 
 interface SessionScreenProps {
   session: MockInterviewSessionState;
@@ -24,6 +24,7 @@ interface SessionScreenProps {
   onDone: () => Promise<void>;
   onRepeat: () => Promise<void>;
   onEnd: () => Promise<void>;
+  onAnswerReady: () => Promise<void>;
 }
 
 const THINKING_LABEL: Partial<Record<MockInterviewState, string>> = {
@@ -36,13 +37,26 @@ const THINKING_LABEL: Partial<Record<MockInterviewState, string>> = {
   [MockInterviewState.Stopping]: 'Ending the interview…',
 };
 
-export function SessionScreen({ session, onSkip, onDone, onRepeat, onEnd }: SessionScreenProps) {
+export function SessionScreen({
+  session,
+  onSkip,
+  onDone,
+  onRepeat,
+  onEnd,
+  onAnswerReady,
+}: SessionScreenProps) {
   const { state, currentQuestion } = session;
   const [busy, setBusy] = useState<'skip' | 'done' | 'end' | 'repeat' | null>(null);
   const [answerReady, setAnswerReady] = useState(currentQuestion?.hasAudio ?? true);
   const levelRingRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const levelRef = useMicLevel(mockTranscriptionService.getStream());
+  // Only while Listening, which is the only state the ring below ever reads this for: the stream
+  // itself lives for the whole session, so passing it through unconditionally would run the FFT
+  // analysis loop in use-mic-level.ts continuously through Speaking/Generating/Evaluating/Scoring
+  // too, for a value nothing displays until Listening comes back around.
+  const levelRef = useMicLevel(
+    state === MockInterviewState.Listening ? mockTranscriptionService.getStream() : null
+  );
   const { enabled: hintsEnabled, toggle: toggleHints } = useMockLiveSuggestions();
 
   // This screen mounts once a session actually starts (the auto-start loading state on
@@ -102,8 +116,7 @@ export function SessionScreen({ session, onSkip, onDone, onRepeat, onEnd }: Sess
   // Shown for the whole active session once hints are on, not just once the first one arrives -
   // otherwise the panel would pop in mid-question the moment the first hint request resolves,
   // shifting the transcript panel it sits beside.
-  const showHintsPanel =
-    hintsEnabled && state !== MockInterviewState.Idle && state !== MockInterviewState.Finished;
+  const showHintsPanel = hintsEnabled && isMockInterviewSessionActive(session);
 
   const statusText = isThinking
     ? THINKING_LABEL[state]
@@ -170,7 +183,17 @@ export function SessionScreen({ session, onSkip, onDone, onRepeat, onEnd }: Sess
           </div>
           {statusText && <span>{statusText}</span>}
           {showReadyPrompt && (
-            <Button size="sm" variant="outline" className="h-6 text-xs" onClick={() => setAnswerReady(true)}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-6 text-xs"
+              onClick={() => {
+                setAnswerReady(true);
+                // Arms the silence backstop in main - see mockInterviewService.answerReady for
+                // why it isn't armed until now rather than when the question was installed.
+                void onAnswerReady();
+              }}
+            >
               I&apos;m ready
             </Button>
           )}

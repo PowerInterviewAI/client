@@ -277,6 +277,54 @@ export async function run() {
       'with the actual answer text preserved',
       mockInterviewService.getState().answers[0]?.answer === 'The mic works fine.'
     );
+
+    // Regression: endSession() landing between answerFinished()'s synchronous answer-push and
+    // its evaluateTurn round trip used to resurrect and re-add the same answer a second time,
+    // because finalAnswerText was not cleared until installQuestion ran for the *next* question -
+    // which this race never reaches. See mockInterviewService.answerFinished.
+    mockInterviewService.clear();
+    await mockInterviewService.start({ ...setup, question_count: 3 });
+    await toListening();
+    mockInterviewService.ingestAnswer('final', 'Answered right before ending.');
+    const answerFinishedRace = mockInterviewService.answerFinished();
+    await mockInterviewService.endSession();
+    await answerFinishedRace;
+    check(
+      'ending while answerFinished is still awaiting evaluateTurn does not duplicate the answer',
+      mockInterviewService.getState().answers.length === 1
+    );
+    check(
+      'and the one answer recorded is the real one, not a resurrected duplicate',
+      mockInterviewService.getState().answers[0]?.answer === 'Answered right before ending.'
+    );
+
+    // Same race, reached through Skip instead of Done answering: a partial the candidate never
+    // submitted must not be resurrected onto a question they explicitly chose to skip. See
+    // mockInterviewService.skipQuestion. A real first answer is needed before this: ending with
+    // only a skip on the books has no real content, so endSession() takes the "nothing to score"
+    // reset-to-initial branch instead of the scoring branch this race is about, regardless of the
+    // bug under test.
+    mockInterviewService.clear();
+    await mockInterviewService.start({ ...setup, question_count: 3 });
+    await toListening();
+    mockInterviewService.ingestAnswer('final', 'A real first answer.');
+    await mockInterviewService.answerFinished();
+    await toListening();
+    // 'final' ASR segments accumulate into finalAnswerText as the candidate speaks, independent
+    // of "Done answering" actually being clicked - a 'partial' would not reproduce this, since
+    // only a 'final' type touches finalAnswerText at all (see ingestAnswer).
+    mockInterviewService.ingestAnswer('final', 'Spoken but never submitted before skipping.');
+    const skipRace = mockInterviewService.skipQuestion();
+    await mockInterviewService.endSession();
+    await skipRace;
+    check(
+      'ending while skipQuestion is still advancing does not resurrect the unsubmitted partial',
+      mockInterviewService.getState().answers.length === 2
+    );
+    check(
+      'and the second answer recorded is the skip, not the unsubmitted partial',
+      mockInterviewService.getState().answers[1]?.skipped === true
+    );
   } finally {
     globalThis.fetch = originalFetch;
     mockInterviewService.clear();
