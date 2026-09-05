@@ -22,6 +22,13 @@ export async function run(userDataDir) {
         email: 'a@b.c',
         autoScrollTranscript: false,
         interviewConf: { username: 'Jane', profileData: 'MY CV', jobDescription: 'MY JD' },
+        // Leftover from the removed bring-your-own-API-key feature. Seeded here, never written
+        // by anything in this test, to pin that the scrub IIFE at import time actually removes
+        // it rather than merely that RuntimeConfig no longer declares the field.
+        llmConf: { provider: 'openai', apikey: 'sk-leftover-secret', model: 'gpt-4o' },
+        // Leftover from the retired "don't show again" headphone notice preference - same scrub
+        // mechanism (scrubRetiredKey), a different retired key.
+        headphoneNoticeAcknowledged: true,
       },
     })
   );
@@ -38,14 +45,6 @@ export async function run(userDataDir) {
   check(
     'getConfig keeps real settings',
     cfg.email === 'a@b.c' && cfg.autoScrollTranscript === false
-  );
-
-  // Backfilled by the migration IIFE at the bottom of the store, which runs on import. A key
-  // that arrives undefined reads as "not acknowledged" either way, but the notice this one
-  // gates is shown on every Start until it is set, so an absent key must not read as silenced.
-  check(
-    'a store written before the headphone notice existed defaults to showing it',
-    cfg.headphoneNoticeAcknowledged === false
   );
 
   // The data-loss trap: an unrelated write must not drop the not-yet-migrated copy.
@@ -93,6 +92,46 @@ export async function run(userDataDir) {
   check(
     'professionalMode survives an unrelated write',
     store.configStore.getConfig().professionalMode === true
+  );
+
+  // Which session the control bar's primary Start button launches without going through its
+  // dropdown. A product decision rather than a convenience default - a first-time user is far
+  // likelier to be trying the app out than walking into a real call - and one that a later edit
+  // could flip with no symptom other than Start quietly doing the other thing.
+  check('lastSessionMode defaults to mock', store.configStore.getConfig().lastSessionMode === 'mock');
+
+  store.configStore.updateConfig({ lastSessionMode: 'live' });
+  check(
+    'the last session mode is remembered across reads',
+    store.configStore.getConfig().lastSessionMode === 'live'
+  );
+
+  store.configStore.updateConfig({ sessionToken: 'tok3' });
+  check(
+    'and survives an unrelated write',
+    store.configStore.getConfig().lastSessionMode === 'live'
+  );
+
+  store.configStore.updateConfig({ lastSessionMode: 'mock' });
+
+  // Security cleanup: llmConf could hold a real provider API key in plaintext. Removing the
+  // field from RuntimeConfig does not erase it from an existing install's disk - the scrub IIFE
+  // at the bottom of the store has to actually delete it, and the write has to reach the file,
+  // not just the in-memory store, or the key survives the next getConfig/updateConfig spread.
+  check(
+    'a pre-upgrade install with a stored llmConf has it scrubbed on load',
+    !('llmConf' in (store.configStore.getStoredRuntime() ?? {}))
+  );
+  check(
+    'the scrub is written back to disk, not just held in memory',
+    !('llmConf' in (JSON.parse(fs.readFileSync(configFile, 'utf8')).runtime ?? {}))
+  );
+
+  // Same scrub, a second retired key - not sensitive like llmConf, but nothing else will ever
+  // remove it either, so it would otherwise sit on disk forever on an upgraded install.
+  check(
+    'a pre-upgrade install with a stored headphoneNoticeAcknowledged has it scrubbed on load',
+    !('headphoneNoticeAcknowledged' in (store.configStore.getStoredRuntime() ?? {}))
   );
 
   return failures;

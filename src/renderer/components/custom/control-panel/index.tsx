@@ -1,6 +1,6 @@
 import { Ellipsis, Play, Square } from 'lucide-react';
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { useAppState } from '@/hooks/use-app-state';
@@ -12,13 +12,14 @@ import { useSaveHistoryGuard } from '@/hooks/use-save-history-guard';
 import { isMac } from '@/lib/consts';
 import { getElectron } from '@/lib/utils';
 import { RunningState } from '@/types/app-state';
+import type { MockInterviewSetup } from '@/types/mock-interview';
 
 import HeadphoneNoticeDialog from '../headphone-notice-dialog';
+import { MockInterviewSetupDialog } from '../mock-interview-setup-dialog';
 import PermissionGateDialog from '../permission-gate-dialog';
 import ZoomControl from '../zoom-control';
 import { AudioGroup } from './audio-group';
 import { LanguageGroup } from './language-group';
-import { LLMGroup } from './llm-group';
 import { MainGroup } from './main-group';
 import { ProfessionalModeGroup } from './professional-mode-group';
 import { ToolsGroup } from './tools-group';
@@ -33,14 +34,30 @@ type StateConfig = {
 export default function ControlPanel() {
   const isStealth = useIsStealthMode();
   const navigate = useNavigate();
+  const location = useLocation();
   const { startAssistant, stopAssistant } = useAssistantService();
   const { runningState, appState } = useAppState();
-  const { config } = useConfigStore();
+  const { config, updateConfig } = useConfigStore();
   const { confirmDiscard } = useSaveHistoryGuard();
   const [permGateOpen, setPermGateOpen] = useState(false);
   const [headphoneNoticeOpen, setHeadphoneNoticeOpen] = useState(false);
+  const [mockSetupOpen, setMockSetupOpen] = useState(false);
 
   const { devices: audioInputDevices, ready: audioDevicesReady } = useAudioInputDevices();
+
+  // "Practise again" on the report screen has nowhere left to configure a new session other than
+  // here, so it navigates back to /main and hands this flag through router state to reopen the
+  // dialog on arrival - one click instead of the two it would take otherwise. Consumed once: the
+  // state is cleared in the same navigate that opens the dialog, so returning to this route later
+  // (Back, or a second visit) does not reopen it uninvited.
+  const openedMockSetupFromState = useRef(false);
+  useEffect(() => {
+    const navState = location.state as { openMockSetup?: boolean } | null;
+    if (!navState?.openMockSetup || openedMockSetupFromState.current) return;
+    openedMockSetupFromState.current = true;
+    setMockSetupOpen(true);
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location, navigate]);
 
   if (isStealth) return null;
 
@@ -100,6 +117,15 @@ export default function ControlPanel() {
   };
 
   const doStart = async () => {
+    // Persisted here rather than at the top of the flow, because this is the one point both
+    // routes into a live session pass through (the headphone notice's own continuation and the
+    // macOS permission gate's) and the last point anything can still back out - the save-history
+    // prompt and that gate both return without starting, and neither should quietly change what
+    // the Start button does next time.
+    void updateConfig({ lastSessionMode: 'live' }).catch((e) =>
+      console.error('Failed to persist last session mode', e)
+    );
+
     try {
       await startAssistant();
     } catch (error) {
@@ -144,13 +170,36 @@ export default function ControlPanel() {
 
     // Before the permission gate, and before anything opens a socket: on speakers the echo is
     // already in the audio by the time the first question is asked, and the failure it causes
-    // is silent. Nothing here can detect the output route, so the user is asked.
-    if (!config?.headphoneNoticeAcknowledged) {
-      setHeadphoneNoticeOpen(true);
-      return;
-    }
+    // is silent. Nothing here can detect the output route, so the user is asked - every session,
+    // since whether the call is on speakers is a property of the machine and the meeting, not a
+    // setting that stays true once answered.
+    setHeadphoneNoticeOpen(true);
+  };
 
-    await startAfterNotice();
+  // The dialog has already validated and shown its own headphone notice by the time this runs -
+  // starting the session itself happens on `/mock-interview`, not here, so that only one
+  // `useMockInterview()` instance is ever mounted at once. Starting it from this page as well
+  // would leave two instances reacting to the same `Speaking` transition for the moment before
+  // the route swap finishes, which is what plays (or replays) the question's audio twice.
+  const handleMockInterviewStart = async (setup: MockInterviewSetup) => {
+    void updateConfig({ lastSessionMode: 'mock' }).catch((e) =>
+      console.error('Failed to persist last session mode', e)
+    );
+    setMockSetupOpen(false);
+    navigate('/mock-interview', { state: { pendingSetup: setup } });
+  };
+
+  // What the primary button starts when nothing has been chosen explicitly - whichever mode was
+  // last actually started, defaulting to mock for a candidate who has never started either. The
+  // dropdown's own two items bypass this and always name a specific mode; this is only for the
+  // half of the split button that has no menu attached to it.
+  const defaultSessionMode: 'live' | 'mock' = config?.lastSessionMode ?? 'mock';
+  const handleStartDefault = () => {
+    if (defaultSessionMode === 'mock') {
+      setMockSetupOpen(true);
+    } else {
+      void handleStartClick();
+    }
   };
 
   const stateConfig: Record<RunningState, StateConfig> = {
@@ -199,15 +248,21 @@ export default function ControlPanel() {
           Zoom is held at the right edge by ml-auto: it changes how the app is viewed rather than
           what it does, and mixing it into the run would make it read as another interview control. */}
       <div id="control-panel" className="flex items-center gap-4 px-1 pb-1 pt-0.5">
-        <MainGroup stateConfig={{ onClick, className, icon, label }} getDisabled={getDisabled} />
+        <MainGroup
+          stateConfig={{ onClick, className, icon, label }}
+          getDisabled={getDisabled}
+          defaultMode={defaultSessionMode}
+          onStartDefault={handleStartDefault}
+          onStartMockInterview={() => setMockSetupOpen(true)}
+        />
 
         <div className="h-5 w-px bg-border" aria-hidden="true" />
 
-        {/* What the session runs on. Only the model locks while the assistant runs; audio and
-            language stay live, because both are things an interview can get wrong in progress
-            and neither can be fixed by restarting without losing the transcript. Language sits
-            here rather than with the presentation toggles because it is an input as much as an
-            output: it picks the speech model before it picks the answer's language. */}
+        {/* What the session runs on. Both stay live while the assistant runs, because audio and
+            language are things an interview can get wrong in progress and neither can be fixed
+            by restarting without losing the transcript. Language sits here rather than with the
+            presentation toggles because it is an input as much as an output: it picks the speech
+            model before it picks the answer's language. */}
         <div className="flex items-center gap-1">
           <AudioGroup
             audioInputDevices={audioInputDevices}
@@ -215,7 +270,6 @@ export default function ControlPanel() {
             getDisabled={getDisabled}
           />
           <LanguageGroup getDisabled={getDisabled} />
-          <LLMGroup getDisabled={getDisabled} />
         </div>
 
         {/* What the interview produces: how suggestions read, and what to do with the session */}
@@ -233,6 +287,12 @@ export default function ControlPanel() {
         open={headphoneNoticeOpen}
         onOpenChange={setHeadphoneNoticeOpen}
         onProceed={() => void startAfterNotice()}
+      />
+
+      <MockInterviewSetupDialog
+        open={mockSetupOpen}
+        onOpenChange={setMockSetupOpen}
+        onStart={handleMockInterviewStart}
       />
 
       {isMac && (

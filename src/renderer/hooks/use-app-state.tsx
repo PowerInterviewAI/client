@@ -46,6 +46,8 @@ class AppStateManager {
       // Defaults false, which is the safe direction: an older main that does not send it makes
       // the save prompt silent rather than making it fire on every Clear with nothing to save.
       hasHistory: raw.hasHistory ?? false,
+      mockInterview: raw.mockInterview ?? null,
+      hasMockContent: raw.hasMockContent ?? false,
     };
   }
 
@@ -115,6 +117,14 @@ class AppStateManager {
 
 const manager: AppStateManager =
   globalAny[GLOBAL_KEY] ?? (globalAny[GLOBAL_KEY] = new AppStateManager());
+
+/**
+ * The current app state without subscribing to it - for call sites that are not React components
+ * (a Zustand store action, for instance) and so cannot call the `useAppState` hook below.
+ */
+export function getAppStateSnapshot(): AppState | null {
+  return manager.state;
+}
 
 export const useAppState = (): AppStateContextType => {
   const [appState, setAppState] = useState<AppState | null>(manager.state);

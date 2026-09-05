@@ -1,6 +1,8 @@
 import { BrowserWindow, globalShortcut } from 'electron';
 
 import { ZOOM_STEP } from './consts.js';
+import { appStateService } from './services/app-state.service.js';
+import { mockInterviewService } from './services/mock-interview.service.js';
 import { actionSuggestionService } from './services/suggestion-action.service.js';
 import {
   moveWindowByArrow,
@@ -11,6 +13,7 @@ import {
   WindowPosition,
 } from './services/window-control.service.js';
 import * as zoomService from './services/zoom.service.js';
+import { isMockInterviewSessionActive } from './types/mock-interview.js';
 
 const isMac = process.platform === 'darwin';
 
@@ -38,8 +41,16 @@ export function registerGlobalHotkeys(): void {
   // Unregister existing hotkeys first
   globalShortcut.unregisterAll();
 
-  // Stop assistant
+  // Stop assistant - or end the mock session, if one is running. There is deliberately no
+  // *start* hotkey for either, so this is the only routing decision this shortcut needs: without
+  // it, pressing it during a mock interview would run the live stop path against a session that
+  // was never started (close to a no-op, but it still walks `runningState` through `Stopping`)
+  // while doing nothing about the session actually on screen.
   registerShortcut(`${BASE}+Q`, () => {
+    if (isMockInterviewSessionActive(appStateService.getState().mockInterview)) {
+      void mockInterviewService.endSession();
+      return;
+    }
     const w = BrowserWindow.getAllWindows()[0];
     if (w && !w.isDestroyed()) {
       w.webContents.send('hotkey:stop-assistant');

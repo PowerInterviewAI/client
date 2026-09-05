@@ -1,7 +1,7 @@
 import type { AppState } from './app-state';
 import type { Config } from './config';
 import type { ExportFormat } from './export';
-import type { LLMConfig, LLMConfigValidationResult, LLMModelInfo } from './llm';
+import type { MockInterviewSetup } from './mock-interview';
 import type {
   AvailableCurrency,
   CreatePaymentRequest,
@@ -101,14 +101,6 @@ declare global {
       getCredits: () => Promise<{ success: boolean; credits?: number; error?: string }>;
     };
 
-    // LLM management
-    llm: {
-      listModels: () => Promise<{ success: boolean; data?: LLMModelInfo[]; error?: string }>;
-      validate: (
-        config: LLMConfig | null
-      ) => Promise<{ success: boolean; data?: LLMConfigValidationResult; error?: string }>;
-    };
-
     // App state management
     appState: {
       get: () => Promise<AppState>;
@@ -149,12 +141,29 @@ declare global {
       trigger: () => Promise<void>;
     };
 
+    // Mock interview management. State itself travels on AppState.mockInterview, pushed the
+    // same way as everything else - these calls only ever request a transition.
+    mockInterview: {
+      start: (setup: MockInterviewSetup) => Promise<void>;
+      synthesizeChunk: (index: number) => Promise<ArrayBuffer | null>;
+      speechFinished: () => Promise<void>;
+      speechFailed: () => Promise<void>;
+      ingestAnswer: (payload: { type: 'partial' | 'final'; text: string }) => Promise<void>;
+      answerFinished: () => Promise<void>;
+      repeatQuestion: () => Promise<void>;
+      answerReady: () => Promise<void>;
+      skipQuestion: () => Promise<void>;
+      endSession: () => Promise<void>;
+      clear: () => Promise<void>;
+    };
+
     // Push notification listener
     onPushNotification: (callback: (notification: PushNotification) => void) => () => void;
 
     // Tools management
     tools: {
       exportTranscript: (format: ExportFormat) => Promise<string | null>;
+      exportMockReport: (format: ExportFormat) => Promise<string | null>;
       clearAll: () => Promise<void>;
       setPlaceholderData: () => Promise<void>;
       saveImage: (opts: {

@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAppState } from '@/hooks/use-app-state';
 import { useCommandPaletteStore } from '@/hooks/use-command-palette';
-import { useConfigStore } from '@/hooks/use-config-store';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { APP_NAME, isMac } from '@/lib/consts';
 import { getElectron } from '@/lib/utils';
@@ -45,7 +44,6 @@ export default function Titlebar() {
   const handleClose = () => window.electronAPI?.close();
 
   const { appState } = useAppState();
-  const { config } = useConfigStore();
   const openCommandPalette = useCommandPaletteStore((s) => s.setOpen);
 
   if (isStealth) return null;
@@ -71,7 +69,7 @@ export default function Titlebar() {
         {appState?.isLoggedIn && appState?.credits !== undefined && (
           <CreditsDisplay
             credits={appState.credits ?? 0}
-            llmModel={config?.llmConf?.model ?? appState.providedLLMModel ?? ''}
+            llmModel={appState.providedLLMModel ?? ''}
             userRole={appState.userRole}
             style={DRAG}
           />

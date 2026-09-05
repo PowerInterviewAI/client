@@ -39,7 +39,7 @@ interface ToolsGroupProps {
 
 export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
   const { runningState, appState } = useAppState();
-  const { exporting, exportTranscript, clearAll, setPlaceholderData } = useTools();
+  const { exporting, exportTranscript, exportMockReport, clearAll, setPlaceholderData } = useTools();
   const { visible: transcriptVisible, toggle: onToggleTranscript } = useTranscriptPanel();
   const { confirmDiscard } = useSaveHistoryGuard();
   const [clearing, setClearing] = useState(false);
@@ -90,7 +90,13 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
   // On `hasHistory` rather than on the array lengths, which are never zero: the panels carry
   // placeholder copy on launch and again after every Clear, so the old check let a summarize
   // request be billed for a document about "Transcripts will be here".
-  const nothingToExport = !appState?.hasHistory;
+  //
+  // Subject dispatch mirrors save-history-dialog.tsx: a finished mock session's report can still
+  // be sitting unexported when the candidate is back on this bar (nothing forces a return to
+  // `/main` through Clear), and this button calling `exportTranscript` unconditionally in that
+  // state said "nothing to export" over real, unsaved mock content instead of exporting it.
+  const isMockSubject = appState?.hasMockContent === true && appState?.hasHistory !== true;
+  const nothingToExport = !appState?.hasHistory && !appState?.hasMockContent;
 
   const onExportTranscript = async (format: ExportFormat) => {
     if (nothingToExport) {
@@ -101,7 +107,9 @@ export function ToolsGroup({ getDisabled }: ToolsGroupProps) {
     }
 
     try {
-      const filePath = await exportTranscript(format);
+      const filePath = isMockSubject
+        ? await exportMockReport(format)
+        : await exportTranscript(format);
       if (!filePath) return;
       showExportSuccessToast(filePath, format);
     } catch (error) {

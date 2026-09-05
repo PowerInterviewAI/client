@@ -8,6 +8,7 @@ import SignupPage from './pages/auth/signup';
 import DocumentationPage from './pages/documentation';
 import IndexPage from './pages/index';
 import MainPage from './pages/main/index';
+import MockInterviewPage from './pages/mock-interview/index';
 import PaymentPage from './pages/payment';
 import SettingsPage from './pages/settings';
 
@@ -28,6 +29,10 @@ export const router = createHashRouter([
       {
         path: '/main',
         element: <MainPage />,
+      },
+      {
+        path: '/mock-interview',
+        element: <MockInterviewPage />,
       },
       {
         path: '/auth',

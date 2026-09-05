@@ -206,7 +206,7 @@ A code this build knows but an older backend does not is resolved back to Englis
 
 `configStore.getConfig()` resolves the language on the way *out*, not on the way in. The disk holds whatever some build wrote - a code a later release dropped, or one an older release never knew - and every consumer reads through `getConfig`, so that is the single place an unknown code can be stopped before it reaches the ASR URL and three request bodies. `test/language.test.mjs` pins it.
 
-**The picker stays live mid-interview**, unlike Model, because an interview that switches language is the case it exists for and not one the candidate can prepare for by restarting. The two halves of the setting move at different speeds and `useInterviewLanguage` is where that is reconciled. Suggestions need nothing: every request reads the config store as it is built, so the next one already follows. The ASR carries its language as a *connection* parameter, so `liveTranscriptionService.setLanguage()` tears both sockets down and re-opens them - a second or two of gap, and whatever utterance was mid-flight is orphaned, which is why the button shows a spinner rather than pretending the change was instant and why the menu says so before the user commits.
+**The picker stays live mid-interview**, because an interview that switches language is the case it exists for and not one the candidate can prepare for by restarting. The two halves of the setting move at different speeds and `useInterviewLanguage` is where that is reconciled. Suggestions need nothing: every request reads the config store as it is built, so the next one already follows. The ASR carries its language as a *connection* parameter, so `liveTranscriptionService.setLanguage()` tears both sockets down and re-opens them - a second or two of gap, and whatever utterance was mid-flight is orphaned, which is why the button shows a spinner rather than pretending the change was instant and why the menu says so before the user commits.
 
 Three guards in `AudioWsStream` make that safe, and all three protect against the same failure - two sockets on one channel, one of them orphaned and still relaying audio into a dead session. `ws.onclose` ignores a close from a socket that is no longer `this.ws`, since that is the tail of a replacement rather than a disconnect; and the `switching` flag suppresses the ordinary backoff reconnect for the close `setLanguage` causes itself, which it then handles immediately instead of after `WS_RETRY_BASE_DELAY_MS`. `connectWebSocket` rebuilds the URL per attempt rather than capturing it, which is what lets a reconnect pick up the new language at all.
 
@@ -258,10 +258,13 @@ cheapest of the three to back out of - cancelling here means the other two were 
 `startAfterNotice` holds everything after it so the dialog can hand the start back without
 duplicating those checks.
 
-`headphoneNoticeAcknowledged` is opt-out rather than opt-in: whether the call is on speakers is a
-property of the machine and the meeting, not a setting, so it can change between sessions on the
-same install. The preference is written when the user goes through, not when they tick the box - a
-tick followed by Cancel would otherwise silence a warning they never acted on.
+Shown before every session, deliberately with no "don't show again": whether the call is on
+speakers is a property of the machine and the meeting, not a setting, and it can change between
+any two sessions on the same install - a permanent silence option would contradict the one fact
+this dialog exists to establish. A `variant` prop (`'live' | 'mock'`) swaps the copy rather than
+the mechanism: the live session's failure mode is a suppressed suggestion (the mic hears its own
+question), while a mock session has no suggestion to suppress, only the transcribed answer's own
+echo tail - so the mock variant names that instead of borrowing the live copy.
 
 ### Audio input device
 

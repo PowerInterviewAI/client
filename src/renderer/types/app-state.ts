@@ -1,3 +1,4 @@
+import { type MockInterviewSessionState } from './mock-interview';
 import { type ActionSuggestion, type LiveSuggestion } from './suggestion';
 import { type Transcript } from './transcript';
 
@@ -47,4 +48,14 @@ export interface AppState {
    * are seeded with. Derived in main; the renderer only reads it.
    */
   hasHistory: boolean;
+
+  /** Null until a mock interview has been started at least once this launch. */
+  mockInterview: MockInterviewSessionState | null;
+
+  /**
+   * Whether the mock session holds an answer worth protecting from an unasked close or a
+   * navigation away from the screen. Derived in main from answers that carry real content -
+   * see the main-process `AppState`'s docstring for why this is not simply `answers.length`.
+   */
+  hasMockContent: boolean;
 }
