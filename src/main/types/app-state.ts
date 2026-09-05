@@ -5,6 +5,7 @@
 import { UserRole } from './health-check.js';
 import { Language } from './language.js';
 import { SuggestionMode } from './llm.js';
+import { MockInterviewSessionState } from './mock-interview.js';
 
 export enum Speaker {
   Self = 'self',
@@ -115,6 +116,21 @@ export interface AppState {
    * nothing to save.
    */
   hasHistory: boolean;
+
+  /** Null until a mock interview session has been started at least once this launch. */
+  mockInterview: MockInterviewSessionState | null;
+
+  /**
+   * Whether the mock session holds an answer worth protecting from an unasked close.
+   *
+   * Derived, never set by a caller - `updateState` strips it off incoming updates, the same way
+   * `hasHistory` is. Based on answers that carry real content, not on `answers.length`: a
+   * question the candidate skipped is not content, and a session where every question was
+   * skipped has nothing a close prompt should protect. Independent of `hasHistory` - the two
+   * guard different sessions and must not be combined into one signal-of-truth, only combined
+   * at the one call site (the close guard) that has to ask "is there anything to lose at all".
+   */
+  hasMockContent: boolean;
 }
 
 /** The app state as sent to the renderer, with the interview config reduced to a summary. */

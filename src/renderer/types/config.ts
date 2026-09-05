@@ -29,6 +29,10 @@ export interface Config {
   // Suggestions come back as headline + keyword bullets instead of full sentences
   professionalMode: boolean;
 
-  // The user has silenced the headphone notice shown before each session starts
-  headphoneNoticeAcknowledged: boolean;
+  // Mock interview: also show what the live assistant would have suggested. On by default.
+  mockLiveSuggestionsEnabled: boolean;
+
+  // Which session the control bar's primary Start button launches directly - whichever the
+  // candidate last actually started. Defaults to 'mock'.
+  lastSessionMode: 'live' | 'mock';
 }

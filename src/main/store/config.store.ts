@@ -32,14 +32,14 @@ export interface RuntimeConfig {
   // suggestions come back as headline + keyword bullets instead of full sentences
   professionalMode: boolean;
 
-  /**
-   * The user has ticked "do not show this again" on the headphone notice.
-   *
-   * Opt-out rather than opt-in: whether the call is coming out of speakers is a property of the
-   * machine and the meeting, not a setting this app can read, so the only reliable signal is
-   * the user's own answer and it is asked for again on every session until they silence it.
-   */
-  headphoneNoticeAcknowledged: boolean;
+  // mock interview: also generate what the live assistant would have suggested for each
+  // question. On by default - trying this out is one of the two reasons the feature exists.
+  mockLiveSuggestionsEnabled: boolean;
+
+  // Which session the control bar's primary Start button launches directly, without going
+  // through the dropdown - whichever the candidate last actually started. Defaults to 'mock':
+  // a first-time user is far more likely to be trying the app out than walking into a real call.
+  lastSessionMode: 'live' | 'mock';
 }
 
 // Default runtime configuration
@@ -62,7 +62,10 @@ const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
   // opt-in: prose is what every existing user already expects from the panel
   professionalMode: false,
 
-  headphoneNoticeAcknowledged: false,
+  // opt-out: showing what the live assistant would have said is the point of trying this
+  mockLiveSuggestionsEnabled: true,
+
+  lastSessionMode: 'mock',
 };
 
 // interviewConf (full name, profile, context) used to be cached under `runtime`, but it's now
@@ -261,8 +264,11 @@ export const configStore = new ConfigStore();
   if (raw?.professionalMode === undefined) {
     migration.professionalMode = false;
   }
-  if (raw?.headphoneNoticeAcknowledged === undefined) {
-    migration.headphoneNoticeAcknowledged = false;
+  if (raw?.mockLiveSuggestionsEnabled === undefined) {
+    migration.mockLiveSuggestionsEnabled = true;
+  }
+  if (raw?.lastSessionMode === undefined) {
+    migration.lastSessionMode = 'mock';
   }
   // perform migration only if there are values to set
   if (Object.keys(migration).length > 0) {
@@ -270,17 +276,28 @@ export const configStore = new ConfigStore();
   }
 })(); // migration block
 
-// One-time cleanup: `llmConf` backed the removed bring-your-own-API-key feature and could hold a
-// real provider key in plaintext on disk. `RuntimeConfig` no longer declares it, but every read
-// and write here spreads the raw stored object through - nothing strips a key TypeScript no
-// longer knows about - so a leftover value would otherwise survive on an upgraded install forever.
-(() => {
-  const raw = configStore.getStoredRuntime() as (StoredRuntime & { llmConf?: unknown }) | undefined;
-  if (raw && 'llmConf' in raw) {
-    delete raw.llmConf;
+/**
+ * Drop a key `RuntimeConfig` no longer declares, so a value from before it was retired does not
+ * survive forever on an upgraded install - every read and write in this file spreads the raw
+ * stored object through, and nothing else strips a key TypeScript no longer knows about.
+ */
+function scrubRetiredKey(key: string): void {
+  const raw = configStore.getStoredRuntime() as (StoredRuntime & Record<string, unknown>) | undefined;
+  if (raw && key in raw) {
+    delete raw[key];
     configStore.setStoredRuntime(raw);
   }
-})(); // llmConf scrub
+}
+
+// `llmConf` backed the removed bring-your-own-API-key feature and could hold a real provider key
+// in plaintext - this one matters for more than tidiness.
+scrubRetiredKey('llmConf');
+
+// `headphoneNoticeAcknowledged` was replaced by the mock-interview-aware `HeadphoneNoticeDialog`
+// variant, which no longer has a "do not show this again" option to acknowledge (see its own
+// docstring for why). Not sensitive, but left here for the same reason `llmConf` is: nothing else
+// will ever remove it.
+scrubRetiredKey('headphoneNoticeAcknowledged');
 
 // Read (but do not yet delete) any leftover local copy, so AccountService can migrate it
 // onto the account. Deleting here unconditionally would destroy the only copy whenever the

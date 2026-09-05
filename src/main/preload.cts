@@ -126,6 +126,22 @@ const electronApi = {
     stop: () => ipcRenderer.invoke('action-suggestion:stop'),
   },
 
+  mockInterview: {
+    start: (setup: Record<string, unknown>) => ipcRenderer.invoke('mock-interview:start', setup),
+    synthesizeChunk: (index: number) =>
+      ipcRenderer.invoke('mock-interview:synthesize-chunk', index),
+    speechFinished: () => ipcRenderer.invoke('mock-interview:speech-finished'),
+    speechFailed: () => ipcRenderer.invoke('mock-interview:speech-failed'),
+    ingestAnswer: (payload: { type: 'partial' | 'final'; text: string }) =>
+      ipcRenderer.invoke('mock-interview:ingest-answer', payload),
+    answerFinished: () => ipcRenderer.invoke('mock-interview:answer-finished'),
+    repeatQuestion: () => ipcRenderer.invoke('mock-interview:repeat-question'),
+    answerReady: () => ipcRenderer.invoke('mock-interview:answer-ready'),
+    skipQuestion: () => ipcRenderer.invoke('mock-interview:skip-question'),
+    endSession: () => ipcRenderer.invoke('mock-interview:end-session'),
+    clear: () => ipcRenderer.invoke('mock-interview:clear'),
+  },
+
   onPushNotification: (callback: (notification: PushNotification) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, notification: PushNotification) =>
       callback(notification);
@@ -136,6 +152,8 @@ const electronApi = {
   tools: {
     exportTranscript: (format: 'docx' | 'md') =>
       ipcRenderer.invoke('tools:export-transcript', format),
+    exportMockReport: (format: 'docx' | 'md') =>
+      ipcRenderer.invoke('tools:export-mock-report', format),
     clearAll: () => ipcRenderer.invoke('tools:clear-all'),
     setPlaceholderData: () => ipcRenderer.invoke('tools:set-placeholder-data'),
     saveImage: (opts: { filename: string; data: number[] }) =>

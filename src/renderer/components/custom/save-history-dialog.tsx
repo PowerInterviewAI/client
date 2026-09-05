@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useAppState } from '@/hooks/use-app-state';
 import { type SaveHistoryReason, useSaveHistoryPrompt } from '@/hooks/use-save-history-guard';
 import useTools from '@/hooks/use-tools';
 import { getElectron } from '@/lib/utils';
@@ -55,8 +56,17 @@ const COPY: Record<SaveHistoryReason, { title: string; body: string; discard: st
  */
 export default function SaveHistoryDialog() {
   const { reason, settle, prompt } = useSaveHistoryPrompt();
-  const { exportTranscript } = useTools();
+  const { exportTranscript, exportMockReport } = useTools();
+  const { appState } = useAppState();
   const [saving, setSaving] = useState<ExportFormat | null>(null);
+
+  // Widened to trigger on either subject (see window-close-guard.ts), so it has to know which
+  // export to call. The two are mutually exclusive in the ordinary case - a live session and a
+  // mock one cannot run at the same time - but a live session left uncleared before a mock one
+  // starts can leave both true at once; that rare case prefers the live export, which is the
+  // subject this dialog has served the longest.
+  const isMockSubject = appState?.hasMockContent === true && appState?.hasHistory !== true;
+  const exportFn = isMockSubject ? exportMockReport : exportTranscript;
 
   // Main vetoes a close that would lose the interview and asks here instead, so the window is
   // held open until one of these two replies is sent. Registered once, for the lifetime of the
@@ -76,7 +86,7 @@ export default function SaveHistoryDialog() {
   const save = async (format: ExportFormat) => {
     setSaving(format);
     try {
-      const filePath = await exportTranscript(format);
+      const filePath = await exportFn(format);
       // Cancelled at the system save dialog. That is backing out of the file, not out of the
       // question, so the prompt stays up rather than reading as a decision to discard.
       if (!filePath) return;

@@ -258,10 +258,13 @@ cheapest of the three to back out of - cancelling here means the other two were 
 `startAfterNotice` holds everything after it so the dialog can hand the start back without
 duplicating those checks.
 
-`headphoneNoticeAcknowledged` is opt-out rather than opt-in: whether the call is on speakers is a
-property of the machine and the meeting, not a setting, so it can change between sessions on the
-same install. The preference is written when the user goes through, not when they tick the box - a
-tick followed by Cancel would otherwise silence a warning they never acted on.
+Shown before every session, deliberately with no "don't show again": whether the call is on
+speakers is a property of the machine and the meeting, not a setting, and it can change between
+any two sessions on the same install - a permanent silence option would contradict the one fact
+this dialog exists to establish. A `variant` prop (`'live' | 'mock'`) swaps the copy rather than
+the mechanism: the live session's failure mode is a suppressed suggestion (the mic hears its own
+question), while a mock session has no suggestion to suppress, only the transcribed answer's own
+echo tail - so the mock variant names that instead of borrowing the live copy.
 
 ### Audio input device
 
