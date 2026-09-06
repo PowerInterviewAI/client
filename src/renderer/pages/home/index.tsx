@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAppState } from '@/hooks/use-app-state';
 import { useConfigStore } from '@/hooks/use-config-store';
+import { RunningState } from '@/types/app-state';
 import type { MockInterviewSetup } from '@/types/mock-interview';
 
 interface LaunchCardProps {
@@ -14,26 +15,37 @@ interface LaunchCardProps {
   title: string;
   description: string;
   onClick: () => void;
+  disabled?: boolean;
 }
 
 /**
  * One of the two ways to start. A card rather than a button because the choice between them is
  * the whole point of this screen, and a title alone does not say which one a first-time user
  * wants - the description under it does.
+ *
+ * `disabled` is a real removal from the tab order and not just a grey fill: the one case that
+ * uses it - a mock interview while the live assistant runs - is refused by the main process
+ * anyway, so leaving it clickable would route the user to a screen that only reports an error.
  */
-function LaunchCard({ icon, title, description, onClick }: LaunchCardProps) {
+function LaunchCard({ icon, title, description, onClick, disabled = false }: LaunchCardProps) {
   return (
     <Card
       role="button"
-      tabIndex={0}
-      onClick={onClick}
+      aria-disabled={disabled || undefined}
+      tabIndex={disabled ? -1 : 0}
+      onClick={disabled ? undefined : onClick}
       onKeyDown={(e) => {
+        if (disabled) return;
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           onClick();
         }
       }}
-      className="cursor-pointer outline-none transition-colors hover:border-primary focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-ring/50"
+      className={
+        disabled
+          ? 'cursor-not-allowed opacity-60 outline-none'
+          : 'cursor-pointer outline-none transition-colors hover:border-primary focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-ring/50'
+      }
     >
       <CardHeader>
         <div className="flex items-center gap-3">
@@ -64,8 +76,13 @@ function LaunchCard({ icon, title, description, onClick }: LaunchCardProps) {
  */
 export default function HomePage() {
   const navigate = useNavigate();
-  const { appState } = useAppState();
+  const { appState, runningState } = useAppState();
   const { config, isLoading: configLoading, updateConfig } = useConfigStore();
+
+  // The live assistant and a mock interview are mutually exclusive - both want the microphone and
+  // an ASR socket, and the main process refuses the second one. Said here rather than left to
+  // that refusal, so the card names the state instead of routing the user to an error.
+  const liveSessionActive = runningState !== RunningState.Idle;
 
   const [mockSetupOpen, setMockSetupOpen] = useState(false);
 
@@ -79,8 +96,11 @@ export default function HomePage() {
 
   const handleStartLive = () => {
     // `/main`'s control panel runs the start sequence on arrival. Handed through router state
-    // rather than started here so there is exactly one implementation of it.
-    navigate('/main', { state: { autoStartLive: true } });
+    // rather than started here so there is exactly one implementation of it. Already running,
+    // this is just the way back to the interview - the flag would be ignored, but not sending it
+    // is what keeps the card's label honest.
+    if (liveSessionActive) navigate('/main');
+    else navigate('/main', { state: { autoStartLive: true } });
   };
 
   const handleMockInterviewStart = async (setup: MockInterviewSetup) => {
@@ -107,13 +127,22 @@ export default function HomePage() {
           <LaunchCard
             icon={<Mic className="h-5 w-5" aria-hidden="true" />}
             title="Start mock interview"
-            description="The AI asks, you answer out loud, and you get a scored report at the end."
+            description={
+              liveSessionActive
+                ? 'Stop the live assistant first - the two cannot share your microphone.'
+                : 'The AI asks, you answer out loud, and you get a scored report at the end.'
+            }
             onClick={() => setMockSetupOpen(true)}
+            disabled={liveSessionActive}
           />
           <LaunchCard
             icon={<Play className="h-5 w-5" aria-hidden="true" />}
-            title="Start live assistant"
-            description="Transcribes your real interview and suggests answers as it happens."
+            title={liveSessionActive ? 'Back to your interview' : 'Start live assistant'}
+            description={
+              liveSessionActive
+                ? 'Your live assistant is already running.'
+                : 'Transcribes your real interview and suggests answers as it happens.'
+            }
             onClick={handleStartLive}
           />
         </div>
