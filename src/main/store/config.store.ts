@@ -29,8 +29,9 @@ export interface RuntimeConfig {
   // height the user dragged the dock to, in px; null leaves it on the automatic ratio
   transcriptDockHeight: number | null;
 
-  // suggestions come back as headline + keyword bullets instead of full sentences
-  professionalMode: boolean;
+  // hint-only mode: suggestions come back as a headline plus keyword bullets rather than full
+  // sentences. The default for a new install; full-sentence mode is the opt-out.
+  hintOnlyMode: boolean;
 
   // mock interview: also generate what the live assistant would have suggested for each
   // question. On by default - trying this out is one of the two reasons the feature exists.
@@ -59,8 +60,10 @@ const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
   showTranscriptPanel: true,
   transcriptDockHeight: null,
 
-  // opt-in: prose is what every existing user already expects from the panel
-  professionalMode: false,
+  // On by default: a candidate reads a hint at a glance mid-question, where a paragraph of prose
+  // has to be scanned first. An existing install keeps whatever it was already on - see the
+  // migration below.
+  hintOnlyMode: true,
 
   // opt-out: showing what the live assistant would have said is the point of trying this
   mockLiveSuggestionsEnabled: true,
@@ -261,8 +264,12 @@ export const configStore = new ConfigStore();
   if (raw?.transcriptDockHeight === undefined) {
     migration.transcriptDockHeight = null;
   }
-  if (raw?.professionalMode === undefined) {
-    migration.professionalMode = false;
+  if (raw?.hintOnlyMode === undefined) {
+    // `professionalMode` is what this setting was called before it was renamed for the two modes
+    // it actually switches between. An install that carries it keeps the mode it was left on;
+    // one that does not is either new or predates the setting, and takes the new default.
+    const legacy = (raw as (StoredRuntime & Record<string, unknown>) | undefined)?.professionalMode;
+    migration.hintOnlyMode = typeof legacy === 'boolean' ? legacy : true;
   }
   if (raw?.mockLiveSuggestionsEnabled === undefined) {
     migration.mockLiveSuggestionsEnabled = true;
@@ -282,7 +289,9 @@ export const configStore = new ConfigStore();
  * stored object through, and nothing else strips a key TypeScript no longer knows about.
  */
 function scrubRetiredKey(key: string): void {
-  const raw = configStore.getStoredRuntime() as (StoredRuntime & Record<string, unknown>) | undefined;
+  const raw = configStore.getStoredRuntime() as
+    | (StoredRuntime & Record<string, unknown>)
+    | undefined;
   if (raw && key in raw) {
     delete raw[key];
     configStore.setStoredRuntime(raw);
@@ -292,6 +301,10 @@ function scrubRetiredKey(key: string): void {
 // `llmConf` backed the removed bring-your-own-API-key feature and could hold a real provider key
 // in plaintext - this one matters for more than tidiness.
 scrubRetiredKey('llmConf');
+
+// `professionalMode` was renamed to `hintOnlyMode`, whose migration above reads it one last time
+// to carry the user's choice across. Scrubbed after that, so the two can never disagree.
+scrubRetiredKey('professionalMode');
 
 // `headphoneNoticeAcknowledged` was replaced by the mock-interview-aware `HeadphoneNoticeDialog`
 // variant, which no longer has a "do not show this again" option to acknowledge (see its own

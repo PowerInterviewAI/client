@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useAppState } from '@/hooks/use-app-state';
 import useAuth from '@/hooks/use-auth';
-import { useProfessionalMode } from '@/hooks/use-professional-mode';
+import { useSuggestionMode } from '@/hooks/use-suggestion-mode';
 import { useTranscriptPanel } from '@/hooks/use-transcript-panel';
 import { getElectron } from '@/lib/utils';
 
@@ -56,7 +56,7 @@ export default function SettingsPage() {
   const location = useLocation();
   const { appState } = useAppState();
   const { changePassword, loading: authLoading, error: authError, setError } = useAuth();
-  const { enabled: professionalMode, toggle: toggleProfessionalMode } = useProfessionalMode();
+  const { hintOnly, toggle: toggleSuggestionMode } = useSuggestionMode();
   const { visible: transcriptVisible, toggle: toggleTranscriptVisible } = useTranscriptPanel();
 
   // A reload leaves this page as the first entry in the session history, where navigate(-1) has
@@ -283,12 +283,12 @@ export default function SettingsPage() {
           </p>
           <label className="flex items-center justify-between gap-3 rounded-lg border p-3 cursor-pointer">
             <div>
-              <p className="text-sm font-medium">Professional mode</p>
+              <p className="text-sm font-medium">Hint-only mode</p>
               <p className="text-xs text-muted-foreground">
-                Short hints (headline + keyword bullets) instead of full sentences
+                A headline and keyword bullets instead of full sentences
               </p>
             </div>
-            <Checkbox checked={professionalMode} onCheckedChange={() => toggleProfessionalMode()} />
+            <Checkbox checked={hintOnly} onCheckedChange={() => toggleSuggestionMode()} />
           </label>
           <label className="flex items-center justify-between gap-3 rounded-lg border p-3 cursor-pointer">
             <div>

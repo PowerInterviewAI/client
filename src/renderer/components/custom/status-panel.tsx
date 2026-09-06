@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 
 import CreditsDisplay from '@/components/custom/credits-display';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useProfessionalMode } from '@/hooks/use-professional-mode';
+import { useSuggestionMode } from '@/hooks/use-suggestion-mode';
 import { useTranscriptPanel } from '@/hooks/use-transcript-panel';
 import { Hotkey, HOTKEYS } from '@/lib/hotkeys';
 import { cn } from '@/lib/utils';
@@ -53,7 +53,7 @@ export default function StatusPanel({
   userRole,
 }: StatusPanelProps) {
   // calculate and formatting handled by CreditsDisplay component
-  const { enabled: professionalMode } = useProfessionalMode();
+  const { hintOnly } = useSuggestionMode();
   const { visible: transcriptVisible } = useTranscriptPanel();
   const [hotkeysOpen, setHotkeysOpen] = useState(false);
   useHotkeyCheatsheetShortcut(() => setHotkeysOpen(true));
@@ -64,22 +64,22 @@ export default function StatusPanel({
       <CreditsDisplay credits={credits} llmModel={llmModel} userRole={userRole} className="ml-2" />
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className={cn('ml-2', badgeClass(professionalMode))}>
-            {professionalMode ? (
+          <div className={cn('ml-2', badgeClass(hintOnly))}>
+            {hintOnly ? (
               <ListChecks className="h-3.5 w-3.5" />
             ) : (
               <Route className="h-3.5 w-3.5 -scale-y-100" />
             )}
-            {professionalMode ? 'Professional' : 'Normal'}
+            {hintOnly ? 'Hint-only' : 'Full sentences'}
           </div>
         </TooltipTrigger>
         <TooltipContent sideOffset={4}>
           <p>
-            Professional Mode: {professionalMode ? 'On' : 'Off'} (
-            {HOTKEYS[Hotkey.ToggleProfessionalMode].combo})
+            {hintOnly ? 'Hint-only mode' : 'Full-sentence mode'} (
+            {HOTKEYS[Hotkey.ToggleSuggestionMode].combo})
           </p>
           <p className="text-xs text-muted-foreground">
-            {professionalMode ? 'Short hints: headline + keyword bullets' : 'Full sentences'}
+            {hintOnly ? 'Headline + keyword bullets' : 'Answers written out in full'}
           </p>
         </TooltipContent>
       </Tooltip>

@@ -32,7 +32,7 @@ import { useAssistantService } from '@/hooks/use-assistant-service';
 import useAuth from '@/hooks/use-auth';
 import { useCommandPaletteStore } from '@/hooks/use-command-palette';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
-import { useProfessionalMode } from '@/hooks/use-professional-mode';
+import { useSuggestionMode } from '@/hooks/use-suggestion-mode';
 import { useThemeStore } from '@/hooks/use-theme-store';
 import { useTranscriptPanel } from '@/hooks/use-transcript-panel';
 import { isMac } from '@/lib/consts';
@@ -71,7 +71,7 @@ export function CommandPalette() {
   const { appState, runningState } = useAppState();
   const { stopAssistant } = useAssistantService();
   const { logout } = useAuth();
-  const { enabled: professionalMode, toggle: toggleProfessionalMode } = useProfessionalMode();
+  const { hintOnly, toggle: toggleSuggestionMode } = useSuggestionMode();
   const { visible: transcriptVisible, toggle: toggleTranscript } = useTranscriptPanel();
   const { isDark, toggleTheme } = useThemeStore();
 
@@ -125,9 +125,9 @@ export function CommandPalette() {
                 Stop Interview
               </CommandItem>
             )}
-            <CommandItem onSelect={() => run(toggleProfessionalMode)}>
-              {professionalMode ? <ListChecks /> : <Route className="-scale-y-100" />}
-              {professionalMode ? 'Switch to Normal Suggestions' : 'Switch to Professional Mode'}
+            <CommandItem onSelect={() => run(toggleSuggestionMode)}>
+              {hintOnly ? <ListChecks /> : <Route className="-scale-y-100" />}
+              {hintOnly ? 'Switch to full-sentence mode' : 'Switch to hint-only mode'}
             </CommandItem>
             <CommandItem onSelect={() => run(toggleTranscript)}>
               <TranscriptIcon />

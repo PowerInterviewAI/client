@@ -26,8 +26,9 @@ export interface Config {
   // Height the user dragged the transcription dock to, in px. null means automatic sizing.
   transcriptDockHeight: number | null;
 
-  // Suggestions come back as headline + keyword bullets instead of full sentences
-  professionalMode: boolean;
+  // Hint-only mode: suggestions come back as a headline plus keyword bullets rather than full
+  // sentences. The default; full-sentence mode is the opt-out.
+  hintOnlyMode: boolean;
 
   // Mock interview: also show what the live assistant would have suggested. On by default.
   mockLiveSuggestionsEnabled: boolean;

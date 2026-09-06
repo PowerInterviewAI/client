@@ -29,6 +29,10 @@ export async function run(userDataDir) {
         // Leftover from the retired "don't show again" headphone notice preference - same scrub
         // mechanism (scrubRetiredKey), a different retired key.
         headphoneNoticeAcknowledged: true,
+        // The pre-rename name for `hintOnlyMode`, set to the mode this install was left on.
+        // Both mechanisms that touch it are exercised below: the migration reads it once to
+        // carry the choice across, then scrubRetiredKey removes it.
+        professionalMode: false,
       },
     })
   );
@@ -72,33 +76,33 @@ export async function run(userDataDir) {
   check('clear drops the owner claim', store.getLegacyInterviewConfOwner() === null);
   check('clear leaves other settings intact', store.configStore.getConfig().email === 'a@b.c');
 
-  // Professional mode is opt-in: the seeded runtime above predates the key, and an upgrading
-  // install must not silently start emitting hints instead of prose.
-  //
-  // Two independent mechanisms deliver this - the DEFAULT_RUNTIME_CONFIG spread in getConfig,
-  // and the migration IIFE, which pins false rather than the default. That redundancy is the
-  // point: should professional mode ever become the default for new installs, the migration is
-  // what keeps existing users on prose. No single assertion can isolate one mechanism while
-  // both hold, so this asserts the invariant itself.
-  check('professionalMode reads off on upgrade', cfg.professionalMode === false);
-
-  store.configStore.updateConfig({ professionalMode: true });
+  // Hint-only is the default for a new install, but an upgrading one keeps the mode it was
+  // already on. The seed above was left on full sentences (`professionalMode: false`), so the
+  // renamed key must read false here rather than picking up the new default - otherwise the
+  // rename silently changes what every existing user sees in the panel.
+  check('the renamed mode carries the upgrading choice across', cfg.hintOnlyMode === false);
   check(
-    'professionalMode is persisted',
-    store.configStore.getStoredRuntime()?.professionalMode === true
+    'and the pre-rename key is scrubbed',
+    !('professionalMode' in (store.configStore.getStoredRuntime() ?? {}))
   );
+
+  store.configStore.updateConfig({ hintOnlyMode: true });
+  check('hintOnlyMode is persisted', store.configStore.getStoredRuntime()?.hintOnlyMode === true);
 
   store.configStore.updateConfig({ sessionToken: 'tok2' });
   check(
-    'professionalMode survives an unrelated write',
-    store.configStore.getConfig().professionalMode === true
+    'hintOnlyMode survives an unrelated write',
+    store.configStore.getConfig().hintOnlyMode === true
   );
 
   // Which session the control bar's primary Start button launches without going through its
   // dropdown. A product decision rather than a convenience default - a first-time user is far
   // likelier to be trying the app out than walking into a real call - and one that a later edit
   // could flip with no symptom other than Start quietly doing the other thing.
-  check('lastSessionMode defaults to mock', store.configStore.getConfig().lastSessionMode === 'mock');
+  check(
+    'lastSessionMode defaults to mock',
+    store.configStore.getConfig().lastSessionMode === 'mock'
+  );
 
   store.configStore.updateConfig({ lastSessionMode: 'live' });
   check(
