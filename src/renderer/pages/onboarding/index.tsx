@@ -118,6 +118,18 @@ export default function OnboardingPage() {
   const handleSkip = async () => {
     setFinishing(true);
     try {
+      // Skipping abandons the rest of the wizard, not what has already been typed into it. A user
+      // who pastes a CV and then decides they would rather set the rest up later should not find
+      // the CV gone too. Best-effort: a failure here cannot be allowed to stop them leaving,
+      // which is the entire point of Skip, so it warns and goes anyway.
+      if (form.loaded && form.isComplete) {
+        try {
+          await form.save();
+        } catch (e) {
+          console.error('Failed to save your profile before skipping setup:', e);
+          toast.warning('Setup skipped, but your profile was not saved. Try again from Account.');
+        }
+      }
       await complete();
     } finally {
       setFinishing(false);
@@ -125,10 +137,11 @@ export default function OnboardingPage() {
   };
 
   const handleNext = async () => {
-    // Written once both account fields have been collected, rather than at the end: this is the
-    // only content in the wizard the user typed, and losing it to a closed window would mean
-    // pasting a CV in a second time.
-    if (step.id === 'context') {
+    // Written on the way out of each account step rather than once at the end. These two steps
+    // hold the only content in the wizard the user typed, and a window closed on step 4 should
+    // not mean pasting a CV in a second time. Re-saving on the second step, and again if they go
+    // back and forward, costs one idempotent write; the alternative costs the user their CV.
+    if (step.id === 'profile' || step.id === 'context') {
       setFinishing(true);
       try {
         await form.save();
