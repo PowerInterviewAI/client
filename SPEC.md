@@ -55,9 +55,18 @@ Streaming AI responses generated from the user's CV and job description, trigger
 
 Screenshot-based problem solving. Accepts up to 4 images, sends them to the LLM backend, returns syntax-highlighted code output. Service: [src/main/services/suggestion-action.service.ts](src/main/services/suggestion-action.service.ts).
 
-### Professional Mode
+### Hint-Only Mode
 
-Optional, off by default. Restructures both live and triggered suggestions into a bold one-line core answer plus one bullet per point, however many the answer needs - the same answer normal mode would give, reorganised so the eye finds each point in one pass and stripped of its padding. Bullets stay full speakable sentences rather than keywords, so the candidate can read one out loud as it stands. Toggled from the control panel or with `Ctrl+Shift+F7`, which keeps it reachable in stealth mode. Persisted locally as `professionalMode`; sent to the backend as `mode` on the suggestion request.
+The default. Restructures both live and triggered suggestions into a bold one-line core answer plus one bullet per point, however many the answer needs - the same answer full-sentence mode would give, reorganised so the eye finds each point in one pass and stripped of its padding. Bullets stay full speakable sentences rather than keywords, so the candidate can read one out loud as it stands. Switched from the control panel, the configuration page, or with `Ctrl+Shift+F7`, which keeps it reachable in stealth mode. Persisted locally as `hintOnlyMode`; sent to the backend as `mode` on the suggestion request, whose wire values are still `normal` / `professional`.
+
+### First-Run Setup
+
+A new install is sent to `/onboarding` before it can reach anything else, and asked once for the six things a first interview needs: profile, job context, language, microphone (with a live level test), suggestion style, and whether the transcript panel is docked. Each step renders the same component the account and configuration pages use. Gated on `onboardingCompleted`, which is local rather than account-level because half of what it sets is a property of the machine; an install that predates the wizard is migrated straight past it. Page: [src/renderer/pages/onboarding/index.tsx](src/renderer/pages/onboarding/index.tsx).
+
+### Navigation
+
+`/` is a launch hub naming the five things a user comes to the app to do: start a mock interview, start the live assistant, open Account (`/account` - sign-in identity, profile, context, password), open Configuration (`/configuration` - microphone, language, suggestion style, transcript panel), or buy credits. Neither launch button starts a session itself: live hands off to `/main`, which owns the whole start sequence, and mock hands off to `/mock-interview` with the setup its dialog collected. See [docs/ux-conventions.md](docs/ux-conventions.md) for where a new capability belongs.
+
 ### Session Window Behaviour
 
 While the assistant is running - or while stealth mode is on - the window is pinned above other windows (`screen-saver` level, and visible over a fullscreen call on macOS) and drops its taskbar button and Dock icon. The two conditions are independent: switching stealth off mid-session leaves both in place until the session actually stops. macOS traffic lights stay visible outside stealth, since the window is still interactive. Service: [src/main/services/window-control.service.ts](src/main/services/window-control.service.ts).
