@@ -174,7 +174,8 @@ export default function ControlPanel() {
   // config and the enumerated microphones, neither of which has resolved on the first frames
   // after a route change - starting there would greet the user with "could not load your saved
   // configuration" for a config that was about to arrive. If they never resolve, nothing happens
-  // and the user is left looking at the Start button, which is the honest outcome.
+  // and the user is left on an idle console with a way back to the home screen, which is the
+  // honest outcome.
   const autoStartLiveReady =
     autoStartLiveRequested.current &&
     runningState === RunningState.Idle &&

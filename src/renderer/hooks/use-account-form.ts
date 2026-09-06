@@ -53,7 +53,7 @@ export function useAccountForm() {
     };
   }, []);
 
-  /** Whether there is enough here to run an interview. Mirrors the control bar's start checks. */
+  /** Whether there is enough here to run an interview. Mirrors `checkCanStart`'s two checks. */
   const isComplete = fullName.trim() !== '' && profileData.trim() !== '';
 
   /**

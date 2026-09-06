@@ -10,9 +10,8 @@ import type { MockInterviewSetup } from '@/types/mock-interview';
 import { MockDifficulty, MockSeniority } from '@/types/mock-interview';
 
 /**
- * State and validation shared by every place a mock interview can be configured and started -
- * the home screen's launch card and the control bar's split Start button, both through
- * `MockInterviewSetupDialog`.
+ * State and validation for configuring and starting a mock interview, held apart from
+ * `MockInterviewSetupDialog` so how the form behaves does not depend on where it is presented.
  *
  * Holds only what is per-session: seniority, question count and difficulty. The interview
  * language is not among them - it is one stored setting the live assistant reads too, edited in

@@ -28,8 +28,8 @@ interface Step {
  * One thing per step, in the order a first interview needs them: who you are, what you are
  * interviewing for, then the four things that decide how the session behaves.
  *
- * Profile first because it is the only step that can block a start - the control bar refuses to
- * run without a name and a CV - and the only one that is worth typing rather than picking.
+ * Profile first because it is the only step that can block a start - the start sequence refuses
+ * to run without a name and a CV - and the only one that is worth typing rather than picking.
  */
 const STEPS: Step[] = [
   {
@@ -93,8 +93,9 @@ export default function OnboardingPage() {
   const isFirst = stepIndex === 0;
   const isLast = stepIndex === STEPS.length - 1;
 
-  // Only the profile step gates progress: the name and CV are what the control bar checks before
-  // it will start anything, so letting the wizard past them would only move the failure later.
+  // Only the profile step gates progress: the name and CV are what the start sequence checks
+  // before it will run anything, so letting the wizard past them would only move the failure
+  // later.
   const canAdvance = step.id === 'profile' ? form.isComplete && form.loaded : true;
 
   /**
