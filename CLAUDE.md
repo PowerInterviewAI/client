@@ -79,15 +79,17 @@ The classifier is deliberately asymmetric, and `test/interviewer-turn.test.mjs` 
 
 Action suggestions are independent of transcripts - triggered by screenshot captures (up to `ACTION_SUGGESTION_MAX_CAPTURES` = 4 images per request).
 
-**Professional mode** (`professionalMode` in ConfigStore, off by default) asks the backend for hints - a headline plus keyword bullets - instead of full sentences. Both suggestion services read the flag once at the top of `generateSuggestion` and send it as `mode` on the request; the backend defaults it to `normal`, so the field is safe to omit against an older deployment.
+**Hint-only mode** (`hintOnlyMode` in ConfigStore, on by default) asks the backend for hints - a headline plus keyword bullets - instead of the full sentences of full-sentence mode. Both suggestion services read the flag once at the top of `generateSuggestion` and send it as `mode` on the request; the backend defaults it to `normal`, so the field is safe to omit against an older deployment.
 
-The `NO_SUGGESTION_NEEDED` sentinel goes through `isNoSuggestionSentinel()` ([src/main/utils/suggestion-sentinel.ts](src/main/utils/suggestion-sentinel.ts)) rather than a direct comparison. It backs up the deterministic gate above for turns the lexicon cannot settle, and it is in-band by nature - a control decision travelling in the answer stream - which is why it is the fallback rather than the mechanism. It is prefix-matched because it runs on every streamed chunk, and it strips leading markdown first: the professional prompt asks for a bold headline on line 1, so a model that carries that format over emits `**NO_SUGGESTION_NEEDED**` and a bare match would leave the sentinel on screen as a card. Unicode format characters are stripped with the emphasis, and that is what makes the fallback hold in Arabic and Hebrew: a model writing right-to-left routinely opens on a directional mark, and U+200F is not whitespace, so it survives `\s` and leaves the comparison starting on a character the sentinel does not - putting `NO_SUGGESTION_NEEDED` on screen as the answer to a question the backend had just decided needed none. `test/suggestion-sentinel.test.mjs` pins both halves - the wrapped forms are suppressed, real answers are not, including a real Hebrew one opening on the same mark.
+The setting was called `professionalMode` until it was renamed for the two modes it actually switches between. Two things survive that rename deliberately. `SuggestionMode`'s wire values are still `normal` / `professional`, because they are the backend's contract (`app/schemas/suggestion.py`) and it deploys separately - the TypeScript members are `FullSentence` / `HintOnly`, the strings are not. And the config store's migration reads the old key once to seed the new one before `scrubRetiredKey` removes it, so an upgrading install keeps the mode it was on rather than being moved onto the new default.
 
-Both live modes render through `SafeMarkdown`, the same component the action panel uses. The normal-mode prompt asks for plain text *with light formatting*, so any bold or bullet the model reached for used to land on screen as literal asterisks. Prose is passed through `withHardBreaks()` ([src/renderer/lib/suggestions.ts](src/renderer/lib/suggestions.ts)) first: Markdown folds a single newline into a space, and the `whitespace-pre-wrap` rendering it replaced showed every newline the model emitted.
+The `NO_SUGGESTION_NEEDED` sentinel goes through `isNoSuggestionSentinel()` ([src/main/utils/suggestion-sentinel.ts](src/main/utils/suggestion-sentinel.ts)) rather than a direct comparison. It backs up the deterministic gate above for turns the lexicon cannot settle, and it is in-band by nature - a control decision travelling in the answer stream - which is why it is the fallback rather than the mechanism. It is prefix-matched because it runs on every streamed chunk, and it strips leading markdown first: the hint-only prompt asks for a bold headline on line 1, so a model that carries that format over emits `**NO_SUGGESTION_NEEDED**` and a bare match would leave the sentinel on screen as a card. Unicode format characters are stripped with the emphasis, and that is what makes the fallback hold in Arabic and Hebrew: a model writing right-to-left routinely opens on a directional mark, and U+200F is not whitespace, so it survives `\s` and leaves the comparison starting on a character the sentinel does not - putting `NO_SUGGESTION_NEEDED` on screen as the answer to a question the backend had just decided needed none. `test/suggestion-sentinel.test.mjs` pins both halves - the wrapped forms are suppressed, real answers are not, including a real Hebrew one opening on the same mark.
+
+Both live modes render through `SafeMarkdown`, the same component the action panel uses. The full-sentence prompt asks for plain text *with light formatting*, so any bold or bullet the model reached for used to land on screen as literal asterisks. Prose is passed through `withHardBreaks()` ([src/renderer/lib/suggestions.ts](src/renderer/lib/suggestions.ts)) first: Markdown folds a single newline into a space, and the `whitespace-pre-wrap` rendering it replaced showed every newline the model emitted.
 
 The backend prompts now ask for inline emphasis on the words an answer turns on, in both modes, so `strong` and `em` are declared explicitly in `SafeMarkdown` rather than left to browser defaults - body copy is deliberately regular weight so that `strong` reads as emphasis against it. Live answers additionally go through `stripDanglingEmphasis()`: the panel re-renders on every streamed chunk, so each emphasized span exists for a few frames as an opening `**` with no closing pair, which Markdown renders as literal asterisks on the card the candidate is reading. It drops that one unmatched marker, leaving the text plain until the span closes. Live only - action suggestions carry code, where an asterisk is a dereference or a glob (`test/suggestion-emphasis.test.mjs` pins both halves, including that a `*` opening a list item is a block marker and never stripped).
 
-Each `LiveSuggestion` still carries the `mode` it was *generated* under, and the panel keys off that rather than the current setting, so toggling mid-interview leaves cards already on screen alone. What the mode selects is the presentation around the Markdown: professional promotes the headline line, normal keeps the 🪄 marker in a column of its own - prepending it to the content instead would swallow whatever structure the answer opens with.
+Each `LiveSuggestion` still carries the `mode` it was *generated* under, and the panel keys off that rather than the current setting, so toggling mid-interview leaves cards already on screen alone. What the mode selects is the presentation around the Markdown: hint-only promotes the headline line, full-sentence keeps the 🪄 marker in a column of its own - prepending it to the content instead would swallow whatever structure the answer opens with.
 
 ### Assistant lifecycle
 
@@ -110,9 +112,9 @@ outside the `try` as an unhandled rejection.
 
 `useMediaDevices` reports `ready` alongside the device list because an empty list means two
 different things - `enumerateDevices()` has not answered yet, and this machine has none - and the
-control panel renders a destructive badge and refuses Start on the second. Reading them as one
-put a red `!` on a working microphone for the first frames after every launch, and refused a Start
-pressed quickly with a message naming a device that was there all along. An unset
+control panel renders a destructive badge and refuses the start on the second. Reading them as one
+put a red `!` on a working microphone for the first frames after every launch, and refused a start
+requested quickly with a message naming a device that was there all along. An unset
 `audioInputDeviceName` is a third state again, and also not "missing": `AudioGroup` is choosing
 the default at that moment, in an effect - never in the render body, where the store write
 re-enters React mid-commit and a failed IPC call rolls the value back into the same condition that
@@ -121,12 +123,22 @@ triggered it, one write per frame.
 ### Saving the interview before it is lost
 
 The transcript and the suggestions live only in main-process memory. Nothing is written to disk
-until an export, so the three actions that empty them - Clear, Start (which opens with
-`clearAll()`), and closing the app - are the only paths in the app that destroy work with no way
-back. All three now ask first, through one dialog:
+until an export, so the actions that empty them - Clear, Start (which opens with `clearAll()`),
+Stop, and closing the app - are the only paths in the app that destroy work with no way back. All
+of them ask first, through one dialog:
 [save-history-dialog.tsx](src/renderer/components/custom/save-history-dialog.tsx), mounted once in
-`MainFrame` because the three do not share a screen - the control panel is not rendered in stealth
-mode, and the close prompt arrives from main with no component of its own.
+`MainFrame` because they do not share a screen - the control panel is not rendered in stealth
+mode, the close prompt arrives from main with no component of its own, and the stop prompt
+outlives the screen that raised it.
+
+**Stop is the one that is not a guard.** The other reasons are asked *before* the destructive act
+and can be answered with "not now", which leaves the interview alone. `useEndLiveSession`
+([use-end-live-session.ts](src/renderer/hooks/use-end-live-session.ts)) stops the assistant, asks,
+then clears and goes home whatever the answer was - so the dialog drops its Cancel and refuses Esc
+for that reason, because an Esc that read as backing out would silently be the discard. It is
+deliberately not what the stop *hotkey* does: that one fires while the app is hidden mid-screen-
+share, where a modal dialog and a navigation to the dashboard are the opposite of what was asked
+for, and the next Start still asks about the transcript it left behind.
 
 **The question is only worth asking about a real interview, and length cannot tell you that.**
 `setPlaceholderState()` seeds the panels with one transcript and two suggestions so an empty app

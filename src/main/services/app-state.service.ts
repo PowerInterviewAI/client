@@ -97,7 +97,7 @@ export class AppStateService {
           answer: 'Suggested answers will be here in real-time',
           state: SuggestionState.Success,
           error: '',
-          mode: SuggestionMode.Normal,
+          mode: SuggestionMode.FullSentence,
         },
       ],
       actionSuggestions: [

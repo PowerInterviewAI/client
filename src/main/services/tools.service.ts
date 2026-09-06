@@ -148,10 +148,10 @@ class ToolsService {
     // about a session that had been cleared and the save dialog - which picks the mock export
     // whenever mock content is the only content - would have written a report for it.
     //
-    // Guarded on `isActive()` rather than unconditional. Every caller here (the Clear button, and
-    // `startAssistant` opening a live session) is reachable only from the live control bar, which
-    // a running mock session excludes, so this is belt: clearing a session that is still running
-    // would drop the interview out from under the screen showing it.
+    // Guarded on `isActive()` rather than unconditional. Every caller here - the Clear button,
+    // `startAssistant` opening a live session, and `useEndLiveSession` dropping a finished one -
+    // only exists in a state a running mock session excludes, so this is belt: clearing a session
+    // that is still running would drop the interview out from under the screen showing it.
     if (!mockInterviewService.isActive()) {
       mockInterviewService.clear();
     }

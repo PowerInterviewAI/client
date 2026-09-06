@@ -44,10 +44,10 @@ const electronApi = {
     return () => ipcRenderer.removeListener('hotkey:toggle-transcript', handler);
   },
 
-  onHotkeyToggleProfessionalMode: (callback: () => void) => {
+  onHotkeyToggleSuggestionMode: (callback: () => void) => {
     const handler = () => callback();
-    ipcRenderer.on('hotkey:toggle-professional-mode', handler);
-    return () => ipcRenderer.removeListener('hotkey:toggle-professional-mode', handler);
+    ipcRenderer.on('hotkey:toggle-suggestion-mode', handler);
+    return () => ipcRenderer.removeListener('hotkey:toggle-suggestion-mode', handler);
   },
 
   config: {
@@ -124,6 +124,9 @@ const electronApi = {
   actionSuggestion: {
     clear: () => ipcRenderer.invoke('action-suggestion:clear'),
     stop: () => ipcRenderer.invoke('action-suggestion:stop'),
+    capture: () => ipcRenderer.invoke('action-suggestion:capture'),
+    clearImages: () => ipcRenderer.invoke('action-suggestion:clear-images'),
+    trigger: () => ipcRenderer.invoke('action-suggestion:trigger'),
   },
 
   mockInterview: {

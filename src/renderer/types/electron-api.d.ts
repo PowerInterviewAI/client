@@ -27,7 +27,7 @@ declare global {
     // Hotkey stop assistant event
     onHotkeyStopAssistant: (callback: () => void) => () => void;
     onHotkeyToggleTranscript: (callback: () => void) => () => void;
-    onHotkeyToggleProfessionalMode: (callback: () => void) => () => void;
+    onHotkeyToggleSuggestionMode: (callback: () => void) => () => void;
 
     // Configuration management
     config: {
@@ -136,6 +136,9 @@ declare global {
     actionSuggestion: {
       clear: () => Promise<void>;
       stop: () => Promise<void>;
+      capture: () => Promise<void>;
+      clearImages: () => Promise<void>;
+      trigger: () => Promise<void>;
     };
 
     // Mock interview management. State itself travels on AppState.mockInterview, pushed the

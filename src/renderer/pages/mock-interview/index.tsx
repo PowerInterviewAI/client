@@ -19,13 +19,13 @@ import { SessionScreen } from './session';
  * `shouldHideSurfaces()` only reacts to stealth and `RunningState.Running`, and a mock session
  * sets neither.
  *
- * Setup lives entirely on `/main` now, through the control bar's split Start button
- * (`MockInterviewSetupDialog`) - this route is reached only with a setup already handed off
- * through router state (`pendingSetup`), and its job is to run the session and show the report,
- * nothing else. Idle with no setup to start is not a state this route presents on its own: it
- * sends the candidate back to `/main`, which is where Start - and the dialog that used to be a
- * page here - actually is. "Practise again" is what reaches that fallback most often, since
- * clearing a finished session back to Idle is the whole of what it does.
+ * Setup lives on the home screen, through `MockInterviewSetupDialog` - this route is reached
+ * only with a setup already handed off through router state (`pendingSetup`), and its job is to
+ * run the session and show the report, nothing else. Idle with no setup to start is not a state
+ * this route presents on its own: it sends the candidate home, which is where starting - and the
+ * dialog that used to be a page here - actually is. "Practise again" is what reaches that
+ * fallback most often, since clearing a finished session back to Idle is the whole of what it
+ * does.
  *
  * Known gap: leaving this route mid-session currently ends it outright (scoring whatever was
  * answered) rather than raising a confirmation dialog first, the way closing the app does via
@@ -145,15 +145,15 @@ export default function MockInterviewPage() {
         onPracticeAgain={async () => {
           if (!(await confirmDiscard('clear'))) return;
           await clear();
-          // Setup has nowhere to happen on this route any more - back to /main, with a flag
-          // ControlPanel reads once to reopen the dialog itself, so "practise again" costs one
-          // click rather than the two it would if this just landed on the plain control bar.
-          navigate('/main', { state: { openMockSetup: true } });
+          // Setup has nowhere to happen on this route - back to the home screen, with a flag it
+          // reads once to reopen the setup dialog itself, so "practise again" costs one click
+          // rather than the two it would if this just landed on the launch cards.
+          navigate('/', { state: { openMockSetup: true } });
         }}
         onDone={async () => {
           if (!(await confirmDiscard('clear'))) return;
           await clear();
-          navigate('/main');
+          navigate('/');
         }}
       />
     );
@@ -180,6 +180,6 @@ export default function MockInterviewPage() {
   }
 
   // Idle with nothing pending - a start that just failed (the toast already said why), or this
-  // route opened directly with no handoff at all. Either way, Start lives on /main now.
-  return <Navigate to="/main" replace />;
+  // route opened directly with no handoff at all. Either way, starting lives on the home screen.
+  return <Navigate to="/" replace />;
 }
