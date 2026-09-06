@@ -13,6 +13,7 @@ import {
   SettingsIcon,
   Square,
   Sun,
+  UserRound,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -110,6 +111,14 @@ export function CommandPalette() {
               <Play />
               Start Interview
             </CommandItem>
+            <CommandItem onSelect={() => run(() => navigate('/account'))}>
+              <UserRound />
+              Account
+            </CommandItem>
+            <CommandItem onSelect={() => run(() => navigate('/configuration'))}>
+              <SettingsIcon />
+              Configuration
+            </CommandItem>
             <CommandItem onSelect={() => run(() => navigate('/payment'))}>
               <CreditCard />
               Buy Credits
@@ -138,10 +147,6 @@ export function CommandPalette() {
           <CommandSeparator />
 
           <CommandGroup heading="App">
-            <CommandItem onSelect={() => run(() => navigate('/settings'))}>
-              <SettingsIcon />
-              Settings
-            </CommandItem>
             <CommandItem onSelect={() => run(() => navigate('/documentation'))}>
               <BookOpen />
               Documentation

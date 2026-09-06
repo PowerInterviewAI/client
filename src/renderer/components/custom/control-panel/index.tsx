@@ -89,12 +89,12 @@ export default function ControlPanel() {
       {
         ok: !!appState?.interviewConfig?.fullName,
         message: 'Full name is not set',
-        onFail: () => navigate('/settings'),
+        onFail: () => navigate('/account'),
       },
       {
         ok: appState?.interviewConfig?.hasProfileData ?? false,
         message: 'Profile data is not set',
-        onFail: () => navigate('/settings'),
+        onFail: () => navigate('/account'),
       },
       {
         ok: !noAudioInputDevices,

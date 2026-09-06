@@ -50,12 +50,12 @@ export function useMockInterviewSetupForm(onStart: (setup: MockInterviewSetup) =
     }
     if (!appState?.interviewConfig?.fullName) {
       toast.error('Full name is not set');
-      navigate('/settings');
+      navigate('/account');
       return false;
     }
     if (!appState?.interviewConfig?.hasProfileData) {
       toast.error('Profile data is not set');
-      navigate('/settings');
+      navigate('/account');
       return false;
     }
     if (noAudioInputDevices) {

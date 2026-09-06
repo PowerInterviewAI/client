@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { toast } from 'sonner';
 
+import { useConfigStore } from '@/hooks/use-config-store';
 import { MainContainerContext } from '@/hooks/use-main-container';
 import usePointerLockGuard from '@/hooks/use-pointer-lock-guard';
 import type { PushNotification } from '@/types/push-notification';
@@ -12,6 +13,14 @@ import { UpdateNotification } from './update-notification';
 
 export default function MainFrame({ children }: { children: React.ReactNode }) {
   usePointerLockGuard();
+
+  // Loaded here rather than per page. Routes reached directly - a reload on `/configuration`, the
+  // onboarding gate on `/` - all read the config, and every one of them holding its own fetch is
+  // how one of them ends up not having it. Pages that need a *fresh* read still ask for one.
+  const loadConfig = useConfigStore((s) => s.loadConfig);
+  useEffect(() => {
+    loadConfig();
+  }, [loadConfig]);
 
   const [container, setContainer] = React.useState<HTMLElement | null>(null);
   const mainRef = React.useCallback((el: HTMLElement | null) => {

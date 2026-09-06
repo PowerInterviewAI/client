@@ -1,4 +1,15 @@
-import { BookOpen, EyeOff, LogOut, Mail, Menu, Moon, SettingsIcon, Sun } from 'lucide-react';
+import {
+  BookOpen,
+  EyeOff,
+  Home,
+  LogOut,
+  Mail,
+  Menu,
+  Moon,
+  SettingsIcon,
+  Sun,
+  UserRound,
+} from 'lucide-react';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -80,14 +91,21 @@ export default function TitlebarMenu({ style }: { style?: React.CSSProperties })
               {config?.email}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {/* Account, password, and billing all live on the Settings page now - one
-                  guessable entry point instead of three separate, unrelated-looking rows. */}
-            <DropdownMenuItem
-              onClick={() => !disabled && navigate('/settings')}
-              disabled={disabled}
-            >
+            <DropdownMenuItem onClick={() => navigate('/')}>
+              <Home className="mr-2 h-4 w-4" />
+              Home
+            </DropdownMenuItem>
+            {/* The same two destinations the home page names, in the same words. Account is
+                disabled mid-session because saving a new profile rewrites state the running
+                assistant reads; configuration is not, because every control on it is meant to be
+                changed during an interview. */}
+            <DropdownMenuItem onClick={() => !disabled && navigate('/account')} disabled={disabled}>
+              <UserRound className="mr-2 h-4 w-4" />
+              Account
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/configuration')}>
               <SettingsIcon className="mr-2 h-4 w-4" />
-              Settings
+              Configuration
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleToggleStealth}>
