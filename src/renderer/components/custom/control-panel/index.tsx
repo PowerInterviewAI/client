@@ -45,19 +45,24 @@ export default function ControlPanel() {
 
   const { devices: audioInputDevices, ready: audioDevicesReady } = useAudioInputDevices();
 
-  // Two routes arrive here asking for something to happen on arrival, both through router state:
+  // Several surfaces ask for something to happen on arrival here, all through router state:
   // "Practise again" on the report screen, which has nowhere left to configure a new session, and
-  // the home page's "Start live assistant", which deliberately does not own a copy of the start
-  // sequence below. Consumed once - the state is cleared in the same navigate that acts on it, so
-  // returning to this route later (Back, or a second visit) does not re-trigger it uninvited.
-  const consumedNavIntent = useRef(false);
+  // the home page and command palette's two Start actions, which deliberately do not own a copy
+  // of the start sequence below.
+  //
+  // Guarded per history entry, not per mount. The state is cleared by the replace below, so a
+  // Back to this entry finds nothing to re-trigger; the key is what stops StrictMode's double
+  // effect acting twice before that replace lands. A ref that latched for the life of the mount
+  // would also swallow the *second* request - the palette firing Start again from `/main`, which
+  // is the same route and therefore the same mount.
+  const consumedNavKey = useRef<string | null>(null);
   const autoStartLiveRequested = useRef(false);
   useEffect(() => {
     const navState = location.state as { openMockSetup?: boolean; autoStartLive?: boolean } | null;
-    if (consumedNavIntent.current) return;
     if (!navState?.openMockSetup && !navState?.autoStartLive) return;
+    if (consumedNavKey.current === location.key) return;
 
-    consumedNavIntent.current = true;
+    consumedNavKey.current = location.key;
     if (navState.openMockSetup) setMockSetupOpen(true);
     if (navState.autoStartLive) autoStartLiveRequested.current = true;
     navigate(location.pathname, { replace: true, state: null });

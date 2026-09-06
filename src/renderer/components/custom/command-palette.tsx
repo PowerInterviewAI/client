@@ -7,6 +7,8 @@ import {
   Keyboard,
   ListChecks,
   LogOut,
+  Mic,
+  MonitorPlay,
   Moon,
   Play,
   Route,
@@ -108,8 +110,8 @@ export function CommandPalette() {
               Home
             </CommandItem>
             <CommandItem onSelect={() => run(() => navigate('/main'))}>
-              <Play />
-              Start Interview
+              <MonitorPlay />
+              Interview console
             </CommandItem>
             <CommandItem onSelect={() => run(() => navigate('/account'))}>
               <UserRound />
@@ -128,6 +130,30 @@ export function CommandPalette() {
           <CommandSeparator />
 
           <CommandGroup heading="Session">
+            {/* Both starts hand off to `/main` through router state rather than starting anything
+                here: the control panel there owns the whole start sequence, and the palette is
+                reachable from every route, including ones where none of it is mounted. Named the
+                way the home page names them, because they are the same two actions. */}
+            {!isRunning && (
+              <>
+                <CommandItem
+                  onSelect={() =>
+                    run(() => navigate('/main', { state: { openMockSetup: true } }))
+                  }
+                >
+                  <Mic />
+                  Start mock interview
+                </CommandItem>
+                <CommandItem
+                  onSelect={() =>
+                    run(() => navigate('/main', { state: { autoStartLive: true } }))
+                  }
+                >
+                  <Play />
+                  Start live assistant
+                </CommandItem>
+              </>
+            )}
             {isRunning && (
               <CommandItem onSelect={() => run(() => void stopAssistant())}>
                 <Square />
