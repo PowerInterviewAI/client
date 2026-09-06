@@ -37,6 +37,11 @@ export interface RuntimeConfig {
   // question. On by default - trying this out is one of the two reasons the feature exists.
   mockLiveSuggestionsEnabled: boolean;
 
+  // Whether the first-run setup wizard has been finished (or deliberately skipped) on this
+  // machine. Local rather than account-level on purpose: half of what the wizard sets - the
+  // microphone above all - is a property of this machine, not of the account.
+  onboardingCompleted: boolean;
+
   // Which session the control bar's primary Start button launches directly, without going
   // through the dropdown - whichever the candidate last actually started. Defaults to 'mock':
   // a first-time user is far more likely to be trying the app out than walking into a real call.
@@ -67,6 +72,10 @@ const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
 
   // opt-out: showing what the live assistant would have said is the point of trying this
   mockLiveSuggestionsEnabled: true,
+
+  // False for a new install, which is what puts a first launch into the setup wizard. An install
+  // that predates the wizard is migrated to true below rather than sent through it.
+  onboardingCompleted: false,
 
   lastSessionMode: 'mock',
 };
@@ -276,6 +285,12 @@ export const configStore = new ConfigStore();
   }
   if (raw?.lastSessionMode === undefined) {
     migration.lastSessionMode = 'mock';
+  }
+  // Absent means this store was written by a build that predates the wizard, so the user has
+  // already configured the app the long way round and should not be walked through it now. A
+  // genuinely new install never reaches here: `defaults` puts the key on disk at construction.
+  if (raw?.onboardingCompleted === undefined) {
+    migration.onboardingCompleted = true;
   }
   // perform migration only if there are values to set
   if (Object.keys(migration).length > 0) {

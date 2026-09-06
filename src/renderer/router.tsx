@@ -11,6 +11,7 @@ import DocumentationPage from './pages/documentation';
 import IndexPage from './pages/index';
 import MainPage from './pages/main/index';
 import MockInterviewPage from './pages/mock-interview/index';
+import OnboardingPage from './pages/onboarding';
 import PaymentPage from './pages/payment';
 
 // MainFrame is a layout route rather than a wrapper around RouterProvider so that the chrome it
@@ -64,6 +65,10 @@ export const router = createHashRouter([
       {
         path: '/configuration',
         element: <ConfigurationPage />,
+      },
+      {
+        path: '/onboarding',
+        element: <OnboardingPage />,
       },
       {
         path: '/documentation',

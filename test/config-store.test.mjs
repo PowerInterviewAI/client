@@ -86,6 +86,10 @@ export async function run(userDataDir) {
     !('professionalMode' in (store.configStore.getStoredRuntime() ?? {}))
   );
 
+  // An install that predates the setup wizard has already been configured the long way round,
+  // so it is migrated straight past it rather than being walked through one on next launch.
+  check('an upgrading install is not sent through onboarding', cfg.onboardingCompleted === true);
+
   store.configStore.updateConfig({ hintOnlyMode: true });
   check('hintOnlyMode is persisted', store.configStore.getStoredRuntime()?.hintOnlyMode === true);
 
