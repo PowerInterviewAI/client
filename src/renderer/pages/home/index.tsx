@@ -1,11 +1,13 @@
-import { BookOpen, CreditCard, Mic, Play, SettingsIcon, UserRound } from 'lucide-react';
+import { BookOpen, CreditCard, LogOut, Mic, Play, SettingsIcon, UserRound } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { MockInterviewSetupDialog } from '@/components/custom/mock-interview-setup-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAppState } from '@/hooks/use-app-state';
+import useAuth from '@/hooks/use-auth';
 import { useConfigStore } from '@/hooks/use-config-store';
 import { RunningState } from '@/types/app-state';
 import type { MockInterviewSetup } from '@/types/mock-interview';
@@ -63,7 +65,7 @@ function LaunchCard({ icon, title, description, onClick, disabled = false }: Lau
 }
 
 /**
- * The app's front door: the two things you can start, and the three places you can go.
+ * The app's front door: the two things you can start, the places you can go, and the way out.
  *
  * `/` used to redirect straight into the control console, which is dense, unlabelled and assumes
  * you already know what the app does. Everything reachable from here is named in the words a
@@ -84,6 +86,7 @@ export default function HomePage() {
   const location = useLocation();
   const { appState, runningState } = useAppState();
   const { config, isLoading: configLoading } = useConfigStore();
+  const { logout } = useAuth();
 
   // The live assistant and a mock interview are mutually exclusive - both want the microphone and
   // an ASR socket, and the main process refuses the second one. Said here rather than left to
@@ -91,6 +94,7 @@ export default function HomePage() {
   const liveSessionActive = runningState !== RunningState.Idle;
 
   const [mockSetupOpen, setMockSetupOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
   // "Practise again" on the mock report has nowhere of its own to configure the next session, so
   // it comes back here with a flag rather than making the candidate find the card again. Guarded
@@ -138,6 +142,22 @@ export default function HomePage() {
   // `useMockInterview()` instance is ever mounted at once - starting it from this page as well
   // would leave two instances reacting to the same `Speaking` transition for the moment before
   // the route swap finishes, which is what plays the question's audio twice.
+  const handleSignOut = async () => {
+    setSigningOut(true);
+    try {
+      await logout();
+    } catch (err) {
+      // Read off the caught error rather than the hook's `error` state - `logout` sets it and
+      // throws in the same tick, so this closure's copy is still last render's value.
+      console.error('Sign out failed:', err);
+      toast.error(err instanceof Error ? err.message : 'Failed to sign out');
+      setSigningOut(false);
+      return;
+    }
+    // No `setSigningOut(false)` on success: signing out redirects to the login screen and this
+    // page unmounts, and clearing the flag first would flash "Sign out" back for a frame.
+  };
+
   const handleMockInterviewStart = async (setup: MockInterviewSetup) => {
     setMockSetupOpen(false);
     navigate('/mock-interview', { state: { pendingSetup: setup } });
@@ -220,10 +240,29 @@ export default function HomePage() {
           </div>
         </Card>
 
-        <Button variant="ghost" size="sm" onClick={() => navigate('/documentation')}>
-          <BookOpen className="h-4 w-4" aria-hidden="true" />
-          Documentation
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/documentation')}>
+            <BookOpen className="h-4 w-4" aria-hidden="true" />
+            Documentation
+          </Button>
+          {/* Signing out was only ever in the titlebar menu and the command palette, which is a
+              strange place for the one action that ends everything else on this screen. Refused
+              while a session is running, for the same reason the titlebar menu refuses it: it
+              tears down the credentials the running assistant is streaming on. */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ml-auto text-muted-foreground"
+            disabled={liveSessionActive || signingOut}
+            title={
+              liveSessionActive ? 'Stop the live assistant before signing out' : undefined
+            }
+            onClick={() => void handleSignOut()}
+          >
+            <LogOut className="h-4 w-4" aria-hidden="true" />
+            {signingOut ? 'Signing out...' : 'Sign out'}
+          </Button>
+        </div>
       </div>
 
       <MockInterviewSetupDialog
