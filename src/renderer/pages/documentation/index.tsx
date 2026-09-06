@@ -10,6 +10,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { APP_NAME } from '@/lib/consts';
+import { Hotkey, HOTKEYS } from '@/lib/hotkeys';
 import { LANGUAGES } from '@/types/language';
 
 export default function DocumentationPage() {
@@ -114,6 +115,48 @@ export default function DocumentationPage() {
                 The change takes effect immediately and transcription keeps running, so nothing is
                 cut short. If the device you pick cannot be opened - unplugged, or in use by another
                 app - the interview carries on using the previous one and the app says so.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="suggestion-style">
+            <AccordionTrigger className="text-sm font-semibold">
+              Hint-only vs. full-sentence suggestions
+            </AccordionTrigger>
+            <AccordionContent>
+              <p className="text-sm text-muted-foreground">
+                Hint-only is the default: each suggestion arrives as a one-line headline plus
+                keyword bullets, so you can take it in at a glance and keep talking. Full-sentence
+                writes the answer out the way it would be spoken - more to read, less to improvise.
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Switch between them on the control bar, on the configuration page, or with{' '}
+                {HOTKEYS[Hotkey.ToggleSuggestionMode].combo}, which works in stealth mode too.
+                Suggestions already on screen keep the style they were generated in; only the next
+                one changes.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="where-things-are">
+            <AccordionTrigger className="text-sm font-semibold">
+              Where your settings live
+            </AccordionTrigger>
+            <AccordionContent>
+              <p className="text-sm text-muted-foreground">
+                <strong className="text-foreground">Account</strong> holds who you are - the name
+                you go by, the profile or CV your suggestions are written from, the job context you
+                are interviewing against, and your password.
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                <strong className="text-foreground">Configuration</strong> holds how the interview
+                runs - your microphone (with a test), the interview language, the suggestion style,
+                and whether the transcript panel is docked. Nothing there needs saving; each change
+                takes effect as you make it.
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Both are on the home screen, in the titlebar menu, and in the Cmd/Ctrl+K palette. A
+                new install is walked through all of it once on first launch.
               </p>
             </AccordionContent>
           </AccordionItem>

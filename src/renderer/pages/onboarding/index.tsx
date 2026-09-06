@@ -97,18 +97,32 @@ export default function OnboardingPage() {
   // it will start anything, so letting the wizard past them would only move the failure later.
   const canAdvance = step.id === 'profile' ? form.isComplete && form.loaded : true;
 
+  /**
+   * Record that setup is done and leave.
+   *
+   * The write has to land before the navigate. Home gates on this exact flag, so leaving on a
+   * failed write would bounce the user straight back here with no explanation - a loop, not a
+   * degraded state. On failure they stay put and are told why.
+   */
   const complete = async () => {
     try {
       await updateConfig({ onboardingCompleted: true });
     } catch (e) {
-      // Not fatal, and deliberately not a blocker: the worst case is being offered the wizard
-      // again next launch, which is a far better outcome than being held on it now.
       console.error('Failed to record that setup is complete', e);
+      toast.error('Could not save your setup. Check your connection and try again.');
+      return;
     }
     navigate('/', { replace: true });
   };
 
-  const handleSkip = () => void complete();
+  const handleSkip = async () => {
+    setFinishing(true);
+    try {
+      await complete();
+    } finally {
+      setFinishing(false);
+    }
+  };
 
   const handleNext = async () => {
     // Written once both account fields have been collected, rather than at the end: this is the
@@ -129,8 +143,11 @@ export default function OnboardingPage() {
 
     if (isLast) {
       setFinishing(true);
-      await complete();
-      setFinishing(false);
+      try {
+        await complete();
+      } finally {
+        setFinishing(false);
+      }
       return;
     }
 
@@ -179,7 +196,7 @@ export default function OnboardingPage() {
         </div>
 
         <div className="mt-8 flex items-center gap-2 border-t pt-4">
-          <Button variant="ghost" size="sm" onClick={handleSkip} disabled={finishing}>
+          <Button variant="ghost" size="sm" onClick={() => void handleSkip()} disabled={finishing}>
             Skip setup
           </Button>
           <div className="ml-auto flex items-center gap-2">

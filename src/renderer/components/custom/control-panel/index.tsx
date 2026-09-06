@@ -190,7 +190,10 @@ export default function ControlPanel() {
     (appState?.interviewConfigLoaded ?? false);
 
   useEffect(() => {
-    if (!autoStartLiveReady) return;
+    // The ref is re-checked here, not just folded into `autoStartLiveReady` above: StrictMode
+    // runs this effect twice on mount without a render in between, so the recomputed condition
+    // is not what stops the second run - the ref is.
+    if (!autoStartLiveReady || !autoStartLiveRequested.current) return;
     autoStartLiveRequested.current = false;
     void handleStartClick();
     // handleStartClick is redefined every render and is not a dependency of when this should

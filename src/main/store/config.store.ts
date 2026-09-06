@@ -40,6 +40,12 @@ export interface RuntimeConfig {
   // Whether the first-run setup wizard has been finished (or deliberately skipped) on this
   // machine. Local rather than account-level on purpose: half of what the wizard sets - the
   // microphone above all - is a property of this machine, not of the account.
+  //
+  // The cost of that choice is a second account signing in on a machine where the first has
+  // already been through the wizard: it does not run again, and that user reaches Start with an
+  // empty profile. They are not stranded - the control bar's own check names the missing field
+  // and sends them to the account page - and scoping the flag to an account would trade this for
+  // a worse one, re-running the wizard for the same person on every new machine.
   onboardingCompleted: boolean;
 
   // Which session the control bar's primary Start button launches directly, without going
