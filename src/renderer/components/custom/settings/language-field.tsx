@@ -1,5 +1,6 @@
 import { AlertTriangle, Loader } from 'lucide-react';
 
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -11,8 +12,25 @@ import {
 import { useInterviewLanguage } from '@/hooks/use-interview-language';
 import { type Language, LANGUAGES } from '@/types/language';
 
+interface LanguageFieldProps {
+  /** Replaces the helper line under the picker, for a surface where it means something else. */
+  description?: string;
+  /**
+   * Say which languages the interviewer can speak, and warn when the chosen one is not among
+   * them. Only the mock interview has any use for this - the live assistant never speaks - which
+   * is why it is opt-in rather than always shown.
+   */
+  showVoice?: boolean;
+}
+
 /**
- * The interview language, on the configuration page and in the first-run wizard.
+ * The interview language, on the configuration page, in the first-run wizard, and in the mock
+ * interview's setup dialog.
+ *
+ * There is one language setting, not one per surface: it picks the speech model for transcription
+ * and the language answers come back in, and a mock session reads the same stored value the live
+ * assistant does. So all three places edit the same thing through this component, rather than the
+ * mock dialog showing a read-only copy and telling the user to go and change it somewhere else.
  *
  * Both names are shown, endonym first: someone looking for their own language recognises
  * "Deutsch" before "German", and the English name is there for anyone who has not found theirs
@@ -23,8 +41,8 @@ import { type Language, LANGUAGES } from '@/types/language';
  * the ASR sockets down and re-opens them, and a reconnect that fails leaves transcription on the
  * old language while this picker shows the new one.
  */
-export function LanguageField() {
-  const { language, switching, reconnectFailed, setLanguage } = useInterviewLanguage();
+export function LanguageField({ description, showVoice = false }: LanguageFieldProps) {
+  const { language, option, switching, reconnectFailed, setLanguage } = useInterviewLanguage();
 
   return (
     <div className="space-y-2">
@@ -39,10 +57,16 @@ export function LanguageField() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {LANGUAGES.map((option) => (
-              <SelectItem key={option.code} value={option.code}>
-                {option.nativeName}
-                <span className="text-muted-foreground"> ({option.name})</span>
+            {LANGUAGES.map((entry) => (
+              <SelectItem key={entry.code} value={entry.code}>
+                {entry.nativeName}
+                <span className="text-muted-foreground"> ({entry.name})</span>
+                {/* Inside the item, so the trigger repeats it for the current choice. The
+                    constraint applies to the language that is selected, not only to the ones
+                    being browsed past. */}
+                {showVoice && !entry.hasVoice && (
+                  <span className="text-muted-foreground"> &middot; text only</span>
+                )}
               </SelectItem>
             ))}
           </SelectContent>
@@ -65,8 +89,17 @@ export function LanguageField() {
         </p>
       ) : (
         <p className="text-xs text-muted-foreground">
-          What is transcribed, and what your suggestions come back in.
+          {description ?? 'What is transcribed, and what your suggestions come back in.'}
         </p>
+      )}
+
+      {showVoice && !option.hasVoice && (
+        <Alert>
+          <AlertDescription>
+            The interviewer will write its questions instead of speaking them. You still answer out
+            loud, and the scoring is the same.
+          </AlertDescription>
+        </Alert>
       )}
     </div>
   );

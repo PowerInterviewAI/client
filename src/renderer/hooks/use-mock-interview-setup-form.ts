@@ -6,13 +6,17 @@ import { useAppState } from '@/hooks/use-app-state';
 import { useAudioInputDevices } from '@/hooks/use-audio-devices';
 import { useConfigStore } from '@/hooks/use-config-store';
 import { getElectron } from '@/lib/utils';
-import { getLanguageOption } from '@/types/language';
 import type { MockInterviewSetup } from '@/types/mock-interview';
 import { MockDifficulty, MockSeniority } from '@/types/mock-interview';
 
 /**
  * State and validation shared by every place a mock interview can be configured and started -
- * the full-page setup screen and the control bar's setup dialog.
+ * the home screen's launch card and the control bar's split Start button, both through
+ * `MockInterviewSetupDialog`.
+ *
+ * Holds only what is per-session: seniority, question count and difficulty. The interview
+ * language is not among them - it is one stored setting the live assistant reads too, edited in
+ * the dialog through the shared `LanguageField` rather than copied into this form.
  *
  * Deliberately asks for nothing the account already has. `checkCanStart` reads
  * `interviewConfig.fullName`/`hasProfileData` off the shared account state the live assistant
@@ -30,9 +34,6 @@ export function useMockInterviewSetupForm(onStart: (setup: MockInterviewSetup) =
   const [questionCount, setQuestionCount] = useState(8);
   const [starting, setStarting] = useState(false);
   const [headphoneNoticeOpen, setHeadphoneNoticeOpen] = useState(false);
-
-  const language = config?.language;
-  const languageOption = getLanguageOption(language);
 
   const selectedAudioInputDeviceName = config?.audioInputDeviceName ?? '';
   const noAudioInputDevices = audioDevicesReady && audioInputDevices.length === 0;
@@ -107,7 +108,6 @@ export function useMockInterviewSetupForm(onStart: (setup: MockInterviewSetup) =
     starting,
     headphoneNoticeOpen,
     setHeadphoneNoticeOpen,
-    languageOption,
     handleStartClick,
     startAfterNotice,
   };

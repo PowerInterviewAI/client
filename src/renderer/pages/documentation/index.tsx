@@ -71,9 +71,10 @@ export default function DocumentationPage() {
             </AccordionTrigger>
             <AccordionContent>
               <p className="text-sm text-muted-foreground">
-                The language button on the control bar sets the language of the whole session: which
-                speech model transcribes the call, what language suggestions are written in, and the
-                language of the exported report.
+                One setting covers the whole session: which speech model transcribes the call, what
+                language suggestions are written in, and the language of the exported report. Set it
+                from the language button on the control bar, from the configuration page, or in the
+                mock interview&apos;s setup dialog - they all change the same thing.
               </p>
               {/* A list rather than a sentence: at 28 entries the run-on paragraph this used to
                   be could not be scanned for one's own language, which is the only question a
@@ -96,6 +97,11 @@ export default function DocumentationPage() {
                 You can change it mid-interview. Suggestions follow immediately, from the next
                 answer onward. Speech recognition takes a moment longer: it reconnects, so the
                 sentence being spoken at that instant may be cut short in the transcript.
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                In a mock interview, a language marked &ldquo;text only&rdquo; in the setup dialog
+                has no voice available: the interviewer writes its questions instead of speaking
+                them. You still answer out loud and the scoring is unchanged.
               </p>
             </AccordionContent>
           </AccordionItem>
