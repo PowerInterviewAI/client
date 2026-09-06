@@ -45,21 +45,23 @@ export default function ControlPanel() {
 
   const { devices: audioInputDevices, ready: audioDevicesReady } = useAudioInputDevices();
 
-  // "Practise again" on the report screen has nowhere left to configure a new session other than
-  // here, so it navigates back to /main and hands this flag through router state to reopen the
-  // dialog on arrival - one click instead of the two it would take otherwise. Consumed once: the
-  // state is cleared in the same navigate that opens the dialog, so returning to this route later
-  // (Back, or a second visit) does not reopen it uninvited.
-  const openedMockSetupFromState = useRef(false);
+  // Two routes arrive here asking for something to happen on arrival, both through router state:
+  // "Practise again" on the report screen, which has nowhere left to configure a new session, and
+  // the home page's "Start live assistant", which deliberately does not own a copy of the start
+  // sequence below. Consumed once - the state is cleared in the same navigate that acts on it, so
+  // returning to this route later (Back, or a second visit) does not re-trigger it uninvited.
+  const consumedNavIntent = useRef(false);
+  const autoStartLiveRequested = useRef(false);
   useEffect(() => {
-    const navState = location.state as { openMockSetup?: boolean } | null;
-    if (!navState?.openMockSetup || openedMockSetupFromState.current) return;
-    openedMockSetupFromState.current = true;
-    setMockSetupOpen(true);
+    const navState = location.state as { openMockSetup?: boolean; autoStartLive?: boolean } | null;
+    if (consumedNavIntent.current) return;
+    if (!navState?.openMockSetup && !navState?.autoStartLive) return;
+
+    consumedNavIntent.current = true;
+    if (navState.openMockSetup) setMockSetupOpen(true);
+    if (navState.autoStartLive) autoStartLiveRequested.current = true;
     navigate(location.pathname, { replace: true, state: null });
   }, [location, navigate]);
-
-  if (isStealth) return null;
 
   const selectedAudioInputDeviceName = config?.audioInputDeviceName ?? '';
 
@@ -176,6 +178,27 @@ export default function ControlPanel() {
     setHeadphoneNoticeOpen(true);
   };
 
+  // Deferred rather than fired the moment the intent arrives. `checkCanStart` reads the account
+  // config and the enumerated microphones, neither of which has resolved on the first frames
+  // after a route change - starting there would greet the user with "could not load your saved
+  // configuration" for a config that was about to arrive. If they never resolve, nothing happens
+  // and the user is left looking at the Start button, which is the honest outcome.
+  const autoStartLiveReady =
+    autoStartLiveRequested.current &&
+    runningState === RunningState.Idle &&
+    audioDevicesReady &&
+    (appState?.interviewConfigLoaded ?? false);
+
+  useEffect(() => {
+    if (!autoStartLiveReady) return;
+    autoStartLiveRequested.current = false;
+    void handleStartClick();
+    // handleStartClick is redefined every render and is not a dependency of when this should
+    // fire; the ref above is what makes it happen exactly once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStartLiveReady]);
+
+  if (isStealth) return null;
 
   // The dialog has already validated and shown its own headphone notice by the time this runs -
   // starting the session itself happens on `/mock-interview`, not here, so that only one
