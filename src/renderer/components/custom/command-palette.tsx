@@ -31,9 +31,9 @@ import {
   CommandSeparator,
 } from '@/components/ui/command';
 import { useAppState } from '@/hooks/use-app-state';
-import { useAssistantService } from '@/hooks/use-assistant-service';
 import useAuth from '@/hooks/use-auth';
 import { useCommandPaletteStore } from '@/hooks/use-command-palette';
+import { useEndLiveSession } from '@/hooks/use-end-live-session';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { useSuggestionMode } from '@/hooks/use-suggestion-mode';
 import { useThemeStore } from '@/hooks/use-theme-store';
@@ -72,7 +72,7 @@ export function CommandPalette() {
   const setOpen = useCommandPaletteStore((s) => s.setOpen);
 
   const { appState, runningState } = useAppState();
-  const { stopAssistant } = useAssistantService();
+  const endLiveSession = useEndLiveSession();
   const { logout } = useAuth();
   const { hintOnly, toggle: toggleSuggestionMode } = useSuggestionMode();
   const { visible: transcriptVisible, toggle: toggleTranscript } = useTranscriptPanel();
@@ -155,9 +155,9 @@ export function CommandPalette() {
               </>
             )}
             {isRunning && (
-              <CommandItem onSelect={() => run(() => void stopAssistant())}>
+              <CommandItem onSelect={() => run(() => void endLiveSession())}>
                 <Square />
-                Stop Interview
+                Stop interview
               </CommandItem>
             )}
             <CommandItem onSelect={() => run(toggleSuggestionMode)}>

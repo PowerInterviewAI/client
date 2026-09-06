@@ -123,12 +123,22 @@ triggered it, one write per frame.
 ### Saving the interview before it is lost
 
 The transcript and the suggestions live only in main-process memory. Nothing is written to disk
-until an export, so the three actions that empty them - Clear, Start (which opens with
-`clearAll()`), and closing the app - are the only paths in the app that destroy work with no way
-back. All three now ask first, through one dialog:
+until an export, so the actions that empty them - Clear, Start (which opens with `clearAll()`),
+Stop, and closing the app - are the only paths in the app that destroy work with no way back. All
+of them ask first, through one dialog:
 [save-history-dialog.tsx](src/renderer/components/custom/save-history-dialog.tsx), mounted once in
-`MainFrame` because the three do not share a screen - the control panel is not rendered in stealth
-mode, and the close prompt arrives from main with no component of its own.
+`MainFrame` because they do not share a screen - the control panel is not rendered in stealth
+mode, the close prompt arrives from main with no component of its own, and the stop prompt
+outlives the screen that raised it.
+
+**Stop is the one that is not a guard.** The other reasons are asked *before* the destructive act
+and can be answered with "not now", which leaves the interview alone. `useEndLiveSession`
+([use-end-live-session.ts](src/renderer/hooks/use-end-live-session.ts)) stops the assistant, asks,
+then clears and goes home whatever the answer was - so the dialog drops its Cancel and refuses Esc
+for that reason, because an Esc that read as backing out would silently be the discard. It is
+deliberately not what the stop *hotkey* does: that one fires while the app is hidden mid-screen-
+share, where a modal dialog and a navigation to the dashboard are the opposite of what was asked
+for, and the next Start still asks about the transcript it left behind.
 
 **The question is only worth asking about a real interview, and length cannot tell you that.**
 `setPlaceholderState()` seeds the panels with one transcript and two suggestions so an empty app

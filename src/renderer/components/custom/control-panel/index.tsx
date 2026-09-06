@@ -7,6 +7,7 @@ import { useAppState } from '@/hooks/use-app-state';
 import { useAssistantService } from '@/hooks/use-assistant-service';
 import { useAudioInputDevices } from '@/hooks/use-audio-devices';
 import { useConfigStore } from '@/hooks/use-config-store';
+import { useEndLiveSession } from '@/hooks/use-end-live-session';
 import useIsStealthMode from '@/hooks/use-is-stealth-mode';
 import { useSaveHistoryGuard } from '@/hooks/use-save-history-guard';
 import { isMac } from '@/lib/consts';
@@ -35,7 +36,8 @@ export default function ControlPanel() {
   const isStealth = useIsStealthMode();
   const navigate = useNavigate();
   const location = useLocation();
-  const { startAssistant, stopAssistant } = useAssistantService();
+  const { startAssistant } = useAssistantService();
+  const endLiveSession = useEndLiveSession();
   const { runningState, appState } = useAppState();
   const { config, updateConfig } = useConfigStore();
   const { confirmDiscard } = useSaveHistoryGuard();
@@ -249,8 +251,11 @@ export default function ControlPanel() {
       label: 'Starting',
     },
     [RunningState.Running]: {
+      // Stop is more than a teardown here: it ends the session, offers to keep it, and takes the
+      // candidate back to the home screen. See `useEndLiveSession` for why that offer belongs on
+      // the stop rather than on the next start.
       onClick: async () => {
-        await stopAssistant();
+        await endLiveSession();
       },
       className: 'bg-destructive hover:bg-destructive/90 animate-pulse',
       icon: <Square className="h-3.5 w-3.5" />,
