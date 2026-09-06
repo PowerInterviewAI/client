@@ -65,7 +65,9 @@ A new install is sent to `/onboarding` before it can reach anything else, and as
 
 ### Navigation
 
-`/` is a launch hub naming the five things a user comes to the app to do: start a mock interview, start the live assistant, open Account (`/account` - sign-in identity, profile, context, password), open Configuration (`/configuration` - microphone, language, suggestion style, transcript panel), or buy credits. Neither launch button starts a session itself: live hands off to `/main`, which owns the whole start sequence, and mock hands off to `/mock-interview` with the setup its dialog collected. See [docs/ux-conventions.md](docs/ux-conventions.md) for where a new capability belongs.
+`/` is a launch hub naming the five things a user comes to the app to do: start a mock interview, start the live assistant, open Account (`/account` - sign-in identity, profile, context, password), open Configuration (`/configuration` - microphone, language, suggestion style, transcript panel), or buy credits.
+
+**It is the only place a session begins.** Both launch buttons start one; neither implements starting one. Live hands off to `/main` through router state, because `/main`'s control panel owns the whole start sequence; mock hands off to `/mock-interview` with the setup its dialog collected. `/main` itself carries only Stop - it is the live assistant, not a place to choose one - and shows a way back to `/` on the rare idle visit (a start cancelled at the headphone notice, or the route opened directly). Stopping asks whether to save the interview, clears it, and returns to `/`. See [docs/ux-conventions.md](docs/ux-conventions.md) for where a new capability belongs.
 
 ### Session Window Behaviour
 

@@ -29,6 +29,9 @@ export async function run(userDataDir) {
         // Leftover from the retired "don't show again" headphone notice preference - same scrub
         // mechanism (scrubRetiredKey), a different retired key.
         headphoneNoticeAcknowledged: true,
+        // Backed the control bar's split Start button, which no longer exists. Seeded so the
+        // scrub below has something to remove on an upgrading install.
+        lastSessionMode: 'live',
         // The pre-rename name for `hintOnlyMode`, set to the mode this install was left on.
         // Both mechanisms that touch it are exercised below: the migration reads it once to
         // carry the choice across, then scrubRetiredKey removes it.
@@ -99,28 +102,14 @@ export async function run(userDataDir) {
     store.configStore.getConfig().hintOnlyMode === true
   );
 
-  // Which session the control bar's primary Start button launches without going through its
-  // dropdown. A product decision rather than a convenience default - a first-time user is far
-  // likelier to be trying the app out than walking into a real call - and one that a later edit
-  // could flip with no symptom other than Start quietly doing the other thing.
+  // `lastSessionMode` backed the control bar's split Start button, which no longer exists.
+  // Seeded above, so this pins the scrub rather than merely that RuntimeConfig stopped declaring
+  // it - every read and write in the store spreads the raw stored object through, and nothing
+  // else strips a key TypeScript has forgotten about.
   check(
-    'lastSessionMode defaults to mock',
-    store.configStore.getConfig().lastSessionMode === 'mock'
+    'the retired lastSessionMode is scrubbed',
+    !('lastSessionMode' in (store.configStore.getStoredRuntime() ?? {}))
   );
-
-  store.configStore.updateConfig({ lastSessionMode: 'live' });
-  check(
-    'the last session mode is remembered across reads',
-    store.configStore.getConfig().lastSessionMode === 'live'
-  );
-
-  store.configStore.updateConfig({ sessionToken: 'tok3' });
-  check(
-    'and survives an unrelated write',
-    store.configStore.getConfig().lastSessionMode === 'live'
-  );
-
-  store.configStore.updateConfig({ lastSessionMode: 'mock' });
 
   // Security cleanup: llmConf could hold a real provider API key in plaintext. Removing the
   // field from RuntimeConfig does not erase it from an existing install's disk - the scrub IIFE

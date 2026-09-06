@@ -48,10 +48,6 @@ export interface RuntimeConfig {
   // a worse one, re-running the wizard for the same person on every new machine.
   onboardingCompleted: boolean;
 
-  // Which session the control bar's primary Start button launches directly, without going
-  // through the dropdown - whichever the candidate last actually started. Defaults to 'mock':
-  // a first-time user is far more likely to be trying the app out than walking into a real call.
-  lastSessionMode: 'live' | 'mock';
 }
 
 // Default runtime configuration
@@ -83,7 +79,6 @@ const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
   // that predates the wizard is migrated to true below rather than sent through it.
   onboardingCompleted: false,
 
-  lastSessionMode: 'mock',
 };
 
 // interviewConf (full name, profile, context) used to be cached under `runtime`, but it's now
@@ -289,9 +284,6 @@ export const configStore = new ConfigStore();
   if (raw?.mockLiveSuggestionsEnabled === undefined) {
     migration.mockLiveSuggestionsEnabled = true;
   }
-  if (raw?.lastSessionMode === undefined) {
-    migration.lastSessionMode = 'mock';
-  }
   // Absent means this store was written by a build that predates the wizard, so the user has
   // already configured the app the long way round and should not be walked through it now. A
   // genuinely new install never reaches here: `defaults` puts the key on disk at construction.
@@ -322,6 +314,11 @@ function scrubRetiredKey(key: string): void {
 // `llmConf` backed the removed bring-your-own-API-key feature and could hold a real provider key
 // in plaintext - this one matters for more than tidiness.
 scrubRetiredKey('llmConf');
+
+// `lastSessionMode` recorded which session the control bar's split Start button should launch
+// by default. That button is gone - starting is a home-screen decision now, where both kinds are
+// named outright - so nothing reads it and nothing should keep writing it.
+scrubRetiredKey('lastSessionMode');
 
 // `professionalMode` was renamed to `hintOnlyMode`, whose migration above reads it one last time
 // to carry the user's choice across. Scrubbed after that, so the two can never disagree.

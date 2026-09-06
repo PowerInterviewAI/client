@@ -112,9 +112,9 @@ outside the `try` as an unhandled rejection.
 
 `useMediaDevices` reports `ready` alongside the device list because an empty list means two
 different things - `enumerateDevices()` has not answered yet, and this machine has none - and the
-control panel renders a destructive badge and refuses Start on the second. Reading them as one
-put a red `!` on a working microphone for the first frames after every launch, and refused a Start
-pressed quickly with a message naming a device that was there all along. An unset
+control panel renders a destructive badge and refuses the start on the second. Reading them as one
+put a red `!` on a working microphone for the first frames after every launch, and refused a start
+requested quickly with a message naming a device that was there all along. An unset
 `audioInputDeviceName` is a third state again, and also not "missing": `AudioGroup` is choosing
 the default at that moment, in an effect - never in the render body, where the store write
 re-enters React mid-commit and a failed IPC call rolls the value back into the same condition that

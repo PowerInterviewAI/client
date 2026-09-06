@@ -1,6 +1,6 @@
 import { BookOpen, CreditCard, Mic, Play, SettingsIcon, UserRound } from 'lucide-react';
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { MockInterviewSetupDialog } from '@/components/custom/mock-interview-setup-dialog';
 import { Button } from '@/components/ui/button';
@@ -69,15 +69,21 @@ function LaunchCard({ icon, title, description, onClick, disabled = false }: Lau
  * you already know what the app does. Everything reachable from here is named in the words a
  * candidate would use, not the ones the codebase uses.
  *
- * Neither launch button starts a session from this page. Live hands off to `/main`, which owns
- * the whole start sequence - the microphone checks, the headphone notice, the macOS permission
- * gate and the save-history guard - and mock hands off to `/mock-interview` with the setup this
- * page's dialog collected. Duplicating either flow here is how the two would drift apart.
+ * Both launch buttons start a session; neither implements starting one. Live hands off to
+ * `/main`, which owns the whole start sequence - the microphone checks, the headphone notice, the
+ * macOS permission gate and the save-history guard - and mock hands off to `/mock-interview` with
+ * the setup this page's dialog collected. Duplicating either flow here is how the two would
+ * drift apart.
+ *
+ * This is now the only place either kind of session begins. The control bar used to carry a split
+ * Start button of its own, which meant two screens answering the same question and a stored
+ * preference deciding which one a button meant.
  */
 export default function HomePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { appState, runningState } = useAppState();
-  const { config, isLoading: configLoading, updateConfig } = useConfigStore();
+  const { config, isLoading: configLoading } = useConfigStore();
 
   // The live assistant and a mock interview are mutually exclusive - both want the microphone and
   // an ASR socket, and the main process refuses the second one. Said here rather than left to
@@ -85,6 +91,30 @@ export default function HomePage() {
   const liveSessionActive = runningState !== RunningState.Idle;
 
   const [mockSetupOpen, setMockSetupOpen] = useState(false);
+
+  // "Practise again" on the mock report has nowhere of its own to configure the next session, so
+  // it comes back here with a flag rather than making the candidate find the card again. Guarded
+  // per history entry and cleared by the replace, the same shape the live handoff uses on
+  // `/main`: a Back to this entry then finds nothing to reopen.
+  const consumedNavKey = useRef<string | null>(null);
+  useEffect(() => {
+    const navState = location.state as { openMockSetup?: boolean } | null;
+    if (!navState?.openMockSetup) return;
+    if (consumedNavKey.current === location.key) return;
+
+    // Consumed before the check below, not after: the flag is spent either way, so that clearing
+    // the router state cannot leave a stale request to reopen this dialog on a later Back.
+    consumedNavKey.current = location.key;
+    navigate(location.pathname, { replace: true, state: null });
+
+    // Not reachable through the UI - every surface that sets this flag is either inside a
+    // finished mock session or hidden while the assistant runs - but opening a setup dialog for
+    // a session the main process would refuse is a bad enough failure to be worth one line.
+    if (liveSessionActive) return;
+    setMockSetupOpen(true);
+    // `liveSessionActive` is read at the moment the request arrives and is not a trigger for it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location, navigate]);
 
   const email = config?.email;
   const credits = appState?.credits;
@@ -103,10 +133,12 @@ export default function HomePage() {
     else navigate('/main', { state: { autoStartLive: true } });
   };
 
+  // The dialog has already validated and shown its own headphone notice by the time this runs.
+  // Starting the session itself happens on `/mock-interview`, not here, so that only one
+  // `useMockInterview()` instance is ever mounted at once - starting it from this page as well
+  // would leave two instances reacting to the same `Speaking` transition for the moment before
+  // the route swap finishes, which is what plays the question's audio twice.
   const handleMockInterviewStart = async (setup: MockInterviewSetup) => {
-    void updateConfig({ lastSessionMode: 'mock' }).catch((e) =>
-      console.error('Failed to persist last session mode', e)
-    );
     setMockSetupOpen(false);
     navigate('/mock-interview', { state: { pendingSetup: setup } });
   };

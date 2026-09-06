@@ -138,7 +138,7 @@ export function CommandPalette() {
               <>
                 <CommandItem
                   onSelect={() =>
-                    run(() => navigate('/main', { state: { openMockSetup: true } }))
+                    run(() => navigate('/', { state: { openMockSetup: true } }))
                   }
                 >
                   <Mic />
